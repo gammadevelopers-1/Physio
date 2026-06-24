@@ -497,6 +497,12 @@
     "lastNameAr": "Last name (Arabic)",
     "email": "Email",
     "phone": "Phone",
+    "phoneField": {
+      "label": "Mobile number",
+      "placeholder": "5XXXXXXXX",
+      "helper": "Saudi mobile — 9 digits, starts with 5",
+      "invalid": "Enter a valid Saudi mobile number (e.g. 512345678)"
+    },
     "language": "Language",
     "calendarType": "Calendar type",
     "calendarTypeDesc": "Applies to all dates across the platform",
@@ -1706,6 +1712,7 @@
       "certifications": "Certifications",
       "badges": "Badges",
       "invoices": "Invoices",
+      "billing": "Billing",
       "applications": "My Applications",
       "inviteFriends": "My Points",
       "transcript": "Transcript",
@@ -2296,6 +2303,189 @@
       "successMessage": "Your refund request has been submitted. Our finance team will review it shortly.",
       "close": "Close"
     },
+    "billing": {
+      "title": "Billing",
+      "subtitle": "Your payments, invoices, refunds and tax information.",
+      "tabs": {
+        "overview": "Overview",
+        "payments": "Payments",
+        "invoices": "Invoices",
+        "refunds": "Refunds"
+      },
+      "kpi": {
+        "lifetimePaid": "Lifetime spend",
+        "vatPaidYtd": "VAT paid this year",
+        "paidCount": "Paid payments",
+        "pendingCount": "Pending",
+        "refundedCount": "Refunded",
+        "refundInFlight": "Refund in progress"
+      },
+      "common": {
+        "sar": "SAR",
+        "viewDetails": "View details",
+        "downloadInvoice": "Download invoice",
+        "requestRefund": "Request refund",
+        "refresh": "Refresh",
+        "loading": "Loading…",
+        "loadFailed": "Failed to load. Please try again.",
+        "empty": "Nothing to show yet."
+      },
+      "payments": {
+        "title": "Payments",
+        "subtitle": "Every transaction on your account.",
+        "emptyTitle": "No payments yet",
+        "emptyDesc": "Once you enrol in a paid course, your payments will appear here.",
+        "filters": {
+          "status": "Status",
+          "method": "Method",
+          "from": "From",
+          "to": "To",
+          "all": "All",
+          "apply": "Apply",
+          "clear": "Clear"
+        },
+        "cols": {
+          "date": "Date",
+          "course": "Course",
+          "amount": "Amount",
+          "method": "Method",
+          "status": "Status",
+          "actions": "Actions"
+        }
+      },
+      "invoices": {
+        "title": "Invoices",
+        "subtitle": "Tax invoices for every payment.",
+        "emptyTitle": "No invoices yet",
+        "emptyDesc": "Tax invoices are issued automatically when a payment completes.",
+        "cols": {
+          "number": "Invoice No.",
+          "issuedAt": "Issued",
+          "amount": "Total",
+          "status": "Status",
+          "actions": "Actions"
+        }
+      },
+      "refunds": {
+        "title": "Refund requests",
+        "subtitle": "Your refund requests and their status.",
+        "emptyTitle": "No refund requests",
+        "emptyDesc": "If you need to request a refund, open a payment and click \"Request refund\".",
+        "cols": {
+          "requestedAt": "Requested",
+          "amount": "Amount",
+          "reason": "Reason",
+          "status": "Status",
+          "decision": "Decision"
+        }
+      },
+      "status": {
+        "pending": "Pending",
+        "processing": "Processing",
+        "awaiting_approval": "Awaiting verification",
+        "paid": "Paid",
+        "failed": "Failed",
+        "refunded": "Refunded",
+        "partially_refunded": "Partially refunded",
+        "chargeback": "Chargeback",
+        "approved": "Approved",
+        "completed": "Completed",
+        "rejected": "Rejected"
+      },
+      "method": {
+        "card": "Card",
+        "mada": "mada",
+        "apple_pay": "Apple Pay",
+        "bnpl": "Pay in instalments",
+        "bank_transfer": "Bank transfer",
+        "unknown": "—"
+      },
+      "gateway": {
+        "moyasar": "Card / mada / Apple Pay",
+        "tamara": "Tamara",
+        "tabby": "Tabby",
+        "bank_transfer": "Bank transfer",
+        "mock": "Test"
+      },
+      "vatBreakdown": {
+        "title": "Tax breakdown",
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "vat": "VAT ({rate}%)",
+        "total": "Total"
+      },
+      "drawer": {
+        "title": "Payment details",
+        "paymentMethod": "Payment method",
+        "gateway": "Gateway",
+        "transactionId": "Transaction ID",
+        "paidOn": "Paid on",
+        "course": "Course",
+        "refundHistory": "Refund history",
+        "noRefunds": "No refunds for this payment.",
+        "refundIneligible": "This payment isn't eligible for a refund right now.",
+        "viewCourse": "View course"
+      },
+      "policy": {
+        "title": "Refund policy at a glance",
+        "subtitle": "Live policy — updates automatically when our finance team makes changes.",
+        "ruleCourseStart": "No refunds after the course has started",
+        "ruleAttendance": "No refunds after you've attended a session",
+        "ruleCertificate": "No refunds after your certificate is issued",
+        "ruleCme": "No refunds after CME / CPD hours are granted",
+        "ruleOff": "Allowed",
+        "perGatewayTitle": "Per payment method",
+        "partialAllowed": "Partial refunds: allowed",
+        "partialNotAllowed": "Partial refunds: not supported by this method (full refund only)",
+        "merchantDeductionNote": "You'll receive the full amount — we cover the gateway processing fee."
+      },
+      "methodsBlock": {
+        "title": "Payment methods accepted now",
+        "subtitle": "Updated in real time based on what's currently working.",
+        "available": "Available",
+        "unavailable": "Temporarily unavailable",
+        "sandboxNotice": "Test mode — no real charges."
+      },
+      "refundModal": {
+        "title": "Request refund",
+        "subtitleForm": "Tell us why — we'll review and refund the full amount to your original payment method.",
+        "subtitleConfirm": "Please confirm — once submitted, our finance team will review your request.",
+        "paymentLabel": "Payment",
+        "courseLabel": "Course",
+        "originalAmount": "Original amount",
+        "youReceive": "You'll receive",
+        "fullRefundNote": "Full refund — we cover the gateway processing fee.",
+        "reasonLabel": "Why do you want a refund?",
+        "reasonSelect": "Please select a reason",
+        "reasons": {
+          "policy": "Course doesn't match what was described",
+          "cancelled": "I no longer need it / changed my mind",
+          "technical": "Technical issue with the platform",
+          "duplicate": "Duplicate payment",
+          "other": "Other (please explain below)"
+        },
+        "noteLabel": "Additional notes (optional)",
+        "noteRequiredLabel": "Please describe what happened",
+        "notePlaceholder": "Give us any details that will help us review your request faster.",
+        "noteRequired": "A short explanation is required when choosing \"Other\".",
+        "gatewayHints": {
+          "moyasar": "Card refunds typically arrive within 5–10 business days, depending on your bank.",
+          "tamara": "Tamara will adjust your remaining instalments; any amount already paid is refunded to your original method.",
+          "tabby": "Tabby will adjust your remaining instalments; any amount already paid is refunded to your original method.",
+          "bank_transfer": "We'll process a manual bank transfer to the account on file within 3–7 business days.",
+          "mock": "This is a test payment — no real money will move."
+        },
+        "cancel": "Cancel",
+        "back": "Back",
+        "next": "Continue",
+        "submit": "Submit request",
+        "submitting": "Submitting…",
+        "submitError": "Couldn't submit your request. Please try again.",
+        "successTitle": "Refund requested",
+        "successBody": "Your request was submitted. We'll email you when our finance team has reviewed it.",
+        "successClose": "Done"
+      }
+    },
     "myPoints": {
       "title": "My Points",
       "subtitle": "Earn points and redeem them for course discounts and free unlocks",
@@ -2467,6 +2657,7 @@
       "startLearning": "Start Learning",
       "continueLearning": "Continue Learning",
       "reviewCourseMaterial": "Review Course Material",
+      "viewReceipt": "View receipt",
       "complete": "complete",
       "cmeHours": "{hours} CME Hours",
       "attendance": "Attendance",
@@ -7042,10 +7233,11 @@
           "cloudSqlBackup": "Cloud SQL Backup",
           "moyasar": "Moyasar",
           "tamara": "Tamara",
-          "paytabs": "PayTabs"
+          "tabby": "Tabby",
+          "bankTransfer": "Bank Transfer"
         },
         "howToConnect": "Configuring credentials",
-        "howToConnectBody": "Credentials are stored in GCP Secret Manager, not in this UI. To connect a missing integration, add the corresponding secret via gcloud and redeploy the backend."
+        "howToConnectBody": "Most credentials are stored in GCP Secret Manager and require a redeploy. Payment gateway secrets (Moyasar, Tamara, Tabby) and bank transfer details can also be configured directly in Finance → Settings → Payments — saved values are AES-256 encrypted at rest."
       },
       "zoomHost": {
         "manage": "Manage",

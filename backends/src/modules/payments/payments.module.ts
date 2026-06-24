@@ -15,6 +15,7 @@ import { ReconciliationController } from './reconciliation/reconciliation.contro
 import { EscalationsController } from './reconciliation/escalations.controller';
 import { ReconciliationCronController } from './reconciliation/reconciliation-cron.controller';
 import { AdminFinanceController } from './admin/admin-finance.controller';
+import { StudentFinanceController } from './student/student-finance.controller';
 
 // Services
 import { PaymentsService } from './payments.service';
@@ -81,6 +82,7 @@ import { GatewayCredentialsService } from './gateways/gateway-credentials.servic
     EscalationsController,
     ReconciliationCronController,
     AdminFinanceController,
+    StudentFinanceController,
   ],
   providers: [
     PaymentsService,

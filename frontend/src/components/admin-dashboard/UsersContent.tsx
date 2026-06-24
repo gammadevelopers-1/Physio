@@ -12,6 +12,11 @@ import { adminApi, supportApi, User, CreateUserData, UpdateUserData, PaginatedUs
 import { toast } from "sonner";
 import UserDevicesModal from "./UserDevicesModal";
 import Select from "./Select";
+import SaudiPhoneInput from "@/components/shared/SaudiPhoneInput";
+import {
+  localPartFromStored,
+  normalizeSaudiMobile,
+} from "@/lib/saudi-phone";
 import UserAvatar from "./users/UserAvatar";
 import UserDetailDrawer from "./users/UserDetailDrawer";
 import { ROLE_ORDER } from "./users/userHelpers";
@@ -243,6 +248,7 @@ function CreateUserModal({
 }) {
   const t = useTranslations("adminDashboard");
   const tToasts = useTranslations("toasts");
+  const tPhone = useTranslations("commonSettings.phoneField");
   const [form, setForm] = useState({
     email: "",
     firstName: "",
@@ -310,7 +316,15 @@ function CreateUserModal({
         lastName: form.lastName,
         role: form.role,
       };
-      if (form.phone) data.phone = form.phone;
+      if (form.phone) {
+        const normalized = normalizeSaudiMobile(form.phone);
+        if (!normalized) {
+          toast.error(tPhone("invalid"));
+          setIsSubmitting(false);
+          return;
+        }
+        data.phone = normalized;
+      }
       if (form.role === "SUPPORT") {
         data.supportSubRole = form.supportSubRole;
         if (form.supportSubRole === "agent") {
@@ -398,15 +412,10 @@ function CreateUserModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Phone</label>
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
-            />
-          </div>
+          <SaudiPhoneInput
+            value={form.phone}
+            onChange={(v) => setForm({ ...form, phone: v })}
+          />
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Role *</label>
@@ -562,10 +571,13 @@ function EditUserModal({
   onUpdated: () => void;
 }) {
   const tToasts = useTranslations("toasts");
+  const tPhone = useTranslations("commonSettings.phoneField");
   const [form, setForm] = useState({
     firstName: user.firstName || "",
     lastName: user.lastName || "",
-    phone: user.phone || "",
+    // Decode any stored format (E.164 or legacy free-text) → 9-digit local.
+    // Legacy garbage decodes to "" — admin re-enters if they want to keep it.
+    phone: localPartFromStored(user.phone),
     zoomEmail: user.zoomEmail || "",
     isActive: user.isActive,
     isVerified: user.isVerified,
@@ -589,7 +601,15 @@ function EditUserModal({
         // Send trimmed value, or "" to clear. undefined would skip it.
         zoomEmail: form.zoomEmail.trim() || "",
       };
-      if (form.phone) data.phone = form.phone;
+      if (form.phone) {
+        const normalized = normalizeSaudiMobile(form.phone);
+        if (!normalized) {
+          toast.error(tPhone("invalid"));
+          setIsSubmitting(false);
+          return;
+        }
+        data.phone = normalized;
+      }
       await adminApi.updateUser(user.id, data);
       toast.success(tToasts("userUpdated"));
       onUpdated();
@@ -646,15 +666,10 @@ function EditUserModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Phone</label>
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
-            />
-          </div>
+          <SaudiPhoneInput
+            value={form.phone}
+            onChange={(v) => setForm({ ...form, phone: v })}
+          />
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Upload, Loader2, User as UserIcon, Trash2 } from "lucide-react";
@@ -11,6 +11,11 @@ import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
 import Select from "../Select";
 import { TabShell } from "./TabShell";
 import { useSettingsCategory } from "./useSettingsCategory";
+import SaudiPhoneInput from "@/components/shared/SaudiPhoneInput";
+import {
+  localPartFromStored,
+  normalizeSaudiMobile,
+} from "@/lib/saudi-phone";
 
 interface GeneralSettings extends Record<string, unknown> {
   platformName: string;
@@ -41,17 +46,44 @@ export default function GeneralTab() {
   const user = useUser();
   const { refreshUser } = useAuth();
   const platformGeneral = usePlatformGeneral();
-  const { draft, setDraft, dirty, loading, saving, save, loadError } =
+  const { draft, setDraft, dirty, loading, saving, saveWith, loadError } =
     useSettingsCategory<GeneralSettings>("general", FALLBACK, {
       saved: t("toasts.saved"),
       saveFailed: t("toasts.saveFailed"),
       loadFailed: t("toasts.loadFailed"),
     });
 
+  const tPhone = useTranslations("commonSettings.phoneField");
+
   // Admin avatar — managed via profileApi, persisted on the user record.
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [removingAvatar, setRemovingAvatar] = useState(false);
+
+  // Phone fields edit the 9-digit local part. Draft remains in whatever
+  // shape the backend stored (canonical E.164 going forward, possibly
+  // legacy free-text for older rows). We normalize → E.164 on save.
+  const [phoneLocal, setPhoneLocal] = useState({
+    supportPhone: "",
+    whatsappNumber: "",
+  });
+  useEffect(() => {
+    if (loading) return;
+    setPhoneLocal({
+      supportPhone: localPartFromStored(draft.supportPhone),
+      whatsappNumber: localPartFromStored(draft.whatsappNumber),
+    });
+    // Re-syncs on initial load AND after each successful save (saveWith
+    // merges the API response into draft). User keystrokes only touch
+    // phoneLocal, so this won't clobber in-flight edits.
+  }, [loading, draft.supportPhone, draft.whatsappNumber]);
+
+  // Phone fields are edited via `phoneLocal`, separate from `draft`, so we
+  // OR a local-vs-stored diff into the hook's dirty flag.
+  const phonesDirty =
+    phoneLocal.supportPhone !== localPartFromStored(draft.supportPhone) ||
+    phoneLocal.whatsappNumber !== localPartFromStored(draft.whatsappNumber);
+  const effectiveDirty = dirty || phonesDirty;
 
   const adminName =
     user?.firstName || user?.lastName
@@ -93,7 +125,33 @@ export default function GeneralTab() {
   };
 
   const handleSave = async () => {
-    await save();
+    // Normalize phones → E.164 before persist. Empty input = explicit clear.
+    let supportPhoneE164 = "";
+    if (phoneLocal.supportPhone) {
+      const norm = normalizeSaudiMobile(phoneLocal.supportPhone);
+      if (!norm) {
+        toast.error(tPhone("invalid"));
+        return;
+      }
+      supportPhoneE164 = norm;
+    }
+    let whatsappE164 = "";
+    if (phoneLocal.whatsappNumber) {
+      const norm = normalizeSaudiMobile(phoneLocal.whatsappNumber);
+      if (!norm) {
+        toast.error(tPhone("invalid"));
+        return;
+      }
+      whatsappE164 = norm;
+    }
+    // Use saveWith() to bypass React's state-batching race that would
+    // leave save() reading the pre-update draft. Construct the merged
+    // payload here and hand it directly to the API.
+    await saveWith({
+      ...draft,
+      supportPhone: supportPhoneE164,
+      whatsappNumber: whatsappE164,
+    });
     await platformGeneral.refresh();
   };
 
@@ -103,7 +161,7 @@ export default function GeneralTab() {
       description={t("general.subtitle")}
       loading={loading}
       saving={saving}
-      dirty={dirty}
+      dirty={effectiveDirty}
       loadError={loadError}
       onSave={handleSave}
     >
@@ -225,23 +283,11 @@ export default function GeneralTab() {
             {t("general.contactEmailHelp")}
           </p>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-            {t("general.supportPhone")}
-          </label>
-          <input
-            type="tel"
-            value={draft.supportPhone}
-            onChange={(e) =>
-              setDraft((d) => ({ ...d, supportPhone: e.target.value }))
-            }
-            placeholder="0555614285"
-            className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
-          />
-          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-            {t("general.supportPhoneHelp")}
-          </p>
-        </div>
+        <SaudiPhoneInput
+          label={t("general.supportPhone")}
+          value={phoneLocal.supportPhone}
+          onChange={(v) => setPhoneLocal((p) => ({ ...p, supportPhone: v }))}
+        />
       </div>
 
       {/* Timezone */}
@@ -277,20 +323,13 @@ export default function GeneralTab() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-              {t("general.whatsappNumber")}
-            </label>
-            <input
-              type="tel"
-              value={draft.whatsappNumber}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, whatsappNumber: e.target.value }))
-              }
-              placeholder="+966555614285"
-              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
-            />
-          </div>
+          <SaudiPhoneInput
+            label={t("general.whatsappNumber")}
+            value={phoneLocal.whatsappNumber}
+            onChange={(v) =>
+              setPhoneLocal((p) => ({ ...p, whatsappNumber: v }))
+            }
+          />
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
               {t("general.whatsappCompanyName")}

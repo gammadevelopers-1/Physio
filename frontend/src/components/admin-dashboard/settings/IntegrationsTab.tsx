@@ -20,6 +20,7 @@ import {
   Settings2,
   CreditCard,
   Wallet,
+  Landmark,
 } from "lucide-react";
 import { adminSettingsApi } from "@/lib/api";
 import { TabShell } from "./TabShell";
@@ -43,7 +44,8 @@ const ROW_META: Record<string, { icon: React.ElementType; labelKey: string }> = 
   cloudSqlBackup: { icon: HardDrive, labelKey: "cloudSqlBackup" },
   moyasar: { icon: CreditCard, labelKey: "moyasar" },
   tamara: { icon: Wallet, labelKey: "tamara" },
-  paytabs: { icon: CreditCard, labelKey: "paytabs" },
+  tabby: { icon: Wallet, labelKey: "tabby" },
+  bankTransfer: { icon: Landmark, labelKey: "bankTransfer" },
 };
 
 export default function IntegrationsTab() {

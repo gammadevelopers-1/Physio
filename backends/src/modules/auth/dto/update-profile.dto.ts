@@ -6,6 +6,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { IsSaudiNationalId } from '../../../common/validators/saudi-national-id.validator';
+import { IsSaudiPhone } from '../../../common/validators/saudi-phone.validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -20,9 +21,14 @@ export class UpdateProfileDto {
   @MaxLength(100)
   lastName?: string;
 
+  // Empty string is the "clear my phone" sentinel — allowed through
+  // without format validation. Any non-empty value must be a valid KSA
+  // mobile (will be normalized to E.164 in the service before encrypt).
   @IsOptional()
   @IsString()
   @MaxLength(20)
+  @ValidateIf((o) => typeof o.phone === 'string' && o.phone.length > 0)
+  @IsSaudiPhone()
   phone?: string;
 
   @IsOptional()

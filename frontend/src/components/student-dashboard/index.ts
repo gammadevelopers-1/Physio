@@ -12,6 +12,7 @@ export { default as CertificationsContent } from "./CertificationsContent";
 export { default as TranscriptContent } from "./TranscriptContent";
 export { default as BadgesContent } from "./BadgesContent";
 export { default as InvoicesContent } from "./InvoicesContent";
+export { default as BillingContent } from "./BillingContent";
 export { default as MyPointsContent } from "./MyPointsContent";
 export { default as SettingsContent } from "./SettingsContent";
 export { default as SupportContent } from "./SupportContent";

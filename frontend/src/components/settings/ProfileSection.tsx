@@ -3,10 +3,15 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Mail, Phone, Loader2, Save } from "lucide-react";
+import { Mail, Loader2, Save } from "lucide-react";
 import { profileApi } from "@/lib/api";
 import { useAuth, useUser } from "@/contexts/AuthContext";
 import AvatarUploader from "./AvatarUploader";
+import SaudiPhoneInput from "@/components/shared/SaudiPhoneInput";
+import {
+  localPartFromStored,
+  normalizeSaudiMobile,
+} from "@/lib/saudi-phone";
 
 export interface ProfileSectionExtraField {
   /** Form-state key under `profileApi.update()` payload */
@@ -45,6 +50,7 @@ export default function ProfileSection({
   extraSavePayload,
 }: ProfileSectionProps) {
   const t = useTranslations("commonSettings");
+  const tPhone = useTranslations("commonSettings.phoneField");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const user = useUser();
@@ -68,7 +74,9 @@ export default function ProfileSection({
       firstNameAr: user.firstNameAr || "",
       lastNameAr: user.lastNameAr || "",
       email: user.email || "",
-      phone: user.phone || "",
+      // Decode any stored format → 9-digit local part. Garbage / legacy
+      // free-text rows decode to "" and the user is prompted to re-enter.
+      phone: localPartFromStored(user.phone),
     });
   }, [user]);
 
@@ -79,6 +87,21 @@ export default function ProfileSection({
   ).trim();
 
   const handleSave = async () => {
+    // Phone is optional — empty is fine. But if the user typed anything,
+    // it must be a complete valid KSA mobile before we send it.
+    let normalizedPhone: string | null | undefined = undefined;
+    if (showPhone) {
+      if (data.phone === "") {
+        normalizedPhone = null; // explicit clear
+      } else {
+        normalizedPhone = normalizeSaudiMobile(data.phone);
+        if (!normalizedPhone) {
+          toast.error(tPhone("invalid"));
+          return;
+        }
+      }
+    }
+
     setSaving(true);
     try {
       await profileApi.update({
@@ -88,7 +111,7 @@ export default function ProfileSection({
           firstNameAr: data.firstNameAr,
           lastNameAr: data.lastNameAr,
         }),
-        ...(showPhone && { phone: data.phone }),
+        ...(showPhone && { phone: normalizedPhone ?? "" }),
         ...extraSavePayload,
       });
       await refreshUser();
@@ -157,14 +180,10 @@ export default function ProfileSection({
           />
 
           {showPhone && (
-            <Field
+            <SaudiPhoneInput
               id={`${idPrefix}-phone`}
-              label={t("phone")}
-              type="tel"
               value={data.phone}
               onChange={(v) => setData({ ...data, phone: v })}
-              icon={<Phone className="w-4 h-4 text-[var(--color-text-secondary)]" />}
-              isRTL={isRTL}
             />
           )}
         </div>

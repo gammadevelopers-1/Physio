@@ -13,11 +13,10 @@ import ReCAPTCHA from "react-google-recaptcha";
 import OtpVerifyModal from "./trainer-application/OtpVerifyModal";
 import ResumeBuilder, { emptyStructuredResume, type StructuredResume } from "./trainer-application/ResumeBuilder";
 import { toast } from "sonner";
-import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
-import phoneArLabels from "react-phone-number-input/locale/ar.json";
-import "react-phone-number-input/style.css";
 import { isValidIBAN } from "ibantools";
 import { arCountryName, arStateName, arCityName } from "@/lib/locations-ar";
+import SaudiPhoneInput from "./shared/SaudiPhoneInput";
+import { isValidSaudiMobile, normalizeSaudiMobile } from "@/lib/saudi-phone";
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
@@ -1140,17 +1139,14 @@ const BecomeTrainerForm = ({
       return;
     }
 
-    // Phone validation — uses libphonenumber-js (handles every country).
-    // For SA, surface a Saudi-specific message; for others, generic.
+    // Phone validation — KSA-only (admins enforce Saudi-resident trainers).
+    // Field holds the 9-digit local part; normalized to E.164 below.
     if (showMobileNumber && formData.phoneE164) {
-      const valid = isValidPhoneNumber(formData.phoneE164);
-      if (!valid) {
-        const parsed = parsePhoneNumber(formData.phoneE164);
-        const isSaudi = parsed?.country === "SA";
+      if (!isValidSaudiMobile(formData.phoneE164)) {
         toast.error(
-          isSaudi
-            ? (locale === "ar" ? "أدخل رقم جوال سعودي صحيح" : "Please enter a valid Saudi mobile number")
-            : (locale === "ar" ? "أدخل رقم جوال صحيح" : "Please enter a valid mobile number"),
+          locale === "ar"
+            ? "أدخل رقم جوال سعودي صحيح"
+            : "Please enter a valid Saudi mobile number",
         );
         return;
       }
@@ -1261,10 +1257,10 @@ const BecomeTrainerForm = ({
         }
       }
 
-      // Derive country (ISO-2) + national number from the single E.164 value
-      const parsedPhone = formData.phoneE164 ? parsePhoneNumber(formData.phoneE164) : null;
-      const phoneCountry = parsedPhone?.country || "";
-      const phoneNational = parsedPhone?.nationalNumber || "";
+      // KSA-only: derive E.164 + 9-digit national number from the local
+      // input. Country code is always SA.
+      const phoneE164 = normalizeSaudiMobile(formData.phoneE164) || "";
+      const phoneNational = phoneE164 ? phoneE164.slice(-9) : "";
 
       const profileData = {
         fullNameArabic: formData.fullNameArabic,
@@ -1272,8 +1268,8 @@ const BecomeTrainerForm = ({
         firstName: formData.fullNameEnglish?.split(" ")[0] || formData.fullNameArabic?.split(" ")[0] || "",
         lastName: formData.fullNameEnglish?.split(" ").slice(1).join(" ") || formData.fullNameArabic?.split(" ").slice(1).join(" ") || "",
         email: formData.email,
-        phone: formData.phoneE164,
-        countryCode: phoneCountry,
+        phone: phoneE164,
+        countryCode: phoneE164 ? "SA" : "",
         mobileNumber: phoneNational,
         country: formData.countryName,
         state: formData.stateName,
@@ -1542,19 +1538,19 @@ const BecomeTrainerForm = ({
 
             
 
-                {/* Mobile Number with international country selector */}
+                {/* Mobile Number — KSA only (locked +966 prefix) */}
                 <div className="flex items-start py-6 justify-between">
                   <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
                     {labels.mobile} <span className="text-[#dc2626]">*</span>
                   </label>
-                  <div className="w-1/2 pg-phone-field" dir={isRTL ? "rtl" : "ltr"}>
-                    <PhoneInput
-                      international
-                      defaultCountry="SA"
+                  <div className="w-1/2">
+                    <SaudiPhoneInput
+                      hideLabel
                       value={formData.phoneE164}
-                      onChange={(v) => setFormData((prev) => ({ ...prev, phoneE164: v || "" }))}
-                      placeholder={isRTL ? "أدخل رقم الجوال" : "Enter phone number"}
-                      labels={isRTL ? phoneArLabels : undefined}
+                      onChange={(v) =>
+                        setFormData((prev) => ({ ...prev, phoneE164: v }))
+                      }
+                      required
                     />
                   </div>
                 </div>
@@ -1783,20 +1779,19 @@ const BecomeTrainerForm = ({
 
               <InputField label={labels.email} name="email" type="email" required icon={<Mail className="w-5 h-5" strokeWidth={1.5} />} withDivider={false} value={formData.email} onChange={handleInputChange} isRTL={isRTL} />
 
-              {/* Mobile Number */}
+              {/* Mobile Number — KSA only (locked +966 prefix) */}
               <div className="flex flex-col gap-2">
                 <label className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
                   {labels.mobile} <span className="text-[#dc2626]">*</span>
                 </label>
-                <div className="pg-phone-field" dir={isRTL ? "rtl" : "ltr"}>
-                  <PhoneInput
-                    international
-                    defaultCountry="SA"
-                    value={formData.phoneE164}
-                    onChange={(v) => setFormData((prev) => ({ ...prev, phoneE164: v || "" }))}
-                    placeholder={isRTL ? "أدخل رقم الجوال" : "Enter phone number"}
-                  />
-                </div>
+                <SaudiPhoneInput
+                  hideLabel
+                  value={formData.phoneE164}
+                  onChange={(v) =>
+                    setFormData((prev) => ({ ...prev, phoneE164: v }))
+                  }
+                  required
+                />
               </div>
 
                {/* Divider */}

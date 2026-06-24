@@ -62,6 +62,32 @@ export function useSettingsCategory<T extends Record<string, unknown>>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, draft]);
 
+  /**
+   * Escape hatch for tabs that need to normalize / transform values right
+   * before persistence (e.g. converting an edited phone "5XXXXXXXX" to its
+   * canonical E.164 form). Unlike save(), saveWith() persists EXACTLY the
+   * payload you hand it — bypassing React's state-batching race that
+   * would otherwise leave save() looking at the pre-setDraft snapshot.
+   */
+  const saveWith = useCallback(
+    async (payload: T) => {
+      setSaving(true);
+      try {
+        const res = await adminSettingsApi.updateCategory<T>(category, payload);
+        const merged = { ...fallback, ...res.value };
+        setServerValue(merged);
+        setDraft(merged);
+        toast.success(toasts.saved);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : toasts.saveFailed);
+      } finally {
+        setSaving(false);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [category],
+  );
+
   // Cheap dirty check via JSON round-trip — settings blobs are small
   // (single-digit KB) so this is fine and avoids importing a deep-eq lib.
   const dirty = JSON.stringify(draft) !== JSON.stringify(serverValue);
@@ -75,6 +101,7 @@ export function useSettingsCategory<T extends Record<string, unknown>>(
     loadError,
     dirty,
     save,
+    saveWith,
     refetch: fetchSettings,
   };
 }

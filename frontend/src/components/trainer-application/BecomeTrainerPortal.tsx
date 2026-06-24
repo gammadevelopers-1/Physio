@@ -33,6 +33,11 @@ import {
   type RoleRequestEvent,
   type MissingRequirement,
 } from "@/lib/api";
+import SaudiPhoneInput from "../shared/SaudiPhoneInput";
+import {
+  localPartFromStored,
+  normalizeSaudiMobile,
+} from "@/lib/saudi-phone";
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
@@ -644,7 +649,11 @@ function ResubmitForm({
   const [profileEdits, setProfileEdits] = useState({
     fullNameEnglish: profile.fullNameEnglish ?? "",
     fullNameArabic: profile.fullNameArabic ?? "",
-    mobileNumber: profile.mobileNumber ?? profile.phoneE164 ?? "",
+    // Always edit the 9-digit local part. Stored value may be in any of
+    // E.164 / national-number / legacy free-text shapes; decode if possible.
+    mobileNumber: localPartFromStored(
+      profile.mobileNumber || profile.phoneE164 || profile.phone,
+    ),
     specialty: profile.specialty ?? "",
     qualification: profile.qualification ?? "",
     scfhsNumber: profile.scfhsNumber ?? "",
@@ -704,12 +713,35 @@ function ResubmitForm({
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    // Validate phone if present — admin enforces KSA-only.
+    let mobileNumberPayload = "";
+    let phoneE164Payload = "";
+    if (profileEdits.mobileNumber) {
+      const normalized = normalizeSaudiMobile(profileEdits.mobileNumber);
+      if (!normalized) {
+        toast.error(
+          locale === "ar"
+            ? "أدخل رقم جوال سعودي صحيح"
+            : "Please enter a valid Saudi mobile number",
+        );
+        return;
+      }
+      mobileNumberPayload = normalized.slice(-9);
+      phoneE164Payload = normalized;
+    }
     setSubmitting(true);
     try {
       // Merge: start with the original profileData, overlay just the
       // fields the inline form lets them edit. Keeps everything else
       // (address, gender, nationality, etc.) as previously submitted.
-      const mergedProfile = { ...profile, ...profileEdits };
+      const mergedProfile = {
+        ...profile,
+        ...profileEdits,
+        mobileNumber: mobileNumberPayload,
+        phoneE164: phoneE164Payload,
+        phone: phoneE164Payload,
+        countryCode: phoneE164Payload ? "SA" : "",
+      };
 
       await trainerApplicationsPortalApi.resubmit(token, {
         roleRequestId,
@@ -758,11 +790,12 @@ function ResubmitForm({
           value={profileEdits.fullNameArabic}
           onChange={onProfileChange}
         />
-        <Field
+        <SaudiPhoneInput
           label={t("resubmit.fields.mobileNumber")}
-          name="mobileNumber"
           value={profileEdits.mobileNumber}
-          onChange={onProfileChange}
+          onChange={(v) =>
+            setProfileEdits((prev) => ({ ...prev, mobileNumber: v }))
+          }
         />
         <Field
           label={t("resubmit.fields.specialty")}

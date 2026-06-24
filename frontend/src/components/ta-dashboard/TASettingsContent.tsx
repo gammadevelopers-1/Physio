@@ -21,7 +21,6 @@ import {
   Settings,
   Pencil,
   Mail,
-  Phone,
   MapPin,
   Globe,
   Key,
@@ -32,9 +31,15 @@ import {
   Upload,
   Trash2,
 } from "lucide-react";
+import SaudiPhoneInput from "@/components/shared/SaudiPhoneInput";
+import {
+  localPartFromStored,
+  normalizeSaudiMobile,
+} from "@/lib/saudi-phone";
 
 const TASettingsContent = () => {
   const t = useTranslations("taDashboard");
+  const tPhone = useTranslations("commonSettings.phoneField");
   const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -82,7 +87,7 @@ const TASettingsContent = () => {
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         email: user.email,
-        phone: user.phone || "",
+        phone: localPartFromStored(user.phone),
         bio: (user as any).bio || "",
         location: (user as any).location || "",
         language: (user as any).language || "en",
@@ -119,13 +124,25 @@ const TASettingsContent = () => {
   };
 
   const handleSaveProfile = async () => {
+    // Phone is optional — empty is fine. If anything was typed, it must
+    // be a complete valid KSA mobile.
+    let phonePayload: string = "";
+    if (profileData.phone !== "") {
+      const normalized = normalizeSaudiMobile(profileData.phone);
+      if (!normalized) {
+        toast.error(tPhone("invalid"));
+        return;
+      }
+      phonePayload = normalized;
+    }
+
     setSaving(true);
     try {
       const newLang = profileData.language;
       await profileApi.update({
         firstName: profileData.firstName,
         lastName: profileData.lastName,
-        phone: profileData.phone,
+        phone: phonePayload,
         bio: profileData.bio,
         location: profileData.location,
         language: newLang,
@@ -419,25 +436,15 @@ const TASettingsContent = () => {
                             />
                           </div>
                         </div>
-                        <div>
-                          <label htmlFor="ta-phone" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
-                            {t("settings.phone")}
-                          </label>
-                          <div className="relative">
-                            <Phone
-                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
-                            />
-                            <input
-                              id="ta-phone"
-                              type="tel"
-                              value={profileData.phone}
-                              onChange={(e) =>
-                                setProfileData({ ...profileData, phone: e.target.value })
-                              }
-                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
-                            />
-                          </div>
-                        </div>
+                        <SaudiPhoneInput
+                          id="ta-phone"
+                          label={t("settings.phone")}
+                          value={profileData.phone}
+                          onChange={(v) =>
+                            setProfileData({ ...profileData, phone: v })
+                          }
+                        />
+
                         <div>
                           <label htmlFor="ta-location" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                             {t("settings.location")}

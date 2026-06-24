@@ -21,6 +21,7 @@ import {
   Calendar,
   Users,
   Headphones,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
@@ -96,6 +97,11 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
       label: tDashboard("sidebar.support"),
       href: `/${locale}/dashboard/student/support`,
       icon: Headphones,
+    },
+    {
+      label: tDashboard("sidebar.billing"),
+      href: `/${locale}/dashboard/student/billing`,
+      icon: Receipt,
     },
     {
       label: tDashboard("sidebar.settings"),

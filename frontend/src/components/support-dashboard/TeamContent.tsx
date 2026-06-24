@@ -11,6 +11,8 @@ import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import PanelErrorState from "./PanelErrorState";
 import Select from "@/components/admin-dashboard/Select";
+import SaudiPhoneInput from "@/components/shared/SaudiPhoneInput";
+import { normalizeSaudiMobile } from "@/lib/saudi-phone";
 import {
   Users,
   Clock,
@@ -674,6 +676,7 @@ function AddAgentModal({
   onSubmitted: () => void;
 }) {
   const t = useTranslations("supportDashboard");
+  const tPhone = useTranslations("commonSettings.phoneField");
   const [mode, setMode] = useState<"existing" | "new">("existing");
   const [available, setAvailable] = useState<AvailableAgent[]>([]);
   const [loadingAvail, setLoadingAvail] = useState(true);
@@ -727,12 +730,22 @@ function AddAgentModal({
           setSubmitting(false);
           return;
         }
+        let candidatePhone: string | undefined = undefined;
+        if (newForm.phone) {
+          const normalized = normalizeSaudiMobile(newForm.phone);
+          if (!normalized) {
+            toast.error(tPhone("invalid"));
+            setSubmitting(false);
+            return;
+          }
+          candidatePhone = normalized;
+        }
         await supportApi.createTeamRequest({
           kind: "add_new",
           candidateEmail: newForm.email.trim(),
           candidateFirstName: newForm.firstName.trim(),
           candidateLastName: newForm.lastName.trim(),
-          candidatePhone: newForm.phone.trim() || undefined,
+          candidatePhone,
           reason: reason.trim() || undefined,
         });
       }
@@ -892,12 +905,10 @@ function AddAgentModal({
                 value={newForm.email}
                 onChange={(v) => setNewForm((p) => ({ ...p, email: v }))}
               />
-              <Field
-                type="tel"
+              <SaudiPhoneInput
                 label={t("teamPage.modal.phone")}
                 value={newForm.phone}
                 onChange={(v) => setNewForm((p) => ({ ...p, phone: v }))}
-                optional
               />
               <p className="text-xs text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] rounded-lg p-2.5">
                 {t("teamPage.modal.adminWillSetPassword")}

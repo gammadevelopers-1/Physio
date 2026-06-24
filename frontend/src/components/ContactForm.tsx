@@ -6,6 +6,8 @@ import { Mail, Phone, MapPin, ChevronRight, ChevronLeft, ChevronDown } from "luc
 import { useTranslations, useLocale } from "next-intl";
 import type { ContactPage } from "@/lib/strapi/types";
 import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
+import SaudiPhoneInput from "./shared/SaudiPhoneInput";
+import { normalizeSaudiMobile } from "@/lib/saudi-phone";
 
 // Dynamically import Map component to avoid SSR issues with Leaflet
 const Map = dynamic(() => import("./Map"), {
@@ -28,14 +30,13 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
     fullName: "",
     email: "",
     issueType: "",
-    countryCode: "SA",
+    // 9-digit local part — normalized to +9665XXXXXXXX on submit.
     phoneNumber: "",
     subject: "",
     description: "",
   });
 
   const [isIssueTypeOpen, setIsIssueTypeOpen] = useState(false);
-  const [isCountryOpen, setIsCountryOpen] = useState(false);
   const maxDescriptionLength = 275;
 
   const issueTypes = [
@@ -69,7 +70,11 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    // Phone is required — already enforced by the SaudiPhoneInput's
+    // required prop visually; normalize to canonical E.164 for any
+    // future API consumer.
+    const phoneE164 = normalizeSaudiMobile(formData.phoneNumber);
+    console.log("Form submitted:", { ...formData, phoneE164 });
   };
 
   return (
@@ -381,74 +386,20 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                   </div>
                 </div>
 
-                {/* Phone Number */}
-                <div className="flex flex-col w-full gap-2">
-                  <label
-                    className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
-                    style={{
-                      color: "var(--on-surface-default, var(--color-text-primary))",
-                      fontFamily: "var(--typeface-family, 'DM Sans')",
-                      fontSize: "16px",
-                      fontWeight: 400,
-                      lineHeight: "24px",
-                    }}
-                  >
-                    {s("formPhoneLabel", "form.phoneNumber")} <span style={{ color: "#DC2626" }}>*</span>
-                  </label>
-                  <div className="flex bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] overflow-hidden" style={{ height: "44px" }}>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setIsCountryOpen(!isCountryOpen)}
-                        className={`h-full px-3.5 flex items-center gap-1 cursor-pointer ${isRTL ? "border-l border-[var(--color-border)]" : "border-r border-[var(--color-border)]"}`}
-                      >
-                        <span
-                          className="text-[var(--color-text-primary)] text-sm md:text-base"
-                          style={{ fontSize: "16px" }}
-                        >
-                          {formData.countryCode}
-                        </span>
-                        <ChevronDown
-                          className={`w-5 h-5 text-[var(--on-surface-variant)] transition-transform ${isCountryOpen ? "rotate-180" : ""}`}
-                          strokeWidth={1.5}
-                        />
-                      </button>
-                      {isCountryOpen && (
-                        <div className={`absolute top-full mt-1 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
-                          {["SA", "AE", "US", "UK"].map((code) => (
-                            <button
-                              key={code}
-                              type="button"
-                              onClick={() => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  countryCode: code,
-                                }));
-                                setIsCountryOpen(false);
-                              }}
-                              className={`w-full px-3.5 py-2 hover:bg-[var(--color-border-subtle)] transition-colors text-sm ${isRTL ? "text-right" : "text-left"}`}
-                            >
-                              {code}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <input
-                      type="tel"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      required
-                      className="flex-1 focus:outline-none"
-                      style={{
-                        padding: "10px 14px",
-                        textAlign: isRTL ? "right" : "left",
-                        direction: "ltr",
-                      }}
-                    />
-                  </div>
-                </div>
+                {/* Phone Number — KSA only */}
+                <SaudiPhoneInput
+                  label={
+                    <span className={isRTL ? "flex-row-reverse" : ""}>
+                      {s("formPhoneLabel", "form.phoneNumber")}{" "}
+                      <span style={{ color: "#DC2626" }}>*</span>
+                    </span>
+                  }
+                  value={formData.phoneNumber}
+                  onChange={(v) =>
+                    setFormData((prev) => ({ ...prev, phoneNumber: v }))
+                  }
+                  required
+                />
 
                 {/* Subject */}
                 <div className="flex flex-col w-full gap-2">

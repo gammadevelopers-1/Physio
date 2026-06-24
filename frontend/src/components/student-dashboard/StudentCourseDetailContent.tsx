@@ -27,6 +27,7 @@ import {
   Sparkles,
   Trophy,
   ChevronRight,
+  Receipt,
 } from "lucide-react";
 import ReviewModal, { type ReviewKind } from "./ReviewModal";
 import DashboardSidebar from "./DashboardSidebar";
@@ -35,7 +36,7 @@ import DashboardNavbar from "./DashboardNavbar";
 import StudentCourseDetailSkeleton from "./StudentCourseDetailSkeleton";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCourseDetail } from "@/hooks/useStudentCourseDetail";
-import { studentApi, ApiError } from "@/lib/api";
+import { studentApi, studentFinanceApi, ApiError } from "@/lib/api";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import { isJoinable, formatTimeUntil, canDropCourseNow } from "@/lib/calendar-utils";
@@ -66,6 +67,31 @@ const StudentCourseDetailContent = () => {
     allRequiredSubmitted: boolean;
   } | null>(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+
+  // Resolve enrollment → paid payment so we can show a "View receipt" link
+  // that deep-opens the billing drawer. Free enrollments and never-paid
+  // courses 404 from the endpoint; we hide the link silently in that case.
+  const enrollmentId = data?.enrollment?.id ?? null;
+  const [receiptPaymentId, setReceiptPaymentId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!enrollmentId) {
+      setReceiptPaymentId(null);
+      return;
+    }
+    let cancelled = false;
+    studentFinanceApi
+      .getPaymentByEnrollment(enrollmentId)
+      .then((res) => {
+        if (!cancelled) setReceiptPaymentId(res.paymentId);
+      })
+      .catch(() => {
+        // 404 (free / never paid) is the common path — fail silent.
+        if (!cancelled) setReceiptPaymentId(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [enrollmentId]);
 
   // Fetch review-submission status once the enrollment is known to be completed.
   // Used to gate the cert button and prompt for missing reviews.
@@ -337,7 +363,7 @@ const StudentCourseDetailContent = () => {
                                      approved, also show View Certificate
                                      side-by-side. */}
                     {data.enrollment.status === "active" && (
-                      <div className="mt-4">
+                      <div className="mt-4 flex flex-wrap gap-3">
                         <Link
                           href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
                           className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity btn-gold text-[var(--color-button-text)]"
@@ -347,6 +373,15 @@ const StudentCourseDetailContent = () => {
                             ? t("courseDetail.continueLearning")
                             : t("courseDetail.startLearning")}
                         </Link>
+                        {receiptPaymentId && (
+                          <Link
+                            href={`/${locale}/dashboard/student/billing?payment=${receiptPaymentId}`}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:border-[var(--color-primary)] hover:shadow-sm transition-all"
+                          >
+                            <Receipt className="w-4 h-4" />
+                            {t("courseDetail.viewReceipt")}
+                          </Link>
+                        )}
                       </div>
                     )}
                     {data.enrollment.status === "completed" && (
@@ -365,6 +400,15 @@ const StudentCourseDetailContent = () => {
                           >
                             <Award className="w-4 h-4" />
                             {locale === "ar" ? "عرض الشهادة" : "View Certificate"}
+                          </Link>
+                        )}
+                        {receiptPaymentId && (
+                          <Link
+                            href={`/${locale}/dashboard/student/billing?payment=${receiptPaymentId}`}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:border-[var(--color-primary)] hover:shadow-sm transition-all"
+                          >
+                            <Receipt className="w-4 h-4" />
+                            {t("courseDetail.viewReceipt")}
                           </Link>
                         )}
                       </div>

@@ -7805,6 +7805,13 @@ export const refundApi = {
   request: (data: { paymentId: string; reason: string; reasonNote?: string }) =>
     api.post<any>('/refunds', data),
 
+  // Student-only: returns refunds where requesterId === current user.
+  getMyRefunds: (page = 1, limit = 10) =>
+    api.get<{
+      data: any[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/refunds/my-refunds?page=${page}&limit=${limit}`),
+
   getAll: (
     page = 1,
     limit = 10,
@@ -8019,6 +8026,197 @@ export const refundApi = {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   },
+};
+
+// ===========================================
+// Student Finance API — read-only umbrella for the /dashboard/student/billing
+// page. Refund creation reuses refundApi.request(); invoice/PDF reuse invoiceApi.
+// All endpoints are server-side guarded to "this row belongs to me".
+// ===========================================
+
+export type StudentPaymentStatus =
+  | 'pending'
+  | 'processing'
+  | 'awaiting_approval'
+  | 'paid'
+  | 'failed'
+  | 'refunded'
+  | 'partially_refunded'
+  | 'chargeback';
+
+export type StudentGatewayKey =
+  | 'moyasar'
+  | 'tamara'
+  | 'tabby'
+  | 'bank_transfer'
+  | 'mock';
+
+export interface StudentVatBreakdown {
+  subtotalSar: number;
+  vatSar: number;
+  totalSar: number;
+  vatRatePct: number;
+  discountSar: number;
+}
+
+export interface StudentFinanceOverview {
+  counts: {
+    paid: number;
+    pending: number;
+    refunded: number;
+    refundInFlight: number;
+  };
+  totals: {
+    lifetimePaidSar: number;
+    vatPaidYtdSar: number;
+    currency: 'SAR';
+  };
+  recentPayments: Array<{
+    id: string;
+    amount: string;
+    gateway: string;
+    status: StudentPaymentStatus;
+    paidAt: string | null;
+    createdAt: string;
+    courseTitle: string | null;
+    courseTitleAr: string | null;
+  }>;
+}
+
+export interface StudentPaymentRow {
+  id: string;
+  amount: string;
+  currency: string;
+  gateway: string;
+  paymentMethod: string | null;
+  status: StudentPaymentStatus;
+  paidAt: string | null;
+  createdAt: string;
+  metadata: Record<string, unknown> | null;
+  courseId: string;
+  courseTitle: string | null;
+  courseTitleAr: string | null;
+  invoiceId: string | null;
+  vatBreakdown: StudentVatBreakdown;
+  hasInvoice: boolean;
+}
+
+export interface StudentPaymentsListResponse {
+  data: StudentPaymentRow[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
+export interface StudentPaymentDetailResponse {
+  payment: {
+    id: string;
+    userId: string;
+    courseId: string;
+    enrollmentId: string | null;
+    gateway: string;
+    gatewayChargeId: string | null;
+    paymentMethod: string | null;
+    amount: string;
+    currency: string;
+    status: StudentPaymentStatus;
+    metadata: Record<string, unknown> | null;
+    paidAt: string | null;
+    failedAt: string | null;
+    failureReason: string | null;
+    createdAt: string;
+    courseTitle: string | null;
+    courseTitleAr: string | null;
+    courseDeliveryType: string | null;
+    invoiceId: string | null;
+    invoiceNumber: string | null;
+    vatBreakdown: StudentVatBreakdown;
+  };
+  refunds: Array<{
+    id: string;
+    status: string;
+    reason: string;
+    reasonNote: string | null;
+    originalAmount: string;
+    refundAmount: string;
+    deductionAmount: string;
+    createdAt: string;
+    approvedAt: string | null;
+    completedAt: string | null;
+    rejectedAt: string | null;
+    rejectionNote: string | null;
+  }>;
+  refundability: {
+    canRequest: boolean;
+    blockedBy: string | null;
+    reason: string | null;
+    partialAllowed: boolean;
+    merchantDeductionPercent: number;
+  };
+}
+
+export interface StudentFinancePolicySnapshot {
+  rules: {
+    blockAfterCourseStart: boolean;
+    blockAfterAttendance: boolean;
+    blockAfterCertificate: boolean;
+    blockAfterCmeGranted: boolean;
+  };
+  perGateway: Record<
+    StudentGatewayKey,
+    { deductionPercent: number; partialRefundCapable: boolean }
+  >;
+  activeGateways: {
+    moyasar:       { available: boolean; mode: 'test' | 'live' | null };
+    tamara:        { available: boolean; mode: 'test' | 'live' | null };
+    tabby:         { available: boolean; mode: 'test' | 'live' | null };
+    bank_transfer: { available: boolean; mode: null };
+  };
+}
+
+export interface StudentPaymentsFilters {
+  status?: string;
+  gateway?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  courseId?: string;
+}
+
+export const studentFinanceApi = {
+  getOverview: () =>
+    api.get<StudentFinanceOverview>('/student/finance/overview'),
+
+  listPayments: (
+    page = 1,
+    limit = 20,
+    filters?: StudentPaymentsFilters,
+  ) => {
+    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.gateway && filters.gateway !== 'all') sp.set('gateway', filters.gateway);
+    if (filters?.dateFrom) sp.set('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) sp.set('dateTo', filters.dateTo);
+    if (filters?.courseId) sp.set('courseId', filters.courseId);
+    return api.get<StudentPaymentsListResponse>(
+      `/student/finance/payments?${sp.toString()}`,
+    );
+  },
+
+  getPaymentDetail: (paymentId: string) =>
+    api.get<StudentPaymentDetailResponse>(
+      `/student/finance/payments/${paymentId}`,
+    ),
+
+  getPolicySnapshot: () =>
+    api.get<StudentFinancePolicySnapshot>(
+      '/student/finance/policy-snapshot',
+    ),
+
+  // Resolve enrollmentId → paymentId so course pages can deep-link a
+  // student to their billing drawer. Throws 404 when no payment exists
+  // (free enrollment, refunded, never paid) — caller hides the CTA on err.
+  getPaymentByEnrollment: (enrollmentId: string) =>
+    api.get<{ paymentId: string }>(
+      `/student/finance/payment-by-enrollment/${enrollmentId}`,
+    ),
 };
 
 // ===========================================

@@ -20,6 +20,7 @@ import {
   Upload,
   Trash2,
   Headphones,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi } from "@/lib/api";
@@ -110,6 +111,11 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
       label: t("sidebar.support"),
       href: `/${locale}/dashboard/student/support`,
       icon: Headphones,
+    },
+    {
+      label: t("sidebar.billing"),
+      href: `/${locale}/dashboard/student/billing`,
+      icon: Receipt,
     },
     {
       label: t("sidebar.settings"),

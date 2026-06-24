@@ -19,6 +19,7 @@ import {
   Upload,
   Trash2,
   Headphones,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
@@ -109,6 +110,11 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
       label: t("sidebar.support"),
       href: `/${locale}/dashboard/student/support`,
       icon: Headphones,
+    },
+    {
+      label: t("sidebar.billing"),
+      href: `/${locale}/dashboard/student/billing`,
+      icon: Receipt,
     },
     {
       label: t("sidebar.settings"),

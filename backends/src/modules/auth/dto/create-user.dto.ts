@@ -7,8 +7,10 @@ import {
   Matches,
   IsIn,
   IsUUID,
+  ValidateIf,
 } from 'class-validator';
 import { ROLE_NAMES, SUPPORT_SUB_ROLES } from '../../../database/schema';
+import { IsSaudiPhone } from '../../../common/validators/saudi-phone.validator';
 
 // SUPER_ADMIN is seed-only — never assignable via API
 const validRoles = Object.values(ROLE_NAMES).filter(
@@ -49,6 +51,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   @MaxLength(20)
+  @ValidateIf((o) => typeof o.phone === 'string' && o.phone.length > 0)
+  @IsSaudiPhone()
   phone?: string;
 
   @IsIn(validRoles, { message: `Role must be one of: ${validRoles.join(', ')}` })

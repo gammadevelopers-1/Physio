@@ -1,5 +1,6 @@
 import { IsEmail, IsString, MinLength, MaxLength, IsOptional, Matches, IsNotEmpty } from 'class-validator';
 import { IsSaudiNationalId } from '../../../common/validators/saudi-national-id.validator';
+import { IsSaudiPhone } from '../../../common/validators/saudi-phone.validator';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Please provide a valid email' })
@@ -26,6 +27,7 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   @MaxLength(20)
+  @IsSaudiPhone()
   phone?: string;
 
   @IsOptional()

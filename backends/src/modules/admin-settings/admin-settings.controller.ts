@@ -16,7 +16,26 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { normalizePaymentsForSave } from '../payments/gateways/payments-secrets.util';
+import {
+  normalizePaymentsForSave,
+  decryptSecret,
+} from '../payments/gateways/payments-secrets.util';
+
+interface DbPaymentsForHealth {
+  moyasar?: { publishableKey?: string; secretKeyRef?: string | null };
+  tamara?: {
+    merchantToken?: string | null;
+    secretKeyRef?: string | null;
+    mode?: 'test' | 'live';
+  };
+  tabby?: { publicKey?: string; secretKeyRef?: string | null };
+  bankTransfer?: {
+    bankNameEn?: string;
+    bankNameAr?: string;
+    accountNumber?: string;
+    iban?: string;
+  };
+}
 
 /** Replace every encrypted secret in the payments JSONB with "" before
  *  sending to the browser. Loading the form should never give the client
@@ -159,6 +178,43 @@ export class AdminSettingsController {
     Record<string, { configured: boolean; required: boolean; description: string }>
   > {
     const has = (key: string) => !!process.env[key]?.trim();
+
+    // For payment gateways we must check BOTH env vars AND the admin-saved
+    // DB row — secrets are AES-GCM encrypted in JSONB and decrypted at
+    // runtime by GatewayCredentialsService. An admin who configured a
+    // gateway entirely through the UI has no env vars set; we'd otherwise
+    // show "not configured" while charges are actually working.
+    const db =
+      (await this.settingsService.getCategory<DbPaymentsForHealth>(
+        'payments',
+      )) ?? {};
+
+    // Moyasar: real env var is MOYASAR_SECRET_KEY (+ _TEST/_LIVE variants
+    // honored by payments.config). The old check on MOYASAR_API_KEY was
+    // wrong — that name doesn't exist anywhere in the codebase.
+    const moyasarEnv =
+      has('MOYASAR_SECRET_KEY') ||
+      has('MOYASAR_SECRET_KEY_LIVE') ||
+      has('MOYASAR_SECRET_KEY_TEST');
+    const moyasarDb = !!decryptSecret(db.moyasar?.secretKeyRef);
+
+    // Tamara: needs both api token + notification token. Either env or DB.
+    const tamaraEnv = has('TAMARA_API_TOKEN') && has('TAMARA_NOTIFICATION_TOKEN');
+    const tamaraDb =
+      !!decryptSecret(db.tamara?.merchantToken) &&
+      !!decryptSecret(db.tamara?.secretKeyRef);
+
+    // Tabby: needs a secret key. Either env or DB.
+    const tabbyEnv = has('TABBY_SECRET_KEY');
+    const tabbyDb = !!decryptSecret(db.tabby?.secretKeyRef);
+
+    // Bank transfer is DB-only (no env equivalent). Configured = admin has
+    // saved bank name + an account number or IBAN.
+    const bt = db.bankTransfer ?? {};
+    const bankConfigured =
+      !!(bt.bankNameEn || bt.bankNameAr) &&
+      !!(bt.accountNumber || bt.iban);
+
     return {
       zoom: {
         configured:
@@ -216,22 +272,27 @@ export class AdminSettingsController {
           'Automated daily Cloud SQL backup + 7-day PITR (managed at infra layer)',
       },
       // ─── Payment gateways ─────────────────────────────────
-      // env-key presence only — surfaces "needs config" before
-      // anyone tries to charge. Real ping checks can come later.
+      // Honors env vars OR admin-saved encrypted DB credentials — matches
+      // exactly what GatewayCredentialsService loads at runtime.
       moyasar: {
-        configured: has('MOYASAR_API_KEY'),
+        configured: moyasarEnv || moyasarDb,
         required: false,
         description: 'Moyasar — Saudi card / Apple Pay / mada gateway',
       },
       tamara: {
-        configured: has('TAMARA_API_TOKEN') && has('TAMARA_NOTIFICATION_TOKEN'),
+        configured: tamaraEnv || tamaraDb,
         required: false,
         description: 'Tamara — Buy-now-pay-later instalments',
       },
-      paytabs: {
-        configured: has('PAYTABS_PROFILE_ID') && has('PAYTABS_SERVER_KEY'),
+      tabby: {
+        configured: tabbyEnv || tabbyDb,
         required: false,
-        description: 'PayTabs — multi-currency payment gateway',
+        description: 'Tabby — Buy-now-pay-later instalments',
+      },
+      bankTransfer: {
+        configured: bankConfigured,
+        required: false,
+        description: 'Manual bank transfer with admin verification',
       },
     };
   }

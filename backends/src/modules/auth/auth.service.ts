@@ -37,6 +37,29 @@ import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 import { PasswordSetupService } from './password-setup.service';
 import { encryptPII, decryptPII, decryptUserPII } from '../../common/crypto';
 import { validatePasswordPolicy } from '../../common/password-policy';
+import { normalizeSaudiPhone } from '../../common/validators/saudi-phone.validator';
+
+/**
+ * Canonicalize a phone value before storage. Storage policy is:
+ *   - undefined → undefined (caller skips the field; PATCH semantics)
+ *   - null      → null      (explicit clear)
+ *   - ""        → null      (UI "clear my phone" sentinel)
+ *   - valid KSA → "+9665XXXXXXXX" (E.164 canonical)
+ *   - anything else → null (defensive — DTO validation should have caught
+ *     non-KSA shapes upstream, but if it slips through we refuse to store
+ *     garbage rather than encrypting whatever the caller sent)
+ *
+ * The output is what gets handed to `encryptPII`, so legacy junk in old
+ * rows is replaced on the next save instead of being re-encrypted.
+ */
+function normalizePhoneForStorage(
+  value: string | null | undefined,
+): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  return normalizeSaudiPhone(value);
+}
 
 @Injectable()
 export class AuthService {
@@ -134,7 +157,7 @@ export class AuthService {
         passwordHash,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        phone: encryptPII(dto.phone),
+        phone: encryptPII(normalizePhoneForStorage(dto.phone) ?? null),
         scfhsNumber: encryptPII(dto.scfhsNumber || null),
         // National ID / Iqama is required at registration and immutable
         // once stored. Already validated by the DTO via @IsSaudiNationalId.
@@ -1016,7 +1039,7 @@ export class AuthService {
         passwordHash,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        phone: encryptPII(dto.phone),
+        phone: encryptPII(normalizePhoneForStorage(dto.phone) ?? null),
         activeRole: dto.role,
         isVerified: !useInviteFlow,
       })
@@ -1159,7 +1182,10 @@ export class AuthService {
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
     if (dto.firstNameAr !== undefined) updateData.firstNameAr = dto.firstNameAr;
     if (dto.lastNameAr !== undefined) updateData.lastNameAr = dto.lastNameAr;
-    if (dto.phone !== undefined) updateData.phone = encryptPII(dto.phone);
+    if (dto.phone !== undefined) {
+      const canonical = normalizePhoneForStorage(dto.phone);
+      updateData.phone = canonical === null ? null : encryptPII(canonical);
+    }
     if (dto.avatar !== undefined) updateData.avatar = dto.avatar;
     if (dto.bio !== undefined) updateData.bio = dto.bio;
     if (dto.location !== undefined) updateData.location = dto.location;
@@ -1507,7 +1533,10 @@ export class AuthService {
     const updateData: Record<string, unknown> = { updatedAt: new Date() };
     if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
-    if (dto.phone !== undefined) updateData.phone = encryptPII(dto.phone);
+    if (dto.phone !== undefined) {
+      const canonical = normalizePhoneForStorage(dto.phone);
+      updateData.phone = canonical === null ? null : encryptPII(canonical);
+    }
     // Zoom seat email — stored plaintext (not PII): host resolution reads
     // it directly when creating meetings/webinars. Empty clears it.
     if (dto.zoomEmail !== undefined)

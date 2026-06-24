@@ -83,7 +83,16 @@ const DRIFT_TYPE_LABEL: Record<string, string> = {
   paid_no_receipt: "Paid, no receipt",
 };
 
-export default function EscalationsContent() {
+export interface EscalationsContentProps {
+  /** When true, render only the inner page (no AdminNavbar/Sidebar). Used by
+   *  AdminFinanceShell so this content embeds inside the finance hub's tabs
+   *  instead of breaking out as its own page. */
+  embedded?: boolean;
+}
+
+export default function EscalationsContent({
+  embedded = false,
+}: EscalationsContentProps = {}) {
   const admin = useAdminProfile();
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -126,21 +135,10 @@ export default function EscalationsContent() {
     fetchData();
   }, [fetchData]);
 
-  return (
+  const inner = (
     <>
-      <AdminNavbar admin={admin} />
-
-      <div className="bg-[var(--color-surface-page)] min-h-screen">
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="hidden lg:block lg:shrink-0">
-              <AdminSidebar admin={admin} />
-            </div>
-            <AdminMobileSidebar admin={admin} />
-
-            <div className="flex-1 min-w-0">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl bg-[var(--color-border-subtle)] flex items-center justify-center shrink-0">
                     <ShieldAlert className="w-5 h-5 text-[var(--color-primary)]" />
@@ -368,7 +366,24 @@ export default function EscalationsContent() {
                   </div>
                 )}
               </div>
+    </>
+  );
+
+  if (embedded) {
+    return inner;
+  }
+
+  return (
+    <>
+      <AdminNavbar admin={admin} />
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
+        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="hidden lg:block lg:shrink-0">
+              <AdminSidebar admin={admin} />
             </div>
+            <AdminMobileSidebar admin={admin} />
+            <div className="flex-1 min-w-0">{inner}</div>
           </div>
         </div>
       </div>

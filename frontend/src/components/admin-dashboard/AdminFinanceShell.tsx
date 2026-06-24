@@ -160,12 +160,6 @@ export default function AdminFinanceShell() {
     { key: "settings",       label: "Settings",       icon: Settings },
   ];
 
-  // Escalations renders its own AdminSidebar/Navbar to avoid double-chrome,
-  // so handle it as an early-return outside the normal shell.
-  if (activeTab === "escalations") {
-    return <EscalationsContent />;
-  }
-
   return (
     <>
       <AdminNavbar admin={admin} />
@@ -230,6 +224,7 @@ export default function AdminFinanceShell() {
                 {activeTab === "bank-transfers" && <BankTransferQueueContent embedded />}
                 {activeTab === "discounts"      && <DiscountsContent embedded />}
                 {activeTab === "reconciliation" && <ReconciliationContent embedded />}
+                {activeTab === "escalations"    && <EscalationsContent embedded />}
                 {activeTab === "reports"        && <FinanceReportsContent embedded />}
                 {activeTab === "audit-log"      && <AuditLogContent embedded />}
                 {activeTab === "settings" && (

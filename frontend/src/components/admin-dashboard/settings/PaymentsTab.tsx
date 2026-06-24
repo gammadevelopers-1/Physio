@@ -1,19 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import {
   CreditCard,
   Building2,
   Copy,
   Check,
-  Eye,
-  EyeOff,
   Loader2,
   ShieldCheck,
   AlertCircle,
   XCircle,
   RefreshCw,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TabShell } from "./TabShell";
@@ -22,19 +21,19 @@ import {
   adminFinanceApi,
   type AdminGatewayName,
   type AdminGatewayTestResult,
+  type GatewayRuntimeStatusResponse,
 } from "@/lib/api";
 
 type Gateway = "moyasar" | "tamara" | "tabby" | "bank_transfer";
+type TamaraMode = "test" | "live";
 
 interface PaymentsSettings extends Record<string, unknown> {
-  gateway: Gateway;
-  testMode: boolean;
   // SAR is the only supported currency platform-wide. Kept on the type so
   // existing JSONB rows that have `currency: "SAR"` deserialize cleanly.
   currency: "SAR";
-  moyasar: { publishableKey: string; secretKeyRef: string | null };
-  tamara: { merchantToken: string; secretKeyRef: string | null };
-  tabby: { publicKey: string; secretKeyRef: string | null };
+  moyasar: { publishableKey: string; secretKeyRef: string };
+  tamara: { merchantToken: string; secretKeyRef: string; mode?: TamaraMode };
+  tabby: { publicKey: string; secretKeyRef: string };
   bankTransfer: {
     // Legacy single-locale fields — kept for backward compat with prior data.
     bankName?: string;
@@ -50,19 +49,19 @@ interface PaymentsSettings extends Record<string, unknown> {
     instructionsEn: string;
     instructionsAr: string;
   };
-  webhookSecretRef: string | null;
+  webhookSecretRef: string;
   invoiceFooterEn: string;
   invoiceFooterAr: string;
   autoSendReceipt: boolean;
 }
 
 const FALLBACK: PaymentsSettings = {
-  gateway: "bank_transfer",
-  testMode: true,
   currency: "SAR",
-  moyasar: { publishableKey: "", secretKeyRef: null },
-  tamara: { merchantToken: "", secretKeyRef: null },
-  tabby: { publicKey: "", secretKeyRef: null },
+  // Secret fields default to empty strings — the load endpoint strips
+  // encrypted secret values, and empty-on-save means "preserve existing".
+  moyasar: { publishableKey: "", secretKeyRef: "" },
+  tamara: { merchantToken: "", secretKeyRef: "", mode: undefined },
+  tabby: { publicKey: "", secretKeyRef: "" },
   bankTransfer: {
     bankNameEn: "",
     bankNameAr: "",
@@ -74,7 +73,7 @@ const FALLBACK: PaymentsSettings = {
     instructionsEn: "",
     instructionsAr: "",
   },
-  webhookSecretRef: null,
+  webhookSecretRef: "",
   invoiceFooterEn: "",
   invoiceFooterAr: "",
   autoSendReceipt: true,
@@ -97,10 +96,32 @@ export default function PaymentsTab() {
     });
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [showSecretFields, setShowSecretFields] = useState<Record<string, boolean>>({});
 
-  // Last test-connection result per gateway. Drives the status pill and
-  // banner — null means "not tested in this session".
+  // Active gateway tab — purely a view-toggle, no longer saved to DB.
+  // Customer picks gateway at checkout; this just decides which credentials
+  // block the admin is editing right now.
+  const [viewGateway, setViewGateway] = useState<Gateway>("moyasar");
+
+  // Per-gateway runtime status (mode/source/lastFour) — populated from
+  // /admin/finance/gateways/runtime-status. Drives the read-only pills.
+  const [runtimeStatus, setRuntimeStatus] =
+    useState<GatewayRuntimeStatusResponse | null>(null);
+
+  const refreshRuntimeStatus = useCallback(async () => {
+    try {
+      const s = await adminFinanceApi.getGatewayRuntimeStatus();
+      setRuntimeStatus(s);
+    } catch {
+      // Non-fatal — pills just won't render on this load.
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshRuntimeStatus();
+  }, [refreshRuntimeStatus]);
+
+  // Last test-connection result per gateway. Drives the test-button status
+  // pill — null means "not tested in this session".
   const [testResults, setTestResults] = useState<
     Partial<Record<AdminGatewayName, AdminGatewayTestResult>>
   >({});
@@ -171,7 +192,14 @@ export default function PaymentsTab() {
       saving={saving}
       dirty={dirty}
       loadError={loadError}
-      onSave={save}
+      onSave={async () => {
+        await save();
+        // Pull fresh runtime status so mode/source/lastFour pills reflect
+        // any new keys the admin just rotated. Test results stale-reset
+        // too — the previous result might have been against old keys.
+        setTestResults({});
+        await refreshRuntimeStatus();
+      }}
     >
       {/* Live runtime info banner — DB changes go live immediately via the
           shared gateway-credentials cache (env vars stay as fallback). */}
@@ -185,23 +213,25 @@ export default function PaymentsTab() {
         </div>
       </div>
 
-      {/* Gateway selector */}
+      {/* Gateway tabs — view-only filter (NOT persisted). Picking one just
+          decides which credentials section the admin is editing right now.
+          Active gateway for customers is decided at checkout. */}
       <div>
         <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-          {t("payments.activeGateway")}
+          {t("payments.editingGateway")}
         </label>
         <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-          {t("payments.activeGatewayHelp")}
+          {t("payments.editingGatewayHelp")}
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {GATEWAYS.map((g) => {
             const Icon = g.icon;
-            const active = draft.gateway === g.id;
+            const active = viewGateway === g.id;
             return (
               <button
                 key={g.id}
                 type="button"
-                onClick={() => setDraft((d) => ({ ...d, gateway: g.id }))}
+                onClick={() => setViewGateway(g.id)}
                 className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                   active
                     ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
@@ -226,50 +256,24 @@ export default function PaymentsTab() {
         </div>
       </div>
 
-      {/* Test mode — currency intentionally removed: SAR is the only
-          supported currency end-to-end (ZATCA, gateways, invoices). */}
-      <div className="flex items-center justify-between border border-[var(--color-border)] rounded-lg p-4">
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text-primary)]">
-            {t("payments.testMode")}
-          </p>
-          <p className="text-xs text-[var(--color-text-secondary)]">
-            {t("payments.testModeDesc")}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setDraft((d) => ({ ...d, testMode: !d.testMode }))}
-          className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${
-            draft.testMode ? "bg-[#F59E0B]" : "bg-[#D1D5DB]"
-          }`}
-        >
-          <div
-            className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${
-              draft.testMode ? "ms-auto" : ""
-            }`}
-          />
-        </button>
-      </div>
-
       {/* Gateway-specific credentials */}
-      {draft.gateway !== "bank_transfer" && (
+      {viewGateway !== "bank_transfer" && (
         <div className="border border-[var(--color-border)] rounded-lg p-4 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {t(`payments.gateway.${draft.gateway}`)} {t("payments.credentialsTitle")}
+                {t(`payments.gateway.${viewGateway}`)} {t("payments.credentialsTitle")}
               </h3>
               <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                 {t("payments.credentialsHelp")}
               </p>
             </div>
             <GatewayTestControl
-              gateway={draft.gateway as AdminGatewayName}
-              testing={testing === draft.gateway}
+              gateway={viewGateway as AdminGatewayName}
+              testing={testing === viewGateway}
               dirty={dirty}
-              result={testResults[draft.gateway as AdminGatewayName]}
-              onTest={() => runConnectionTest(draft.gateway as AdminGatewayName)}
+              result={testResults[viewGateway as AdminGatewayName]}
+              onTest={() => runConnectionTest(viewGateway as AdminGatewayName)}
               labels={{
                 test: t("payments.testConnection"),
                 testing: t("payments.testing"),
@@ -288,7 +292,24 @@ export default function PaymentsTab() {
             />
           </div>
 
-          {draft.gateway === "moyasar" && (
+          {/* Runtime status pill — shows what's actually loaded RIGHT NOW
+              (mode / source / last-4 of the key). Source-of-truth pulled
+              from /admin/finance/gateways/runtime-status, not the form. */}
+          <RuntimeStatusPill
+            status={runtimeStatus?.[viewGateway as AdminGatewayName]}
+            labels={{
+              live: t("payments.modeLive"),
+              test: t("payments.modeTest"),
+              modeUnknown: t("payments.modeUnknown"),
+              sourceDb: t("payments.sourceDb"),
+              sourceEnv: t("payments.sourceEnv"),
+              sourceMixed: t("payments.sourceMixed"),
+              sourceEmpty: t("payments.sourceEmpty"),
+              keyLabel: t("payments.currentKey"),
+            }}
+          />
+
+          {viewGateway === "moyasar" && (
             <>
               <CredField
                 label={t("payments.publishableKey")}
@@ -301,27 +322,53 @@ export default function PaymentsTab() {
                 }
                 helpText={t("payments.publishableKeyHelp")}
               />
-              <SecretRefField
+              <SecretRotationField
                 label={t("payments.secretKey")}
                 value={draft.moyasar.secretKeyRef}
-                show={!!showSecretFields["moyasar"]}
-                onToggle={() =>
-                  setShowSecretFields((p) => ({ ...p, moyasar: !p.moyasar }))
-                }
                 onChange={(v) =>
                   setDraft((d) => ({
                     ...d,
                     moyasar: { ...d.moyasar, secretKeyRef: v },
                   }))
                 }
-                helpText={t("payments.secretKeyHelp")}
+                lastFour={runtimeStatus?.moyasar.lastFour ?? null}
+                labels={secretRotationLabels(t)}
               />
             </>
           )}
 
-          {draft.gateway === "tamara" && (
+          {viewGateway === "tamara" && (
             <>
-              <CredField
+              {/* Tamara-specific Mode dropdown — drives BOTH the API URL
+                  (sandbox vs prod) AND the key environment. Persisted to
+                  system_settings.payments.tamara.mode. */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+                  {t("payments.tamaraMode")}
+                </label>
+                <select
+                  value={draft.tamara.mode ?? ""}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      tamara: {
+                        ...d.tamara,
+                        mode: (e.target.value || undefined) as TamaraMode | undefined,
+                      },
+                    }))
+                  }
+                  className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                >
+                  <option value="">{t("payments.tamaraModeAuto")}</option>
+                  <option value="test">{t("payments.modeTest")}</option>
+                  <option value="live">{t("payments.modeLive")}</option>
+                </select>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                  {t("payments.tamaraModeHelp")}
+                </p>
+              </div>
+
+              <SecretRotationField
                 label={t("payments.merchantToken")}
                 value={draft.tamara.merchantToken}
                 onChange={(v) =>
@@ -330,27 +377,26 @@ export default function PaymentsTab() {
                     tamara: { ...d.tamara, merchantToken: v },
                   }))
                 }
+                lastFour={runtimeStatus?.tamara.lastFour ?? null}
+                labels={secretRotationLabels(t)}
                 helpText={t("payments.merchantTokenHelp")}
               />
-              <SecretRefField
+              <SecretRotationField
                 label={t("payments.secretKey")}
                 value={draft.tamara.secretKeyRef}
-                show={!!showSecretFields["tamara"]}
-                onToggle={() =>
-                  setShowSecretFields((p) => ({ ...p, tamara: !p.tamara }))
-                }
                 onChange={(v) =>
                   setDraft((d) => ({
                     ...d,
                     tamara: { ...d.tamara, secretKeyRef: v },
                   }))
                 }
-                helpText={t("payments.secretKeyHelp")}
+                lastFour={null}
+                labels={secretRotationLabels(t)}
               />
             </>
           )}
 
-          {draft.gateway === "tabby" && (
+          {viewGateway === "tabby" && (
             <>
               <CredField
                 label={t("payments.publicKey")}
@@ -360,15 +406,14 @@ export default function PaymentsTab() {
                 }
                 helpText={t("payments.publicKeyHelp")}
               />
-              <SecretRefField
+              <SecretRotationField
                 label={t("payments.secretKey")}
                 value={draft.tabby.secretKeyRef}
-                show={!!showSecretFields["tabby"]}
-                onToggle={() => setShowSecretFields((p) => ({ ...p, tabby: !p.tabby }))}
                 onChange={(v) =>
                   setDraft((d) => ({ ...d, tabby: { ...d.tabby, secretKeyRef: v } }))
                 }
-                helpText={t("payments.secretKeyHelp")}
+                lastFour={runtimeStatus?.tabby.lastFour ?? null}
+                labels={secretRotationLabels(t)}
               />
             </>
           )}
@@ -376,7 +421,7 @@ export default function PaymentsTab() {
       )}
 
       {/* Bank transfer config — shown to students on the public checkout page */}
-      {draft.gateway === "bank_transfer" && (
+      {viewGateway === "bank_transfer" && (
         <div className="border border-[var(--color-border)] rounded-lg p-4 space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -519,7 +564,7 @@ export default function PaymentsTab() {
       )}
 
       {/* Webhook */}
-      {draft.gateway !== "bank_transfer" && (
+      {viewGateway !== "bank_transfer" && (
         <div className="border border-[var(--color-border)] rounded-lg p-4 space-y-4">
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
             {t("payments.webhookTitle")}
@@ -554,16 +599,12 @@ export default function PaymentsTab() {
               </button>
             </div>
           </div>
-          <SecretRefField
+          <SecretRotationField
             label={t("payments.webhookSecret")}
             value={draft.webhookSecretRef}
-            show={!!showSecretFields["webhook"]}
-            onToggle={() =>
-              setShowSecretFields((p) => ({ ...p, webhook: !p.webhook }))
-            }
-            onChange={(v) =>
-              setDraft((d) => ({ ...d, webhookSecretRef: v }))
-            }
+            onChange={(v) => setDraft((d) => ({ ...d, webhookSecretRef: v }))}
+            lastFour={null}
+            labels={secretRotationLabels(t)}
             helpText={t("payments.webhookSecretHelp")}
           />
         </div>
@@ -774,46 +815,124 @@ function GatewayTestControl({
   );
 }
 
-function SecretRefField({
+// ─── Read-only runtime status pill ─────────────────────────────────
+// Shows MODE (test / live) + SOURCE (admin / env / mixed) + last-4 chars
+// of the loaded secret. Computed server-side — no secret ever reaches the
+// browser. Used as a "what's actually live right now" indicator above each
+// credentials block.
+function RuntimeStatusPill({
+  status,
+  labels,
+}: {
+  status:
+    | { mode: "test" | "live" | null; source: string; lastFour: string | null; hasCredentials: boolean }
+    | undefined;
+  labels: {
+    live: string;
+    test: string;
+    modeUnknown: string;
+    sourceDb: string;
+    sourceEnv: string;
+    sourceMixed: string;
+    sourceEmpty: string;
+    keyLabel: string;
+  };
+}) {
+  if (!status) return null;
+  const modeLabel =
+    status.mode === "live" ? labels.live
+    : status.mode === "test" ? labels.test
+    : labels.modeUnknown;
+  const modeBg =
+    status.mode === "live" ? "bg-[#FEE2E2] text-[#991B1B] border-[#FECACA]"
+    : status.mode === "test" ? "bg-[#FFFBEB] text-[#92400E] border-[#FDE68A]"
+    : "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] border-[var(--color-border)]";
+  const sourceLabel =
+    status.source === "db" ? labels.sourceDb
+    : status.source === "env" ? labels.sourceEnv
+    : status.source === "mixed" ? labels.sourceMixed
+    : labels.sourceEmpty;
+  return (
+    <div className="bg-[var(--color-surface-page)] border border-[var(--color-border-subtle)] rounded-lg p-3 flex flex-wrap items-center gap-2 text-xs">
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-semibold uppercase tracking-wide ${modeBg}`}
+      >
+        {modeLabel}
+      </span>
+      <span className="text-[var(--color-text-secondary)]">·</span>
+      <span className="text-[var(--color-text-secondary)]">{sourceLabel}</span>
+      {status.lastFour && (
+        <>
+          <span className="text-[var(--color-text-secondary)]">·</span>
+          <span className="text-[var(--color-text-secondary)]">{labels.keyLabel}:</span>
+          <span className="font-mono text-[var(--color-text-primary)]">
+            ••••{status.lastFour}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Secret rotation field ─────────────────────────────────────────
+// Empty by default. Admin types a new value to ROTATE; leaving it empty
+// preserves whatever's already stored. No reveal button — the server
+// never sends back the stored secret, so there's nothing to reveal.
+function secretRotationLabels(
+  t: ReturnType<typeof useTranslations<"adminDashboard.settingsPage">>,
+) {
+  return {
+    leaveEmpty: t("payments.rotateLeaveEmpty"),
+    rotatingPill: t("payments.rotatingPill"),
+    typeToRotate: t("payments.typeToRotate"),
+  };
+}
+
+function SecretRotationField({
   label,
   value,
-  show,
-  onToggle,
   onChange,
   helpText,
+  lastFour,
+  labels,
 }: {
   label: string;
-  value: string | null;
-  show: boolean;
-  onToggle: () => void;
-  onChange: (v: string | null) => void;
+  value: string;
+  onChange: (v: string) => void;
   helpText?: string;
+  lastFour: string | null;
+  labels: {
+    leaveEmpty: string;
+    rotatingPill: string;
+    typeToRotate: string;
+  };
 }) {
+  const isRotating = value.length > 0;
   return (
     <div>
-      <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          type={show ? "text" : "password"}
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value || null)}
-          className="w-full h-10 px-3 pe-10 border border-[var(--color-input-border)] rounded-lg text-sm font-mono focus:outline-none focus:border-[var(--color-primary)]"
-        />
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-        >
-          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-        </button>
+      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+        <label className="block text-sm font-medium text-[var(--color-text-primary)]">
+          {label}
+        </label>
+        {isRotating && (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
+            <KeyRound className="w-3 h-3" />
+            {labels.rotatingPill}
+          </span>
+        )}
       </div>
-      {helpText && (
-        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-          {helpText}
-        </p>
-      )}
+      <input
+        type="password"
+        autoComplete="new-password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={lastFour ? `••••${lastFour} — ${labels.leaveEmpty}` : labels.typeToRotate}
+        className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm font-mono focus:outline-none focus:border-[var(--color-primary)]"
+      />
+      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+        {helpText ? `${helpText} · ` : ""}
+        {labels.leaveEmpty}
+      </p>
     </div>
   );
 }

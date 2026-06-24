@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AdminSettingsService } from '../../admin-settings/admin-settings.service';
+import { decryptSecret, modeFromKeyPrefix } from './payments-secrets.util';
 
 /**
  * Per-gateway credential snapshot. Sync getters return the active values
@@ -14,12 +15,20 @@ import { AdminSettingsService } from '../../admin-settings/admin-settings.servic
  * the gateway.
  */
 
+export type GatewaySource = 'db' | 'env' | 'mixed' | 'empty';
+export type GatewayMode = 'test' | 'live';
+
 export interface MoyasarCredentials {
   secretKey: string;
   publishableKey: string;
   webhookSecret: string;
   apiUrl: string;
-  source: 'db' | 'env' | 'mixed';
+  source: GatewaySource;
+  /** test/live inferred from key prefix (sk_test_ vs sk_live_), or null
+   *  when no key is configured / prefix is unrecognised. */
+  mode: GatewayMode | null;
+  /** Last 4 chars of the secret key (UI display). null if no secret. */
+  lastFour: string | null;
 }
 
 export interface TamaraCredentials {
@@ -27,7 +36,11 @@ export interface TamaraCredentials {
   notificationToken: string;
   publicKey: string;
   apiUrl: string;
-  source: 'db' | 'env' | 'mixed';
+  source: GatewaySource;
+  /** test/live decided by the stored `mode` field (admin-controlled) or
+   *  derived from the API URL when no stored mode exists. */
+  mode: GatewayMode | null;
+  lastFour: string | null;
 }
 
 export interface TabbyCredentials {
@@ -36,7 +49,10 @@ export interface TabbyCredentials {
   webhookSecret: string;
   merchantCode: string;
   apiUrl: string;
-  source: 'db' | 'env' | 'mixed';
+  source: GatewaySource;
+  /** test/live inferred from key prefix. */
+  mode: GatewayMode | null;
+  lastFour: string | null;
 }
 
 export interface BankTransferCredentials {
@@ -57,7 +73,12 @@ interface DbPaymentsSettings {
   testMode?: boolean;
   currency?: string;
   moyasar?: { publishableKey?: string; secretKeyRef?: string | null };
-  tamara?: { merchantToken?: string; secretKeyRef?: string | null };
+  tamara?: {
+    merchantToken?: string;
+    secretKeyRef?: string | null;
+    /** Admin-saved mode for Tamara — drives URL choice (sandbox vs prod). */
+    mode?: 'test' | 'live';
+  };
   tabby?: { publicKey?: string; secretKeyRef?: string | null };
   bankTransfer?: {
     bankNameEn?: string;
@@ -72,6 +93,14 @@ interface DbPaymentsSettings {
   };
   webhookSecretRef?: string | null;
 }
+
+// Tamara URL constants — admin mode dropdown picks between these so admin
+// can switch sandbox↔live without devops touching env vars. Both come from
+// official Tamara docs.
+const TAMARA_URLS = {
+  test: 'https://api-sandbox.tamara.co',
+  live: 'https://api.tamara.co',
+} as const;
 
 @Injectable()
 export class GatewayCredentialsService implements OnModuleInit {
@@ -161,27 +190,38 @@ export class GatewayCredentialsService implements OnModuleInit {
   }
 
   private applyEnvDefaults(): void {
+    const moySec = this.cfg('payments.moyasar.secretKey');
+    const tabSec = this.cfg('payments.tabby.secretKey');
+    const tamTok = this.cfg('payments.tamara.apiToken');
+    const tamUrl = this.cfg('payments.tamara.apiUrl', 'https://api-sandbox.tamara.co');
+
     this.moyasar = {
-      secretKey: this.cfg('payments.moyasar.secretKey'),
+      secretKey: moySec,
       publishableKey: this.cfg('payments.moyasar.publishableKey'),
       webhookSecret: this.cfg('payments.moyasar.webhookSecret'),
       apiUrl: this.cfg('payments.moyasar.apiUrl', 'https://api.moyasar.com/v1'),
-      source: 'env',
+      source: moySec ? 'env' : 'empty',
+      mode: moySec ? this.modeFromMoyasarConfigOrPrefix(moySec) : null,
+      lastFour: this.tailFour(moySec),
     };
     this.tamara = {
-      apiToken: this.cfg('payments.tamara.apiToken'),
+      apiToken: tamTok,
       notificationToken: this.cfg('payments.tamara.notificationToken'),
       publicKey: this.cfg('payments.tamara.publicKey', ''),
-      apiUrl: this.cfg('payments.tamara.apiUrl', 'https://api-sandbox.tamara.co'),
-      source: 'env',
+      apiUrl: tamUrl,
+      source: tamTok ? 'env' : 'empty',
+      mode: tamTok ? (tamUrl.includes('sandbox') ? 'test' : 'live') : null,
+      lastFour: this.tailFour(tamTok),
     };
     this.tabby = {
-      secretKey: this.cfg('payments.tabby.secretKey'),
+      secretKey: tabSec,
       publicKey: this.cfg('payments.tabby.publicKey'),
       webhookSecret: this.cfg('payments.tabby.webhookSecret'),
       merchantCode: this.cfg('payments.tabby.merchantCode'),
       apiUrl: this.cfg('payments.tabby.apiUrl', 'https://api.tabby.ai/api/v2'),
-      source: 'env',
+      source: tabSec ? 'env' : 'empty',
+      mode: tabSec ? modeFromKeyPrefix(tabSec) : null,
+      lastFour: this.tailFour(tabSec),
     };
     this.bankTransfer = {
       bankNameEn: '',
@@ -197,63 +237,100 @@ export class GatewayCredentialsService implements OnModuleInit {
     };
   }
 
+  private tailFour(value: string | undefined): string | null {
+    if (!value || value.length < 4) return null;
+    return value.slice(-4);
+  }
+
+  /** Moyasar's MOYASAR_MODE env var is authoritative when set; fall back
+   *  to key-prefix detection otherwise (matches admin-side UX). */
+  private modeFromMoyasarConfigOrPrefix(key: string): GatewayMode | null {
+    const cfgMode = this.cfg('payments.moyasar.mode').toLowerCase();
+    if (cfgMode === 'live') return 'live';
+    if (cfgMode === 'test') return 'test';
+    return modeFromKeyPrefix(key);
+  }
+
   private applyDbOverrides(db: DbPaymentsSettings): void {
-    // Moyasar
-    const moyasarPub = this.nonEmpty(db.moyasar?.publishableKey);
-    const moyasarSec = this.nonEmpty(db.moyasar?.secretKeyRef);
-    const moyasarHook = this.nonEmpty(db.webhookSecretRef);
-    if (moyasarPub || moyasarSec || moyasarHook) {
+    // ─── Moyasar ──────────────────────────────────────────────────
+    // Publishable key is plain (safe to expose). Secret + webhook are
+    // decrypted via decryptSecret (no-op for legacy plaintext rows).
+    const moyDbPub = this.nonEmpty(db.moyasar?.publishableKey);
+    const moyDbSec = decryptSecret(db.moyasar?.secretKeyRef);
+    const moyDbHook = decryptSecret(db.webhookSecretRef);
+    if (moyDbPub || moyDbSec || moyDbHook) {
       const envPub = this.cfg('payments.moyasar.publishableKey');
       const envSec = this.cfg('payments.moyasar.secretKey');
       const envHook = this.cfg('payments.moyasar.webhookSecret');
+      const effectiveSec = moyDbSec || envSec;
       this.moyasar = {
-        secretKey: moyasarSec || envSec,
-        publishableKey: moyasarPub || envPub,
-        webhookSecret: moyasarHook || envHook,
+        secretKey: effectiveSec,
+        publishableKey: moyDbPub || envPub,
+        webhookSecret: moyDbHook || envHook,
         apiUrl: this.cfg('payments.moyasar.apiUrl', 'https://api.moyasar.com/v1'),
-        source: moyasarSec && envSec && moyasarSec !== envSec ? 'db'
-          : (moyasarSec || moyasarPub || moyasarHook) ? 'mixed' : 'env',
+        source: this.detectSource(
+          [moyDbPub, moyDbSec, moyDbHook],
+          [envPub, envSec, envHook],
+        ),
+        mode: effectiveSec ? this.modeFromMoyasarConfigOrPrefix(effectiveSec) : null,
+        lastFour: this.tailFour(effectiveSec),
       };
     }
 
-    // Tamara — DB field `merchantToken` maps to env `apiToken`; webhook is
-    // shared `webhookSecretRef` (one secret for all webhooks in admin UI).
-    const tamaraTok = this.nonEmpty(db.tamara?.merchantToken);
-    const tamaraSec = this.nonEmpty(db.tamara?.secretKeyRef);
-    if (tamaraTok || tamaraSec) {
+    // ─── Tamara ───────────────────────────────────────────────────
+    // UI's `merchantToken` field maps to runtime apiToken; `secretKeyRef`
+    // maps to notificationToken. Both are encrypted. Mode is admin-saved
+    // and drives URL choice between sandbox and prod — overriding env.
+    const tamDbTok = decryptSecret(db.tamara?.merchantToken);
+    const tamDbNotif = decryptSecret(db.tamara?.secretKeyRef);
+    const tamStoredMode = db.tamara?.mode;
+    if (tamDbTok || tamDbNotif || tamStoredMode) {
       const envTok = this.cfg('payments.tamara.apiToken');
       const envNotif = this.cfg('payments.tamara.notificationToken');
+      const envUrl = this.cfg('payments.tamara.apiUrl', 'https://api-sandbox.tamara.co');
+      const effectiveTok = tamDbTok || envTok;
+      // Stored mode wins; else infer from existing env URL.
+      const effectiveMode: GatewayMode | null = tamStoredMode
+        ? tamStoredMode
+        : effectiveTok
+          ? envUrl.includes('sandbox') ? 'test' : 'live'
+          : null;
       this.tamara = {
-        apiToken: tamaraTok || envTok,
-        notificationToken: tamaraSec || envNotif,
+        apiToken: effectiveTok,
+        notificationToken: tamDbNotif || envNotif,
         publicKey: this.cfg('payments.tamara.publicKey', ''),
-        apiUrl: this.cfg('payments.tamara.apiUrl', 'https://api-sandbox.tamara.co'),
-        source: (tamaraTok && envTok && tamaraTok !== envTok) ? 'db'
-          : (tamaraTok || tamaraSec) ? 'mixed' : 'env',
+        // Admin mode dropdown picks the URL — devops env stays as fallback.
+        apiUrl: effectiveMode ? TAMARA_URLS[effectiveMode] : envUrl,
+        source: this.detectSource([tamDbTok, tamDbNotif], [envTok, envNotif]),
+        mode: effectiveMode,
+        lastFour: this.tailFour(effectiveTok),
       };
     }
 
-    // Tabby
-    const tabbyPub = this.nonEmpty(db.tabby?.publicKey);
-    const tabbySec = this.nonEmpty(db.tabby?.secretKeyRef);
-    if (tabbyPub || tabbySec) {
+    // ─── Tabby ────────────────────────────────────────────────────
+    const tabDbPub = this.nonEmpty(db.tabby?.publicKey);
+    const tabDbSec = decryptSecret(db.tabby?.secretKeyRef);
+    if (tabDbPub || tabDbSec) {
       const envPub = this.cfg('payments.tabby.publicKey');
       const envSec = this.cfg('payments.tabby.secretKey');
       const envHook = this.cfg('payments.tabby.webhookSecret');
+      const effectiveSec = tabDbSec || envSec;
       this.tabby = {
-        secretKey: tabbySec || envSec,
-        publicKey: tabbyPub || envPub,
-        webhookSecret: envHook, // not exposed in admin UI; env-only
+        secretKey: effectiveSec,
+        publicKey: tabDbPub || envPub,
+        webhookSecret: envHook, // not exposed in admin UI yet; env-only
         merchantCode: this.cfg('payments.tabby.merchantCode'),
         apiUrl: this.cfg('payments.tabby.apiUrl', 'https://api.tabby.ai/api/v2'),
-        source: (tabbySec && envSec && tabbySec !== envSec) ? 'db'
-          : (tabbySec || tabbyPub) ? 'mixed' : 'env',
+        source: this.detectSource([tabDbPub, tabDbSec], [envPub, envSec]),
+        mode: effectiveSec ? modeFromKeyPrefix(effectiveSec) : null,
+        lastFour: this.tailFour(effectiveSec),
       };
     }
 
-    // Bank transfer — DB-only; env has no equivalent fields. Empty means
-    // the admin hasn't configured it yet, in which case the public
-    // checkout falls through to whatever fallback the controller chooses.
+    // ─── Bank transfer ───────────────────────────────────────────
+    // DB-only; env has no equivalent fields. Empty means the admin hasn't
+    // configured it yet, in which case the public checkout falls through
+    // to whatever fallback the controller chooses.
     const bt = db.bankTransfer ?? {};
     const anyBankField =
       this.nonEmpty(bt.bankNameEn) ||
@@ -274,6 +351,28 @@ export class GatewayCredentialsService implements OnModuleInit {
         source: 'db',
       };
     }
+  }
+
+  /**
+   * Classify where the active credentials came from.
+   *   - 'empty' → both DB and env are empty
+   *   - 'env'   → DB is empty, env has values
+   *   - 'db'    → DB has values, env is empty
+   *   - 'mixed' → both populated (some fields from DB, some fallback to env)
+   */
+  private detectSource(
+    dbValues: Array<string | null | undefined>,
+    envValues: Array<string | null | undefined>,
+  ): GatewaySource {
+    const dbAny = dbValues.some((v) => !!v && v.length > 0);
+    const envAny = envValues.some((v) => !!v && v.length > 0);
+    if (!dbAny && !envAny) return 'empty';
+    if (dbAny && !envAny) return 'db';
+    if (!dbAny && envAny) return 'env';
+    // Both populated — if every DB slot is filled, treat as pure db; if
+    // any DB slot was empty (admin only rotated one of two), 'mixed'.
+    const allDbFilled = dbValues.every((v) => !!v && v.length > 0);
+    return allDbFilled ? 'db' : 'mixed';
   }
 
   private cfg(key: string, fallback = ''): string {

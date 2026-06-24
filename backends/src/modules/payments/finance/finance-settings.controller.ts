@@ -28,6 +28,7 @@ import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 import { RefundPolicyService } from '../services/refund-policy.service';
 import { TaxComputationService } from '../services/tax-computation.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
+import { lastFourOfSecret } from '../gateways/payments-secrets.util';
 import { UpdateRefundPolicyDto } from '../dto/update-refund-policy.dto';
 import { UpdateTaxSettingsDto } from '../dto/update-tax-settings.dto';
 import {
@@ -75,11 +76,15 @@ interface PaymentsSettings {
 const truthy = (v: unknown): boolean =>
   typeof v === 'string' ? v.trim().length > 0 : Boolean(v);
 
-const maskToken = (raw: string | undefined | null): string | null => {
-  if (!raw || raw.trim().length === 0) return null;
-  const trimmed = raw.trim();
-  if (trimmed.length <= 4) return '••••';
-  return `••••${trimmed.slice(-4)}`;
+// Mask a stored secret for display. Handles both encrypted (v1:...) and
+// legacy plaintext rows by routing through lastFourOfSecret which
+// decrypts transparently. Returns null when the field is empty.
+const maskStoredSecret = (
+  raw: string | undefined | null,
+): string | null => {
+  if (!raw) return null;
+  const four = lastFourOfSecret(raw);
+  return four ? `••••${four}` : '••••';
 };
 
 @Controller('finance/settings')
@@ -118,14 +123,18 @@ export class FinanceSettingsController {
       moyasar: {
         publishableKey: s.moyasar?.publishableKey?.trim() || null,
         hasSecret: truthy(s.moyasar?.secretKeyRef),
+        secretMasked: maskStoredSecret(s.moyasar?.secretKeyRef),
       },
       tamara: {
-        merchantTokenMasked: maskToken(s.tamara?.merchantToken),
+        hasMerchantToken: truthy(s.tamara?.merchantToken),
+        merchantTokenMasked: maskStoredSecret(s.tamara?.merchantToken),
         hasSecret: truthy(s.tamara?.secretKeyRef),
+        secretMasked: maskStoredSecret(s.tamara?.secretKeyRef),
       },
       tabby: {
         publicKey: s.tabby?.publicKey?.trim() || null,
         hasSecret: truthy(s.tabby?.secretKeyRef),
+        secretMasked: maskStoredSecret(s.tabby?.secretKeyRef),
       },
       bankTransfer: {
         bankNameEn: bt.bankNameEn ?? bt.bankName ?? '',

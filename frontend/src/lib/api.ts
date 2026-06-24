@@ -1988,12 +1988,34 @@ export interface AdminGatewayTestResult {
   error?: string;
 }
 
+/** Per-gateway runtime status — what's actually loaded in the credential
+ *  cache. Drives the read-only mode/source/lastFour pills in PaymentsTab. */
+export interface GatewayRuntimeStatus {
+  mode: 'test' | 'live' | null;
+  source: 'db' | 'env' | 'mixed' | 'empty';
+  lastFour: string | null;
+  hasCredentials: boolean;
+}
+
+export interface GatewayRuntimeStatusResponse {
+  moyasar: GatewayRuntimeStatus;
+  tamara: GatewayRuntimeStatus & { apiUrl: string };
+  tabby: GatewayRuntimeStatus;
+}
+
 export const adminFinanceApi = {
   /** Ping a payment gateway with current credentials (DB > env). */
   testGatewayConnection: (gateway: AdminGatewayName) =>
     api.post<AdminGatewayTestResult>(
       `/admin/finance/gateways/${gateway}/test`,
       {},
+    ),
+
+  /** Per-gateway runtime status (mode/source/lastFour). Never returns
+   *  secret values. */
+  getGatewayRuntimeStatus: () =>
+    api.get<GatewayRuntimeStatusResponse>(
+      '/admin/finance/gateways/runtime-status',
     ),
 
   /** Force a refresh of the in-process credentials cache. */

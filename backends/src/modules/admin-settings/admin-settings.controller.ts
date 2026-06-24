@@ -16,6 +16,32 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { normalizePaymentsForSave } from '../payments/gateways/payments-secrets.util';
+
+/** Replace every encrypted secret in the payments JSONB with "" before
+ *  sending to the browser. Loading the form should never give the client
+ *  access to ciphertext (encrypted or not — it's still a payload someone
+ *  could try to decrypt out-of-band). */
+function stripPaymentsSecrets(
+  value: Record<string, unknown>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...value };
+  if (out.moyasar && typeof out.moyasar === 'object') {
+    out.moyasar = { ...(out.moyasar as Record<string, unknown>), secretKeyRef: '' };
+  }
+  if (out.tamara && typeof out.tamara === 'object') {
+    out.tamara = {
+      ...(out.tamara as Record<string, unknown>),
+      merchantToken: '',
+      secretKeyRef: '',
+    };
+  }
+  if (out.tabby && typeof out.tabby === 'object') {
+    out.tabby = { ...(out.tabby as Record<string, unknown>), secretKeyRef: '' };
+  }
+  out.webhookSecretRef = '';
+  return out;
+}
 
 /**
  * Admin Settings endpoints. Read-by-category, write-by-category. JSONB
@@ -38,7 +64,16 @@ export class AdminSettingsController {
 
   @Get(':category')
   async getCategory(@Param('category') category: string) {
-    const value = await this.settingsService.getCategory(category);
+    let value = await this.settingsService.getCategory<Record<string, unknown>>(
+      category,
+    );
+    // Payments is special — secret fields are encrypted in storage and
+    // must never leave the server. Strip them to empty strings before
+    // sending. The PaymentsTab UI shows lastFour/mode via the dedicated
+    // /admin/finance/gateways/runtime-status endpoint instead.
+    if (category === 'payments') {
+      value = stripPaymentsSecrets(value);
+    }
     return { category, value };
   }
 
@@ -48,7 +83,22 @@ export class AdminSettingsController {
     @Body() body: { value: Record<string, unknown> },
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.settingsService.updateCategory(category, body.value, user.id);
+    let value = body.value;
+
+    // Payments category is special: secret fields (Moyasar/Tamara/Tabby
+    // secrets + webhook signing secret) are AES-GCM encrypted before
+    // persistence, and empty incoming values are interpreted as
+    // "preserve existing" rather than "clear". Non-secret fields
+    // (publishable keys, bank-transfer info, invoice footer) pass
+    // through unchanged.
+    if (category === 'payments') {
+      const existing = await this.settingsService.getCategory<Record<string, unknown>>(
+        'payments',
+      );
+      value = normalizePaymentsForSave(value, existing);
+    }
+
+    return this.settingsService.updateCategory(category, value, user.id);
   }
 
   // ─── Notification Templates ─────────────────────────────────────

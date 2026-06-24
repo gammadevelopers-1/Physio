@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -52,6 +53,47 @@ export class AdminFinanceController {
   ) {}
 
   // ── Gateway connection management ─────────────────────────────────
+
+  /**
+   * Per-gateway runtime status — drives the read-only mode/source/lastFour
+   * pills in the admin Payments form so admin sees what's actually loaded
+   * (not a fake test-mode toggle). Never returns secret values, only
+   * presence + last 4 chars.
+   */
+  @Get('gateways/runtime-status')
+  async getGatewayRuntimeStatus(): Promise<{
+    moyasar: { mode: 'test' | 'live' | null; source: string; lastFour: string | null; hasCredentials: boolean };
+    tamara:  { mode: 'test' | 'live' | null; source: string; lastFour: string | null; hasCredentials: boolean; apiUrl: string };
+    tabby:   { mode: 'test' | 'live' | null; source: string; lastFour: string | null; hasCredentials: boolean };
+  }> {
+    // Force a refresh so the answer reflects whatever was just saved
+    // (admin saves a key → instantly visible). Cheap; DB hit ~2ms.
+    await this.credentials.refresh();
+    const m = this.credentials.getMoyasar();
+    const t = this.credentials.getTamara();
+    const b = this.credentials.getTabby();
+    return {
+      moyasar: {
+        mode: m.mode,
+        source: m.source,
+        lastFour: m.lastFour,
+        hasCredentials: !!m.secretKey,
+      },
+      tamara: {
+        mode: t.mode,
+        source: t.source,
+        lastFour: t.lastFour,
+        hasCredentials: !!t.apiToken,
+        apiUrl: t.apiUrl,
+      },
+      tabby: {
+        mode: b.mode,
+        source: b.source,
+        lastFour: b.lastFour,
+        hasCredentials: !!b.secretKey,
+      },
+    };
+  }
 
   @Post('gateways/:gateway/test')
   @HttpCode(HttpStatus.OK)

@@ -47,6 +47,7 @@ import {
   TaxView,
 } from "@/components/finance-dashboard";
 import { ActorRoleProvider } from "@/components/finance-dashboard/shared/ActorRoleContext";
+import ScrollableTabBar from "@/components/finance-dashboard/shared/ScrollableTabBar";
 
 import { financeApi } from "@/lib/api";
 import Money from "@/components/finance-dashboard/shared/Money";
@@ -193,27 +194,30 @@ export default function AdminFinanceShell() {
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="flex gap-1 mb-5 border-b border-[var(--color-border)] overflow-x-auto scrollbar-hide">
-                {TABS.map((tab) => {
-                  const Icon = tab.icon;
-                  const active = activeTab === tab.key;
-                  return (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      onClick={() => changeTab(tab.key)}
-                      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap ${
-                        active
-                          ? "border-[var(--color-primary)] text-[var(--color-primary)]"
-                          : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {tab.label}
-                    </button>
-                  );
-                })}
+              {/* Tabs — wrapped in ScrollableTabBar so the user sees small
+                  left/right chevron buttons when the strip overflows. */}
+              <div className="mb-5 border-b border-[var(--color-border)]">
+                <ScrollableTabBar className="flex gap-1">
+                  {TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = activeTab === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => changeTab(tab.key)}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap ${
+                          active
+                            ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+                            : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </ScrollableTabBar>
               </div>
 
               {/* Tab content — wrap every finance content with ActorRoleProvider
@@ -637,9 +641,9 @@ function SettingsTab({
 
   return (
     <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
-      {/* Sub-tabs */}
-      <div className="px-5 overflow-x-auto">
-        <div className="flex flex-wrap border-b border-[var(--color-border)]">
+      {/* Sub-tabs — scroll indicators surface only when overflow happens. */}
+      <div className="px-5 border-b border-[var(--color-border)]">
+        <ScrollableTabBar className="flex">
           {SUB_TABS.map((tab) => {
             const Icon = tab.icon;
             const active = activeSubTab === tab.key;
@@ -662,7 +666,7 @@ function SettingsTab({
               </button>
             );
           })}
-        </div>
+        </ScrollableTabBar>
       </div>
 
       <div className="p-5">

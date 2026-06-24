@@ -12,6 +12,7 @@ import {
   SecuritySection,
   MasterNotificationToggles,
 } from "@/components/settings";
+import ScrollableTabBar from "./shared/ScrollableTabBar";
 import {
   financeApi,
   type GatewaySettingsView,
@@ -85,9 +86,9 @@ const FinanceSettingsContent = () => {
 
               {/* Settings Card */}
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
-                {/* Tabs */}
-                <div className="px-5 overflow-x-auto">
-                  <div className="flex flex-wrap border-b border-[var(--color-border)]">
+                {/* Tabs — scroll indicators appear when the strip overflows. */}
+                <div className="px-5 border-b border-[var(--color-border)]">
+                  <ScrollableTabBar className="flex">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
                       return (
@@ -108,7 +109,7 @@ const FinanceSettingsContent = () => {
                         </button>
                       );
                     })}
-                  </div>
+                  </ScrollableTabBar>
                 </div>
 
                 {/* Tab Content */}

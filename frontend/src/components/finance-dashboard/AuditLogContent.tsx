@@ -18,7 +18,6 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Loader2,
   X,
   Copy,
   Check,
@@ -491,9 +490,6 @@ const AuditLogContent = () => {
                               {t("auditLog.table.entityType")}
                             </th>
                             <th className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
-                              {t("auditLog.table.action")}
-                            </th>
-                            <th className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
                               {t("auditLog.table.performedBy")}
                             </th>
                             <th className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
@@ -520,24 +516,22 @@ const AuditLogContent = () => {
                             return (
                               <Fragment key={entry.id}>
                                 <tr
-                                  className={`border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors ${
+                                  onClick={() => setExpandedRow(isExpanded ? null : entry.id)}
+                                  className={`border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer ${
                                     isExpanded ? "bg-[var(--color-surface-page)]" : ""
                                   }`}
                                 >
                                   <td className="px-3 py-3 align-top">
-                                    {entry.metadata && (
-                                      <button
-                                        onClick={() => setExpandedRow(isExpanded ? null : entry.id)}
-                                        className="p-0.5 rounded hover:bg-[var(--color-surface-card)] text-[var(--color-text-secondary)]"
-                                        aria-label={t("auditLog.table.toggleMetadata")}
-                                      >
-                                        {isExpanded ? (
-                                          <ChevronUp className="w-4 h-4" />
-                                        ) : (
-                                          <ChevronDown className="w-4 h-4" />
-                                        )}
-                                      </button>
-                                    )}
+                                    <span
+                                      className="p-0.5 inline-flex rounded text-[var(--color-text-secondary)]"
+                                      aria-label={t("auditLog.table.toggleMetadata")}
+                                    >
+                                      {isExpanded ? (
+                                        <ChevronUp className="w-4 h-4" />
+                                      ) : (
+                                        <ChevronDown className="w-4 h-4" />
+                                      )}
+                                    </span>
                                   </td>
                                   <td className={`px-4 py-3 align-top text-${isRTL ? "right" : "left"} text-[var(--color-text-secondary)] whitespace-nowrap font-mono text-xs`}>
                                     {formatTimestamp(entry.createdAt)}
@@ -548,14 +542,6 @@ const AuditLogContent = () => {
                                       style={{ backgroundColor: entityStyle.bg, color: entityStyle.fg }}
                                     >
                                       {formatEntityType(entry.entityType)}
-                                    </span>
-                                  </td>
-                                  <td className={`px-4 py-3 align-top text-${isRTL ? "right" : "left"}`}>
-                                    <span
-                                      className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
-                                      style={{ backgroundColor: actionStyle.bg, color: actionStyle.fg }}
-                                    >
-                                      {formatAction(entry.action)}
                                     </span>
                                   </td>
                                   <td className={`px-4 py-3 align-top text-${isRTL ? "right" : "left"}`}>
@@ -581,7 +567,7 @@ const AuditLogContent = () => {
                                         {entry.entityId.substring(0, 8)}…
                                       </span>
                                       <button
-                                        onClick={() => handleCopyId(entry.entityId)}
+                                        onClick={(e) => { e.stopPropagation(); handleCopyId(entry.entityId); }}
                                         className="p-0.5 rounded hover:bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
                                         aria-label={t("auditLog.table.copyId")}
                                       >
@@ -600,6 +586,7 @@ const AuditLogContent = () => {
                                     {deepLink && (
                                       <Link
                                         href={deepLink}
+                                        onClick={(e) => e.stopPropagation()}
                                         className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)] transition-colors"
                                       >
                                         <ExternalLink className="w-3 h-3" />
@@ -608,17 +595,32 @@ const AuditLogContent = () => {
                                     )}
                                   </td>
                                 </tr>
-                                {isExpanded && entry.metadata && (
+                                {isExpanded && (
                                   <tr key={`${entry.id}-meta`} className="bg-[var(--color-surface-page)]">
                                     <td></td>
-                                    <td colSpan={7} className="px-6 py-3">
-                                      <div className="text-xs">
-                                        <div className="font-semibold text-[var(--color-text-primary)] mb-1">
-                                          {t("auditLog.table.metadata")}
+                                    <td colSpan={6} className="px-6 py-3">
+                                      <div className="text-xs space-y-3">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-semibold text-[var(--color-text-primary)]">
+                                            {t("auditLog.table.action")}:
+                                          </span>
+                                          <span
+                                            className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                                            style={{ backgroundColor: actionStyle.bg, color: actionStyle.fg }}
+                                          >
+                                            {formatAction(entry.action)}
+                                          </span>
                                         </div>
-                                        <pre className="p-3 bg-[var(--color-surface-card)] rounded border border-[var(--color-border)] overflow-x-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed">
-                                          {JSON.stringify(entry.metadata, null, 2)}
-                                        </pre>
+                                        {entry.metadata && (
+                                          <div>
+                                            <div className="font-semibold text-[var(--color-text-primary)] mb-1">
+                                              {t("auditLog.table.metadata")}
+                                            </div>
+                                            <pre className="p-3 bg-[var(--color-surface-card)] rounded border border-[var(--color-border)] overflow-x-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed">
+                                              {JSON.stringify(entry.metadata, null, 2)}
+                                            </pre>
+                                          </div>
+                                        )}
                                       </div>
                                     </td>
                                   </tr>

@@ -134,6 +134,11 @@ const AuditLogContent = ({ embedded = false }: AuditLogContentProps) => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
+  // Toggle: when on, only rows whose action contains `_admin_` are returned.
+  // Surfaces admin super-actions (force-status, replay-webhook, force-cancel,
+  // force-approve, regenerate-pdf, resend-email, gateway test) as a focused
+  // view of who-overrode-what.
+  const [adminOnly, setAdminOnly] = useState(false);
 
   // ─── Data state ────────────────────────────────────────────────
   const [page, setPage] = useState(1);
@@ -193,8 +198,9 @@ const AuditLogContent = ({ embedded = false }: AuditLogContentProps) => {
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       search: search || undefined,
+      adminOnly: adminOnly || undefined,
     }),
-    [entityType, action, actorId, startDate, endDate, search],
+    [entityType, action, actorId, startDate, endDate, search, adminOnly],
   );
 
   const fetchData = useCallback(async () => {
@@ -221,7 +227,7 @@ const AuditLogContent = ({ embedded = false }: AuditLogContentProps) => {
   // Reset to page 1 whenever filters change
   useEffect(() => {
     setPage(1);
-  }, [entityType, action, actorId, startDate, endDate, search]);
+  }, [entityType, action, actorId, startDate, endDate, search, adminOnly]);
 
   // ─── Handlers ───────────────────────────────────────────────────
   const clearFilters = () => {
@@ -231,10 +237,12 @@ const AuditLogContent = ({ embedded = false }: AuditLogContentProps) => {
     setStartDate("");
     setEndDate("");
     setSearch("");
+    setAdminOnly(false);
     setPage(1);
   };
 
   const hasFilters =
+    adminOnly ||
     entityType !== "all" ||
     action !== "all" ||
     actorId !== "all" ||
@@ -387,22 +395,41 @@ const AuditLogContent = ({ embedded = false }: AuditLogContentProps) => {
 
               {/* Filters */}
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mb-6">
-                <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4 text-[var(--color-text-secondary)]" />
                     <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {t("auditLog.filters.title")}
                     </h3>
                   </div>
-                  {hasFilters && (
+                  <div className="flex items-center gap-2">
+                    {/* Admin-overrides-only toggle. Filters server-side to rows
+                        whose action contains `_admin_` — gateway tests, force-
+                        status, replay, sync, force-cancel, regenerate, force-
+                        approve, resend-email. */}
                     <button
-                      onClick={clearFilters}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-[#DC2626] hover:bg-[#FEE2E2] rounded-md transition-colors"
+                      type="button"
+                      onClick={() => setAdminOnly((v) => !v)}
+                      title={t("auditLog.filters.adminOnlyHint")}
+                      className={`inline-flex items-center gap-1.5 px-2.5 h-7 text-[11px] font-medium rounded-md border transition-colors ${
+                        adminOnly
+                          ? "bg-[#FEE2E2] text-[#991B1B] border-[#FECACA]"
+                          : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                      }`}
                     >
-                      <X className="w-3 h-3" />
-                      {t("auditLog.filters.clearFilters")}
+                      <ShieldCheck className="w-3 h-3" />
+                      {t("auditLog.filters.adminOnly")}
                     </button>
-                  )}
+                    {hasFilters && (
+                      <button
+                        onClick={clearFilters}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-[#DC2626] hover:bg-[#FEE2E2] rounded-md transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                        {t("auditLog.filters.clearFilters")}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div>

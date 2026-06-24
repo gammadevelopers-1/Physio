@@ -2047,6 +2047,13 @@ export const adminFinanceApi = {
       body,
     ),
 
+  /** Re-send the invoice email to the original buyer with the PDF attached. */
+  resendInvoiceEmail: (invoiceId: string, body: { reason: string }) =>
+    api.post<{ sent: true; invoiceNumber: string }>(
+      `/admin/finance/invoices/${invoiceId}/resend-email`,
+      body,
+    ),
+
   // ── Refund super-actions ────────────────────────────────────────
 
   /** Approve a refund even when the lifecycle policy would block it. */
@@ -8396,6 +8403,7 @@ export const financeApi = {
     search?: string;
     page?: number;
     limit?: number;
+    adminOnly?: boolean;
   }) => {
     const sp = new URLSearchParams();
     if (params?.entityType) sp.set('entityType', params.entityType);
@@ -8406,6 +8414,7 @@ export const financeApi = {
     if (params?.search) sp.set('search', params.search);
     if (params?.page) sp.set('page', String(params.page));
     if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.adminOnly) sp.set('adminOnly', 'true');
     const qs = sp.toString();
     return api.get<{
       data: Array<{
@@ -8444,6 +8453,7 @@ export const financeApi = {
     startDate?: string;
     endDate?: string;
     search?: string;
+    adminOnly?: boolean;
   }) => {
     const sp = new URLSearchParams();
     if (params?.entityType) sp.set('entityType', params.entityType);
@@ -8452,6 +8462,7 @@ export const financeApi = {
     if (params?.startDate) sp.set('startDate', params.startDate);
     if (params?.endDate) sp.set('endDate', params.endDate);
     if (params?.search) sp.set('search', params.search);
+    if (params?.adminOnly) sp.set('adminOnly', 'true');
     const qs = sp.toString();
     return api.get<{
       totalEvents: number;

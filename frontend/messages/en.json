@@ -7940,8 +7940,11 @@
         "forceCancelDesc": "Voids even a paid invoice. Does NOT issue a refund — pair with refund flow if needed.",
         "regeneratePdf": "Regenerate PDF",
         "regeneratePdfDesc": "Re-renders using current tax + branding settings. Numerical totals stay frozen via metadata snapshot.",
+        "resendEmail": "Resend invoice email",
+        "resendEmailDesc": "Sends the invoice + payment confirmation email to the original buyer with the PDF attached. Common request when the buyer loses the email.",
         "forceCancelToast": "Invoice cancelled",
-        "regeneratePdfToast": "PDF regenerated"
+        "regeneratePdfToast": "PDF regenerated",
+        "resendEmailToast": "Invoice email sent"
       },
       "refund": {
         "forceApprove": "Force-approve (bypass policy)",
@@ -10038,7 +10041,9 @@
         "clearFilters": "Clear filters",
         "allEntityTypes": "All entities",
         "allActions": "All actions",
-        "allActors": "All actors"
+        "allActors": "All actors",
+        "adminOnly": "Admin overrides only",
+        "adminOnlyHint": "Show only events triggered by admin super-actions (force-status, replay, sync, force-cancel, regenerate, force-approve, resend, gateway test)."
       },
       "kpi": {
         "totalEvents": "Total events",

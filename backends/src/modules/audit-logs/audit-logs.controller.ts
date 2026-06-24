@@ -59,9 +59,11 @@ export class AuditLogController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('search') search?: string,
+    @Query('adminOnly') adminOnly?: string,
   ) {
     return this.auditLogService.getFinanceSummary({
       entityType, action, actorId, startDate, endDate, search,
+      adminOnly: adminOnly === 'true' || adminOnly === '1',
     });
   }
 
@@ -145,9 +147,13 @@ export class AuditLogController {
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('adminOnly') adminOnly?: string,
   ) {
     return this.auditLogService.findAllFinance(
-      { entityType, action, actorId, startDate, endDate, search },
+      {
+        entityType, action, actorId, startDate, endDate, search,
+        adminOnly: adminOnly === 'true' || adminOnly === '1',
+      },
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
     );

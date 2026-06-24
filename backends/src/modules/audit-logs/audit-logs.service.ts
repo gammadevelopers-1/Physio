@@ -278,6 +278,7 @@ export class AuditLogService {
       startDate?: string;
       endDate?: string;
       search?: string;
+      adminOnly?: boolean;
     },
     page = 1,
     limit = 20,
@@ -388,6 +389,7 @@ export class AuditLogService {
     startDate?: string;
     endDate?: string;
     search?: string;
+    adminOnly?: boolean;
   }) {
     const conditions = this.buildFinanceConditions(filters);
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -448,6 +450,7 @@ export class AuditLogService {
     startDate?: string;
     endDate?: string;
     search?: string;
+    adminOnly?: boolean;
   }) {
     const conditions: any[] = [
       inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES),
@@ -468,6 +471,12 @@ export class AuditLogService {
       const end = new Date(filters.endDate);
       end.setHours(23, 59, 59, 999);
       conditions.push(lte(auditLogs.createdAt, end));
+    }
+    // Admin-overrides-only: actions written by admin super-actions all share
+    // the `_admin_` infix (e.g. payment_status_admin_override,
+    // refund_approve_admin_override, gateway_admin_test). Match on that.
+    if (filters.adminOnly) {
+      conditions.push(ilike(auditLogs.action, '%_admin_%'));
     }
     if (filters.search) {
       const term = `%${filters.search}%`;

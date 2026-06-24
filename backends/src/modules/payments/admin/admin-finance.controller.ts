@@ -18,6 +18,7 @@ import { CurrentUser, Roles } from '../../auth/decorators';
 import { UserRole } from '../../../database/schema';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
+import { EmailService } from '../../email/email.service';
 import { PaymentsService } from '../payments.service';
 import { InvoiceService } from '../services/invoice.service';
 import { RefundService } from '../services/refund.service';
@@ -47,6 +48,7 @@ export class AdminFinanceController {
     private readonly gatewayFactory: GatewayFactory,
     private readonly credentials: GatewayCredentialsService,
     private readonly auditLog: AuditLogService,
+    private readonly emailService: EmailService,
   ) {}
 
   // ── Gateway connection management ─────────────────────────────────
@@ -288,6 +290,55 @@ export class AdminFinanceController {
       metadata: { reason: body.reason },
     });
     return result;
+  }
+
+  /**
+   * Resend the invoice + payment confirmation email to the buyer. Most
+   * common admin ticket — student lost the email and asks for a copy.
+   * Hits the same code path as the original send (PDF attached when
+   * available), so the buyer's inbox copy is the canonical one.
+   */
+  @Post('invoices/:id/resend-email')
+  @HttpCode(HttpStatus.OK)
+  async resendInvoiceEmail(
+    @Param('id') invoiceId: string,
+    @Body() body: { reason: string },
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    this.requireReason(body?.reason);
+    const invoice = await this.invoiceService.getInvoiceById(invoiceId);
+    if (!invoice) {
+      throw new NotFoundException(`Invoice ${invoiceId} not found`);
+    }
+
+    let pdfAttachment: { buffer: Buffer; filename: string } | undefined;
+    try {
+      const pdf = await this.invoiceService.getInvoicePdfBuffer(invoice.paymentId);
+      if (pdf) pdfAttachment = pdf;
+    } catch {
+      // PDF generation can fail (rare) — still send the plain email so the
+      // buyer has the invoice number + line items in their inbox.
+    }
+    await this.emailService.sendPaymentConfirmation(
+      invoice.userId,
+      invoice.paymentId,
+      pdfAttachment,
+    );
+
+    await this.auditLog.log({
+      entityType: 'invoice',
+      entityId: invoiceId,
+      action: 'invoice_email_admin_resend',
+      performedBy: user.id,
+      metadata: {
+        invoiceNumber: invoice.invoiceNumber,
+        recipientUserId: invoice.userId,
+        attachedPdf: !!pdfAttachment,
+        reason: body.reason,
+      },
+    });
+
+    return { sent: true, invoiceNumber: invoice.invoiceNumber };
   }
 
   /**

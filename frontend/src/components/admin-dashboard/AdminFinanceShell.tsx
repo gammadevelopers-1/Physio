@@ -402,6 +402,153 @@ function OverviewTab({
           />
         </div>
       </div>
+
+      {/* Recent admin overrides — last 10 admin super-actions, clickable. */}
+      <RecentAdminActivity locale={locale} onJumpTab={onJumpTab} />
+    </div>
+  );
+}
+
+// ─── Recent admin overrides widget ──────────────────────────────────
+
+interface AdminActivityRow {
+  id: string;
+  entityType: string;
+  entityId: string;
+  action: string;
+  createdAt: string;
+  performerFirstName: string | null;
+  performerLastName: string | null;
+  performerEmail: string | null;
+}
+
+function RecentAdminActivity({
+  locale,
+  onJumpTab,
+}: {
+  locale: string;
+  onJumpTab: (tab: Tab) => void;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [rows, setRows] = useState<AdminActivityRow[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    financeApi
+      .getAuditLogs({ adminOnly: true, limit: 10, page: 1 })
+      .then((r) => {
+        if (!cancelled) setRows((r.data as AdminActivityRow[]) ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Map (entityType, entityId) → the admin-shell tab + the per-row deep-link
+  // param. Mirrors what the embedded inner components react to.
+  const openEntity = (row: AdminActivityRow) => {
+    switch (row.entityType) {
+      case "payment":
+        return navigateTo("payments", `paymentId=${row.entityId}`);
+      case "invoice":
+        return navigateTo("invoices", `invoiceId=${row.entityId}`);
+      case "refund":
+        return navigateTo("refunds", `refundId=${row.entityId}`);
+      case "payment_gateway":
+        return navigateTo("settings", "section=gateways");
+      default:
+        return navigateTo("audit-log");
+    }
+  };
+  const navigateTo = (tab: Tab, extra?: string) => {
+    onJumpTab(tab);
+    const sp = new URLSearchParams();
+    sp.set("tab", tab);
+    if (extra) {
+      const [k, v] = extra.split("=");
+      sp.set(k, v);
+    }
+    router.push(`${pathname}?${sp.toString()}`, { scroll: false });
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-[#B91C1C]" />
+          Recent admin overrides
+        </h3>
+        <button
+          type="button"
+          onClick={() => onJumpTab("audit-log")}
+          className="text-xs text-[var(--color-primary)] hover:underline"
+        >
+          View all in audit log →
+        </button>
+      </div>
+      <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl divide-y divide-[var(--color-border-subtle)] overflow-hidden">
+        {loading && (
+          <div className="p-6 text-center text-sm text-[var(--color-text-secondary)]">
+            Loading…
+          </div>
+        )}
+        {!loading && rows && rows.length === 0 && (
+          <div className="p-6 text-center text-sm text-[var(--color-text-secondary)]">
+            No admin overrides recorded yet. When admins use force-status,
+            replay-webhook, force-cancel, or any override action, they&apos;ll
+            appear here.
+          </div>
+        )}
+        {!loading &&
+          rows &&
+          rows.length > 0 &&
+          rows.map((row) => {
+            const performerName =
+              [row.performerFirstName, row.performerLastName].filter(Boolean).join(" ") ||
+              row.performerEmail ||
+              "System";
+            const when = new Date(row.createdAt).toLocaleString(
+              locale === "ar" ? "ar-SA-u-nu-latn" : "en-US",
+              {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              },
+            );
+            return (
+              <button
+                key={row.id}
+                type="button"
+                onClick={() => openEntity(row)}
+                className="w-full text-left px-4 py-3 hover:bg-[var(--color-surface-page)] flex items-center gap-3 transition-colors"
+              >
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FEE2E2] text-[#991B1B] flex-shrink-0">
+                  {row.entityType}
+                </span>
+                <span className="text-sm text-[var(--color-text-primary)] flex-1 min-w-0 truncate">
+                  {row.action.replace(/_/g, " ")}
+                </span>
+                <span className="text-xs text-[var(--color-text-secondary)] hidden sm:inline truncate max-w-[180px]">
+                  {performerName}
+                </span>
+                <span className="text-xs text-[var(--color-text-secondary)] flex-shrink-0">
+                  {when}
+                </span>
+              </button>
+            );
+          })}
+      </div>
     </div>
   );
 }

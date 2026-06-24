@@ -201,12 +201,11 @@ const InvoiceDetailDrawer = ({
   const adminActions: AdminOverrideAction[] = invoiceId
     ? [
         {
-          key: "force-cancel",
-          label: tAdmin("invoice.forceCancel"),
-          description: tAdmin("invoice.forceCancelDesc"),
-          danger: true,
-          successToast: tAdmin("invoice.forceCancelToast"),
-          run: (reason) => adminFinanceApi.forceCancelInvoice(invoiceId, { reason }),
+          key: "resend-email",
+          label: tAdmin("invoice.resendEmail"),
+          description: tAdmin("invoice.resendEmailDesc"),
+          successToast: tAdmin("invoice.resendEmailToast"),
+          run: (reason) => adminFinanceApi.resendInvoiceEmail(invoiceId, { reason }),
         },
         {
           key: "regenerate-pdf",
@@ -214,6 +213,14 @@ const InvoiceDetailDrawer = ({
           description: tAdmin("invoice.regeneratePdfDesc"),
           successToast: tAdmin("invoice.regeneratePdfToast"),
           run: (reason) => adminFinanceApi.regenerateInvoicePdf(invoiceId, { reason }),
+        },
+        {
+          key: "force-cancel",
+          label: tAdmin("invoice.forceCancel"),
+          description: tAdmin("invoice.forceCancelDesc"),
+          danger: true,
+          successToast: tAdmin("invoice.forceCancelToast"),
+          run: (reason) => adminFinanceApi.forceCancelInvoice(invoiceId, { reason }),
         },
       ]
     : [];

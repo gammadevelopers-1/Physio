@@ -217,6 +217,26 @@ export class FinanceController {
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="${safeReport}-${dateStr}.csv"`);
     }
+
+    // Self-audit the export. Compliance needs a trail of who pulled which
+    // report with which filters. Non-fatal if the audit write itself fails
+    // (logger.error covers that branch in AuditLogService.log).
+    await this.auditLogService.log({
+      entityType: 'report_export',
+      entityId: `${safeReport}-${dateStr}-${safeFormat}`,
+      action: 'report_exported',
+      performedBy: user.id,
+      metadata: {
+        report: safeReport,
+        format: safeFormat,
+        filters: {
+          startDate, endDate, status, gateway, method, reason,
+          courseId, sessionId, deliveryType, search, top, actorId,
+          entityType, action,
+        },
+      },
+    });
+
     res.send(result);
   }
 

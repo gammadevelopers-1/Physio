@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { db } from '../../database';
 import { auditLogs, users } from '../../database/schema';
-import { eq, and, desc, count, gte, lte, or, ilike, sql, inArray } from 'drizzle-orm';
+import { eq, and, desc, count, gte, lte, or, ilike, sql, inArray, isNotNull } from 'drizzle-orm';
 import * as PDFDocument from 'pdfkit';
+import * as ExcelJS from 'exceljs';
 import { RequestContextService } from '../../common/request-context.service';
 
 /**
@@ -16,6 +17,8 @@ const FINANCE_AUDIT_ENTITY_TYPES = [
   'refund',
   'invoice',
   'discount_code',
+  'discount',
+  'coupon_campaign',
   'webhook',
   // Reconciliation is owned by finance — finding resolve/ignore/escalate
   // and the escalation lifecycle (claim/send_back/decline/enroll/refund)
@@ -24,6 +27,11 @@ const FINANCE_AUDIT_ENTITY_TYPES = [
   'reconciliation_finding',
   'reconciliation_escalation',
   'reconciliation_scan',
+  // Meta-audit: when a finance user exports report data or the audit log
+  // itself, that download is its own audit row. Lets compliance see who
+  // pulled what data and when.
+  'report_export',
+  'audit_log_export',
 ];
 
 export interface AdminAuditLogFilters {
@@ -266,6 +274,7 @@ export class AuditLogService {
     filters: {
       entityType?: string;
       action?: string;
+      actorId?: string;
       startDate?: string;
       endDate?: string;
       search?: string;
@@ -274,34 +283,7 @@ export class AuditLogService {
     limit = 20,
   ) {
     const offset = (page - 1) * limit;
-    // Base scope: finance users only ever see finance-related audit entries.
-    const conditions: any[] = [
-      inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES),
-    ];
-
-    if (filters.entityType) {
-      conditions.push(eq(auditLogs.entityType, filters.entityType));
-    }
-    if (filters.action) {
-      conditions.push(eq(auditLogs.action, filters.action));
-    }
-    if (filters.startDate) {
-      conditions.push(gte(auditLogs.createdAt, new Date(filters.startDate)));
-    }
-    if (filters.endDate) {
-      conditions.push(lte(auditLogs.createdAt, new Date(filters.endDate)));
-    }
-    if (filters.search) {
-      const term = `%${filters.search}%`;
-      conditions.push(
-        or(
-          ilike(auditLogs.action, term),
-          ilike(auditLogs.entityType, term),
-          sql`${auditLogs.entityId}::text ILIKE ${term}`,
-        ),
-      );
-    }
-
+    const conditions = this.buildFinanceConditions(filters);
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const data = await db
@@ -361,6 +343,146 @@ export class AuditLogService {
   }
 
   /**
+   * Distinct actors (humans only — `performedBy IS NOT NULL`) who have
+   * performed any finance-scoped action. Powers the Actor filter dropdown.
+   * System / cron-driven rows (performedBy null) are intentionally excluded
+   * — those surface as "System" in the table and don't need a filter entry.
+   */
+  async getFinanceActors() {
+    const rows = await db
+      .selectDistinct({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(auditLogs)
+      .innerJoin(users, eq(auditLogs.performedBy, users.id))
+      .where(
+        and(
+          inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES),
+          isNotNull(auditLogs.performedBy),
+        ),
+      )
+      .orderBy(users.firstName, users.lastName);
+
+    return rows.map((r) => ({
+      id: r.id,
+      name: `${r.firstName || ''} ${r.lastName || ''}`.trim() || r.email,
+      email: r.email,
+    }));
+  }
+
+  /**
+   * KPI rollup for the Audit Log page header.
+   *
+   * Returns total events in the window, distinct actor count, and the top
+   * 5 actions / entity types by frequency. Single round-trip per metric;
+   * runs the same finance-scope filter as the list query so the KPIs
+   * always reflect what the operator is looking at.
+   */
+  async getFinanceSummary(filters: {
+    entityType?: string;
+    action?: string;
+    actorId?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) {
+    const conditions = this.buildFinanceConditions(filters);
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [totalRow, actorsRow] = await Promise.all([
+      db
+        .select({ count: count() })
+        .from(auditLogs)
+        .where(whereClause),
+      db
+        .select({ count: sql<number>`COUNT(DISTINCT ${auditLogs.performedBy})::int` })
+        .from(auditLogs)
+        .where(whereClause),
+    ]);
+
+    const topActions = await db
+      .select({
+        action: auditLogs.action,
+        count: sql<number>`COUNT(*)::int`,
+      })
+      .from(auditLogs)
+      .where(whereClause)
+      .groupBy(auditLogs.action)
+      .orderBy(sql`COUNT(*) DESC`)
+      .limit(5);
+
+    const topEntities = await db
+      .select({
+        entityType: auditLogs.entityType,
+        count: sql<number>`COUNT(*)::int`,
+      })
+      .from(auditLogs)
+      .where(whereClause)
+      .groupBy(auditLogs.entityType)
+      .orderBy(sql`COUNT(*) DESC`)
+      .limit(5);
+
+    return {
+      totalEvents: Number(totalRow[0]?.count || 0),
+      uniqueActors: Number(actorsRow[0]?.count || 0),
+      topActions: topActions.map((r) => ({ action: r.action, count: Number(r.count) })),
+      topEntityTypes: topEntities.map((r) => ({
+        entityType: r.entityType,
+        count: Number(r.count),
+      })),
+    };
+  }
+
+  /**
+   * Shared WHERE-builder for every finance-scope audit query. Keeps the list,
+   * summary, CSV, XLSX, and PDF queries from drifting out of sync as the
+   * filter set evolves.
+   */
+  private buildFinanceConditions(filters: {
+    entityType?: string;
+    action?: string;
+    actorId?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) {
+    const conditions: any[] = [
+      inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES),
+    ];
+    if (filters.entityType) {
+      conditions.push(eq(auditLogs.entityType, filters.entityType));
+    }
+    if (filters.action) {
+      conditions.push(eq(auditLogs.action, filters.action));
+    }
+    if (filters.actorId) {
+      conditions.push(eq(auditLogs.performedBy, filters.actorId));
+    }
+    if (filters.startDate) {
+      conditions.push(gte(auditLogs.createdAt, new Date(filters.startDate)));
+    }
+    if (filters.endDate) {
+      const end = new Date(filters.endDate);
+      end.setHours(23, 59, 59, 999);
+      conditions.push(lte(auditLogs.createdAt, end));
+    }
+    if (filters.search) {
+      const term = `%${filters.search}%`;
+      conditions.push(
+        or(
+          ilike(auditLogs.action, term),
+          ilike(auditLogs.entityType, term),
+          sql`${auditLogs.entityId}::text ILIKE ${term}`,
+        ),
+      );
+    }
+    return conditions;
+  }
+
+  /**
    * PDP-compliant: strip PII from metadata before export.
    */
   private sanitizeMetadata(
@@ -383,31 +505,14 @@ export class AuditLogService {
     filters: {
       entityType?: string;
       action?: string;
+      actorId?: string;
       startDate?: string;
       endDate?: string;
       search?: string;
     },
     userId?: string,
   ): Promise<string> {
-    // Fetch all matching rows (no pagination) — scoped to finance entity types
-    const conditions: any[] = [
-      inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES),
-    ];
-    if (filters.entityType) conditions.push(eq(auditLogs.entityType, filters.entityType));
-    if (filters.action) conditions.push(eq(auditLogs.action, filters.action));
-    if (filters.startDate) conditions.push(gte(auditLogs.createdAt, new Date(filters.startDate)));
-    if (filters.endDate) conditions.push(lte(auditLogs.createdAt, new Date(filters.endDate)));
-    if (filters.search) {
-      const term = `%${filters.search}%`;
-      conditions.push(
-        or(
-          ilike(auditLogs.action, term),
-          ilike(auditLogs.entityType, term),
-          sql`${auditLogs.entityId}::text ILIKE ${term}`,
-        ),
-      );
-    }
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = and(...this.buildFinanceConditions(filters));
 
     const rows = await db
       .select({
@@ -463,36 +568,22 @@ export class AuditLogService {
 
   /**
    * NELC-compliant PDF export of audit trail with Gamma Developers branding.
+   * Styling intentionally mirrors the Reports-page PDFs (light grey header
+   * band, alternating zebra rows, right-aligned where appropriate) so the
+   * finance section feels coherent.
    */
   async exportAuditPdf(
     filters: {
       entityType?: string;
       action?: string;
+      actorId?: string;
       startDate?: string;
       endDate?: string;
       search?: string;
     },
     userId?: string,
   ): Promise<Buffer> {
-    // Fetch all matching rows — scoped to finance entity types
-    const conditions: any[] = [
-      inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES),
-    ];
-    if (filters.entityType) conditions.push(eq(auditLogs.entityType, filters.entityType));
-    if (filters.action) conditions.push(eq(auditLogs.action, filters.action));
-    if (filters.startDate) conditions.push(gte(auditLogs.createdAt, new Date(filters.startDate)));
-    if (filters.endDate) conditions.push(lte(auditLogs.createdAt, new Date(filters.endDate)));
-    if (filters.search) {
-      const term = `%${filters.search}%`;
-      conditions.push(
-        or(
-          ilike(auditLogs.action, term),
-          ilike(auditLogs.entityType, term),
-          sql`${auditLogs.entityId}::text ILIKE ${term}`,
-        ),
-      );
-    }
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = and(...this.buildFinanceConditions(filters));
 
     const rows = await db
       .select({
@@ -502,12 +593,24 @@ export class AuditLogService {
         action: auditLogs.action,
         performerFirstName: users.firstName,
         performerLastName: users.lastName,
+        performerEmail: users.email,
         ipAddress: auditLogs.ipAddress,
       })
       .from(auditLogs)
       .leftJoin(users, eq(auditLogs.performedBy, users.id))
       .where(whereClause)
       .orderBy(desc(auditLogs.createdAt));
+
+    // Per-column widths sum to 760 (landscape-A4 content). Picks the print-
+    // essential columns; CSV/XLSX exports still include every column.
+    const colHeaders = ['Date', 'Entity', 'Entity ID', 'Action', 'Performer', 'IP'];
+    const colWidths = [130, 90, 180, 150, 130, 80];
+    const colX: number[] = [];
+    let cursor = 40;
+    for (const w of colWidths) {
+      colX.push(cursor);
+      cursor += w;
+    }
 
     return new Promise((resolve, reject) => {
       try {
@@ -517,75 +620,80 @@ export class AuditLogService {
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
 
-        // Header with Gamma branding
+        // Branding
         doc.font('Helvetica-Bold').fontSize(16)
           .text('PhysioGuidance — Audit Trail Report', 40, 40);
-        doc.font('Helvetica').fontSize(8)
+        doc.font('Helvetica').fontSize(8).fillColor('#666666')
           .text('Gamma Developers  |  PhysioGuidance Platform', 40, 58);
-        doc.font('Helvetica').fontSize(9)
-          .text(`Generated: ${new Date().toISOString()}  |  Generated by: ${userId || 'system'}  |  NELC Audit Evidence`, 40, 70);
-
+        doc.fillColor('#000000').fontSize(9)
+          .text(
+            `Generated: ${new Date().toISOString()}  |  Generated by: ${userId || 'system'}  |  NELC Audit Evidence`,
+            40, 70,
+          );
         if (filters.startDate || filters.endDate) {
-          doc.text(`Date Range: ${filters.startDate || 'beginning'} → ${filters.endDate || 'now'}`, 40, 82);
+          doc.text(
+            `Date Range: ${filters.startDate || 'beginning'} → ${filters.endDate || 'now'}`,
+            40, 82,
+          );
         }
+        doc.moveTo(40, 96).lineTo(800, 96).stroke('#CCCCCC');
 
-        doc.moveTo(40, 96).lineTo(800, 96).stroke();
-
-        // Table setup
-        const headers = ['Date', 'Entity Type', 'Entity ID', 'Action', 'Performed By', 'IP Address'];
-        const colWidths = [130, 90, 200, 130, 120, 90];
-
-        let y = 104;
-        const drawHeaders = () => {
-          doc.font('Helvetica-Bold').fontSize(8);
-          let x = 40;
-          headers.forEach((h, i) => {
-            doc.text(h, x, y, { width: colWidths[i] });
-            x += colWidths[i];
+        const drawHeader = (y: number) => {
+          doc.rect(40, y - 3, 760, 18).fill('#F3F4F6');
+          doc.fillColor('#111827').font('Helvetica-Bold').fontSize(8);
+          colHeaders.forEach((h, i) => {
+            doc.text(h, colX[i] + 4, y + 1, { width: colWidths[i] - 8 });
           });
-          y += 14;
-          doc.moveTo(40, y).lineTo(800, y).stroke();
-          y += 4;
+          doc.fillColor('#000000');
+          return y + 18;
         };
 
-        drawHeaders();
+        let y = 108;
+        y = drawHeader(y);
 
-        const truncate = (s: string, len: number) =>
-          s.length > len ? s.substring(0, len - 1) + '…' : s;
+        const truncate = (s: string | null | undefined, len: number) => {
+          const str = String(s ?? '—');
+          return str.length > len ? str.substring(0, len - 1) + '…' : str;
+        };
+        const charBudget = colWidths.map((w) => Math.max(8, Math.floor((w - 8) / 4.2)));
 
+        const ROW_HEIGHT = 16;
         doc.font('Helvetica').fontSize(7.5);
-        for (const row of rows) {
+        for (let ri = 0; ri < rows.length; ri++) {
           if (y > 530) {
             doc.addPage({ size: 'A4', layout: 'landscape', margin: 40 });
-            y = 40;
-            drawHeaders();
+            y = drawHeader(40);
             doc.font('Helvetica').fontSize(7.5);
           }
-
+          if (ri % 2 === 1) {
+            doc.rect(40, y - 2, 760, ROW_HEIGHT).fill('#FAFAFA');
+            doc.fillColor('#000000');
+          }
+          const row = rows[ri];
           const performer = row.performerFirstName
             ? `${row.performerFirstName} ${row.performerLastName || ''}`.trim()
             : 'System';
-
           const cells = [
-            row.createdAt ? new Date(row.createdAt).toISOString().replace('T', ' ').substring(0, 19) : '',
+            row.createdAt
+              ? new Date(row.createdAt).toISOString().replace('T', ' ').substring(0, 19)
+              : '',
             row.entityType,
-            truncate(row.entityId, 32),
-            row.action,
+            row.entityId,
+            row.action.replace(/_/g, ' '),
             performer,
             row.ipAddress || '',
           ];
-
-          let x = 40;
           cells.forEach((cell, i) => {
-            doc.text(cell, x, y, { width: colWidths[i] });
-            x += colWidths[i];
+            doc.text(truncate(cell, charBudget[i]), colX[i] + 4, y + 2, {
+              width: colWidths[i] - 8,
+            });
           });
-          y += 13;
+          y += ROW_HEIGHT;
         }
 
-        // Footer
-        doc.moveTo(40, y + 4).lineTo(800, y + 4).stroke();
-        doc.font('Helvetica-Bold').fontSize(8)
+        // Footer summary
+        doc.moveTo(40, y + 4).lineTo(800, y + 4).stroke('#CCCCCC');
+        doc.font('Helvetica-Bold').fontSize(8).fillColor('#374151')
           .text(`Total rows: ${rows.length}`, 40, y + 10);
 
         doc.end();
@@ -593,5 +701,104 @@ export class AuditLogService {
         reject(err);
       }
     });
+  }
+
+  /**
+   * Excel export of the audit trail. Adds a separate Metadata sheet so
+   * compliance can pivot on the metadata payload without parsing JSON
+   * in the data sheet's wide column.
+   */
+  async exportAuditXlsx(
+    filters: {
+      entityType?: string;
+      action?: string;
+      actorId?: string;
+      startDate?: string;
+      endDate?: string;
+      search?: string;
+    },
+    userId?: string,
+  ): Promise<Buffer> {
+    const whereClause = and(...this.buildFinanceConditions(filters));
+
+    const rows = await db
+      .select({
+        createdAt: auditLogs.createdAt,
+        entityType: auditLogs.entityType,
+        entityId: auditLogs.entityId,
+        action: auditLogs.action,
+        performedBy: auditLogs.performedBy,
+        ipAddress: auditLogs.ipAddress,
+        metadata: auditLogs.metadata,
+        performerFirstName: users.firstName,
+        performerLastName: users.lastName,
+        performerEmail: users.email,
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(auditLogs.performedBy, users.id))
+      .where(whereClause)
+      .orderBy(desc(auditLogs.createdAt));
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'PhysioGuidance Platform';
+    workbook.created = new Date();
+
+    // Metadata sheet (sheet 1) — top-of-file context for the export
+    const metaSheet = workbook.addWorksheet('Export Metadata');
+    metaSheet.addRow(['PhysioGuidance Platform — Audit Trail Export']);
+    metaSheet.addRow(['Generated', new Date().toISOString()]);
+    metaSheet.addRow(['Generated by', userId || 'system']);
+    metaSheet.addRow(['Date Range', `${filters.startDate || 'all'} to ${filters.endDate || 'all'}`]);
+    metaSheet.addRow(['Filters', JSON.stringify(filters)]);
+    metaSheet.addRow(['Row Count', rows.length]);
+    metaSheet.addRow(['Publisher', 'Gamma Developers']);
+    metaSheet.addRow(['Notice', 'Card numbers and emails inside metadata are masked.']);
+    metaSheet.getColumn(1).width = 18;
+    metaSheet.getColumn(2).width = 60;
+
+    // Data sheet (sheet 2)
+    const dataSheet = workbook.addWorksheet('Audit Log');
+    const headers = [
+      'Timestamp (ISO)',
+      'Entity Type',
+      'Entity ID',
+      'Action',
+      'Performer',
+      'Performer Email',
+      'IP Address',
+      'Metadata',
+    ];
+    const headerRow = dataSheet.addRow(headers);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
+      cell.alignment = { horizontal: 'center' };
+    });
+
+    for (const row of rows) {
+      const performer = row.performerFirstName
+        ? `${row.performerFirstName} ${row.performerLastName || ''}`.trim()
+        : 'System';
+      dataSheet.addRow([
+        row.createdAt ? new Date(row.createdAt).toISOString() : '',
+        row.entityType,
+        row.entityId,
+        row.action,
+        performer,
+        row.performerEmail || '',
+        row.ipAddress || '',
+        this.sanitizeMetadata(row.metadata as Record<string, unknown> | null),
+      ]);
+    }
+
+    // Reasonable column widths — metadata column wide enough to be useful
+    // but capped so the sheet isn't horizontal-scroll only.
+    const widths = [24, 18, 38, 28, 24, 28, 16, 60];
+    dataSheet.columns.forEach((col, i) => {
+      col.width = widths[i] || 18;
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
   }
 }

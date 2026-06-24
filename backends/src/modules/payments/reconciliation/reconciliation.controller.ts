@@ -15,6 +15,7 @@ import {
 import { Request, Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { ReconciliationService } from './reconciliation.service';
+import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
@@ -30,7 +31,10 @@ import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
 export class ReconciliationController {
-  constructor(private readonly service: ReconciliationService) {}
+  constructor(
+    private readonly service: ReconciliationService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   @Get('stats')
   async getStats() {
@@ -80,6 +84,21 @@ export class ReconciliationController {
       toDate,
       user,
     });
+
+    // Self-audit the export. Reconciliation evidence leaving the system
+    // needs a trail for compliance — who, when, with what filters.
+    await this.auditLogService.log({
+      entityType: 'report_export',
+      entityId: `reconciliation-findings-${new Date().toISOString().split('T')[0]}-${safeFormat}`,
+      action: 'report_exported',
+      performedBy: user.id,
+      metadata: {
+        report: 'reconciliation_findings',
+        format: safeFormat,
+        filters: { status, gateway, driftType, fromDate, toDate },
+      },
+    });
+
     res.setHeader('Content-Type', result.contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     return res.send(result.body);

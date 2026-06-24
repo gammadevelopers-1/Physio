@@ -7,11 +7,9 @@ import FinanceMobileSidebar from "./FinanceMobileSidebar";
 import FinanceNavbar from "./FinanceNavbar";
 import Select from "@/components/admin-dashboard/Select";
 import DatePicker from "@/components/ui/DatePicker";
+import ExportDropdown from "./shared/ExportDropdown";
 import {
   BarChart3,
-  Download,
-  FileSpreadsheet,
-  FileText,
   TrendingUp,
   Receipt,
   CreditCard,
@@ -873,24 +871,7 @@ const FinanceReportsContent = () => {
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <ExportButton
-                    icon={FileSpreadsheet}
-                    label={t("reportsPage.exportExcel")}
-                    busy={downloading === "xlsx"}
-                    onClick={() => handleDownload("xlsx")}
-                  />
-                  <ExportButton
-                    icon={FileText}
-                    label={t("reportsPage.exportCsv")}
-                    busy={downloading === "csv"}
-                    onClick={() => handleDownload("csv")}
-                  />
-                  <ExportButton
-                    icon={Download}
-                    label={t("reportsPage.exportPdf")}
-                    busy={downloading === "pdf"}
-                    onClick={() => handleDownload("pdf")}
-                  />
+                  <ExportDropdown onExport={handleDownload} busy={downloading} />
                 </div>
               </div>
 
@@ -949,19 +930,6 @@ const FinanceReportsContent = () => {
 };
 
 // ─── Sub-components ──────────────────────────────────────────────
-
-const ExportButton = ({
-  icon: Icon, label, busy, onClick,
-}: { icon: typeof Download; label: string; busy: boolean; onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    disabled={busy}
-    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
-  >
-    {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />}
-    {label}
-  </button>
-);
 
 const StatCard = ({ label, value, accent }: { label: string; value: string; accent: string }) => (
   <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">

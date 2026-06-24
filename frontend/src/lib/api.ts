@@ -8156,6 +8156,7 @@ export const financeApi = {
   getAuditLogs: (params?: {
     entityType?: string;
     action?: string;
+    actorId?: string;
     startDate?: string;
     endDate?: string;
     search?: string;
@@ -8165,6 +8166,7 @@ export const financeApi = {
     const sp = new URLSearchParams();
     if (params?.entityType) sp.set('entityType', params.entityType);
     if (params?.action) sp.set('action', params.action);
+    if (params?.actorId) sp.set('actorId', params.actorId);
     if (params?.startDate) sp.set('startDate', params.startDate);
     if (params?.endDate) sp.set('endDate', params.endDate);
     if (params?.search) sp.set('search', params.search);
@@ -8195,48 +8197,56 @@ export const financeApi = {
     return api.get<{ entityTypes: string[]; actions: string[] }>('/audit-logs/finance/filters');
   },
 
-  exportAuditLogsCsv: async (params?: {
-    entityType?: string;
-    action?: string;
-    startDate?: string;
-    endDate?: string;
-    search?: string;
-  }) => {
-    const token = getAccessToken();
-    const query = new URLSearchParams({ format: 'csv' });
-    if (params?.entityType) query.set('entityType', params.entityType);
-    if (params?.action) query.set('action', params.action);
-    if (params?.startDate) query.set('startDate', params.startDate);
-    if (params?.endDate) query.set('endDate', params.endDate);
-    if (params?.search) query.set('search', params.search);
-
-    const res = await fetch(`${API_URL}/audit-logs/finance/export?${query.toString()}`, {
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    });
-    if (!res.ok) throw new Error('Export failed');
-
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  getAuditLogActors: () => {
+    return api.get<Array<{ id: string; name: string; email: string }>>(
+      '/audit-logs/finance/actors',
+    );
   },
 
-  exportAuditLogsPdf: async (params?: {
+  getAuditLogSummary: (params?: {
     entityType?: string;
     action?: string;
+    actorId?: string;
     startDate?: string;
     endDate?: string;
     search?: string;
   }) => {
+    const sp = new URLSearchParams();
+    if (params?.entityType) sp.set('entityType', params.entityType);
+    if (params?.action) sp.set('action', params.action);
+    if (params?.actorId) sp.set('actorId', params.actorId);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    if (params?.search) sp.set('search', params.search);
+    const qs = sp.toString();
+    return api.get<{
+      totalEvents: number;
+      uniqueActors: number;
+      topActions: Array<{ action: string; count: number }>;
+      topEntityTypes: Array<{ entityType: string; count: number }>;
+    }>(`/audit-logs/finance/summary${qs ? `?${qs}` : ''}`);
+  },
+
+  /**
+   * Unified audit log export — XLSX / CSV / PDF in one call. Backend
+   * self-audits every download (entity type `audit_log_export`).
+   */
+  downloadAuditLog: async (
+    format: 'csv' | 'xlsx' | 'pdf',
+    params?: {
+      entityType?: string;
+      action?: string;
+      actorId?: string;
+      startDate?: string;
+      endDate?: string;
+      search?: string;
+    },
+  ) => {
     const token = getAccessToken();
-    const query = new URLSearchParams({ format: 'pdf' });
+    const query = new URLSearchParams({ format });
     if (params?.entityType) query.set('entityType', params.entityType);
     if (params?.action) query.set('action', params.action);
+    if (params?.actorId) query.set('actorId', params.actorId);
     if (params?.startDate) query.set('startDate', params.startDate);
     if (params?.endDate) query.set('endDate', params.endDate);
     if (params?.search) query.set('search', params.search);
@@ -8250,7 +8260,8 @@ export const financeApi = {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.pdf`;
+    const ext = format === 'xlsx' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
+    a.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.${ext}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

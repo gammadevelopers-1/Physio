@@ -2,16 +2,25 @@ import {
   Controller,
   Get,
   Query,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuditLogService } from './audit-logs.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+
+function extractIp(req: Request): string {
+  return (
+    req.ip ||
+    (req.connection as { remoteAddress?: string } | undefined)?.remoteAddress ||
+    'unknown'
+  );
+}
 
 @Controller('audit-logs')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -28,34 +37,98 @@ export class AuditLogController {
   }
 
   /**
-   * GET /audit-logs/finance/export — NELC-compliant CSV/PDF export
+   * GET /audit-logs/finance/actors — distinct humans who have performed any
+   * finance-scoped action. Powers the Actor filter dropdown.
+   */
+  @Roles('FINANCE' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('finance/actors')
+  async getFinanceActors() {
+    return this.auditLogService.getFinanceActors();
+  }
+
+  /**
+   * GET /audit-logs/finance/summary — KPI rollup for the page header.
+   * Honours every list filter so the cards always reflect the active view.
+   */
+  @Roles('FINANCE' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('finance/summary')
+  async getFinanceSummary(
+    @Query('entityType') entityType?: string,
+    @Query('action') action?: string,
+    @Query('actorId') actorId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.auditLogService.getFinanceSummary({
+      entityType, action, actorId, startDate, endDate, search,
+    });
+  }
+
+  /**
+   * GET /audit-logs/finance/export — NELC-compliant XLSX / CSV / PDF export.
+   *
+   * Meta-audited: every successful export writes its own audit row
+   * (entity type `audit_log_export`) so compliance can see who pulled the
+   * audit trail, with what filters, from which IP.
    */
   @Roles('FINANCE' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   @Get('finance/export')
   async exportAuditLogs(
     @Res() res: Response,
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Query('format') format?: string,
     @Query('entityType') entityType?: string,
     @Query('action') action?: string,
+    @Query('actorId') actorId?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('search') search?: string,
   ) {
-    const filters = { entityType, action, startDate, endDate, search };
+    const filters = { entityType, action, actorId, startDate, endDate, search };
     const dateStr = new Date().toISOString().split('T')[0];
+    const safeFormat = ['xlsx', 'pdf', 'csv'].includes(format || '') ? format! : 'csv';
 
-    if (format === 'pdf') {
-      const buffer = await this.auditLogService.exportAuditPdf(filters, user.id);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="audit-trail-${dateStr}.pdf"`);
-      return res.send(buffer);
+    let body: Buffer | string;
+    let contentType: string;
+    let extension: string;
+    if (safeFormat === 'xlsx') {
+      body = await this.auditLogService.exportAuditXlsx(filters, user.id);
+      contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      extension = 'xlsx';
+    } else if (safeFormat === 'pdf') {
+      body = await this.auditLogService.exportAuditPdf(filters, user.id);
+      contentType = 'application/pdf';
+      extension = 'pdf';
+    } else {
+      body = await this.auditLogService.exportAuditCsv(filters, user.id);
+      contentType = 'text/csv; charset=utf-8';
+      extension = 'csv';
     }
 
-    const csv = await this.auditLogService.exportAuditCsv(filters, user.id);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="audit-trail-${dateStr}.csv"`);
-    return res.send(csv);
+    // Self-audit the export. Failures here are non-fatal — the user still
+    // gets their file, but a logger.error in AuditLogService.log will surface
+    // the write failure for ops review.
+    await this.auditLogService.log({
+      entityType: 'audit_log_export',
+      entityId: `export-${dateStr}-${safeFormat}`,
+      action: 'audit_log_exported',
+      performedBy: user.id,
+      ipAddress: extractIp(req),
+      metadata: {
+        format: safeFormat,
+        filters,
+        rowEstimate: Buffer.isBuffer(body) ? body.length : body.length,
+      },
+    });
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="audit-trail-${dateStr}.${extension}"`,
+    );
+    return res.send(body);
   }
 
   /**
@@ -66,6 +139,7 @@ export class AuditLogController {
   async getFinanceAuditLogs(
     @Query('entityType') entityType?: string,
     @Query('action') action?: string,
+    @Query('actorId') actorId?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('search') search?: string,
@@ -73,7 +147,7 @@ export class AuditLogController {
     @Query('limit') limit?: string,
   ) {
     return this.auditLogService.findAllFinance(
-      { entityType, action, startDate, endDate, search },
+      { entityType, action, actorId, startDate, endDate, search },
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
     );

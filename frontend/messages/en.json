@@ -9672,7 +9672,59 @@
         "unresolved": "Unresolved",
         "missingLocally": "Missing locally",
         "missingOnGateway": "Missing on gateway",
-        "mismatches": "Mismatches"
+        "mismatches": "Mismatches",
+        "sentBack": "Sent back to me"
+      },
+      "advancedScan": "Advanced",
+      "scanFrom": "Scan from",
+      "scanTo": "Scan to",
+      "scanWindowHint": "(default last 7 days)",
+      "scanWindowDefault": "Leave both empty to scan the last 7 days.",
+      "filters": {
+        "title": "Filters",
+        "gateway": "Gateway",
+        "driftType": "Drift type",
+        "fromDate": "Detected from",
+        "toDate": "Detected to",
+        "anyDate": "Any date",
+        "allGateways": "All gateways",
+        "allDriftTypes": "All drift types"
+      },
+      "export": {
+        "xlsx": "Excel",
+        "csv": "CSV",
+        "pdf": "PDF"
+      },
+      "bulk": {
+        "nSelected": "{n} selected",
+        "resolveSelected": "Resolve selected",
+        "ignoreSelected": "Ignore selected",
+        "clear": "Clear",
+        "toggleAll": "Select all visible",
+        "toggleRow": "Select this finding",
+        "resolveTitle": "Resolve {n} findings?",
+        "resolveSubtitle": "Marks every selected unresolved finding as resolved. The note (optional) is applied to all of them.",
+        "resolveConfirm": "Resolve all",
+        "resolveNotePlaceholder": "Optional shared note — e.g. 'Triaged sandbox noise from migration backfill'",
+        "ignoreTitle": "Ignore {n} findings?",
+        "ignoreSubtitle": "Marks every selected unresolved finding as ignored. The note (required, ≥5 chars) is applied to all of them.",
+        "ignoreConfirm": "Ignore all",
+        "ignoreNotePlaceholder": "Required — why are these being ignored? (≥5 chars)"
+      },
+      "glossary": {
+        "openLabel": "Drift type glossary",
+        "title": "Drift type glossary",
+        "subtitle": "Each finding is tagged with one of these eight drift types. They tell you what's mismatched between our records and the gateway.",
+        "definitions": {
+          "missing_local": "Gateway has a record (e.g. a paid invoice), but we don't have a matching payment. Often means the buyer paid but our webhook didn't land — usually needs a manual enrollment.",
+          "missing_gateway": "We have a payment row, but the gateway doesn't know about it. Almost always a test record or an abandoned attempt — safe to ignore once verified.",
+          "amount_mismatch": "Our amount and the gateway's amount differ. Usually a discount or fee was applied on one side only — investigate or refund the difference.",
+          "status_mismatch": "Both sides agree the payment exists but disagree on its state (e.g. we say PENDING, gateway says PAID). Often a missed webhook — refetch should resolve it.",
+          "stuck_pending": "Our payment has been in PENDING for >24h with no terminal status from the gateway. Buyer likely abandoned the flow. Mark failed or refund if needed.",
+          "stuck_approval": "Bank-transfer payment has been awaiting finance approval for >7d. Either approve, reject, or chase the buyer.",
+          "orphan_receipt": "A bank-transfer receipt was uploaded but no enrollment exists. Either approve the receipt or refund.",
+          "paid_no_receipt": "Payment is marked PAID but no receipt was ever uploaded. Possible data issue — investigate before assuming anything."
+        }
       },
       "recentScans": "Recent scans",
       "scanStats": "{scanned} scanned · {drifts} drifts",
@@ -9792,7 +9844,11 @@
         "noteMin5": "Note must be at least 5 characters",
         "escalated": "Escalated to admin",
         "escalateFailed": "Failed to escalate",
-        "noteMin20": "Escalation note must be at least 20 characters"
+        "noteMin20": "Escalation note must be at least 20 characters",
+        "bulkResultFmt": "{op} applied to {transitioned} of {requested} selected",
+        "bulkFailed": "Bulk action failed",
+        "exported": "Findings exported",
+        "exportFailed": "Export failed"
       }
     },
     "auditLog": {

@@ -27,6 +27,7 @@ import { TabbyGateway } from '../gateways/tabby.gateway';
 import { NormalizedPaymentStatus } from '../gateways/gateway-types';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
+import { FinanceService } from '../services/finance.service';
 
 const MOYASAR_TERMINAL_STATUSES = new Set(['paid', 'captured', 'failed', 'refunded']);
 
@@ -65,6 +66,7 @@ export class ReconciliationService {
     private readonly tamara: TamaraGateway,
     private readonly tabby: TabbyGateway,
     private readonly auditLogService: AuditLogService,
+    private readonly financeService: FinanceService,
   ) {}
 
   // ─── Scan entry point ────────────────────────────────────────────────
@@ -745,6 +747,8 @@ export class ReconciliationService {
     status?: 'unresolved' | 'resolved' | 'ignored' | 'all';
     gateway?: string;
     driftType?: string;
+    fromDate?: string;
+    toDate?: string;
     page?: number;
     limit?: number;
   }) {
@@ -760,11 +764,19 @@ export class ReconciliationService {
         eq(reconciliationFindings.status, RECONCILIATION_STATUS.UNRESOLVED),
       );
     }
-    if (opts.gateway) {
+    if (opts.gateway && opts.gateway !== 'all') {
       conditions.push(eq(reconciliationFindings.gateway, opts.gateway));
     }
-    if (opts.driftType) {
+    if (opts.driftType && opts.driftType !== 'all') {
       conditions.push(eq(reconciliationFindings.driftType, opts.driftType));
+    }
+    if (opts.fromDate) {
+      conditions.push(gte(reconciliationFindings.createdAt, new Date(opts.fromDate)));
+    }
+    if (opts.toDate) {
+      const end = new Date(opts.toDate);
+      end.setHours(23, 59, 59, 999);
+      conditions.push(lte(reconciliationFindings.createdAt, end));
     }
     const whereExpr = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -952,5 +964,170 @@ export class ReconciliationService {
       );
     }
     return { id: updated.id, status: updated.status };
+  }
+
+  // ─── Bulk operations ────────────────────────────────────────────────
+
+  /**
+   * Resolve or ignore many findings at once. A single shared note is applied
+   * to every selected finding (operator types it once in the bulk modal).
+   * Only UNRESOLVED findings are transitioned — any already-resolved /
+   * ignored / escalated ids are silently skipped, and we report the actual
+   * count of state changes so the UI can show "resolved 27 of 30 selected".
+   *
+   * `op='ignore'` enforces the same ≥5-char note requirement as the single
+   * ignore path; for bulk-resolve the note is optional.
+   */
+  async bulkTransition(args: {
+    ids: string[];
+    op: 'resolve' | 'ignore';
+    note: string | undefined;
+    user: AuthenticatedUser;
+    ipAddress?: string;
+  }) {
+    const { ids, op, note, user, ipAddress } = args;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new BadRequestException('No finding IDs supplied');
+    }
+    if (ids.length > 200) {
+      throw new BadRequestException(
+        `Bulk operations are capped at 200 findings per call (got ${ids.length})`,
+      );
+    }
+    if (op === 'ignore' && (!note || note.trim().length < 5)) {
+      throw new BadRequestException(
+        'Bulk-ignore requires a note (≥5 chars) explaining why these findings are being ignored',
+      );
+    }
+    const newStatus =
+      op === 'resolve' ? RECONCILIATION_STATUS.RESOLVED : RECONCILIATION_STATUS.IGNORED;
+
+    const updated = await db
+      .update(reconciliationFindings)
+      .set({
+        status: newStatus,
+        resolutionNote: note?.trim() || null,
+        resolvedBy: user.id,
+        resolvedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          inArray(reconciliationFindings.id, ids),
+          eq(reconciliationFindings.status, RECONCILIATION_STATUS.UNRESOLVED),
+        ),
+      )
+      .returning({ id: reconciliationFindings.id });
+
+    // One audit row per finding so each row stays independently traceable —
+    // the finance auditor can still query "what happened to finding X" without
+    // wading through a bulk-batch metadata blob.
+    if (updated.length > 0) {
+      const auditAction =
+        op === 'resolve' ? 'reconciliation_resolved' : 'reconciliation_ignored';
+      await Promise.all(
+        updated.map((u) =>
+          this.auditLogService.log({
+            entityType: 'reconciliation_finding',
+            entityId: u.id,
+            action: auditAction,
+            performedBy: user.id,
+            ipAddress,
+            metadata: { note: note?.trim() || null, bulk: true, batchSize: ids.length },
+          }),
+        ),
+      );
+    }
+
+    return {
+      requested: ids.length,
+      transitioned: updated.length,
+      skipped: ids.length - updated.length,
+      status: newStatus,
+    };
+  }
+
+  // ─── Findings export (CSV / XLSX / PDF) ─────────────────────────────
+
+  /**
+   * Export the current findings view to file. Uses the same filters as
+   * `listFindings` but skips pagination (caps at 5000 rows — enough for any
+   * realistic audit pull). Renders through FinanceService so styling +
+   * branding match the rest of the finance section.
+   */
+  async exportFindings(args: {
+    format: 'csv' | 'xlsx' | 'pdf';
+    status?: 'unresolved' | 'resolved' | 'ignored' | 'all';
+    gateway?: string;
+    driftType?: string;
+    fromDate?: string;
+    toDate?: string;
+    user: AuthenticatedUser;
+  }): Promise<{ contentType: string; filename: string; body: Buffer | string }> {
+    const { format, user, ...filters } = args;
+    const list = await this.listFindings({ ...filters, page: 1, limit: 5000 });
+    const rows = list.data;
+
+    const headers = [
+      'Detected',
+      'Drift',
+      'Gateway',
+      'Customer',
+      'Course',
+      'Local PaymentID',
+      'GatewayChargeID',
+      'Status',
+      'Resolution Note',
+    ];
+
+    const data: (string | number | null)[][] = rows.map((r) => [
+      r.createdAt ? new Date(r.createdAt).toISOString() : '',
+      r.driftType,
+      r.gateway,
+      r.userName || r.userEmail || '',
+      r.courseTitle || '',
+      r.paymentId || '',
+      r.gatewayChargeId || '',
+      r.status,
+      r.resolutionNote || '',
+    ]);
+
+    const title = 'Reconciliation Findings';
+    const dateStr = new Date().toISOString().split('T')[0];
+
+    let body: Buffer | string;
+    let contentType: string;
+    let extension: string;
+    switch (format) {
+      case 'xlsx':
+        body = await this.financeService.buildXlsx(
+          title, headers, data, 'reconciliationFindings',
+          filters.fromDate, filters.toDate, user.id,
+        );
+        contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        extension = 'xlsx';
+        break;
+      case 'pdf':
+        body = await this.financeService.buildPdf(
+          title, headers, data, 'reconciliationFindings',
+          filters.fromDate, filters.toDate, user.id,
+        );
+        contentType = 'application/pdf';
+        extension = 'pdf';
+        break;
+      default:
+        body = this.financeService.buildCsv(
+          title, headers, data, 'reconciliationFindings',
+          filters.fromDate, filters.toDate, user.id,
+        );
+        contentType = 'text/csv; charset=utf-8';
+        extension = 'csv';
+        break;
+    }
+    return {
+      contentType,
+      filename: `reconciliation-findings-${dateStr}.${extension}`,
+      body,
+    };
   }
 }

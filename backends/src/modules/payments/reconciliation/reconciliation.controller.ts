@@ -6,12 +6,13 @@ import {
   Body,
   Param,
   Query,
+  Res,
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
   Req,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { ReconciliationService } from './reconciliation.service';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
@@ -41,10 +42,47 @@ export class ReconciliationController {
     @Query('status') status?: 'unresolved' | 'resolved' | 'ignored' | 'all',
     @Query('gateway') gateway?: string,
     @Query('driftType') driftType?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit = 20,
   ) {
-    return this.service.listFindings({ status, gateway, driftType, page, limit });
+    return this.service.listFindings({
+      status, gateway, driftType, fromDate, toDate, page, limit,
+    });
+  }
+
+  /**
+   * CSV / XLSX / PDF export of the current findings view. Honours the same
+   * filters as listFindings; caps at 5000 rows. Rendered through the shared
+   * FinanceService export pipeline so styling matches Reports-page exports.
+   */
+  @Get('findings/export')
+  async exportFindings(
+    @Res() res: Response,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('format') format?: string,
+    @Query('status') status?: 'unresolved' | 'resolved' | 'ignored' | 'all',
+    @Query('gateway') gateway?: string,
+    @Query('driftType') driftType?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+  ) {
+    const safeFormat = (['csv', 'xlsx', 'pdf'] as const).includes(format as any)
+      ? (format as 'csv' | 'xlsx' | 'pdf')
+      : 'csv';
+    const result = await this.service.exportFindings({
+      format: safeFormat,
+      status,
+      gateway,
+      driftType,
+      fromDate,
+      toDate,
+      user,
+    });
+    res.setHeader('Content-Type', result.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    return res.send(result.body);
   }
 
   /**
@@ -101,5 +139,52 @@ export class ReconciliationController {
       (req.connection as { remoteAddress?: string } | undefined)?.remoteAddress ||
       'unknown';
     return this.service.ignoreFinding(findingId, user, body.note, ip);
+  }
+
+  // ─── Bulk operations ────────────────────────────────────────────────
+  // Single shared note across all selected findings (confirmed product
+  // choice — per-finding notes defeat the point of bulk for the common
+  // "triaging sandbox noise" workflow). Already-handled findings are
+  // skipped silently and reported in the response so the UI can show
+  // "resolved 27 of 30 selected".
+
+  @Patch('findings/bulk-resolve')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async bulkResolve(
+    @Body() body: { ids: string[]; note?: string },
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    const ip =
+      req.ip ||
+      (req.connection as { remoteAddress?: string } | undefined)?.remoteAddress ||
+      'unknown';
+    return this.service.bulkTransition({
+      ids: body?.ids || [],
+      op: 'resolve',
+      note: body?.note,
+      user,
+      ipAddress: ip,
+    });
+  }
+
+  @Patch('findings/bulk-ignore')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async bulkIgnore(
+    @Body() body: { ids: string[]; note?: string },
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    const ip =
+      req.ip ||
+      (req.connection as { remoteAddress?: string } | undefined)?.remoteAddress ||
+      'unknown';
+    return this.service.bulkTransition({
+      ids: body?.ids || [],
+      op: 'ignore',
+      note: body?.note,
+      user,
+      ipAddress: ip,
+    });
   }
 }

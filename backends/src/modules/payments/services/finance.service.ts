@@ -1622,6 +1622,94 @@ export class FinanceService {
     return lines.join('\n');
   }
 
+  /**
+   * Per-report PDF layout: which columns to keep (by index into the full
+   * headers/rows array) and how wide each kept column should be.
+   *
+   * Widths must sum to 760 (landscape-A4 content width with 40px side
+   * margins). CSV/XLSX exports always include every column — these layouts
+   * only trim what would be unreadable on a printed page (UUIDs, duplicate
+   * timestamps, secondary metadata).
+   *
+   * Reports not listed here fall back to even-split across all columns.
+   */
+  private readonly PDF_LAYOUTS: Record<string, { keep: number[]; widths: number[] }> = {
+    // headers: Type, Bucket, Count, Amount, '' — drop the trailing spacer
+    revenue: { keep: [0, 1, 2, 3], widths: [120, 280, 140, 220] },
+
+    // headers: RefundID, Requester, Email, Course, Gateway, Reason,
+    //          Amount, FeeBorne, Status, Agent, Created, Completed
+    // print-essentials: Requester, Course, Gateway, Reason, Amount, Status, Agent, Created
+    refunds: { keep: [1, 3, 4, 5, 6, 8, 9, 10], widths: [110, 150, 70, 90, 80, 80, 100, 80] },
+
+    // headers: PaymentID, Buyer, Email, Course, Gateway, Method, Amount,
+    //          Status, GatewayRef, Created, Paid
+    // print-essentials: Buyer, Course, Gateway, Method, Amount, Status, Paid
+    payments: { keep: [1, 3, 4, 5, 6, 7, 10], widths: [130, 180, 70, 70, 90, 90, 130] },
+
+    // headers: Course, Delivery, Units Sold, Gross, Refunds, Net
+    courseSales: { keep: [0, 1, 2, 3, 4, 5], widths: [240, 80, 90, 110, 110, 130] },
+
+    // headers: Course, Session, Scheduled, Total Reg, Paid Reg, Revenue
+    webinarSales: { keep: [0, 1, 2, 3, 4, 5], widths: [160, 160, 130, 100, 100, 110] },
+
+    // headers: Student, Email, Payments, Courses, Total Paid, Refunded, Net, Last Purchase
+    studentPurchases: { keep: [0, 2, 3, 4, 5, 6, 7], widths: [150, 80, 80, 110, 110, 110, 120] },
+
+    // headers: When, Actor, Email, Action, Entity, EntityID, IP
+    financeActivity: { keep: [0, 1, 3, 4, 6], widths: [140, 150, 200, 140, 130] },
+
+    // headers: Period, Invoices, Taxable Base, VAT 15%, Total
+    vat: { keep: [0, 1, 2, 3, 4], widths: [110, 110, 180, 160, 200] },
+
+    // headers: Detected, Drift, Gateway, Customer, Course, ChargeID, Status, Note
+    // (used by ReconciliationService.exportFindings — defined here so the
+    //  PDF style/layout stays consistent across the whole finance section).
+    reconciliationFindings: { keep: [0, 1, 2, 3, 4, 6, 7], widths: [110, 100, 70, 130, 160, 80, 110] },
+  };
+
+  // ── Public export builders (used by ReconciliationService too) ───
+  // Visibility deliberately public: ReconciliationService injects this
+  // service to reuse the same CSV/XLSX/PDF styling for its own findings
+  // export. Inlining the renderers there would duplicate ~150 lines of
+  // PDFKit layout code.
+
+  buildCsv(
+    title: string,
+    headers: string[],
+    rows: (string | number | null)[][],
+    reportType: string,
+    startDate?: string,
+    endDate?: string,
+    userId?: string,
+  ): string {
+    return this.buildCsvExport(title, headers, rows, reportType, startDate, endDate, userId);
+  }
+
+  buildXlsx(
+    title: string,
+    headers: string[],
+    rows: (string | number | null)[][],
+    reportType: string,
+    startDate?: string,
+    endDate?: string,
+    userId?: string,
+  ): Promise<Buffer> {
+    return this.buildExcelExport(title, headers, rows, reportType, startDate, endDate, userId);
+  }
+
+  buildPdf(
+    title: string,
+    headers: string[],
+    rows: (string | number | null)[][],
+    reportType: string,
+    startDate?: string,
+    endDate?: string,
+    userId?: string,
+  ): Promise<Buffer> {
+    return this.buildPdfExport(title, headers, rows, reportType, startDate, endDate, userId);
+  }
+
   private buildPdfExport(
     title: string,
     headers: string[],
@@ -1633,72 +1721,115 @@ export class FinanceService {
   ): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
+        // ── Layout: drop noise columns + give the rest proportional widths.
+        // Falls back to even-split for any report not yet in the map.
+        const layout = this.PDF_LAYOUTS[reportType];
+        const keep = layout ? layout.keep : headers.map((_, i) => i);
+        const colHeaders = keep.map((i) => headers[i]);
+        const colRows = rows.map((r) => keep.map((i) => r[i]));
+        const colWidths = layout
+          ? layout.widths
+          : keep.map(() => Math.floor(760 / keep.length));
+
+        // Right-align numeric columns. Detected from the first non-null value
+        // in each column — works for both the 8 spec reports (where most
+        // numeric cols are derived from amounts/counts) and the legacy ones.
+        const colAlignments = colHeaders.map((_, i) => {
+          for (const r of colRows) {
+            if (r[i] != null) return typeof r[i] === 'number' ? 'right' : 'left';
+          }
+          return 'left';
+        });
+
+        // Column x-offsets (absolute, in PDF points)
+        const colX: number[] = [];
+        let xCursor = 40;
+        for (const w of colWidths) {
+          colX.push(xCursor);
+          xCursor += w;
+        }
+
         const doc = new PDFDocument({ size: 'A4', margin: 40, layout: 'landscape' });
         const chunks: Buffer[] = [];
         doc.on('data', (chunk: Buffer) => chunks.push(chunk));
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
 
-        // Header with Gamma branding
+        // ── Branding / report header ────────────────────────────────
         doc.font('Helvetica-Bold').fontSize(16)
           .text(`PhysioGuidance — ${title}`, 40, 40);
-        doc.font('Helvetica').fontSize(8)
+        doc.font('Helvetica').fontSize(8).fillColor('#666666')
           .text('Gamma Developers  |  PhysioGuidance Platform', 40, 58);
-        doc.font('Helvetica').fontSize(9)
-          .text(`Generated: ${new Date().toISOString()}  |  Generated by: ${userId || 'system'}  |  NELC Audit Evidence`, 40, 70);
-
+        doc.fillColor('#000000').fontSize(9)
+          .text(
+            `Generated: ${new Date().toISOString()}  |  Generated by: ${userId || 'system'}  |  NELC Audit Evidence`,
+            40, 70,
+          );
         if (startDate || endDate) {
           doc.text(`Date Range: ${startDate || 'beginning'} → ${endDate || 'now'}`, 40, 82);
         }
+        doc.moveTo(40, 96).lineTo(800, 96).stroke('#CCCCCC');
 
-        doc.moveTo(40, 96).lineTo(800, 96).stroke();
+        // ── Table header (light-fill band) ─────────────────────────
+        const drawHeader = (y: number) => {
+          doc.rect(40, y - 3, 760, 18).fill('#F3F4F6');
+          doc.fillColor('#111827').font('Helvetica-Bold').fontSize(8);
+          colHeaders.forEach((h, i) => {
+            doc.text(String(h), colX[i] + 4, y + 1, {
+              width: colWidths[i] - 8,
+              align: colAlignments[i] as 'left' | 'right',
+            });
+          });
+          doc.fillColor('#000000');
+          return y + 18;
+        };
 
-        // Calculate column widths
-        const colCount = headers.length;
-        const totalWidth = 760;
-        const colWidth = Math.floor(totalWidth / colCount);
+        let y = 108;
+        y = drawHeader(y);
 
-        // Table header
-        let y = 104;
-        doc.font('Helvetica-Bold').fontSize(8);
-        headers.forEach((h, i) => {
-          doc.text(h, 40 + i * colWidth, y, { width: colWidth });
-        });
-        y += 14;
-        doc.moveTo(40, y).lineTo(800, y).stroke();
-        y += 4;
-
-        // Data rows
+        // ── Data rows (alternating stripe, right-aligned numerics) ──
         doc.font('Helvetica').fontSize(7.5);
         const truncate = (s: string | number | null | undefined, len: number) => {
           const str = String(s ?? '—');
           return str.length > len ? str.substring(0, len - 1) + '…' : str;
         };
+        // Char budget per column ≈ width / 4.2 at 7.5pt; pad a little so
+        // descenders don't get clipped.
+        const charBudget = colWidths.map((w) => Math.max(8, Math.floor((w - 8) / 4.2)));
 
-        for (const row of rows) {
+        const ROW_HEIGHT = 16;
+        for (let ri = 0; ri < colRows.length; ri++) {
           if (y > 530) {
             doc.addPage({ size: 'A4', layout: 'landscape', margin: 40 });
-            y = 40;
-            doc.font('Helvetica-Bold').fontSize(8);
-            headers.forEach((h, i) => {
-              doc.text(h, 40 + i * colWidth, y, { width: colWidth });
-            });
-            y += 14;
-            doc.moveTo(40, y).lineTo(800, y).stroke();
-            y += 4;
+            y = drawHeader(40);
             doc.font('Helvetica').fontSize(7.5);
           }
 
-          row.forEach((cell, i) => {
-            const val = typeof cell === 'number' ? cell.toLocaleString('en-US', { maximumFractionDigits: 2 }) : truncate(cell, 30);
-            doc.text(val, 40 + i * colWidth, y, { width: colWidth });
+          // Subtle zebra striping
+          if (ri % 2 === 1) {
+            doc.rect(40, y - 2, 760, ROW_HEIGHT).fill('#FAFAFA');
+            doc.fillColor('#000000');
+          }
+
+          colRows[ri].forEach((cell, i) => {
+            const val =
+              typeof cell === 'number'
+                ? cell.toLocaleString('en-US', {
+                    minimumFractionDigits: Number.isInteger(cell) ? 0 : 2,
+                    maximumFractionDigits: 2,
+                  })
+                : truncate(cell, charBudget[i]);
+            doc.text(val, colX[i] + 4, y + 2, {
+              width: colWidths[i] - 8,
+              align: colAlignments[i] as 'left' | 'right',
+            });
           });
-          y += 13;
+          y += ROW_HEIGHT;
         }
 
-        // Footer
-        doc.moveTo(40, y + 4).lineTo(800, y + 4).stroke();
-        doc.font('Helvetica-Bold').fontSize(8)
+        // ── Footer summary ─────────────────────────────────────────
+        doc.moveTo(40, y + 4).lineTo(800, y + 4).stroke('#CCCCCC');
+        doc.font('Helvetica-Bold').fontSize(8).fillColor('#374151')
           .text(`Total rows: ${rows.length}`, 40, y + 10);
 
         doc.end();

@@ -7258,14 +7258,18 @@ export const reconciliationApi = {
   listFindings: (opts: {
     status?: ReconciliationFindingStatus | 'all';
     gateway?: string;
-    driftType?: ReconciliationDriftType;
+    driftType?: ReconciliationDriftType | 'all';
+    fromDate?: string;
+    toDate?: string;
     page?: number;
     limit?: number;
   } = {}) => {
     const sp = new URLSearchParams();
     if (opts.status) sp.set('status', opts.status);
-    if (opts.gateway) sp.set('gateway', opts.gateway);
-    if (opts.driftType) sp.set('driftType', opts.driftType);
+    if (opts.gateway && opts.gateway !== 'all') sp.set('gateway', opts.gateway);
+    if (opts.driftType && opts.driftType !== 'all') sp.set('driftType', opts.driftType);
+    if (opts.fromDate) sp.set('fromDate', opts.fromDate);
+    if (opts.toDate) sp.set('toDate', opts.toDate);
     sp.set('page', String(opts.page ?? 1));
     sp.set('limit', String(opts.limit ?? 20));
     return api.get<{
@@ -7293,6 +7297,53 @@ export const reconciliationApi = {
       `/payments/reconciliation/findings/${findingId}/ignore`,
       { note },
     ),
+
+  bulkResolve: (ids: string[], note?: string) =>
+    api.patch<{ requested: number; transitioned: number; skipped: number; status: string }>(
+      '/payments/reconciliation/findings/bulk-resolve',
+      { ids, note },
+    ),
+
+  bulkIgnore: (ids: string[], note: string) =>
+    api.patch<{ requested: number; transitioned: number; skipped: number; status: string }>(
+      '/payments/reconciliation/findings/bulk-ignore',
+      { ids, note },
+    ),
+
+  /**
+   * Download the current findings view as CSV / XLSX / PDF. Triggers a
+   * browser download — returns nothing on success.
+   */
+  exportFindings: async (
+    format: 'csv' | 'xlsx' | 'pdf',
+    filters: {
+      status?: ReconciliationFindingStatus | 'all';
+      gateway?: string;
+      driftType?: ReconciliationDriftType | 'all';
+      fromDate?: string;
+      toDate?: string;
+    } = {},
+  ) => {
+    const token = getAccessToken();
+    const sp = new URLSearchParams({ format });
+    for (const [k, v] of Object.entries(filters)) {
+      if (v !== undefined && v !== null && v !== '' && v !== 'all') sp.set(k, String(v));
+    }
+    const res = await fetch(`${API_URL}/payments/reconciliation/findings/export?${sp.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const ext = format === 'xlsx' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
+    a.download = `reconciliation-findings-${new Date().toISOString().slice(0, 10)}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 // ===========================================

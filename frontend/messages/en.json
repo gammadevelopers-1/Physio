@@ -9667,6 +9667,12 @@
         "summaryReceiveHeader": "When approved, customer receives:",
         "summaryOfPayment": "of payment",
         "summaryGatewayFee": "gateway fee",
+        "summaryCustomerHeader": "Customer refund",
+        "summaryCustomerLine": "The customer always receives 100% of the payment — no deductions, regardless of gateway.",
+        "summaryMerchantHeader": "Merchant settlement fees",
+        "summaryMerchantNote": "Fees retained by the gateway on settlement. Paid by PhysioGuidance, NOT deducted from the learner.",
+        "summaryMerchantLine": "{pct}% of the refunded amount",
+        "summaryNoMerchantFee": "No merchant settlement fees configured on any gateway.",
         "rules": {
           "blockAfterCourseStart": {
             "label": "Block refund after course start date",
@@ -9702,6 +9708,7 @@
         "bankTransfer": "Bank Transfer",
         "deductionPercent": "Deduction %",
         "allowPartial": "Allow partial refund",
+        "partialLockedByGateway": "Not supported by gateway — Tamara and Tabby reject partial-refund API calls.",
         "save": "Save Policy",
         "lastUpdatedBy": "Last updated by {who} on {when}",
         "neverSaved": "Defaults — never saved",

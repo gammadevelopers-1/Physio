@@ -667,6 +667,13 @@ const REFUND_GATEWAYS: Array<{
   { key: "bank_transfer", labelKey: "bankTransfer", color: "bg-[#4338CA]", icon: Building2 },
 ];
 
+// BNPL gateways don't accept partial-refund API calls — keep the UI in
+// lock-step with the backend's enforced policy.
+const NO_PARTIAL_REFUND_GATEWAYS: ReadonlySet<RefundGatewayKey> = new Set([
+  "tamara",
+  "tabby",
+]);
+
 const RULE_KEYS = [
   "blockAfterCourseStart",
   "blockAfterAttendance",
@@ -860,17 +867,35 @@ export const RefundPolicyView = () => {
                       <span className="absolute top-1/2 -translate-y-1/2 right-3 text-xs text-[var(--color-text-secondary)]">%</span>
                     </div>
                   </div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={cfg.partialRefundCapable}
-                      onChange={(e) => setGatewayField(gw.key, "partialRefundCapable", e.target.checked)}
-                      className="w-4 h-4 accent-[var(--color-primary)]"
-                    />
-                    <span className="text-[12px] text-[var(--color-text-primary)]">
-                      {t("allowPartial")}
-                    </span>
-                  </label>
+                  {(() => {
+                    const lockedOff = NO_PARTIAL_REFUND_GATEWAYS.has(gw.key);
+                    return (
+                      <div>
+                        <label
+                          className={`flex items-center gap-2 ${
+                            lockedOff ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                          }`}
+                          title={lockedOff ? t("partialLockedByGateway") : undefined}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={lockedOff ? false : cfg.partialRefundCapable}
+                            disabled={lockedOff}
+                            onChange={(e) => setGatewayField(gw.key, "partialRefundCapable", e.target.checked)}
+                            className="w-4 h-4 accent-[var(--color-primary)]"
+                          />
+                          <span className="text-[12px] text-[var(--color-text-primary)]">
+                            {t("allowPartial")}
+                          </span>
+                        </label>
+                        {lockedOff && (
+                          <p className="text-[11px] text-[var(--color-text-secondary)] mt-1 ms-6">
+                            {t("partialLockedByGateway")}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -899,22 +924,47 @@ export const RefundPolicyView = () => {
               <li className="italic">{t("summary.noRules")}</li>
             )}
         </ul>
-        <p className="text-[13px] text-[var(--color-text-primary)] mb-2">{t("summaryReceiveHeader")}</p>
-        <ul className="space-y-1 text-[13px] text-[var(--color-text-secondary)] ms-4 list-disc">
-          {REFUND_GATEWAYS.map((gw) => {
-            const cfg = draft.perGateway[gw.key];
-            const pct = 100 - cfg.deductionPercent;
-            const tail = cfg.deductionPercent > 0
-              ? ` (${cfg.deductionPercent}% ${t("summaryGatewayFee")})`
-              : "";
+        {/* Customer side — always 100%, regardless of gateway. The
+            customer never sees any deduction. */}
+        <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-lg p-3 mb-3">
+          <p className="text-[13px] text-[var(--color-text-primary)]">
+            <span className="font-semibold">{t("summaryCustomerHeader")}:</span>{" "}
+            {t("summaryCustomerLine")}
+          </p>
+        </div>
+
+        {/* Merchant side — only show gateways that actually charge a fee. */}
+        {(() => {
+          const fees = REFUND_GATEWAYS
+            .map((gw) => ({ gw, pct: draft.perGateway[gw.key].deductionPercent }))
+            .filter((row) => row.pct > 0);
+
+          if (fees.length === 0) {
             return (
-              <li key={gw.key}>
-                <span className="font-medium text-[var(--color-text-primary)]">{t(gw.labelKey)}:</span>{" "}
-                {pct}% {t("summaryOfPayment")}{tail}
-              </li>
+              <p className="text-[13px] text-[var(--color-text-secondary)] italic">
+                {t("summaryNoMerchantFee")}
+              </p>
             );
-          })}
-        </ul>
+          }
+          return (
+            <>
+              <p className="text-[13px] text-[var(--color-text-primary)] mb-1">
+                {t("summaryMerchantHeader")}
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)] mb-2">
+                {t("summaryMerchantNote")}
+              </p>
+              <ul className="space-y-1 text-[13px] text-[var(--color-text-secondary)] ms-4 list-disc">
+                {fees.map(({ gw, pct }) => (
+                  <li key={gw.key}>
+                    <span className="font-medium text-[var(--color-text-primary)]">{t(gw.labelKey)}:</span>{" "}
+                    {t("summaryMerchantLine", { pct })}
+                  </li>
+                ))}
+              </ul>
+            </>
+          );
+        })()}
       </section>
 
       <div className="flex items-center justify-between gap-3 pt-2 border-t border-[var(--color-border-subtle)]">

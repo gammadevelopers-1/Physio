@@ -9667,6 +9667,12 @@
         "summaryReceiveHeader": "عند الموافقة، يستلم العميل:",
         "summaryOfPayment": "من قيمة الدفع",
         "summaryGatewayFee": "رسوم البوابة",
+        "summaryCustomerHeader": "استرداد العميل",
+        "summaryCustomerLine": "يستلم العميل دائماً 100% من قيمة الدفع — بدون أي خصم، مهما كانت البوابة.",
+        "summaryMerchantHeader": "رسوم تسوية البوابة",
+        "summaryMerchantNote": "رسوم تحتفظ بها البوابة عند التسوية. تتحمّلها PhysioGuidance، ولا تُخصم من المتعلّم.",
+        "summaryMerchantLine": "{pct}% من المبلغ المُسترد",
+        "summaryNoMerchantFee": "لا توجد رسوم تسوية مُهيّأة على أي بوابة.",
         "rules": {
           "blockAfterCourseStart": {
             "label": "منع الاسترداد بعد تاريخ بدء الدورة",
@@ -9702,6 +9708,7 @@
         "bankTransfer": "تحويل بنكي",
         "deductionPercent": "نسبة الخصم",
         "allowPartial": "السماح بالاسترداد الجزئي",
+        "partialLockedByGateway": "غير مدعوم من البوابة — تمارا وتابي ترفضان طلبات الاسترداد الجزئي عبر API.",
         "save": "حفظ السياسة",
         "lastUpdatedBy": "آخر تحديث بواسطة {who} في {when}",
         "neverSaved": "الإعدادات الافتراضية — لم تُحفظ بعد",

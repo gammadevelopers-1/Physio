@@ -72,6 +72,15 @@ const DEFAULT_POLICY: RefundPolicy = {
   },
 };
 
+// BNPL gateways physically reject partial refund API calls — the API
+// either 4xx's or marks the order as fully refunded anyway. Enforcing
+// this at the policy layer prevents a finance manager from saving a
+// setting that would leave refunds stuck in APPROVED state.
+const NO_PARTIAL_REFUND_GATEWAYS: ReadonlySet<GatewayKey> = new Set([
+  'tamara',
+  'tabby',
+]);
+
 const CATEGORY = 'refund_policy';
 const CACHE_TTL_MS = 30_000;
 
@@ -113,19 +122,20 @@ export class RefundPolicyService {
     ipAddress?: string,
   ): Promise<RefundPolicy> {
     const before = await this.getPolicy();
+    const normalized = this.enforceGatewayConstraints(input);
 
     await db
       .insert(systemSettings)
       .values({
         category: CATEGORY,
-        value: input,
+        value: normalized,
         updatedBy: actorId,
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
         target: systemSettings.category,
         set: {
-          value: input,
+          value: normalized,
           updatedBy: actorId,
           updatedAt: new Date(),
         },
@@ -139,10 +149,10 @@ export class RefundPolicyService {
       action: 'refund_policy_updated',
       performedBy: actorId,
       ipAddress,
-      metadata: { before, after: input },
+      metadata: { before, after: normalized },
     });
 
-    return input;
+    return normalized;
   }
 
   /**
@@ -299,18 +309,37 @@ export class RefundPolicyService {
   }
 
   private mergeWithDefaults(stored: Partial<RefundPolicy> | undefined): RefundPolicy {
-    if (!stored) return DEFAULT_POLICY;
-    return {
-      rules: { ...DEFAULT_POLICY.rules, ...(stored.rules ?? {}) },
-      autoApproveEligible:
-        stored.autoApproveEligible ?? DEFAULT_POLICY.autoApproveEligible,
-      perGateway: {
-        moyasar:       { ...DEFAULT_POLICY.perGateway.moyasar,       ...(stored.perGateway?.moyasar ?? {}) },
-        tamara:        { ...DEFAULT_POLICY.perGateway.tamara,        ...(stored.perGateway?.tamara ?? {}) },
-        tabby:         { ...DEFAULT_POLICY.perGateway.tabby,         ...(stored.perGateway?.tabby ?? {}) },
-        bank_transfer: { ...DEFAULT_POLICY.perGateway.bank_transfer, ...(stored.perGateway?.bank_transfer ?? {}) },
-        mock:          { ...DEFAULT_POLICY.perGateway.mock,          ...(stored.perGateway?.mock ?? {}) },
-      },
-    };
+    const merged: RefundPolicy = !stored
+      ? DEFAULT_POLICY
+      : {
+          rules: { ...DEFAULT_POLICY.rules, ...(stored.rules ?? {}) },
+          autoApproveEligible:
+            stored.autoApproveEligible ?? DEFAULT_POLICY.autoApproveEligible,
+          perGateway: {
+            moyasar:       { ...DEFAULT_POLICY.perGateway.moyasar,       ...(stored.perGateway?.moyasar ?? {}) },
+            tamara:        { ...DEFAULT_POLICY.perGateway.tamara,        ...(stored.perGateway?.tamara ?? {}) },
+            tabby:         { ...DEFAULT_POLICY.perGateway.tabby,         ...(stored.perGateway?.tabby ?? {}) },
+            bank_transfer: { ...DEFAULT_POLICY.perGateway.bank_transfer, ...(stored.perGateway?.bank_transfer ?? {}) },
+            mock:          { ...DEFAULT_POLICY.perGateway.mock,          ...(stored.perGateway?.mock ?? {}) },
+          },
+        };
+    return this.enforceGatewayConstraints(merged);
+  }
+
+  /**
+   * Force `partialRefundCapable: false` on BNPL gateways no matter what's
+   * stored — the upstream Tamara/Tabby APIs don't accept partial refunds,
+   * so honouring a saved `true` would just leave refunds stuck in APPROVED.
+   * Applied on read AND write to keep the cache, the DB row, and the
+   * runtime in sync.
+   */
+  private enforceGatewayConstraints(policy: RefundPolicy): RefundPolicy {
+    const perGateway = { ...policy.perGateway };
+    for (const gw of NO_PARTIAL_REFUND_GATEWAYS) {
+      if (perGateway[gw]) {
+        perGateway[gw] = { ...perGateway[gw], partialRefundCapable: false };
+      }
+    }
+    return { ...policy, perGateway };
   }
 }

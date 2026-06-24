@@ -9514,6 +9514,12 @@
     "settingsPage": {
       "title": "Finance Settings",
       "subtitle": "Manage your profile, security, and finance configuration",
+      "profile": {
+        "saved": "Profile updated successfully",
+        "avatarError": "Failed to update profile picture",
+        "uploadPhoto": "Upload Photo",
+        "removePhoto": "Remove Photo"
+      },
       "tabs": {
         "profile": "Profile",
         "security": "Security",

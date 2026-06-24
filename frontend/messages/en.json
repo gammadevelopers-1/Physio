@@ -6937,6 +6937,20 @@
         "subtitle": "Configure the active payment gateway, credentials, webhook, currency, and bank-transfer details",
         "providerNotConnected": "Live payment provider not yet wired",
         "providerNotConnectedBody": "Settings here are saved but checkout uses the bank-transfer flow until the provider integration goes live. Once credentials are filled in and the gateway is selected, integration can be flipped on.",
+        "liveRuntime": "Live runtime — admin saves go live",
+        "liveRuntimeBody": "Credentials saved here override environment-variable defaults within seconds. Use \"Test connection\" to verify keys before pointing the live cart at them.",
+        "testConnection": "Test connection",
+        "testing": "Testing…",
+        "testSuccess": "Gateway is healthy",
+        "testDegraded": "Gateway reachable but degraded",
+        "testFailed": "Connection test failed",
+        "statusHealthy": "Healthy",
+        "statusDegraded": "Degraded",
+        "statusDown": "Down",
+        "sourceDb": "Source: admin settings",
+        "sourceEnv": "Source: environment",
+        "sourceMixed": "Source: mixed",
+        "saveFirstHint": "Save your changes before testing.",
         "activeGateway": "Active Gateway",
         "activeGatewayHelp": "The gateway selected here is what new checkout sessions use. Existing sessions continue with whatever they started with.",
         "gateway": {
@@ -7896,6 +7910,45 @@
   "financeDashboard": {
     "title": "Finance Dashboard",
     "subtitle": "Welcome back, {name}! Here's your financial overview.",
+    "adminOverride": {
+      "title": "Admin overrides",
+      "subtitle": "Reserved for admin role. Every action is audit-logged with the reason you provide.",
+      "reasonLabel": "Why are you running \"{action}\"?",
+      "reasonPlaceholder": "Justify this admin override in one short sentence…",
+      "reasonHint": "Reason is stored on the audit log and shown to the finance team. Minimum 5 characters.",
+      "reasonTooShort": "Reason must be at least 5 characters.",
+      "cancel": "Cancel",
+      "confirmRun": "Confirm override",
+      "running": "Running…",
+      "genericError": "Override failed. See toast log.",
+      "payment": {
+        "forcePaid": "Force-mark as PAID",
+        "forcePaidDesc": "Triggers enrollment activation + invoice generation. Use only when the gateway webhook never arrived.",
+        "forceFailed": "Force-mark as FAILED",
+        "forceFailedDesc": "Releases the pending payment slot. Cannot be undone.",
+        "replayWebhook": "Replay success webhook",
+        "replayWebhookDesc": "Re-runs invoice generation + confirmation email. Idempotent on a paid payment.",
+        "syncFromGateway": "Sync from gateway",
+        "syncFromGatewayDesc": "Polls the gateway for the live status and applies it locally.",
+        "forcePaidToast": "Payment marked as paid",
+        "forceFailedToast": "Payment marked as failed",
+        "replayWebhookToast": "Webhook replayed",
+        "syncFromGatewayToast": "Synced from gateway"
+      },
+      "invoice": {
+        "forceCancel": "Force-cancel invoice",
+        "forceCancelDesc": "Voids even a paid invoice. Does NOT issue a refund — pair with refund flow if needed.",
+        "regeneratePdf": "Regenerate PDF",
+        "regeneratePdfDesc": "Re-renders using current tax + branding settings. Numerical totals stay frozen via metadata snapshot.",
+        "forceCancelToast": "Invoice cancelled",
+        "regeneratePdfToast": "PDF regenerated"
+      },
+      "refund": {
+        "forceApprove": "Force-approve (bypass policy)",
+        "forceApproveDesc": "Approves even when lifecycle policy blocks (CME granted, attendance recorded, certificate issued). Releases gateway refund immediately.",
+        "forceApproveToast": "Refund approved with policy bypass"
+      }
+    },
     "sidebar": {
       "dashboard": "Dashboard",
       "payments": "Payments",

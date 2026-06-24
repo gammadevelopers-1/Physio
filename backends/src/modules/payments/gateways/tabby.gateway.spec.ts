@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'crypto';
 import { TabbyGateway } from './tabby.gateway';
+import { GatewayCredentialsService } from './gateway-credentials.service';
 import { CreateChargeParams } from './payment-gateway.interface';
 import { PaymentGatewayError } from './payment-gateway.error';
 
@@ -10,16 +10,19 @@ const originalNodeEnv = process.env.NODE_ENV;
 
 const WEBHOOK_SECRET = 'tabby-test-webhook-secret';
 
-const mockConfigService = {
-  get: jest.fn((key: string, fallback?: string) => {
-    if (key === 'payments.tabby.secretKey') return 'sk_test_xxx';
-    if (key === 'payments.tabby.publicKey') return 'pk_test_xxx';
-    if (key === 'payments.tabby.webhookSecret') return WEBHOOK_SECRET;
-    if (key === 'payments.tabby.apiUrl') return 'https://api.tabby.ai/api/v2';
-    if (key === 'payments.tabby.merchantCode') return 'PHYS';
-    return fallback;
-  }),
-};
+function buildCredsMock(overrides: Partial<ReturnType<GatewayCredentialsService['getTabby']>> = {}) {
+  return {
+    getTabby: jest.fn().mockReturnValue({
+      secretKey: 'sk_test_xxx',
+      publicKey: 'pk_test_xxx',
+      webhookSecret: WEBHOOK_SECRET,
+      merchantCode: 'PHYS',
+      apiUrl: 'https://api.tabby.ai/api/v2',
+      source: 'env' as const,
+      ...overrides,
+    }),
+  } as unknown as GatewayCredentialsService;
+}
 
 function okJson(body: any, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -69,7 +72,7 @@ describe('TabbyGateway', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TabbyGateway,
-        { provide: ConfigService, useValue: mockConfigService },
+        { provide: GatewayCredentialsService, useValue: buildCredsMock() },
       ],
     }).compile();
     gateway = module.get<TabbyGateway>(TabbyGateway);
@@ -167,16 +170,10 @@ describe('TabbyGateway', () => {
     });
 
     it('throws gateway_error when merchantCode is missing', async () => {
-      const noMerchantConfig = {
-        get: jest.fn((key: string) => {
-          if (key === 'payments.tabby.merchantCode') return '';
-          return mockConfigService.get(key);
-        }),
-      };
       const mod = await Test.createTestingModule({
         providers: [
           TabbyGateway,
-          { provide: ConfigService, useValue: noMerchantConfig },
+          { provide: GatewayCredentialsService, useValue: buildCredsMock({ merchantCode: '' }) },
         ],
       }).compile();
       const g = mod.get<TabbyGateway>(TabbyGateway);
@@ -240,16 +237,10 @@ describe('TabbyGateway', () => {
     });
 
     it('in production with missing webhook secret returns false', async () => {
-      const noSecretConfig = {
-        get: jest.fn((key: string) => {
-          if (key === 'payments.tabby.webhookSecret') return '';
-          return mockConfigService.get(key);
-        }),
-      };
       const mod = await Test.createTestingModule({
         providers: [
           TabbyGateway,
-          { provide: ConfigService, useValue: noSecretConfig },
+          { provide: GatewayCredentialsService, useValue: buildCredsMock({ webhookSecret: '' }) },
         ],
       }).compile();
       const g = mod.get<TabbyGateway>(TabbyGateway);
@@ -261,16 +252,10 @@ describe('TabbyGateway', () => {
     });
 
     it('in non-prod with missing webhook secret accepts (sandbox affordance)', async () => {
-      const noSecretConfig = {
-        get: jest.fn((key: string) => {
-          if (key === 'payments.tabby.webhookSecret') return '';
-          return mockConfigService.get(key);
-        }),
-      };
       const mod = await Test.createTestingModule({
         providers: [
           TabbyGateway,
-          { provide: ConfigService, useValue: noSecretConfig },
+          { provide: GatewayCredentialsService, useValue: buildCredsMock({ webhookSecret: '' }) },
         ],
       }).compile();
       const g = mod.get<TabbyGateway>(TabbyGateway);

@@ -24,6 +24,16 @@ import {
 export class AdminSettingsService {
   private cache: Map<string, { value: unknown; expiresAt: number }> = new Map();
   private readonly CACHE_TTL_MS = 30_000;
+  /** Callbacks registered per category, invoked after a successful save.
+   *  Used by the payments-gateway credentials cache to invalidate itself
+   *  the instant admin saves new keys (instead of waiting for TTL). */
+  private changeListeners: Map<string, Array<() => void>> = new Map();
+
+  onCategoryChange(category: string, fn: () => void): void {
+    const arr = this.changeListeners.get(category) ?? [];
+    arr.push(fn);
+    this.changeListeners.set(category, arr);
+  }
 
   /** Read one category's JSONB value. Returns {} if the row doesn't exist. */
   async getCategory<T = Record<string, unknown>>(category: string): Promise<T> {
@@ -71,6 +81,13 @@ export class AdminSettingsService {
       .returning();
 
     this.cache.delete(category);
+    for (const fn of this.changeListeners.get(category) ?? []) {
+      try {
+        fn();
+      } catch {
+        // Listener failures are logged elsewhere; never let one rollback the save.
+      }
+    }
     return row;
   }
 

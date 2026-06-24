@@ -25,9 +25,6 @@ import {
   Clock,
   BarChart3,
 } from "lucide-react";
-import FinanceSidebar from "./FinanceSidebar";
-import FinanceMobileSidebar from "./FinanceMobileSidebar";
-import FinanceNavbar from "./FinanceNavbar";
 import DiscountOverviewTab from "./discounts/DiscountOverviewTab";
 import DiscountCodesTab from "./discounts/DiscountCodesTab";
 import CampaignsTabV2 from "./discounts/CampaignsTabV2";
@@ -35,14 +32,19 @@ import CourseSalesTab from "./discounts/CourseSalesTab";
 import EarlyBirdTab from "./discounts/EarlyBirdTab";
 import DiscountDetailDrawerV2 from "./discounts/DiscountDetailDrawerV2";
 import CampaignDetailDrawer from "./discounts/CampaignDetailDrawer";
-import { useFinanceProfile } from "@/hooks/useFinanceProfile";
+import FinancePageShell from "./shared/FinancePageShell";
 
 type TabKey = "overview" | "codes" | "campaigns" | "course-sales" | "early-bird";
 
-const DiscountsContent = () => {
+export interface DiscountsContentProps {
+  /** When true, render only the inner page (no FinanceNavbar/Sidebar). Used
+   *  when an outer dashboard (e.g. AdminFinanceShell) already provides chrome. */
+  embedded?: boolean;
+}
+
+const DiscountsContent = ({ embedded = false }: DiscountsContentProps) => {
   const t = useTranslations("financeDashboard.discountsPage");
   // dir="rtl" on <html> handles RTL ordering — no isRTL needed here.
-  const profile = useFinanceProfile();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -114,21 +116,9 @@ const DiscountsContent = () => {
     { key: "early-bird", label: t("tabs.earlyBird"), icon: Clock },
   ];
 
-  return (
+  const inner = (
     <>
-      <FinanceNavbar profile={profile} />
-
-      <div className="bg-[var(--color-surface-page)] min-h-screen">
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={profile} />
-            </div>
-
-            <FinanceMobileSidebar profile={profile} />
-
-            <div className="flex-1 min-w-0">
-              {/* Page header — flex with no explicit row-reverse; dir="rtl"
+      {/* Page header — flex with no explicit row-reverse; dir="rtl"
                   on <html> already reverses children naturally. */}
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-start gap-3">
@@ -188,11 +178,12 @@ const DiscountsContent = () => {
               {tab === "early-bird" && (
                 <EarlyBirdTab onOpenCoupon={openCouponDrawer} refreshKey={refreshKey} />
               )}
-            </div>
-          </div>
-        </div>
-      </div>
+    </>
+  );
 
+  return (
+    <>
+      {embedded ? inner : <FinancePageShell>{inner}</FinancePageShell>}
       <DiscountDetailDrawerV2
         discountId={drawerCouponId}
         onClose={() => openCouponDrawer(null)}

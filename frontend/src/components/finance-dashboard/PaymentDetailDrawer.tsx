@@ -26,8 +26,10 @@ import {
 import Drawer from "./shared/Drawer";
 import Money from "./shared/Money";
 import GatewayResponseViewer from "./GatewayResponseViewer";
+import AdminOverridePanel, { AdminOverrideAction } from "./shared/AdminOverridePanel";
+import { useIsAdminActor } from "./shared/ActorRoleContext";
 import { FINANCE_COLORS, gatewayColor } from "./shared/financeColors";
-import { paymentApi } from "@/lib/api";
+import { paymentApi, adminFinanceApi } from "@/lib/api";
 
 type Tab = "overview" | "gateway" | "audit";
 
@@ -51,6 +53,8 @@ const STATUS_PILL: Record<string, { bg: string; text: string }> = {
 
 const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) => {
   const t = useTranslations("financeDashboard");
+  const tAdmin = useTranslations("financeDashboard.adminOverride");
+  const isAdmin = useIsAdminActor();
   const locale = useLocale();
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
@@ -117,6 +121,42 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
         ? "awaitingApproval"
         : data?.payment.status || "pending";
   const statusStyle = STATUS_PILL[data?.payment.status || "pending"] || STATUS_PILL.pending;
+
+  const adminActions: AdminOverrideAction[] = paymentId
+    ? [
+        {
+          key: "force-paid",
+          label: tAdmin("payment.forcePaid"),
+          description: tAdmin("payment.forcePaidDesc"),
+          successToast: tAdmin("payment.forcePaidToast"),
+          run: (reason) =>
+            adminFinanceApi.forcePaymentStatus(paymentId, { status: "paid", reason }),
+        },
+        {
+          key: "force-failed",
+          label: tAdmin("payment.forceFailed"),
+          description: tAdmin("payment.forceFailedDesc"),
+          danger: true,
+          successToast: tAdmin("payment.forceFailedToast"),
+          run: (reason) =>
+            adminFinanceApi.forcePaymentStatus(paymentId, { status: "failed", reason }),
+        },
+        {
+          key: "replay-webhook",
+          label: tAdmin("payment.replayWebhook"),
+          description: tAdmin("payment.replayWebhookDesc"),
+          successToast: tAdmin("payment.replayWebhookToast"),
+          run: (reason) => adminFinanceApi.replayPaymentWebhook(paymentId, { reason }),
+        },
+        {
+          key: "sync-from-gateway",
+          label: tAdmin("payment.syncFromGateway"),
+          description: tAdmin("payment.syncFromGatewayDesc"),
+          successToast: tAdmin("payment.syncFromGatewayToast"),
+          run: (reason) => adminFinanceApi.syncPaymentFromGateway(paymentId, { reason }),
+        },
+      ]
+    : [];
 
   return (
     <Drawer
@@ -352,6 +392,16 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                 locale={locale}
                 t={t}
                 onRefresh={fetchAudit}
+              />
+            )}
+
+            {isAdmin && paymentId && (
+              <AdminOverridePanel
+                actions={adminActions}
+                onAfter={() => {
+                  fetchDetail();
+                  if (activeTab === "audit") fetchAudit();
+                }}
               />
             )}
           </div>

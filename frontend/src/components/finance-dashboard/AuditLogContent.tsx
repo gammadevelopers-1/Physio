@@ -3,12 +3,10 @@
 import { useState, useEffect, useCallback, Fragment, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import FinanceSidebar from "./FinanceSidebar";
-import FinanceMobileSidebar from "./FinanceMobileSidebar";
-import FinanceNavbar from "./FinanceNavbar";
 import Select from "@/components/admin-dashboard/Select";
 import DatePicker from "@/components/ui/DatePicker";
 import ExportDropdown from "./shared/ExportDropdown";
+import FinancePageShell from "./shared/FinancePageShell";
 import {
   Shield,
   ShieldCheck,
@@ -29,7 +27,6 @@ import {
   Layers,
 } from "lucide-react";
 import { financeApi } from "@/lib/api";
-import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 import { toast } from "sonner";
 
 interface AuditLogEntry {
@@ -119,11 +116,16 @@ function formatInt(n: number | undefined | null) {
   return (n ?? 0).toLocaleString("en-US");
 }
 
-const AuditLogContent = () => {
+export interface AuditLogContentProps {
+  /** When true, render only the inner page (no FinanceNavbar/Sidebar). Used
+   *  when an outer dashboard (e.g. AdminFinanceShell) already provides chrome. */
+  embedded?: boolean;
+}
+
+const AuditLogContent = ({ embedded = false }: AuditLogContentProps) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = useFinanceProfile();
 
   // ─── Filter state ──────────────────────────────────────────────
   const [entityType, setEntityType] = useState("all");
@@ -308,20 +310,9 @@ const AuditLogContent = () => {
   };
 
   // ─── Render ────────────────────────────────────────────────────
-  return (
+  const inner = (
     <>
-      <FinanceNavbar profile={profile} />
-
-      <div className="bg-[var(--color-surface-page)] min-h-screen">
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={profile} />
-            </div>
-            <FinanceMobileSidebar profile={profile} />
-
-            <div className="flex-1 min-w-0">
-              {/* Page Header */}
+      {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)] flex items-center gap-2">
@@ -666,12 +657,10 @@ const AuditLogContent = () => {
                   </>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </>
   );
+
+  return embedded ? inner : <FinancePageShell>{inner}</FinancePageShell>;
 };
 
 // ─── Sub-components ────────────────────────────────────────────────

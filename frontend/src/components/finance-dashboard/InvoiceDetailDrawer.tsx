@@ -25,8 +25,10 @@ import {
 } from "lucide-react";
 import Drawer from "./shared/Drawer";
 import Money from "./shared/Money";
+import AdminOverridePanel, { AdminOverrideAction } from "./shared/AdminOverridePanel";
+import { useIsAdminActor } from "./shared/ActorRoleContext";
 import { FINANCE_COLORS } from "./shared/financeColors";
-import { invoiceApi } from "@/lib/api";
+import { invoiceApi, adminFinanceApi } from "@/lib/api";
 
 type Tab = "overview" | "items" | "audit" | "pdf";
 
@@ -51,6 +53,8 @@ const InvoiceDetailDrawer = ({
   onChanged,
 }: InvoiceDetailDrawerProps) => {
   const t = useTranslations("financeDashboard");
+  const tAdmin = useTranslations("financeDashboard.adminOverride");
+  const isAdmin = useIsAdminActor();
   const locale = useLocale();
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
@@ -193,6 +197,26 @@ const InvoiceDetailDrawer = ({
   };
 
   const canCancel = data && status !== "cancelled" && status !== "refunded";
+
+  const adminActions: AdminOverrideAction[] = invoiceId
+    ? [
+        {
+          key: "force-cancel",
+          label: tAdmin("invoice.forceCancel"),
+          description: tAdmin("invoice.forceCancelDesc"),
+          danger: true,
+          successToast: tAdmin("invoice.forceCancelToast"),
+          run: (reason) => adminFinanceApi.forceCancelInvoice(invoiceId, { reason }),
+        },
+        {
+          key: "regenerate-pdf",
+          label: tAdmin("invoice.regeneratePdf"),
+          description: tAdmin("invoice.regeneratePdfDesc"),
+          successToast: tAdmin("invoice.regeneratePdfToast"),
+          run: (reason) => adminFinanceApi.regenerateInvoicePdf(invoiceId, { reason }),
+        },
+      ]
+    : [];
 
   return (
     <Drawer
@@ -539,6 +563,21 @@ const InvoiceDetailDrawer = ({
                   </>
                 )}
               </Card>
+            )}
+
+            {isAdmin && invoiceId && (
+              <AdminOverridePanel
+                actions={adminActions}
+                onAfter={() => {
+                  fetchDetail();
+                  if (activeTab === "audit") fetchAudit();
+                  if (activeTab === "pdf") {
+                    setPdfUrl(null);
+                    fetchPdf();
+                  }
+                  onChanged?.();
+                }}
+              />
             )}
           </div>
 

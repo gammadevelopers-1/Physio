@@ -14,6 +14,7 @@ import { BankTransferController } from './bank-transfer/bank-transfer.controller
 import { ReconciliationController } from './reconciliation/reconciliation.controller';
 import { EscalationsController } from './reconciliation/escalations.controller';
 import { ReconciliationCronController } from './reconciliation/reconciliation-cron.controller';
+import { AdminFinanceController } from './admin/admin-finance.controller';
 
 // Services
 import { PaymentsService } from './payments.service';
@@ -50,6 +51,8 @@ import { EmailModule } from '../email/email.module';
 import { SiteSettingsModule } from '../site-settings/site-settings.module';
 import { EnrollmentsModule } from '../enrollments/enrollments.module';
 import { ZoomModule } from '../zoom/zoom.module';
+import { AdminSettingsModule } from '../admin-settings/admin-settings.module';
+import { GatewayCredentialsService } from './gateways/gateway-credentials.service';
 
 @Module({
   imports: [
@@ -58,6 +61,7 @@ import { ZoomModule } from '../zoom/zoom.module';
     SiteSettingsModule,
     EnrollmentsModule,
     ZoomModule,
+    AdminSettingsModule,
     // BullMQ queue for webhook processing (conditional on Redis)
     ...(process.env.REDIS_HOST
       ? [BullModule.registerQueue({ name: PAYMENT_QUEUE_NAMES.WEBHOOK_PROCESSING })]
@@ -76,6 +80,7 @@ import { ZoomModule } from '../zoom/zoom.module';
     ReconciliationController,
     EscalationsController,
     ReconciliationCronController,
+    AdminFinanceController,
   ],
   providers: [
     PaymentsService,
@@ -90,6 +95,7 @@ import { ZoomModule } from '../zoom/zoom.module';
     EscalationsService,
     ReconciliationCronService,
     GatewayFactory,
+    GatewayCredentialsService,
     MockGateway,
     MoyasarGateway,
     TamaraGateway,
@@ -100,6 +106,6 @@ import { ZoomModule } from '../zoom/zoom.module';
     // Webhook processor only when Redis is available
     ...(process.env.REDIS_HOST ? [WebhookProcessor] : []),
   ],
-  exports: [PaymentsService, InvoiceService],
+  exports: [PaymentsService, InvoiceService, GatewayCredentialsService],
 })
 export class PaymentsModule {}

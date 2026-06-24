@@ -22,12 +22,10 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import FinanceSidebar from "./FinanceSidebar";
-import FinanceMobileSidebar from "./FinanceMobileSidebar";
-import FinanceNavbar from "./FinanceNavbar";
 import Select from "@/components/admin-dashboard/Select";
 import DatePicker from "@/components/ui/DatePicker";
 import ExportDropdown from "./shared/ExportDropdown";
+import FinancePageShell from "./shared/FinancePageShell";
 import {
   reconciliationApi,
   escalationsApi,
@@ -40,7 +38,6 @@ import {
   type EscalationProposedAction,
   type EscalationUrgency,
 } from "@/lib/api";
-import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 // ─── Types + constants ──────────────────────────────────────────────
 
@@ -124,11 +121,16 @@ function formatDateTime(iso: string | null | undefined) {
 
 // ─── Component ──────────────────────────────────────────────────────
 
-export default function ReconciliationContent() {
+export interface ReconciliationContentProps {
+  /** When true, render only the inner page (no FinanceNavbar/Sidebar). Used
+   *  when an outer dashboard (e.g. AdminFinanceShell) already provides chrome. */
+  embedded?: boolean;
+}
+
+export default function ReconciliationContent({ embedded = false }: ReconciliationContentProps) {
   const t = useTranslations("financeDashboard.reconciliationPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = useFinanceProfile();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -470,20 +472,9 @@ export default function ReconciliationContent() {
   );
 
   // ─── Render ─────────────────────────────────────────────────────
-  return (
+  const inner = (
     <>
-      <FinanceNavbar profile={profile} />
-
-      <div className="bg-[var(--color-surface-page)] min-h-screen">
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={profile} />
-            </div>
-            <FinanceMobileSidebar profile={profile} />
-
-            <div className="flex-1 min-w-0">
-              {/* Header + export tray */}
+      {/* Header + export tray */}
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)] flex items-center gap-2">
@@ -965,10 +956,12 @@ export default function ReconciliationContent() {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    </>
+  );
+
+  return (
+    <>
+      {embedded ? inner : <FinancePageShell>{inner}</FinancePageShell>}
 
       {/* Resolve modal */}
       {resolveTarget && (

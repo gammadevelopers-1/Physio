@@ -2,12 +2,10 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import FinanceSidebar from "./FinanceSidebar";
-import FinanceMobileSidebar from "./FinanceMobileSidebar";
-import FinanceNavbar from "./FinanceNavbar";
 import Select from "@/components/admin-dashboard/Select";
 import DatePicker from "@/components/ui/DatePicker";
 import ExportDropdown from "./shared/ExportDropdown";
+import FinancePageShell from "./shared/FinancePageShell";
 import {
   BarChart3,
   TrendingUp,
@@ -23,7 +21,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { financeApi } from "@/lib/api";
-import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 import { toast } from "sonner";
 
 /**
@@ -144,11 +141,16 @@ function formatDate(iso: string | null | undefined) {
 
 // ─── Component ────────────────────────────────────────────────────
 
-const FinanceReportsContent = () => {
+export interface FinanceReportsContentProps {
+  /** When true, render only the inner page (no FinanceNavbar/Sidebar). Used
+   *  when an outer dashboard (e.g. AdminFinanceShell) already provides chrome. */
+  embedded?: boolean;
+}
+
+const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = useFinanceProfile();
 
   const [selectedReport, setSelectedReport] = useState<ReportKey>("revenue");
   const [period, setPeriod] = useState<PeriodKey>("thisMonth");
@@ -843,19 +845,9 @@ const FinanceReportsContent = () => {
 
   // ─── Layout ────────────────────────────────────────────────────
 
-  return (
+  const inner = (
     <>
-      <FinanceNavbar profile={profile} />
-      <div className="bg-[var(--color-surface-page)] min-h-screen">
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={profile} />
-            </div>
-            <FinanceMobileSidebar profile={profile} />
-
-            <div className="flex-1 min-w-0">
-              {/* Page header + export tray */}
+      {/* Page header + export tray */}
               <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-4">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)]">
@@ -921,12 +913,10 @@ const FinanceReportsContent = () => {
                 </div>
                 {renderTable()}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </>
   );
+
+  return embedded ? inner : <FinancePageShell>{inner}</FinancePageShell>;
 };
 
 // ─── Sub-components ──────────────────────────────────────────────

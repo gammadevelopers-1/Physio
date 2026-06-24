@@ -5,16 +5,25 @@ import { useTranslations } from "next-intl";
 import {
   CreditCard,
   Building2,
-  AlertTriangle,
   Copy,
   Check,
   Eye,
   EyeOff,
+  Loader2,
+  ShieldCheck,
+  AlertCircle,
+  XCircle,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import Select from "../Select";
 import { TabShell } from "./TabShell";
 import { useSettingsCategory } from "./useSettingsCategory";
+import {
+  adminFinanceApi,
+  type AdminGatewayName,
+  type AdminGatewayTestResult,
+} from "@/lib/api";
 
 type Gateway = "moyasar" | "tamara" | "tabby" | "bank_transfer";
 
@@ -89,6 +98,44 @@ export default function PaymentsTab() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showSecretFields, setShowSecretFields] = useState<Record<string, boolean>>({});
 
+  // Last test-connection result per gateway. Drives the status pill and
+  // banner — null means "not tested in this session".
+  const [testResults, setTestResults] = useState<
+    Partial<Record<AdminGatewayName, AdminGatewayTestResult>>
+  >({});
+  const [testing, setTesting] = useState<AdminGatewayName | null>(null);
+
+  const runConnectionTest = async (gateway: AdminGatewayName) => {
+    if (testing) return;
+    setTesting(gateway);
+    try {
+      const result = await adminFinanceApi.testGatewayConnection(gateway);
+      setTestResults((prev) => ({ ...prev, [gateway]: result }));
+      if (result.status === "healthy") {
+        toast.success(t("payments.testSuccess"));
+      } else if (result.status === "degraded") {
+        toast.warning(t("payments.testDegraded"));
+      } else {
+        toast.error(result.error || t("payments.testFailed"));
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t("payments.testFailed");
+      toast.error(msg);
+      setTestResults((prev) => ({
+        ...prev,
+        [gateway]: {
+          gateway,
+          status: "down",
+          source: "empty",
+          checkedAt: new Date().toISOString(),
+          error: msg,
+        },
+      }));
+    } finally {
+      setTesting(null);
+    }
+  };
+
   const webhookUrl = `${typeof window !== "undefined" ? window.location.origin.replace(/physioguidance\.org/, "api.physioguidance.org") : "https://api.physioguidance.org"}/api/payments/webhook`;
 
   const copy = async (text: string, fieldKey: string) => {
@@ -121,14 +168,15 @@ export default function PaymentsTab() {
       loadError={loadError}
       onSave={save}
     >
-      {/* Provider-not-wired banner */}
-      <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-4 flex items-start gap-3">
-        <AlertTriangle className="w-5 h-5 text-[#D97706] flex-shrink-0 mt-0.5" />
+      {/* Live runtime info banner — DB changes go live immediately via the
+          shared gateway-credentials cache (env vars stay as fallback). */}
+      <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-lg p-4 flex items-start gap-3">
+        <ShieldCheck className="w-5 h-5 text-[#059669] flex-shrink-0 mt-0.5" />
         <div className="text-sm">
-          <p className="font-medium text-[#92400E] mb-0.5">
-            {t("payments.providerNotConnected")}
+          <p className="font-medium text-[#065F46] mb-0.5">
+            {t("payments.liveRuntime")}
           </p>
-          <p className="text-[#B45309]">{t("payments.providerNotConnectedBody")}</p>
+          <p className="text-[#047857]">{t("payments.liveRuntimeBody")}</p>
         </div>
       </div>
 
@@ -223,13 +271,33 @@ export default function PaymentsTab() {
       {/* Gateway-specific credentials */}
       {draft.gateway !== "bank_transfer" && (
         <div className="border border-[var(--color-border)] rounded-lg p-4 space-y-4">
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-              {t(`payments.gateway.${draft.gateway}`)} {t("payments.credentialsTitle")}
-            </h3>
-            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-              {t("payments.credentialsHelp")}
-            </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                {t(`payments.gateway.${draft.gateway}`)} {t("payments.credentialsTitle")}
+              </h3>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                {t("payments.credentialsHelp")}
+              </p>
+            </div>
+            <GatewayTestControl
+              gateway={draft.gateway as AdminGatewayName}
+              testing={testing === draft.gateway}
+              dirty={dirty}
+              result={testResults[draft.gateway as AdminGatewayName]}
+              onTest={() => runConnectionTest(draft.gateway as AdminGatewayName)}
+              labels={{
+                test: t("payments.testConnection"),
+                testing: t("payments.testing"),
+                healthy: t("payments.statusHealthy"),
+                degraded: t("payments.statusDegraded"),
+                down: t("payments.statusDown"),
+                sourceDb: t("payments.sourceDb"),
+                sourceEnv: t("payments.sourceEnv"),
+                sourceMixed: t("payments.sourceMixed"),
+                saveFirst: t("payments.saveFirstHint"),
+              }}
+            />
           </div>
 
           {draft.gateway === "moyasar" && (
@@ -608,6 +676,84 @@ function CredField({
           {helpText}
         </p>
       )}
+    </div>
+  );
+}
+
+function GatewayTestControl({
+  gateway,
+  testing,
+  dirty,
+  result,
+  onTest,
+  labels,
+}: {
+  gateway: AdminGatewayName;
+  testing: boolean;
+  dirty: boolean;
+  result: AdminGatewayTestResult | undefined;
+  onTest: () => void;
+  labels: {
+    test: string;
+    testing: string;
+    healthy: string;
+    degraded: string;
+    down: string;
+    sourceDb: string;
+    sourceEnv: string;
+    sourceMixed: string;
+    saveFirst: string;
+  };
+}) {
+  const StatusIcon =
+    result?.status === "healthy" ? ShieldCheck
+    : result?.status === "degraded" ? AlertCircle
+    : result?.status === "down" ? XCircle
+    : null;
+  const statusBg =
+    result?.status === "healthy" ? "bg-[#ECFDF5] text-[#065F46] border-[#A7F3D0]"
+    : result?.status === "degraded" ? "bg-[#FFFBEB] text-[#92400E] border-[#FDE68A]"
+    : result?.status === "down" ? "bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]"
+    : "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] border-[var(--color-border)]";
+  const statusLabel =
+    result?.status === "healthy" ? labels.healthy
+    : result?.status === "degraded" ? labels.degraded
+    : result?.status === "down" ? labels.down
+    : null;
+  const sourceLabel =
+    result?.source === "db" ? labels.sourceDb
+    : result?.source === "env" ? labels.sourceEnv
+    : result?.source === "mixed" ? labels.sourceMixed
+    : null;
+
+  return (
+    <div className="flex flex-col items-end gap-2">
+      <button
+        type="button"
+        onClick={onTest}
+        disabled={testing || dirty}
+        title={dirty ? labels.saveFirst : undefined}
+        className="inline-flex items-center gap-1.5 px-3 h-9 text-xs font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--color-text-primary)]"
+      >
+        {testing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+        {testing ? labels.testing : labels.test}
+      </button>
+      {result && StatusIcon && (
+        <div className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-md border ${statusBg}`}>
+          <StatusIcon className="w-3 h-3" />
+          <span>{statusLabel}</span>
+          {sourceLabel && (
+            <span className="opacity-70">·  {sourceLabel}</span>
+          )}
+        </div>
+      )}
+      {dirty && (
+        <p className="text-[11px] text-[var(--color-text-secondary)] text-right max-w-[180px]">
+          {labels.saveFirst}
+        </p>
+      )}
+      {/* gateway value is part of the audit metadata; pin to avoid TS warning */}
+      <span className="sr-only">{gateway}</span>
     </div>
   );
 }

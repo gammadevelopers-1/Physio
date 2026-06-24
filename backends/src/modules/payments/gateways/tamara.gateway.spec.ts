@@ -1,19 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import { TamaraGateway } from './tamara.gateway';
+import { GatewayCredentialsService } from './gateway-credentials.service';
 
 // Mocks the global fetch so we can drive different Tamara API responses
 // per-test without hitting the network.
 const originalFetch = global.fetch;
 
-const mockConfigService = {
-  get: jest.fn((key: string, fallback?: string) => {
-    if (key === 'payments.tamara.apiToken') return 'test-api-token';
-    if (key === 'payments.tamara.notificationToken') return 'notif-secret';
-    if (key === 'payments.tamara.apiUrl') return 'https://api-sandbox.tamara.co';
-    return fallback;
-  }),
-};
+function buildCredsMock(overrides: Partial<ReturnType<GatewayCredentialsService['getTamara']>> = {}) {
+  return {
+    getTamara: jest.fn().mockReturnValue({
+      apiToken: 'test-api-token',
+      notificationToken: 'notif-secret',
+      publicKey: '',
+      apiUrl: 'https://api-sandbox.tamara.co',
+      source: 'env' as const,
+      ...overrides,
+    }),
+  } as unknown as GatewayCredentialsService;
+}
 
 const APPROVED_WEBHOOK_BODY = {
   event_type: 'order_approved',
@@ -45,7 +49,7 @@ describe('TamaraGateway', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TamaraGateway,
-        { provide: ConfigService, useValue: mockConfigService },
+        { provide: GatewayCredentialsService, useValue: buildCredsMock() },
       ],
     }).compile();
     gateway = module.get<TamaraGateway>(TamaraGateway);

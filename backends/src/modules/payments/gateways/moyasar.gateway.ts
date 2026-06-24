@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   PaymentGateway,
   CreateChargeParams,
@@ -13,21 +12,23 @@ import {
 } from './payment-gateway.interface';
 import { BaseGateway } from './base.gateway';
 import { PaymentGatewayError } from './payment-gateway.error';
+import { GatewayCredentialsService } from './gateway-credentials.service';
 
 @Injectable()
 export class MoyasarGateway extends BaseGateway implements PaymentGateway {
   readonly name = 'moyasar' as const;
   protected readonly logger = new Logger(MoyasarGateway.name);
-  private readonly secretKey: string;
-  private readonly webhookSecret: string;
-  private readonly apiUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly credentials: GatewayCredentialsService) {
     super();
-    this.secretKey = this.configService.get<string>('payments.moyasar.secretKey', '');
-    this.webhookSecret = this.configService.get<string>('payments.moyasar.webhookSecret', '');
-    this.apiUrl = this.configService.get<string>('payments.moyasar.apiUrl', 'https://api.moyasar.com/v1');
   }
+
+  // Credential getters read from the shared cache so admin saves in the
+  // payments settings tab propagate without a server restart. Empty DB
+  // fields automatically fall back to env values (see GatewayCredentialsService).
+  private get secretKey(): string { return this.credentials.getMoyasar().secretKey; }
+  private get webhookSecret(): string { return this.credentials.getMoyasar().webhookSecret; }
+  private get apiUrl(): string { return this.credentials.getMoyasar().apiUrl; }
 
   private getAuthHeader(): string {
     return 'Basic ' + Buffer.from(`${this.secretKey}:`).toString('base64');

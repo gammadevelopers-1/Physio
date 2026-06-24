@@ -14,11 +14,8 @@ import {
   CheckCircle,
   Info,
 } from "lucide-react";
-import FinanceSidebar from "./FinanceSidebar";
-import FinanceMobileSidebar from "./FinanceMobileSidebar";
-import FinanceNavbar from "./FinanceNavbar";
 import Select from "@/components/admin-dashboard/Select";
-import { useFinanceProfile } from "@/hooks/useFinanceProfile";
+import FinancePageShell from "./shared/FinancePageShell";
 import {
   financeApi,
   type VatTreatmentRow,
@@ -35,11 +32,16 @@ const TREATMENT_PILL: Record<VatTreatmentValue, { bg: string; fg: string }> = {
 
 const formatInt = (n: number) => (n ?? 0).toLocaleString("en-US");
 
-const VatTreatmentsContent = () => {
+export interface VatTreatmentsContentProps {
+  /** When true, render only the inner page (no FinanceNavbar/Sidebar). Used
+   *  when an outer dashboard (e.g. AdminFinanceShell) already provides chrome. */
+  embedded?: boolean;
+}
+
+const VatTreatmentsContent = ({ embedded = false }: VatTreatmentsContentProps) => {
   const t = useTranslations("financeDashboard.vatTreatments");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = useFinanceProfile();
 
   const [search, setSearch] = useState("");
   const [treatmentFilter, setTreatmentFilter] = useState<VatTreatmentValue | "all">("all");
@@ -151,19 +153,9 @@ const VatTreatmentsContent = () => {
     { value: "zero_rated", label: t("treatments.zero_rated") },
   ];
 
-  return (
+  const inner = (
     <>
-      <FinanceNavbar profile={profile} />
-      <div className="bg-[var(--color-surface-page)] min-h-screen">
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={profile} />
-            </div>
-            <FinanceMobileSidebar profile={profile} />
-
-            <div className="flex-1 min-w-0">
-              <Link
+      <Link
                 href={`/${locale}/dashboard/finance/settings`}
                 className="inline-flex items-center gap-1 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] mb-3"
               >
@@ -406,12 +398,10 @@ const VatTreatmentsContent = () => {
                   </>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </>
   );
+
+  return embedded ? inner : <FinancePageShell>{inner}</FinancePageShell>;
 };
 
 export default VatTreatmentsContent;

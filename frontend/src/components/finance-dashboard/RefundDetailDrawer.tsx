@@ -27,8 +27,10 @@ import {
 import { toast } from "sonner";
 import Drawer from "./shared/Drawer";
 import Money from "./shared/Money";
+import AdminOverridePanel, { AdminOverrideAction } from "./shared/AdminOverridePanel";
+import { useIsAdminActor } from "./shared/ActorRoleContext";
 import { FINANCE_COLORS } from "./shared/financeColors";
-import { refundApi } from "@/lib/api";
+import { refundApi, adminFinanceApi } from "@/lib/api";
 
 type Tab = "overview" | "payment" | "audit";
 
@@ -68,6 +70,8 @@ const RefundDetailDrawer = ({
   onChanged,
 }: RefundDetailDrawerProps) => {
   const t = useTranslations("financeDashboard");
+  const tAdmin = useTranslations("financeDashboard.adminOverride");
+  const isAdmin = useIsAdminActor();
   const locale = useLocale();
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
@@ -195,6 +199,19 @@ const RefundDetailDrawer = ({
 
   const status = data?.status || "pending";
   const statusStyle = STATUS_PILL[status] || STATUS_PILL.pending;
+
+  const adminActions: AdminOverrideAction[] =
+    refundId && data?.status === "pending"
+      ? [
+          {
+            key: "force-approve",
+            label: tAdmin("refund.forceApprove"),
+            description: tAdmin("refund.forceApproveDesc"),
+            successToast: tAdmin("refund.forceApproveToast"),
+            run: (reason) => adminFinanceApi.forceApproveRefund(refundId, { reason }),
+          },
+        ]
+      : [];
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: t("refundsPage.drawer.tabs.overview") },
@@ -663,6 +680,17 @@ const RefundDetailDrawer = ({
                 })
               )}
             </div>
+          )}
+
+          {isAdmin && refundId && adminActions.length > 0 && (
+            <AdminOverridePanel
+              actions={adminActions}
+              onAfter={() => {
+                fetchDetail();
+                if (tab === "audit") fetchAudit();
+                onChanged?.();
+              }}
+            />
           )}
         </div>
       )}

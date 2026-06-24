@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'crypto';
 import {
   BnplPaymentGateway,
@@ -15,6 +14,7 @@ import {
 } from './payment-gateway.interface';
 import { BaseGateway } from './base.gateway';
 import { PaymentGatewayError } from './payment-gateway.error';
+import { GatewayCredentialsService } from './gateway-credentials.service';
 
 @Injectable()
 export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
@@ -22,20 +22,17 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
   readonly isBnpl = true as const;
   readonly deductionRate = 0.10;
   protected readonly logger = new Logger(TabbyGateway.name);
-  private readonly secretKey: string;
-  private readonly publicKey: string;
-  private readonly webhookSecret: string;
-  private readonly apiUrl: string;
-  private readonly merchantCode: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly credentials: GatewayCredentialsService) {
     super();
-    this.secretKey = this.configService.get<string>('payments.tabby.secretKey', '');
-    this.publicKey = this.configService.get<string>('payments.tabby.publicKey', '');
-    this.webhookSecret = this.configService.get<string>('payments.tabby.webhookSecret', '');
-    this.apiUrl = this.configService.get<string>('payments.tabby.apiUrl', 'https://api.tabby.ai/api/v2');
-    this.merchantCode = this.configService.get<string>('payments.tabby.merchantCode', '');
   }
+
+  // See MoyasarGateway for the rationale on getter-backed credentials.
+  private get secretKey(): string { return this.credentials.getTabby().secretKey; }
+  private get publicKey(): string { return this.credentials.getTabby().publicKey; }
+  private get webhookSecret(): string { return this.credentials.getTabby().webhookSecret; }
+  private get apiUrl(): string { return this.credentials.getTabby().apiUrl; }
+  private get merchantCode(): string { return this.credentials.getTabby().merchantCode; }
 
   getInstallmentOptions(amount: number, currency: string): InstallmentOption[] {
     return [

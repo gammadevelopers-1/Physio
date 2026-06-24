@@ -156,7 +156,7 @@ const GATEWAY_META: Record<
   bank_transfer: { color: "bg-[#4338CA]", icon: Building2 },
 };
 
-const GatewaysReadOnlyView = () => {
+export const GatewaysReadOnlyView = () => {
   const t = useTranslations("financeDashboard.settingsPage.gateways");
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -671,7 +671,7 @@ const RULE_KEYS = [
   "blockAfterCmeGranted",
 ] as const;
 
-const RefundPolicyView = () => {
+export const RefundPolicyView = () => {
   const t = useTranslations("financeDashboard.settingsPage.refundPolicy");
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -991,7 +991,7 @@ const RuleRow = ({
 // new invoices will lock in; existing invoices keep their original rate
 // via the metadata snapshot taken at payment time.
 
-const TaxView = () => {
+export const TaxView = () => {
   const t = useTranslations("financeDashboard.settingsPage.tax");
   const locale = useLocale();
   const isRTL = locale === "ar";

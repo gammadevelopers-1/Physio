@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   BnplPaymentGateway,
   CreateChargeParams,
@@ -14,6 +13,7 @@ import {
 } from './payment-gateway.interface';
 import { BaseGateway } from './base.gateway';
 import { PaymentGatewayError } from './payment-gateway.error';
+import { GatewayCredentialsService } from './gateway-credentials.service';
 
 /**
  * TamaraGateway — KSA BNPL (3 monthly instalments, interest-free).
@@ -44,16 +44,15 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
   readonly isBnpl = true as const;
   readonly deductionRate = 0.10;
   protected readonly logger = new Logger(TamaraGateway.name);
-  private readonly apiToken: string;
-  private readonly notificationToken: string;
-  private readonly apiUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly credentials: GatewayCredentialsService) {
     super();
-    this.apiToken = this.configService.get<string>('payments.tamara.apiToken', '');
-    this.notificationToken = this.configService.get<string>('payments.tamara.notificationToken', '');
-    this.apiUrl = this.configService.get<string>('payments.tamara.apiUrl', 'https://api-sandbox.tamara.co');
   }
+
+  // See MoyasarGateway for the rationale on getter-backed credentials.
+  private get apiToken(): string { return this.credentials.getTamara().apiToken; }
+  private get notificationToken(): string { return this.credentials.getTamara().notificationToken; }
+  private get apiUrl(): string { return this.credentials.getTamara().apiUrl; }
 
   getInstallmentOptions(amount: number, currency: string): InstallmentOption[] {
     return [

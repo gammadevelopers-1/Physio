@@ -4,14 +4,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import FinanceSidebar from "./FinanceSidebar";
-import FinanceMobileSidebar from "./FinanceMobileSidebar";
-import FinanceNavbar from "./FinanceNavbar";
 import DateRangeFilter from "./DateRangeFilter";
 import InvoiceDetailDrawer from "./InvoiceDetailDrawer";
 import Money from "./shared/Money";
 import { KPICardSkeleton, TableRowSkeleton } from "./shared/Skeleton";
 import { FINANCE_COLORS, gatewayColor } from "./shared/financeColors";
+import FinancePageShell from "./shared/FinancePageShell";
 import Select from "@/components/admin-dashboard/Select";
 import {
   FileText,
@@ -27,7 +25,6 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { invoiceApi, financeApi, type InvoiceRow, type InvoiceSummary } from "@/lib/api";
-import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 const PAGE_SIZE = 25;
 
@@ -39,12 +36,17 @@ function getDefaultDateRange() {
   return { startDate: start.toISOString().slice(0, 10), endDate: todayStr, label: "30d" };
 }
 
-const InvoicesContent = () => {
+export interface InvoicesContentProps {
+  /** When true, render only the inner page (no FinanceNavbar/Sidebar). Used
+   *  when an outer dashboard (e.g. AdminFinanceShell) already provides chrome. */
+  embedded?: boolean;
+}
+
+const InvoicesContent = ({ embedded = false }: InvoicesContentProps) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const ArrowGlyph = isRTL ? ArrowLeft : ArrowRight;
-  const profile = useFinanceProfile();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -221,20 +223,9 @@ const InvoicesContent = () => {
   const from = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to = Math.min(page * PAGE_SIZE, totalCount);
 
-  return (
+  const inner = (
     <>
-      <FinanceNavbar profile={profile} />
-
-      <div className="bg-[var(--color-surface-page)] min-h-screen">
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={profile} />
-            </div>
-            <FinanceMobileSidebar profile={profile} />
-
-            <div className="flex-1 min-w-0">
-              {/* Page Header */}
+      {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-4">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
@@ -494,11 +485,12 @@ const InvoicesContent = () => {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    </>
+  );
 
+  return (
+    <>
+      {embedded ? inner : <FinancePageShell>{inner}</FinancePageShell>}
       <InvoiceDetailDrawer
         invoiceId={selectedInvoiceId}
         onClose={() => openInvoiceDrawer(null)}

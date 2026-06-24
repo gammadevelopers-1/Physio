@@ -1972,6 +1972,92 @@ export const adminSettingsApi = {
 };
 
 // ===========================================
+// Admin-only finance super-actions — gateway test/refresh + (Batch 3b)
+// force-status, replay-webhook, sync-from-gateway, regenerate-pdf,
+// force-cancel-invoice, force-approve-refund. Each mutation is audit
+// logged on the backend.
+// ===========================================
+
+export type AdminGatewayName = 'moyasar' | 'tamara' | 'tabby';
+
+export interface AdminGatewayTestResult {
+  gateway: AdminGatewayName;
+  status: 'healthy' | 'degraded' | 'down';
+  source: 'db' | 'env' | 'mixed' | 'empty';
+  checkedAt: string;
+  error?: string;
+}
+
+export const adminFinanceApi = {
+  /** Ping a payment gateway with current credentials (DB > env). */
+  testGatewayConnection: (gateway: AdminGatewayName) =>
+    api.post<AdminGatewayTestResult>(
+      `/admin/finance/gateways/${gateway}/test`,
+      {},
+    ),
+
+  /** Force a refresh of the in-process credentials cache. */
+  refreshGatewayCache: () =>
+    api.post<void>('/admin/finance/gateways/refresh-cache', {}),
+
+  // ── Payment super-actions ────────────────────────────────────────
+
+  /** Manually flip a payment to PAID or FAILED (with required reason). */
+  forcePaymentStatus: (
+    paymentId: string,
+    body: { status: 'paid' | 'failed'; reason: string },
+  ) =>
+    api.post<{
+      ok: true;
+      paymentId: string;
+      previousStatus: string;
+      newStatus: 'paid' | 'failed';
+    }>(`/admin/finance/payments/${paymentId}/force-status`, body),
+
+  /** Re-process the success path for a payment (replays the webhook). */
+  replayPaymentWebhook: (paymentId: string, body: { reason: string }) =>
+    api.post<{ ok: true; paymentId: string }>(
+      `/admin/finance/payments/${paymentId}/replay-webhook`,
+      body,
+    ),
+
+  /** Poll the gateway for live status and apply it locally. */
+  syncPaymentFromGateway: (paymentId: string, body: { reason: string }) =>
+    api.post<{
+      ok: true;
+      paymentId: string;
+      gatewayStatus: string;
+      applied: 'paid' | 'failed' | 'no_change';
+    }>(`/admin/finance/payments/${paymentId}/sync-from-gateway`, body),
+
+  // ── Invoice super-actions ────────────────────────────────────────
+
+  /** Cancel an invoice — works even on paid invoices. */
+  forceCancelInvoice: (invoiceId: string, body: { reason: string }) =>
+    api.post<{
+      ok: true;
+      invoiceNumber: string;
+      alreadyCancelled?: boolean;
+    }>(`/admin/finance/invoices/${invoiceId}/force-cancel`, body),
+
+  /** Re-render an invoice PDF with current tax + branding settings. */
+  regenerateInvoicePdf: (invoiceId: string, body: { reason: string }) =>
+    api.post<{ ok: true; invoiceNumber: string }>(
+      `/admin/finance/invoices/${invoiceId}/regenerate-pdf`,
+      body,
+    ),
+
+  // ── Refund super-actions ────────────────────────────────────────
+
+  /** Approve a refund even when the lifecycle policy would block it. */
+  forceApproveRefund: (refundId: string, body: { reason: string }) =>
+    api.post<{ status: 'approved'; gatewayRefundId: string | null }>(
+      `/admin/finance/refunds/${refundId}/force-approve`,
+      body,
+    ),
+};
+
+// ===========================================
 // Zoom host management (admin) — pick the fallback host seat,
 // inspect the connected account, test the connection. Credentials
 // stay in Secret Manager; this only manages which seat hosts.

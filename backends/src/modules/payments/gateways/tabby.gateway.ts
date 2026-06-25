@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import {
   BnplPaymentGateway,
   CreateChargeParams,
@@ -15,6 +15,13 @@ import {
 import { BaseGateway } from './base.gateway';
 import { PaymentGatewayError } from './payment-gateway.error';
 import { GatewayCredentialsService } from './gateway-credentials.service';
+
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
 
 @Injectable()
 export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
@@ -368,23 +375,28 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
       return true;
     }
 
-    // Tabby's docs name the header X-Tabby-Signature. The legacy
-    // X-Tabby-Hmac-SHA256 fallback covers older portal configurations
-    // some merchants still have. Headers come through Express lower-cased
-    // so check both casings to be safe.
-    const signature =
+    // Tabby's webhook registration API (POST /api/v1/webhooks) takes a
+    // {header: {title, value}} object and echoes it back verbatim on every
+    // webhook delivery — i.e. shared-secret passthrough, NOT HMAC over the
+    // body. We registered the header name as X-Tabby-Signature; legacy
+    // X-Tabby-Hmac-SHA256 covers older portal configs that did sign.
+    // Headers come through Express lower-cased, so check both casings.
+    const received =
       headers['x-tabby-signature'] ||
       headers['X-Tabby-Signature'] ||
       headers['x-tabby-hmac-sha256'] ||
       headers['X-Tabby-Hmac-SHA256'];
-    if (!signature) return false;
+    if (!received) return false;
 
+    if (safeEqual(received, this.webhookSecret)) return true;
+
+    // Backwards-compat: if a merchant's portal still HMAC-signs the body,
+    // recompute and compare. Constant-time on the hex strings.
     const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
-    const expectedSignature = createHmac('sha256', this.webhookSecret)
+    const expectedHmac = createHmac('sha256', this.webhookSecret)
       .update(bodyStr)
       .digest('hex');
-
-    return signature === expectedSignature;
+    return safeEqual(received, expectedHmac);
   }
 
   async processWebhook(body: any): Promise<WebhookResult> {

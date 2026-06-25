@@ -197,36 +197,39 @@ describe('TabbyGateway', () => {
 
   // ── verifyWebhook ─────────────────────────────────────────────────────────
   describe('verifyWebhook()', () => {
-    function sign(body: any): string {
+    function hmac(body: any): string {
       const bodyStr = JSON.stringify(body);
       return createHmac('sha256', WEBHOOK_SECRET).update(bodyStr).digest('hex');
     }
 
-    it('accepts request with valid X-Tabby-Signature (per Tabby docs)', () => {
+    it('accepts X-Tabby-Signature equal to the registered shared secret (Tabby passthrough)', () => {
       const body = { id: 'pay-1', status: 'AUTHORIZED' };
-      const sig = sign(body);
-
       expect(
-        gateway.verifyWebhook({ 'x-tabby-signature': sig }, body),
+        gateway.verifyWebhook({ 'x-tabby-signature': WEBHOOK_SECRET }, body),
       ).toBe(true);
     });
 
-    it('still accepts legacy X-Tabby-Hmac-SHA256 header', () => {
+    it('rejects X-Tabby-Signature with a wrong shared-secret value', () => {
       const body = { id: 'pay-1', status: 'AUTHORIZED' };
-      const sig = sign(body);
+      expect(
+        gateway.verifyWebhook({ 'x-tabby-signature': 'not-the-secret' }, body),
+      ).toBe(false);
+    });
 
+    it('still accepts legacy HMAC X-Tabby-Hmac-SHA256 header for older portal configs', () => {
+      const body = { id: 'pay-1', status: 'AUTHORIZED' };
+      const sig = hmac(body);
       expect(
         gateway.verifyWebhook({ 'x-tabby-hmac-sha256': sig }, body),
       ).toBe(true);
     });
 
-    it('rejects a tampered body', () => {
+    it('rejects a tampered body when falling back to legacy HMAC', () => {
       const body = { id: 'pay-1', status: 'AUTHORIZED' };
-      const sig = sign(body);
+      const sig = hmac(body);
       const tampered = { id: 'pay-1', status: 'CLOSED' };
-
       expect(
-        gateway.verifyWebhook({ 'x-tabby-signature': sig }, tampered),
+        gateway.verifyWebhook({ 'x-tabby-hmac-sha256': sig }, tampered),
       ).toBe(false);
     });
 

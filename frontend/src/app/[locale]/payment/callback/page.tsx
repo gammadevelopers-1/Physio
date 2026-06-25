@@ -54,10 +54,19 @@ export default function PaymentCallbackPage() {
 
     const goToCourses = () =>
       router.replace(`/${locale}/dashboard/student/courses`);
-    const goToFailed = (reason?: string) => {
+    // Pass the gateway and the outcome type (cancelled vs failed vs rejected)
+    // so /payment/failed can show the gateway-specific copy Tabby's QA
+    // requires (e.g. "Sorry, Tabby is unable to approve…" for rejection
+    // vs. the generic "Payment failed" message).
+    const goToFailed = (
+      reason?: string,
+      outcome?: "cancelled" | "failed" | "rejected",
+    ) => {
       const params = new URLSearchParams();
       if (paymentId) params.set("paymentId", paymentId);
       if (reason) params.set("error", reason);
+      if (outcome) params.set("outcome", outcome);
+      if (gateway) params.set("gateway", gateway);
       const qs = params.toString();
       router.replace(`/${locale}/payment/failed${qs ? `?${qs}` : ""}`);
     };
@@ -68,7 +77,8 @@ export default function PaymentCallbackPage() {
     // cross-origin verify() call below can't authenticate after the redirect.
     const graceTimer = setTimeout(() => {
       if (gatewayStatus === "paid") goToCourses();
-      else if (gatewayStatus === "failed" || gatewayStatus === "cancelled") goToFailed();
+      else if (gatewayStatus === "cancelled") goToFailed(undefined, "cancelled");
+      else if (gatewayStatus === "failed") goToFailed(undefined, "failed");
       else setStatus("timeout");
     }, gracePeriodMs);
 
@@ -88,7 +98,14 @@ export default function PaymentCallbackPage() {
         } else if (result.status === "failed") {
           clearInterval(pollInterval);
           clearTimeout(graceTimer);
-          goToFailed(result.failureReason);
+          // Map normalized error codes to outcome buckets so /failed can
+          // show the right gateway-specific copy.
+          const outcome =
+            result.failureReason === "tabby_prescoring_rejected" ||
+            result.failureReason === "rejected"
+              ? "rejected"
+              : "failed";
+          goToFailed(result.failureReason, outcome);
         } else if (pollCount.current >= maxPolls) {
           clearInterval(pollInterval);
           setStatus("timeout");

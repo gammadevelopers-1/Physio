@@ -13201,6 +13201,23 @@
       "insufficientFunds": "Insufficient funds. Please check your account balance.",
       "expiredCard": "Your card has expired. Please use a different card.",
       "gatewayTimeout": "The payment gateway timed out. Please try again."
+    },
+    "tabbyOutcomes": {
+      "cancelled": {
+        "title": "Payment Cancelled",
+        "subtitle": "You returned from Tabby without completing the payment.",
+        "message": "You aborted the payment. Please retry or choose another payment method."
+      },
+      "failed": {
+        "title": "Payment Failed",
+        "subtitle": "Tabby could not complete your payment.",
+        "message": "Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order."
+      },
+      "rejected": {
+        "title": "Tabby Declined",
+        "subtitle": "Tabby was unable to approve this purchase.",
+        "message": "Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order."
+      }
     }
   },
   "verifyInvoice": {

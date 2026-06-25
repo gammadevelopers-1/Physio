@@ -23,6 +23,11 @@ export default function PaymentFailedPage() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
   const errorParam = searchParams.get("error");
+  // Tabby's QA requires gateway-specific copy after redirect — different
+  // wording for cancel vs failure vs pre-scoring rejection. These params
+  // are set by the callback page from the gateway's redirect.
+  const gatewayParam = searchParams.get("gateway");
+  const outcomeParam = searchParams.get("outcome");
 
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
@@ -76,13 +81,23 @@ export default function PaymentFailedPage() {
           </div>
 
           <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">
-            {t("title")}
+            {gatewayParam === "tabby"
+              ? t(`tabbyOutcomes.${tabbyKey(outcomeParam)}.title`)
+              : t("title")}
           </h1>
-          <p className="text-[#737373] mb-6">{t("subtitle")}</p>
+          <p className="text-[#737373] mb-6">
+            {gatewayParam === "tabby"
+              ? t(`tabbyOutcomes.${tabbyKey(outcomeParam)}.subtitle`)
+              : t("subtitle")}
+          </p>
 
           <div className="bg-red-50 border border-red-200 rounded-xl p-5 mb-6 space-y-2">
-            <p className="text-sm text-red-700">{t("message")}</p>
-            {errorDetail && (
+            <p className="text-sm text-red-700">
+              {gatewayParam === "tabby"
+                ? t(`tabbyOutcomes.${tabbyKey(outcomeParam)}.message`)
+                : t("message")}
+            </p>
+            {gatewayParam !== "tabby" && errorDetail && (
               <p className="text-sm font-medium text-red-800">{errorDetail}</p>
             )}
           </div>
@@ -116,4 +131,15 @@ export default function PaymentFailedPage() {
       <Footer />
     </div>
   );
+}
+
+/** Map the URL `outcome` param onto the three Tabby copy buckets per
+ *  https://docs.tabby.ai/pay-in-4-custom-integration/checkout-flow#redirection-to-the-store
+ *  Default to "failed" when the param is missing or unrecognised. */
+function tabbyKey(
+  outcome: string | null,
+): "cancelled" | "rejected" | "failed" {
+  if (outcome === "cancelled") return "cancelled";
+  if (outcome === "rejected") return "rejected";
+  return "failed";
 }

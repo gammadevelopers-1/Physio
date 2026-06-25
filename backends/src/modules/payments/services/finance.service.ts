@@ -15,6 +15,7 @@ import {
   auditLogs,
 } from '../../../database/schema';
 import { isNull } from 'drizzle-orm';
+import { parseStartDate, parseEndDate } from '../../../common/date-range';
 
 @Injectable()
 export class FinanceService {
@@ -23,12 +24,10 @@ export class FinanceService {
 
   private buildDateConditions(startDate?: string, endDate?: string) {
     const conditions: any[] = [];
-    if (startDate) {
-      conditions.push(gte(payments.createdAt, new Date(startDate)));
-    }
-    if (endDate) {
-      conditions.push(lte(payments.createdAt, new Date(endDate)));
-    }
+    const start = parseStartDate(startDate);
+    const end = parseEndDate(endDate);
+    if (start) conditions.push(gte(payments.createdAt, start));
+    if (end) conditions.push(lte(payments.createdAt, end));
     return conditions;
   }
 
@@ -42,14 +41,16 @@ export class FinanceService {
    */
   private buildPaidAtConditions(startDate?: string, endDate?: string) {
     const conditions: any[] = [];
-    if (startDate) {
+    const start = parseStartDate(startDate);
+    const end = parseEndDate(endDate);
+    if (start) {
       conditions.push(
-        sql`COALESCE(${payments.paidAt}, ${payments.createdAt}) >= ${new Date(startDate)}`,
+        sql`COALESCE(${payments.paidAt}, ${payments.createdAt}) >= ${start}`,
       );
     }
-    if (endDate) {
+    if (end) {
       conditions.push(
-        sql`COALESCE(${payments.paidAt}, ${payments.createdAt}) <= ${new Date(endDate)}`,
+        sql`COALESCE(${payments.paidAt}, ${payments.createdAt}) <= ${end}`,
       );
     }
     return conditions;

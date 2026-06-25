@@ -14,6 +14,7 @@ import {
 import { StorageService } from '../../storage/storage.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { TaxComputationService } from './tax-computation.service';
+import { parseStartDate, parseEndDate } from '../../../common/date-range';
 import {
   SiteSettingsService,
   SiteBranding,
@@ -1337,8 +1338,10 @@ export class InvoiceService {
 
     const conditions: any[] = [];
     if (status) conditions.push(eq(invoices.status, status as any));
-    if (startDate) conditions.push(gte(invoices.issuedAt, new Date(startDate)));
-    if (endDate) conditions.push(lte(invoices.issuedAt, new Date(endDate)));
+    const start = parseStartDate(startDate);
+    const end = parseEndDate(endDate);
+    if (start) conditions.push(gte(invoices.issuedAt, start));
+    if (end) conditions.push(lte(invoices.issuedAt, end));
     if (gateway) conditions.push(eq(payments.gateway, gateway));
     if (search) {
       const q = `%${search}%`;
@@ -1419,10 +1422,10 @@ export class InvoiceService {
   }) {
     const conditions: any[] = [];
     if (opts.status) conditions.push(eq(invoices.status, opts.status as any));
-    if (opts.startDate)
-      conditions.push(gte(invoices.issuedAt, new Date(opts.startDate)));
-    if (opts.endDate)
-      conditions.push(lte(invoices.issuedAt, new Date(opts.endDate)));
+    const start = parseStartDate(opts.startDate);
+    const end = parseEndDate(opts.endDate);
+    if (start) conditions.push(gte(invoices.issuedAt, start));
+    if (end) conditions.push(lte(invoices.issuedAt, end));
     if (opts.gateway) conditions.push(eq(payments.gateway, opts.gateway));
     if (opts.search) {
       const q = `%${opts.search}%`;

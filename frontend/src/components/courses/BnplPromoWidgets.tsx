@@ -11,6 +11,11 @@ interface BnplPromoWidgetsProps {
   currency?: string;
   /** Where this widget is mounted — Tabby uses this for funnel attribution. */
   source?: "product" | "cart" | "checkout";
+  /** When set, render only that one gateway's snippet (the other is
+   *  skipped). Used on the checkout page so each gateway's snippet sits
+   *  next to its own radio button. Leave undefined to render both
+   *  side-by-side (product / cart pages). */
+  only?: "tabby" | "tamara";
   className?: string;
 }
 
@@ -39,18 +44,25 @@ export default function BnplPromoWidgets({
   price,
   currency = "SAR",
   source = "product",
+  only,
   className = "",
 }: BnplPromoWidgetsProps) {
   const locale = useLocale();
   const lang = locale === "ar" ? "ar" : "en";
   const tabbyMountRef = useRef<HTMLDivElement>(null);
-  const tabbyMountId = `tabby-promo-${source}`;
+  // Per-source-AND-filter mount id so the same page can mount Tabby twice
+  // (e.g. checkout has one near the Tabby radio and one near Tamara — the
+  // Tamara render still includes the wrapping element ref but no Tabby
+  // widget). Suffixing with `only` prevents id collisions.
+  const tabbyMountId = `tabby-promo-${source}${only ? `-${only}` : ""}`;
   const tabbyInstantiatedRef = useRef(false);
+  const showTabby = !only || only === "tabby";
+  const showTamara = !only || only === "tamara";
 
   const showWidgets = price >= 50 && currency === "SAR";
 
   useEffect(() => {
-    if (!showWidgets || !TABBY_PUBLIC_KEY || !TABBY_MERCHANT_CODE) return;
+    if (!showWidgets || !showTabby || !TABBY_PUBLIC_KEY || !TABBY_MERCHANT_CODE) return;
 
     // Tabby's widget is instantiated imperatively (it doesn't auto-mount
     // like Tamara's web component). Wait for the script to load and the
@@ -81,13 +93,13 @@ export default function BnplPromoWidgets({
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, [price, currency, lang, source, tabbyMountId, showWidgets]);
+  }, [price, currency, lang, source, tabbyMountId, showWidgets, showTabby]);
 
   // Re-run Tamara's widget initialisation when price changes — its web
   // component doesn't reactively re-render on attribute changes alone in
   // some builds, so we nudge it.
   useEffect(() => {
-    if (!showWidgets || !TAMARA_PUBLIC_KEY) return;
+    if (!showWidgets || !showTamara || !TAMARA_PUBLIC_KEY) return;
     if (typeof window !== "undefined" && window.TamaraWidgetV2) {
       try {
         window.TamaraWidgetV2.refresh();
@@ -95,13 +107,13 @@ export default function BnplPromoWidgets({
         // Refresh API not exposed in older builds — first render still works.
       }
     }
-  }, [price, showWidgets]);
+  }, [price, showWidgets, showTamara]);
 
   if (!showWidgets) return null;
 
   return (
     <div className={`flex flex-col gap-2 ${className}`} aria-label="Buy now, pay later options">
-      {TABBY_PUBLIC_KEY && TABBY_MERCHANT_CODE ? (
+      {showTabby && TABBY_PUBLIC_KEY && TABBY_MERCHANT_CODE ? (
         <>
           <Script
             src="https://checkout.tabby.ai/tabby-promo.js"
@@ -114,7 +126,7 @@ export default function BnplPromoWidgets({
           />
         </>
       ) : null}
-      {TAMARA_PUBLIC_KEY ? (
+      {showTamara && TAMARA_PUBLIC_KEY ? (
         <>
           <Script
             src="https://cdn.tamara.co/widget-v2/tamara-widget.js"

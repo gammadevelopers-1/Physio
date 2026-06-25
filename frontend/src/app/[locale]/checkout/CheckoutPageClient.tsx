@@ -25,6 +25,7 @@ import { paymentApi, discountApi, studentApi, publicTaxApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import NonStudentEnrollmentNotice from "@/components/courses/NonStudentEnrollmentNotice";
+import BnplPromoWidgets from "@/components/courses/BnplPromoWidgets";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 
 // One course as the checkout page sees it. Cart items + express-mode
@@ -959,12 +960,20 @@ export default function CheckoutPageClient({
                         </div>
                         <Image src="/checkout_cart/tabby.svg" alt="Tabby" width={60} height={24} className="object-contain" />
                       </div>
+                      {/* Tabby's OFFICIAL checkout snippet — per their QA we
+                          must use this instead of custom text like "4
+                          interest-free payments of SAR X". The widget renders
+                          their own branding and copy that matches the rest of
+                          their pay-in-4 product. */}
                       {total > 0 && (
-                        <p className={`text-xs ${isRTL ? "pr-7" : "pl-7"} text-[var(--on-surface-variant)]`}>
-                          {t("payment.tabbyInstallmentPreview", {
-                            monthly: (total / 4).toFixed(2),
-                          })}
-                        </p>
+                        <div className={isRTL ? "pr-7" : "pl-7"}>
+                          <BnplPromoWidgets
+                            price={total}
+                            currency="SAR"
+                            source="checkout"
+                            only="tabby"
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
@@ -986,12 +995,17 @@ export default function CheckoutPageClient({
                         </div>
                         <Image src="/checkout_cart/tamara.svg" alt="Tamara" width={70} height={24} className="object-contain" />
                       </div>
+                      {/* Tamara's own widget — consistent with the Tabby
+                          treatment above, no hand-rolled custom text. */}
                       {total > 0 && (
-                        <p className={`text-xs ${isRTL ? "pr-7" : "pl-7"} text-[var(--on-surface-variant)]`}>
-                          {t("payment.tamaraInstallmentPreview", {
-                            monthly: (total / 3).toFixed(2),
-                          })}
-                        </p>
+                        <div className={isRTL ? "pr-7" : "pl-7"}>
+                          <BnplPromoWidgets
+                            price={total}
+                            currency="SAR"
+                            source="checkout"
+                            only="tamara"
+                          />
+                        </div>
                       )}
                     </div>
                   </div>

@@ -281,12 +281,14 @@ export default function CheckoutPageClient({
   // Tabby background pre-scoring — per their docs we should check
   // eligibility BEFORE the buyer clicks Pay Now so we can hide the radio
   // for buyers Tabby would reject. Runs on mount + whenever the cart
-  // items change (debounced). Fails open: if the check errors out, we
-  // keep Tabby visible.
+  // items change (debounced). Initial state is `eligible: false` so the
+  // radio doesn't render until pre-score confirms — otherwise buyers
+  // over the BNPL cap (e.g. SAR 5000+) see Tabby flash in then disappear.
+  // Fails open: if the check errors out, we surface Tabby anyway.
   const [tabbyEligibility, setTabbyEligibility] = useState<{
     eligible: boolean;
     message?: string;
-  }>({ eligible: true });
+  }>({ eligible: false });
 
   // Totals
   const originalSubtotal = items.reduce((s, it) => s + it.price, 0);
@@ -305,7 +307,8 @@ export default function CheckoutPageClient({
   const cartIdsKey = items.map((it) => it.id).join(",");
   useEffect(() => {
     if (items.length === 0 || total <= 0) {
-      setTabbyEligibility({ eligible: true });
+      // Nothing to score yet — don't surface Tabby for an empty cart.
+      setTabbyEligibility({ eligible: false });
       return;
     }
     let cancelled = false;

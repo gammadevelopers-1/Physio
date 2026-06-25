@@ -18,6 +18,8 @@ import {
 import { ReconciliationService } from './reconciliation.service';
 import { EmailService } from '../../email/email.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
+import { GatewayFactory } from '../gateways/gateway.factory';
+import { PaymentsService } from '../payments.service';
 
 // Compile-time fallbacks if the settings rows are missing. The settings
 // table seed (migration 0089) mirrors these — keep in sync if you change
@@ -56,6 +58,8 @@ export class ReconciliationCronService {
     private readonly reconciliationService: ReconciliationService,
     private readonly emailService: EmailService,
     private readonly auditLogService: AuditLogService,
+    private readonly gatewayFactory: GatewayFactory,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   // ─── Daily scan + auto-escalate + digest ─────────────────────────────
@@ -549,5 +553,125 @@ export class ReconciliationCronService {
     }
 
     return { sweptCount, cutoff: cutoff.toISOString() };
+  }
+
+  // ─── BNPL status poll ────────────────────────────────────────────────
+  //
+  // Webhook-or-poll fallback per Tabby's docs:
+  //   https://docs.tabby.ai/pay-in-4-custom-integration/payment-processing
+  //   "implement payment verification (by webhooks or multiple retrieve requests)"
+  //
+  // Tabby + Tamara payments can land in 'pending' / 'processing' for a few
+  // reasons that webhooks alone don't catch:
+  //   - Webhook delivery dropped on the gateway side (rare but happens)
+  //   - Tamara's order_approved fired before our authorise/capture
+  //     completed, leaving the order at status='approved' on their side
+  //     while ours stayed 'pending'
+  //   - Network blip during the synchronous create-charge path
+  //
+  // This sweep finds BNPL payments stuck in pending/processing for >5min
+  // (gives the webhook path a chance to land first) and <24h (older are
+  // truly abandoned — handled by runAbandonedPaymentSweep), polls each
+  // gateway's status API, and applies the terminal outcome via the same
+  // PaymentsService methods the webhook path uses. The Tamara gateway's
+  // getPaymentStatus is self-healing (calls authorise+capture inline when
+  // it sees status='approved'), so this sweep also recovers stuck Tamara
+  // orders end-to-end.
+
+  async runBnplStatusPoll(opts: { minAgeMinutes?: number; maxAgeHours?: number } = {}): Promise<{
+    inspected: number;
+    transitionedToPaid: number;
+    transitionedToFailed: number;
+    stillPending: number;
+    errors: number;
+  }> {
+    const minAgeMinutes = opts.minAgeMinutes ?? 5;
+    const maxAgeHours = opts.maxAgeHours ?? 24;
+    const upperCutoff = new Date(Date.now() - minAgeMinutes * 60 * 1000);
+    const lowerCutoff = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000);
+
+    const stale = await db
+      .select({
+        id: payments.id,
+        gateway: payments.gateway,
+        gatewayChargeId: payments.gatewayChargeId,
+        status: payments.status,
+      })
+      .from(payments)
+      .where(
+        and(
+          inArray(payments.gateway, ['tabby', 'tamara'] as any),
+          inArray(payments.status, ['pending', 'processing'] as any),
+          isNotNull(payments.gatewayChargeId),
+          lte(payments.createdAt, upperCutoff),
+          gte(payments.createdAt, lowerCutoff),
+        ),
+      )
+      .limit(200);
+
+    this.logger.log(
+      `BNPL status poll starting: ${stale.length} pending/processing tabby+tamara rows in [${lowerCutoff.toISOString()}, ${upperCutoff.toISOString()}]`,
+    );
+
+    let transitionedToPaid = 0;
+    let transitionedToFailed = 0;
+    let stillPending = 0;
+    let errors = 0;
+
+    for (const row of stale) {
+      if (!row.gatewayChargeId) continue;
+      try {
+        const gw = this.gatewayFactory.getGateway(row.gateway);
+        const normalized = await gw.getPaymentStatus(row.gatewayChargeId);
+
+        if (normalized === 'paid') {
+          await this.paymentsService.processPaymentSuccess(row.id);
+          transitionedToPaid++;
+        } else if (normalized === 'failed' || normalized === 'cancelled') {
+          await this.paymentsService.processPaymentFailure(
+            row.id,
+            `Polled status from ${row.gateway}: ${normalized}`,
+            'gateway_error',
+          );
+          transitionedToFailed++;
+        } else {
+          stillPending++;
+        }
+      } catch (err) {
+        errors++;
+        this.logger.warn(
+          `BNPL poll failed for payment ${row.id} (${row.gateway}): ${(err as Error).message}`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `BNPL status poll complete: paid=${transitionedToPaid}, failed=${transitionedToFailed}, still-pending=${stillPending}, errors=${errors}`,
+    );
+
+    await this.auditLogService.log({
+      entityType: 'reconciliation_scan',
+      entityId: `bnpl_poll_${Date.now()}`,
+      action: 'bnpl_status_poll_completed',
+      performedBy: 'system',
+      ipAddress: 'cron',
+      metadata: {
+        inspected: stale.length,
+        transitionedToPaid,
+        transitionedToFailed,
+        stillPending,
+        errors,
+        minAgeMinutes,
+        maxAgeHours,
+      },
+    });
+
+    return {
+      inspected: stale.length,
+      transitionedToPaid,
+      transitionedToFailed,
+      stillPending,
+      errors,
+    };
   }
 }

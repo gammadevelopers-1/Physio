@@ -66,6 +66,22 @@ export class ReconciliationCronController {
     return this.invoiceService.sweepOverdueInvoices();
   }
 
+  /**
+   * BNPL status-poll fallback (Tabby + Tamara). Called frequently (~every
+   * 5 min) by Cloud Scheduler so payments stuck in pending/processing get
+   * actively progressed when webhooks are missed. Cheap when nothing is
+   * stuck — one DB read returning an empty set.
+   *
+   * Throttled higher than the other cron jobs because this one is meant
+   * to fire frequently; the limit just guards against runaway misconfig.
+   */
+  @Post('bnpl-status-poll')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  async bnplStatusPoll(@Headers('x-cron-token') token: string) {
+    this.assertToken(token);
+    return this.cron.runBnplStatusPoll();
+  }
+
   private assertToken(provided: string | undefined): void {
     const expected = process.env.RECONCILIATION_CRON_TOKEN;
     // In development we let it through to make local testing easy. In any

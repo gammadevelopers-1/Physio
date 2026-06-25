@@ -437,10 +437,49 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
 
   async getPaymentStatus(chargeId: string): Promise<NormalizedPaymentStatus> {
     const data = await this.getCharge(chargeId);
+
+    // Self-healing path for the verify endpoint. Tamara orders need the
+    // merchant to actively call Authorise + Capture to settle — the webhook
+    // handler does this inline on `order_approved`, but if Tamara's webhook
+    // is delayed or lost (common in sandbox, occasionally in prod), the
+    // payment would sit in 'pending' forever even though the buyer paid.
+    //
+    // Both Tamara endpoints are idempotent (Authorise: 409 on replay treated
+    // as success; Capture: returns the existing capture record on replay), so
+    // running them from verify is safe even if the webhook eventually arrives
+    // and re-runs them.
+    if (data.status === 'approved') {
+      try {
+        await this.authoriseOrder(chargeId);
+        const totalAmount = Number(data.total_amount?.amount);
+        const totalCurrency = data.total_amount?.currency || 'SAR';
+        if (Number.isFinite(totalAmount) && totalAmount > 0) {
+          await this.captureOrder(chargeId, totalAmount, totalCurrency);
+          return 'paid';
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Tamara verify-path settle failed for ${chargeId}: ${(err as Error).message} — staying pending, webhook will retry`,
+        );
+      }
+    } else if (data.status === 'authorised') {
+      // Authorise already done (probably by an earlier webhook attempt that
+      // got as far as step 1) — just capture.
+      try {
+        const totalAmount = Number(data.total_amount?.amount);
+        const totalCurrency = data.total_amount?.currency || 'SAR';
+        if (Number.isFinite(totalAmount) && totalAmount > 0) {
+          await this.captureOrder(chargeId, totalAmount, totalCurrency);
+          return 'paid';
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Tamara verify-path capture failed for ${chargeId}: ${(err as Error).message} — staying pending, webhook will retry`,
+        );
+      }
+    }
+
     switch (data.status) {
-      // 'approved' means buyer paid 1st instalment but merchant hasn't
-      // Authorised yet — funds are not ours. Only 'captured' / 'fully_captured'
-      // count as paid.
       case 'captured':
       case 'fully_captured':
         return 'paid';

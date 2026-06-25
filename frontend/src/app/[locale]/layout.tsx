@@ -7,6 +7,7 @@ import { HtmlAttributesSetter } from "@/components/HtmlAttributesSetter";
 import NavigationProgress from "@/components/NavigationProgress";
 import LocaleSwitchOverlay from "@/components/LocaleSwitchOverlay";
 import WhatsAppChatWidget from "@/components/WhatsAppChatWidget";
+import NelcVerificationBadge from "@/components/NelcVerificationBadge";
 import { getSiteSettings } from "@/lib/strapi";
 import { getPlatformLocaleSettings } from "@/lib/platform-locale-server";
 import { getPlatformGeneralSettings } from "@/lib/platform-general-server";
@@ -73,6 +74,7 @@ export default async function LocaleLayout({
           replyTime={platformGeneral.whatsappReplyTime ?? settings?.whatsappReplyTime}
           locale={locale}
         />
+        <NelcVerificationBadge />
       </ClientProviders>
     </NextIntlClientProvider>
   );

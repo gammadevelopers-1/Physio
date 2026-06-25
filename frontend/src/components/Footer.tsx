@@ -7,6 +7,7 @@ import { Copyright, Facebook, Linkedin, Twitter, Instagram } from "lucide-react"
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
+import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 
 interface FooterProps {
   siteSettings?: SiteSettings | null;
@@ -17,10 +18,20 @@ interface FooterProps {
   };
 }
 
-const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
+const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: FooterProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const platformGeneral = usePlatformGeneral();
+
+  // Auth / payment / verify-invoice pages are `"use client"` and can't fetch
+  // Strapi server-side, so they render `<Footer />` with no props — which
+  // previously left the footer half-rendered (only the platform name from
+  // PlatformGeneralContext was visible). Fall back to a client-side fetch so
+  // those pages get the same full footer as the marketing pages. Marketing
+  // pages already pass props, so the hook result is overridden and unused.
+  const chrome = useNavbarChrome();
+  const siteSettings = passedSettings ?? chrome.siteSettings;
+  const footerLinks = passedLinks ?? chrome.footerLinks;
 
   // Logo comes strictly from Strapi
   const logoUrl = siteSettings?.logo?.url ? getStrapiMediaUrl(siteSettings.logo.url) : null;

@@ -985,6 +985,48 @@ export default function CheckoutPageClient({
 
                 {/* Gateway Selection */}
                 <div role="radiogroup" aria-label={t("payment.selectGateway")} className="flex flex-col gap-3 mb-4">
+                  {/* Synchronized skeleton column — every payment radio
+                      shimmers in together once Tabby pre-score resolves,
+                      so the slow gateway never visually lags the others.
+                      Trade-off: instant gateways are gated on Tabby for
+                      ~500ms-1s; we accept that for the layout-stable UX. */}
+                  {tabbyEligibility.status === "checking" ? (
+                    <>
+                      {/* 4 skeleton rows, sized to match the real radios so
+                          there's no shift when they resolve. iconBoxes is
+                          the number of right-side logo placeholders. */}
+                      {[
+                        { iconBoxes: 2 }, // Moyasar (mada + visa)
+                        { iconBoxes: 1 }, // Tabby
+                        { iconBoxes: 1 }, // Tamara
+                        { iconBoxes: 0 }, // Bank Transfer
+                      ].map((row, i) => (
+                        <div
+                          key={`payment-skeleton-${i}`}
+                          className="border border-[#e5e5e5] rounded-xl p-[14px] bg-white"
+                          aria-hidden="true"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-[11px]">
+                              <div className="w-[18px] h-[18px] rounded-full bg-[#f2f4f7] animate-pulse" />
+                              <div className="h-4 w-20 rounded bg-[#f2f4f7] animate-pulse" />
+                            </div>
+                            {row.iconBoxes > 0 && (
+                              <div className="flex items-center gap-[11px]">
+                                {Array.from({ length: row.iconBoxes }).map((_, j) => (
+                                  <div
+                                    key={j}
+                                    className="h-5 w-[34px] rounded bg-[#f2f4f7] animate-pulse"
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
                   {/* Moyasar */}
                   <div
                     role="radio"
@@ -1015,26 +1057,9 @@ export default function CheckoutPageClient({
                                    rejection message below, per their docs
                                    (https://docs.tabby.ai/pay-in-4-custom-
                                     integration/checkout-flow#background-
-                                    pre-scoring-check). */}
-                  {/* Skeleton placeholder while the pre-score is in flight
-                      (debounce + network ≈ 500ms-1s). Keeps the layout
-                      stable so the Tamara/Bank Transfer rows don't jump
-                      up when the Tabby radio finally resolves. */}
-                  {tabbyEligibility.status === "checking" && (
-                    <div
-                      className="border border-[#e5e5e5] rounded-xl p-[14px] bg-white"
-                      aria-hidden="true"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-[11px]">
-                          <div className="w-[18px] h-[18px] rounded-full bg-[#f2f4f7] animate-pulse" />
-                          <div className="h-4 w-16 rounded bg-[#f2f4f7] animate-pulse" />
-                        </div>
-                        <div className="h-6 w-[60px] rounded bg-[#f2f4f7] animate-pulse" />
-                      </div>
-                    </div>
-                  )}
-                  {tabbyEligibility.status !== "checking" && (
+                                    pre-scoring-check). The outer ternary
+                      already excludes 'checking', so this branch only
+                      sees eligible / rejected. */}
                   <div
                     role="radio"
                     aria-checked={gateway === "tabby"}
@@ -1084,7 +1109,6 @@ export default function CheckoutPageClient({
                       )}
                     </div>
                   </div>
-                  )}
 
                   {/* Tamara — 3 monthly instalments, interest-free */}
                   <div
@@ -1134,6 +1158,8 @@ export default function CheckoutPageClient({
                       </div>
                     </div>
                   </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Order Summary */}

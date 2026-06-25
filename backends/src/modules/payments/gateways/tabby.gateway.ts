@@ -530,6 +530,41 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
         this.logger.log(`Tabby payment ${paymentId} already captured (per error body)`);
         return;
       }
+      // Tabby returns "could not capture not authorized payments" when the
+      // payment isn't currently in AUTHORIZED state — which includes the
+      // already-CLOSED case (state has moved past AUTHORIZED). Their
+      // 409/"already captured" matchers above miss this wording. Query the
+      // payment's actual state: if it's CLOSED we've already captured it
+      // (idempotent no-op); otherwise the payment really never got
+      // authorized (NEW / REJECTED / EXPIRED) and we surface the error.
+      if (msg.includes('not authorized payments') || msg.includes('not authorised payments')) {
+        try {
+          const statusResp = await this.fetchWithRetry(
+            `${this.apiUrl}/payments/${paymentId}`,
+            {
+              method: 'GET',
+              headers: { Authorization: `Bearer ${this.secretKey}` },
+            },
+          );
+          const statusBody = await statusResp.json().catch(() => ({}));
+          const remoteStatus = String(statusBody?.status || '').toUpperCase();
+          if (remoteStatus === 'CLOSED') {
+            this.logger.log(
+              `Tabby payment ${paymentId} already CLOSED — skipping pre-refund capture`,
+            );
+            return;
+          }
+          throw new PaymentGatewayError(
+            'tabby',
+            `Cannot capture payment in state ${remoteStatus || 'unknown'} — must be AUTHORIZED first`,
+            this.normalizeErrorCode(remoteStatus || data.error),
+            { ...data, remoteStatus },
+          );
+        } catch (lookupErr) {
+          if (lookupErr instanceof PaymentGatewayError) throw lookupErr;
+          // Status lookup itself failed — fall through to the original error.
+        }
+      }
       throw new PaymentGatewayError(
         'tabby',
         data.error || data.message || `Capture failed with HTTP ${response.status}`,

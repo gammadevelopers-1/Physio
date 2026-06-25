@@ -670,8 +670,34 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
 
   async getPaymentStatus(chargeId: string): Promise<NormalizedPaymentStatus> {
     const data = await this.getCharge(chargeId);
-    switch ((data.status || '').toUpperCase()) {
-      case 'AUTHORIZED': case 'CLOSED': return 'paid';
+    const remoteStatus = (data.status || '').toUpperCase();
+    switch (remoteStatus) {
+      case 'AUTHORIZED': {
+        // Self-heal per Tabby's docs: "trigger the Capture API for any
+        // payment in the AUTHORIZED status". The webhook path already does
+        // this on the AUTHORIZED event (tabby.gateway.ts processWebhook),
+        // but if the webhook dropped this path is the only thing that
+        // promotes the payment to CLOSED on Tabby's side. captureOrder is
+        // idempotent (409 / already-captured handled). On capture failure
+        // we still return 'paid' — the buyer authorised and refund() will
+        // re-attempt capture as needed.
+        const amount = Number(data.amount);
+        const currency = data.currency || 'SAR';
+        if (!Number.isNaN(amount)) {
+          try {
+            await this.captureOrder(chargeId, amount, currency);
+            this.logger.log(
+              `Tabby ${chargeId} captured via getPaymentStatus self-heal (${amount} ${currency})`,
+            );
+          } catch (err) {
+            this.logger.warn(
+              `Tabby ${chargeId} capture during status poll failed: ${(err as Error).message} — leaving as AUTHORIZED, will retry next sweep`,
+            );
+          }
+        }
+        return 'paid';
+      }
+      case 'CLOSED': return 'paid';
       case 'CREATED': return 'pending';
       case 'REJECTED': case 'EXPIRED': return 'failed';
       case 'REFUNDED': return 'refunded';

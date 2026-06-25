@@ -27,6 +27,7 @@ import {
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { isGlobalAdmin, isManager, isManagerOrAbove, isTA } from '../../common/role-helpers';
 import { decryptUserPII } from '../../common/crypto';
+import { parseStartDate, parseEndDate } from '../../common/date-range';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CancelSessionDto } from './dto/cancel-session.dto';
@@ -524,8 +525,8 @@ export class SessionsService {
     }
     if (params.dateRange) {
       const [startStr, endStr] = params.dateRange.split(',');
-      if (startStr) conditions.push(gte(sessions.scheduledAt, new Date(startStr)));
-      if (endStr) conditions.push(lte(sessions.scheduledAt, new Date(endStr)));
+      if (startStr) conditions.push(gte(sessions.scheduledAt, parseStartDate(startStr)!));
+      if (endStr) conditions.push(lte(sessions.scheduledAt, parseEndDate(endStr)!));
     }
 
     const assessmentIdSubquery = db

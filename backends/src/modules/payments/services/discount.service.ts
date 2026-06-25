@@ -18,6 +18,7 @@ import {
   auditLogs,
   enrollments,
 } from '../../../database/schema';
+import { parseStartDate, parseEndDate } from '../../../common/date-range';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { CreateDiscountDto } from '../dto/create-discount.dto';
 import { UpdateDiscountDto } from '../dto/update-discount.dto';
@@ -805,10 +806,10 @@ export class DiscountService {
       conditions.push(ilike(discountCodes.code, `%${search}%`));
     }
     if (startDate) {
-      conditions.push(gte(discountCodes.createdAt, new Date(startDate)));
+      conditions.push(gte(discountCodes.createdAt, parseStartDate(startDate)!));
     }
     if (endDate) {
-      conditions.push(lte(discountCodes.createdAt, new Date(endDate)));
+      conditions.push(lte(discountCodes.createdAt, parseEndDate(endDate)!));
     }
     if (extra.type) {
       conditions.push(eq(discountCodes.type, extra.type));
@@ -890,12 +891,12 @@ export class DiscountService {
     const usageDateConditions: any[] = [];
     const invoiceDateConditions: any[] = [];
     if (startDate) {
-      usageDateConditions.push(gte(discountUsage.usedAt, new Date(startDate)));
-      invoiceDateConditions.push(gte(invoices.issuedAt, new Date(startDate)));
+      usageDateConditions.push(gte(discountUsage.usedAt, parseStartDate(startDate)!));
+      invoiceDateConditions.push(gte(invoices.issuedAt, parseStartDate(startDate)!));
     }
     if (endDate) {
-      usageDateConditions.push(lte(discountUsage.usedAt, new Date(endDate)));
-      invoiceDateConditions.push(lte(invoices.issuedAt, new Date(endDate)));
+      usageDateConditions.push(lte(discountUsage.usedAt, parseEndDate(endDate)!));
+      invoiceDateConditions.push(lte(invoices.issuedAt, parseEndDate(endDate)!));
     }
 
     const usageDateWhere = usageDateConditions.length > 0 ? and(...usageDateConditions) : undefined;
@@ -955,8 +956,8 @@ export class DiscountService {
 
     // Top coupons by conversions (filtered by date range)
     const topCouponJoinConditions: any[] = [eq(discountCodes.id, discountUsage.discountId)];
-    if (startDate) topCouponJoinConditions.push(gte(discountUsage.usedAt, new Date(startDate)));
-    if (endDate) topCouponJoinConditions.push(lte(discountUsage.usedAt, new Date(endDate)));
+    if (startDate) topCouponJoinConditions.push(gte(discountUsage.usedAt, parseStartDate(startDate)!));
+    if (endDate) topCouponJoinConditions.push(lte(discountUsage.usedAt, parseEndDate(endDate)!));
 
     const topCoupons = await db
       .select({
@@ -1038,8 +1039,8 @@ export class DiscountService {
    */
   async getCampaignReport(startDate?: string, endDate?: string) {
     const joinConds: any[] = [eq(discountCodes.id, discountUsage.discountId)];
-    if (startDate) joinConds.push(gte(discountUsage.usedAt, new Date(startDate)));
-    if (endDate) joinConds.push(lte(discountUsage.usedAt, new Date(endDate)));
+    if (startDate) joinConds.push(gte(discountUsage.usedAt, parseStartDate(startDate)!));
+    if (endDate) joinConds.push(lte(discountUsage.usedAt, parseEndDate(endDate)!));
 
     const rows = await db
       .select({
@@ -1294,10 +1295,10 @@ export class DiscountService {
       conditions.push(ilike(discountCodes.code, `%${search}%`));
     }
     if (startDate) {
-      conditions.push(gte(discountCodes.createdAt, new Date(startDate)));
+      conditions.push(gte(discountCodes.createdAt, parseStartDate(startDate)!));
     }
     if (endDate) {
-      conditions.push(lte(discountCodes.createdAt, new Date(endDate)));
+      conditions.push(lte(discountCodes.createdAt, parseEndDate(endDate)!));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

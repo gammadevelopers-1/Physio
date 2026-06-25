@@ -38,6 +38,7 @@ import { csatSurveys } from '../../database/schema/surveys';
 import { recomputeEnrollmentProgress } from '../enrollments/progress.helper';
 import { getEffectivePrice } from '../courses/pricing.util';
 import { decryptPII } from '../../common/crypto';
+import { parseStartDate, parseEndDate } from '../../common/date-range';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import { computeEffectiveScore } from '../../common/score-policy';
 import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
@@ -2912,10 +2913,10 @@ export class StudentService {
     // Build date filters for sessions
     const sessionConditions: ReturnType<typeof eq>[] = [];
     if (params.from) {
-      sessionConditions.push(gte(sessions.scheduledAt, new Date(params.from)));
+      sessionConditions.push(gte(sessions.scheduledAt, parseStartDate(params.from)!));
     }
     if (params.to) {
-      sessionConditions.push(lte(sessions.scheduledAt, new Date(params.to)));
+      sessionConditions.push(lte(sessions.scheduledAt, parseEndDate(params.to)!));
     }
 
     // Get sessions from enrolled courses — include all statuses so the calendar
@@ -2982,10 +2983,10 @@ export class StudentService {
     // Also fetch assessments with due dates from enrolled courses
     const assessmentConditions: ReturnType<typeof eq>[] = [];
     if (params.from) {
-      assessmentConditions.push(gte(assessments.dueDate, new Date(params.from)));
+      assessmentConditions.push(gte(assessments.dueDate, parseStartDate(params.from)!));
     }
     if (params.to) {
-      assessmentConditions.push(lte(assessments.dueDate, new Date(params.to)));
+      assessmentConditions.push(lte(assessments.dueDate, parseEndDate(params.to)!));
     }
 
     const assessmentEvents = await db

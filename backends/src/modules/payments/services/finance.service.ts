@@ -805,8 +805,8 @@ export class FinanceService {
     const d90 = new Date(now.getTime() - 90 * 86400000);
 
     const conditions: any[] = [];
-    if (startDate) conditions.push(gte(invoices.issuedAt, new Date(startDate)));
-    if (endDate) conditions.push(lte(invoices.issuedAt, new Date(endDate)));
+    if (startDate) conditions.push(gte(invoices.issuedAt, parseStartDate(startDate)!));
+    if (endDate) conditions.push(lte(invoices.issuedAt, parseEndDate(endDate)!));
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Use dueDate for aging (fall back to issuedAt if dueDate is null)
@@ -1078,10 +1078,10 @@ export class FinanceService {
   async exportPaymentsCsv(startDate?: string, endDate?: string, status?: string, userId?: string, locale?: string): Promise<string> {
     const conditions: any[] = [];
     if (startDate) {
-      conditions.push(gte(payments.createdAt, new Date(startDate)));
+      conditions.push(gte(payments.createdAt, parseStartDate(startDate)!));
     }
     if (endDate) {
-      conditions.push(lte(payments.createdAt, new Date(endDate)));
+      conditions.push(lte(payments.createdAt, parseEndDate(endDate)!));
     }
     if (status) {
       conditions.push(eq(payments.status, status));
@@ -1161,8 +1161,8 @@ export class FinanceService {
 
   async exportPaymentsPdf(startDate?: string, endDate?: string, status?: string, userId?: string, locale?: string): Promise<Buffer> {
     const conditions: any[] = [];
-    if (startDate) conditions.push(gte(payments.createdAt, new Date(startDate)));
-    if (endDate) conditions.push(lte(payments.createdAt, new Date(endDate)));
+    if (startDate) conditions.push(gte(payments.createdAt, parseStartDate(startDate)!));
+    if (endDate) conditions.push(lte(payments.createdAt, parseEndDate(endDate)!));
     if (status) conditions.push(eq(payments.status, status));
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 

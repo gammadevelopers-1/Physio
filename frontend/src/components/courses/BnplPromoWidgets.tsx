@@ -140,7 +140,6 @@ export default function BnplPromoWidgets({
           <div
             id={tabbyMountId}
             ref={tabbyMountRef}
-            className="min-h-[40px]"
           />
         </>
       ) : null}

@@ -28,6 +28,7 @@ import { isNull } from 'drizzle-orm';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { GatewayFactory } from './gateways/gateway.factory';
+import { TabbyGateway } from './gateways/tabby.gateway';
 import { DiscountService } from './services/discount.service';
 import { InvoiceService } from './services/invoice.service';
 import { TaxComputationService } from './services/tax-computation.service';
@@ -200,6 +201,123 @@ export class PaymentsService {
         itemTitle: r.courseTitle || 'Course',
       })),
     };
+  }
+
+  /**
+   * Background pre-scoring for Tabby — call when the checkout page mounts
+   * so we can hide the Tabby radio if underwriting will reject this buyer
+   * for this cart amount. Per Tabby docs:
+   *   https://docs.tabby.ai/pay-in-4-custom-integration/checkout-flow#background-pre-scoring-check
+   *
+   * Re-uses quotePayment to compute the cart total + sanity-check the cart,
+   * builds the same buyer-history + attachment payload createCharge would
+   * send (so the verdict matches what the real Pay-Now session would
+   * receive), then delegates to TabbyGateway.prescore. Does NOT create any
+   * DB rows — Tabby's session is throwaway.
+   *
+   * Fails open: any unexpected error returns eligible=true so the radio
+   * stays visible and the buyer can still attempt payment.
+   */
+  async prescoreTabby(
+    user: AuthenticatedUser,
+    dto: { courseIds: string[]; discountCode?: string; locale?: 'ar' | 'en' },
+  ): Promise<{ eligible: boolean; reason?: string; message?: string }> {
+    try {
+      const quote = await this.quotePayment(user, {
+        courseIds: dto.courseIds,
+        discountCode: dto.discountCode,
+      });
+
+      const [userData] = await db
+        .select({
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          phone: users.phone,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1);
+
+      const plaintextPhone = decryptPII(userData?.phone);
+      // Tabby requires a Saudi phone for pre-scoring too. If the buyer
+      // doesn't have one on file, mark them ineligible up-front (same as
+      // the real Pay-Now check would do) so the radio hides cleanly.
+      if (!plaintextPhone) {
+        return {
+          eligible: false,
+          reason: 'phone_required',
+          message:
+            'Tabby requires a Saudi phone number on your profile. Please add one in account settings.',
+        };
+      }
+
+      const buyerHistory = await this.buildBuyerHistory(
+        user.id,
+        // No real paymentId yet — pass a sentinel so the exclusion clause
+        // in buildBuyerHistory doesn't accidentally match a real row.
+        '00000000-0000-0000-0000-000000000000',
+      );
+
+      // Primary course for the attachment program-length calc — mirrors
+      // initiatePayment's logic.
+      const [primaryCourse] = await db
+        .select({ startDate: courses.startDate, endDate: courses.endDate })
+        .from(courses)
+        .where(eq(courses.id, dto.courseIds[0]))
+        .limit(1);
+      const monthsToCompletion =
+        primaryCourse?.startDate && primaryCourse?.endDate
+          ? Math.max(
+              1,
+              Math.ceil(
+                (new Date(primaryCourse.endDate).getTime() -
+                  new Date(primaryCourse.startDate).getTime()) /
+                  (30 * 24 * 60 * 60 * 1000),
+              ),
+            )
+          : 1;
+
+      const tabby = this.gatewayFactory.getGateway('tabby') as TabbyGateway;
+      return await tabby.prescore({
+        amount: Number(quote.totals.totalAmount),
+        currency: 'SAR',
+        description:
+          quote.lineItems.length === 1
+            ? `Enrollment: ${quote.lineItems[0].title}`
+            : `${quote.lineItems.length} courses`,
+        customerName: `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim(),
+        customerEmail: userData?.email || user.email,
+        customerPhone: plaintextPhone,
+        customerRegisteredSince: userData?.createdAt
+          ? new Date(userData.createdAt).toISOString()
+          : undefined,
+        buyerHistory,
+        educationDetails: {
+          merchantSubtype: 'courses_training',
+          monthsToCompletion,
+        },
+        redirectUrl: 'https://physioguidance.org/payment/callback',
+        cancelUrl: 'https://physioguidance.org/checkout',
+        webhookUrl: 'https://physioguidance.org/api/webhooks/tabby',
+        metadata: {
+          // Sentinel so the prescore session is identifiable in Tabby's
+          // portal as a pre-check, not a real attempt.
+          paymentId: `prescore-${Date.now()}`,
+          enrollmentId: 'prescore',
+          courseId: dto.courseIds[0],
+          courseIds: dto.courseIds,
+          userId: user.id,
+        },
+        locale: dto.locale || 'en',
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Tabby prescore failed for user ${user.id}: ${(err as Error).message} — failing open`,
+      );
+      return { eligible: true };
+    }
   }
 
   /**

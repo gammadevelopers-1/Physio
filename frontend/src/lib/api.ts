@@ -6859,6 +6859,20 @@ export const paymentApi = {
       };
     }>('/payments/quote', data),
 
+  /**
+   * Tabby background pre-scoring check. Called on checkout page mount + when
+   * the cart amount changes. Returns { eligible: false, message: '...' } if
+   * Tabby's underwriting would reject this buyer-cart pair — the FE then
+   * hides the Tabby radio so the buyer isn't presented an option they
+   * can't actually use. See backend prescoreTabby + Tabby docs:
+   * https://docs.tabby.ai/pay-in-4-custom-integration/checkout-flow#background-pre-scoring-check
+   */
+  tabbyPreScore: (data: { courseIds: string[]; discountCode?: string; locale?: 'ar' | 'en' }) =>
+    api.post<{ eligible: boolean; reason?: string; message?: string }>(
+      '/payments/tabby/pre-score',
+      data,
+    ),
+
   verify: (paymentId: string) =>
     api.post<{ status: string; paymentId: string; amount?: string; currency?: string; gateway?: string; paidAt?: string; failureReason?: string }>(`/payments/verify/${paymentId}`),
 

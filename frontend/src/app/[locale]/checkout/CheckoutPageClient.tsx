@@ -278,6 +278,16 @@ export default function CheckoutPageClient({
     };
   }, []);
 
+  // Tabby background pre-scoring — per their docs we should check
+  // eligibility BEFORE the buyer clicks Pay Now so we can hide the radio
+  // for buyers Tabby would reject. Runs on mount + whenever the cart
+  // items change (debounced). Fails open: if the check errors out, we
+  // keep Tabby visible.
+  const [tabbyEligibility, setTabbyEligibility] = useState<{
+    eligible: boolean;
+    message?: string;
+  }>({ eligible: true });
+
   // Totals
   const originalSubtotal = items.reduce((s, it) => s + it.price, 0);
   const subtotal = items.reduce((s, it) => s + it.effectivePrice, 0);
@@ -287,6 +297,46 @@ export default function CheckoutPageClient({
   const effectiveVatRate = vatEnabled ? vatRate / 100 : 0;
   const vat = Math.round(taxableAmount * effectiveVatRate * 100) / 100;
   const total = Math.round((taxableAmount + vat) * 100) / 100;
+
+  // Pre-score Tabby after the cart settles. Debounce so changing the
+  // discount field doesn't fire 5 calls in 2 seconds. Re-running the
+  // check on amount changes catches the "above your limit" case once
+  // the buyer adds an item that pushes them past Tabby's cap.
+  const cartIdsKey = items.map((it) => it.id).join(",");
+  useEffect(() => {
+    if (items.length === 0 || total <= 0) {
+      setTabbyEligibility({ eligible: true });
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      paymentApi
+        .tabbyPreScore({
+          courseIds: items.map((it) => it.id),
+          discountCode: discountResult?.valid ? discountCode : undefined,
+          locale: locale as "ar" | "en",
+        })
+        .then((res) => {
+          if (cancelled) return;
+          setTabbyEligibility({ eligible: res.eligible, message: res.message });
+          // If buyer was on Tabby and Tabby just got rejected, bump them
+          // off so the radio doesn't stay selected on a now-hidden option.
+          if (!res.eligible && gateway === "tabby") {
+            setGateway("moyasar");
+            setPaymentMethod("card");
+          }
+        })
+        .catch(() => {
+          // Fail open — keep Tabby visible.
+          if (!cancelled) setTabbyEligibility({ eligible: true });
+        });
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartIdsKey, total, discountResult?.valid]);
 
   const handleValidateDiscount = async () => {
     if (!discountCode.trim() || items.length === 0) return;
@@ -943,7 +993,10 @@ export default function CheckoutPageClient({
                     </div>
                   </div>
 
-                  {/* Tabby — Pay in 4 */}
+                  {/* Tabby — hidden if Tabby's background pre-scoring
+                      rejected this buyer-cart pair. Their docs recommend
+                      hiding over showing-with-disabled-state. */}
+                  {tabbyEligibility.eligible && (
                   <div
                     role="radio"
                     aria-checked={gateway === "tabby"}
@@ -977,6 +1030,7 @@ export default function CheckoutPageClient({
                       )}
                     </div>
                   </div>
+                  )}
 
                   {/* Tamara — 3 monthly instalments, interest-free */}
                   <div

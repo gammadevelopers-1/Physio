@@ -40,15 +40,93 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
     ];
   }
 
-  async createCharge(params: CreateChargeParams): Promise<ChargeResult> {
+  /**
+   * Background pre-scoring per https://docs.tabby.ai/pay-in-4-custom-integration/checkout-flow#background-pre-scoring-check
+   *
+   * Sends a real Tabby session-create request (Tabby has no dry-run mode)
+   * and inspects the response for status='rejected'. Returns a simple
+   * eligibility verdict the frontend can use to hide / disable the Tabby
+   * radio BEFORE the buyer clicks Pay Now.
+   *
+   * No throw on rejection — eligibility is just a return value here so
+   * callers don't have to wrap in try/catch. HTTP / network failures DO
+   * throw (so the FE can fail-open and still show Tabby rather than
+   * hiding it because of an unrelated network blip).
+   */
+  async prescore(params: CreateChargeParams): Promise<{
+    eligible: boolean;
+    reason?: string;
+    message?: string;
+  }> {
     if (!this.merchantCode) {
-      throw new PaymentGatewayError(
-        'tabby',
-        'TABBY_MERCHANT_CODE is not configured',
-        'gateway_error',
-      );
+      // Fail-open: treat as eligible so the radio renders. The actual
+      // Pay Now click will surface the misconfiguration with a clear error.
+      return { eligible: true };
     }
 
+    // Use the same body builder as createCharge but with a placeholder
+    // paymentId — the response is inspected and discarded; we never store
+    // a payments row from a prescore.
+    const body = this.buildCheckoutBody(params);
+
+    const response = await this.fetchWithRetry(`${this.apiUrl}/checkout`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.secretKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      // Don't penalise the buyer for Tabby being temporarily down — show
+      // the radio and let the Pay Now flow surface the actual error.
+      this.logger.warn(
+        `Tabby prescore HTTP ${response.status}: ${JSON.stringify(data)} — failing open (Tabby will stay visible)`,
+      );
+      return { eligible: true };
+    }
+
+    if (data?.status === 'rejected') {
+      const reason =
+        data?.configuration?.products?.installments?.rejection_reason ||
+        data?.configuration?.available_products?.installments?.[0]
+          ?.rejection_reason ||
+        data?.rejection_reason ||
+        'not_available';
+
+      const messages: Record<string, { en: string; ar: string }> = {
+        not_available: {
+          en: 'Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order.',
+          ar: 'نأسف، تابي غير قادرة على الموافقة على هذه العملية. الرجاء استخدام وسيلة دفع أخرى.',
+        },
+        order_amount_too_high: {
+          en: 'This purchase is above your current spending limit with Tabby — try a smaller cart or use another payment method.',
+          ar: 'هذا الطلب يتجاوز حد الإنفاق المتاح لك مع تابي — جرّب سلة أصغر أو استخدم وسيلة دفع أخرى.',
+        },
+        order_amount_too_low: {
+          en: 'The purchase amount is below the minimum required to use Tabby — try adding more items or use another payment method.',
+          ar: 'مبلغ الطلب أقل من الحد الأدنى المطلوب لاستخدام تابي — جرّب إضافة المزيد من العناصر أو استخدم وسيلة دفع أخرى.',
+        },
+      };
+      const localeKey = params.locale === 'ar' ? 'ar' : 'en';
+      const messageBundle = messages[reason] || messages.not_available;
+      return { eligible: false, reason, message: messageBundle[localeKey] };
+    }
+
+    return { eligible: true };
+  }
+
+  /**
+   * Build the POST /api/v2/checkout body. Extracted so both createCharge
+   * (real payment flow) and prescore (background eligibility check) use the
+   * exact same payload shape — Tabby's underwriting reads every field, so
+   * a prescore that omitted attachment / order_history would give a
+   * different verdict than the real Pay-Now session.
+   */
+  private buildCheckoutBody(params: CreateChargeParams): Record<string, unknown> {
     // Build order_history from the buyer-history snapshot computed in
     // payments.service. Each past order needs buyer + shipping_address +
     // at least one item per Tabby's schema; we re-use the current buyer's
@@ -107,7 +185,7 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
         }
       : undefined;
 
-    const body: Record<string, unknown> = {
+    return {
       payment: {
         amount: params.amount.toFixed(2),
         currency: params.currency,
@@ -167,6 +245,18 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
         failure: params.cancelUrl || params.redirectUrl,
       },
     };
+  }
+
+  async createCharge(params: CreateChargeParams): Promise<ChargeResult> {
+    if (!this.merchantCode) {
+      throw new PaymentGatewayError(
+        'tabby',
+        'TABBY_MERCHANT_CODE is not configured',
+        'gateway_error',
+      );
+    }
+
+    const body = this.buildCheckoutBody(params);
 
     const response = await this.fetchWithRetry(`${this.apiUrl}/checkout`, {
       method: 'POST',

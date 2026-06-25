@@ -64,6 +64,25 @@ export class PaymentsController {
     return this.paymentsService.quotePayment(user, dto);
   }
 
+  /**
+   * Background Tabby pre-scoring per Tabby's docs. FE calls this on
+   * checkout-page mount + when the cart amount changes so the Tabby
+   * radio can be hidden if underwriting will reject this buyer-cart pair.
+   *
+   * Authenticated + role-gated like quote (it reuses quote internally).
+   * Throttled tighter than quote because each call creates a real Tabby
+   * session on their side — we don't want a runaway loop hammering them.
+   */
+  @Post('tabby/pre-score')
+  @Roles('STUDENT')
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  async tabbyPreScore(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: QuotePaymentDto & { locale?: 'ar' | 'en' },
+  ) {
+    return this.paymentsService.prescoreTabby(user, dto);
+  }
+
   @Get('callback')
   @Public()
   async handleCallback(

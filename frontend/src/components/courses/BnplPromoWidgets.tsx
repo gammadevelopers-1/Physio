@@ -25,7 +25,12 @@ const TAMARA_PUBLIC_KEY = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "";
 
 declare global {
   interface Window {
+    // Tabby exposes TWO different widget classes from the same script:
+    //   TabbyPromo — for product / cart placement, takes a `source` param
+    //   TabbyCard  — for checkout placement, no `source` param
+    // Same loader script; just different constructors.
     TabbyPromo?: new (config: Record<string, unknown>) => unknown;
+    TabbyCard?: new (config: Record<string, unknown>) => unknown;
     TamaraWidgetV2?: { refresh: () => void };
   }
 }
@@ -64,22 +69,35 @@ export default function BnplPromoWidgets({
   useEffect(() => {
     if (!showWidgets || !showTabby || !TABBY_PUBLIC_KEY || !TABBY_MERCHANT_CODE) return;
 
-    // Tabby's widget is instantiated imperatively (it doesn't auto-mount
-    // like Tamara's web component). Wait for the script to load and the
-    // mount node to be in the DOM, then construct.
+    // Tabby ships two distinct widgets for two contexts:
+    //   - TabbyPromo (product / cart pages): takes `source: 'product' | 'cart'`
+    //   - TabbyCard  (checkout page): no `source` param, sits next to the
+    //     payment method radio.
+    // Same loader script; instantiated imperatively (no auto-mount). Wait
+    // for the script + mount node, then construct the right class for the
+    // surface we're on.
+    const isCheckout = source === "checkout";
     const tryInstantiate = () => {
       if (tabbyInstantiatedRef.current) return;
-      if (!window.TabbyPromo || !tabbyMountRef.current) return;
+      if (!tabbyMountRef.current) return;
+      const Ctor = isCheckout ? window.TabbyCard : window.TabbyPromo;
+      if (!Ctor) return;
       try {
-        new window.TabbyPromo({
+        const config: Record<string, unknown> = {
           selector: `#${tabbyMountId}`,
           currency,
           price: price.toFixed(2),
           lang,
-          source,
+          // shouldInheritBg lets the widget pick up the surrounding card's
+          // background instead of a hard white block — matters most on the
+          // checkout radio cards (light blue when selected, white otherwise).
+          shouldInheritBg: isCheckout,
           publicKey: TABBY_PUBLIC_KEY,
           merchantCode: TABBY_MERCHANT_CODE,
-        });
+        };
+        // TabbyCard explicitly omits `source`; only TabbyPromo takes it.
+        if (!isCheckout) config.source = source;
+        new Ctor(config);
         tabbyInstantiatedRef.current = true;
       } catch {
         // Tabby's script crashed (network, sandbox quirk) — silently skip.

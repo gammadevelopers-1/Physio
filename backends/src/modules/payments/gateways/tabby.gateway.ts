@@ -353,9 +353,22 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
       );
     }
 
+    // Tabby's /payments/{id}/refunds returns the updated Payment object
+    // (status: CLOSED for full refund, AUTHORIZED for partial), not a
+    // refund-shaped object with status: SUCCEEDED. Mapping that raw payment
+    // status into our terminal-success set kept refunds stuck in PROCESSING.
+    //
+    // Treat HTTP 200 itself as the success signal — Tabby has accepted the
+    // refund instruction and will execute it. If their settlement later
+    // fails on their side, they fire a separate webhook with the failure
+    // (handled in processWebhook). Any pre-acceptance failure already threw
+    // above on the !response.ok branch.
+    this.logger.log(
+      `Tabby refund accepted for ${params.gatewayChargeId}: payment.status=${data.status}`,
+    );
     return {
       refundId: data.id || params.gatewayChargeId,
-      status: data.status?.toLowerCase() || 'processing',
+      status: 'succeeded',
       rawResponse: data,
     };
   }

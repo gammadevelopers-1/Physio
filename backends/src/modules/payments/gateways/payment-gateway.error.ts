@@ -9,6 +9,12 @@ export type NormalizedErrorCode =
   | 'gateway_error'
   | 'network_error'
   | 'payment_disputed'
+  // Tabby pre-scoring outcomes — surfaced when their /checkout response
+  // reports status: 'rejected'. Each has a distinct user-facing message
+  // prescribed by Tabby's docs.
+  | 'tabby_not_available'
+  | 'tabby_amount_too_high'
+  | 'tabby_amount_too_low'
   | 'unknown';
 
 export class PaymentGatewayError extends Error {

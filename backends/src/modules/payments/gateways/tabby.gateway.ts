@@ -190,6 +190,61 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
       );
     }
 
+    // Pre-scoring rejection (HTTP 200 with status: 'rejected'). Per Tabby:
+    //   https://docs.tabby.ai/pay-in-4-custom-integration/checkout-flow#background-pre-scoring-check
+    // The response includes a rejection_reason — surface it as a distinct
+    // normalized error code so the FE can show Tabby's prescribed copy for
+    // that exact reason (not a generic "payment failed").
+    if (data?.status === 'rejected') {
+      // Reason can sit on the top-level payment or under the (now-empty)
+      // installments configuration depending on Tabby's response shape.
+      const reason =
+        data?.configuration?.products?.installments?.rejection_reason ||
+        data?.configuration?.available_products?.installments?.[0]
+          ?.rejection_reason ||
+        data?.rejection_reason ||
+        'not_available';
+
+      const reasonToCode: Record<
+        string,
+        | 'tabby_not_available'
+        | 'tabby_amount_too_high'
+        | 'tabby_amount_too_low'
+      > = {
+        not_available: 'tabby_not_available',
+        order_amount_too_high: 'tabby_amount_too_high',
+        order_amount_too_low: 'tabby_amount_too_low',
+      };
+      // Tabby's prescribed wording, verbatim (en + ar) per their docs. We
+      // pick the message in the buyer's locale because this is what shows
+      // up in the checkout-page error alert inline, not on a localised
+      // failed-page route — backend has to emit the right string here.
+      const reasonToMessage: Record<string, { en: string; ar: string }> = {
+        not_available: {
+          en: 'Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order.',
+          ar: 'نأسف، تابي غير قادرة على الموافقة على هذه العملية. الرجاء استخدام وسيلة دفع أخرى.',
+        },
+        order_amount_too_high: {
+          en: 'This purchase is above your current spending limit with Tabby — try a smaller cart or use another payment method.',
+          ar: 'هذا الطلب يتجاوز حد الإنفاق المتاح لك مع تابي — جرّب سلة أصغر أو استخدم وسيلة دفع أخرى.',
+        },
+        order_amount_too_low: {
+          en: 'The purchase amount is below the minimum required to use Tabby — try adding more items or use another payment method.',
+          ar: 'مبلغ الطلب أقل من الحد الأدنى المطلوب لاستخدام تابي — جرّب إضافة المزيد من العناصر أو استخدم وسيلة دفع أخرى.',
+        },
+      };
+
+      const code = reasonToCode[reason] || 'tabby_not_available';
+      const localeKey = params.locale === 'ar' ? 'ar' : 'en';
+      const messageBundle =
+        reasonToMessage[reason] || reasonToMessage.not_available;
+      const message = messageBundle[localeKey];
+      this.logger.warn(
+        `Tabby pre-scoring rejected for buyer; reason=${reason}, code=${code}`,
+      );
+      throw new PaymentGatewayError('tabby', message, code, data);
+    }
+
     // Tabby returns checkout configuration with redirect URL
     const redirectUrl =
       data.configuration?.available_products?.installments?.[0]?.web_url ||

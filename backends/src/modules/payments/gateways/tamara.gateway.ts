@@ -381,17 +381,26 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
 
   async refund(params: RefundParams): Promise<RefundResult> {
     // Tamara's current documented refund endpoint is
-    // `POST /payments/simplified-refund/{order_id}`. The body takes
-    // `total_amount` only — `comment` is rejected as an unknown field by
-    // newer API versions. The order must already be in CAPTURED state, which
-    // our webhook handler ensures by running authorise+capture inline on
-    // order_approved.
-    const body = {
+    // `POST /payments/simplified-refund/{order_id}`. Body fields per their
+    // public API reference:
+    //   total_amount       — required
+    //   comment            — listed as required in docs, but prior empirical
+    //                        testing here found it rejected as "unknown
+    //                        field"; left out to avoid regressing live
+    //                        refunds. Re-add if Tamara confirms the schema.
+    //   merchant_refund_id — optional; we pass our internal refund row id
+    //                        so the same row is identifiable in Tamara's
+    //                        merchant portal AND so a retry after a
+    //                        timeout doesn't double-refund.
+    // The order must already be in CAPTURED state, which our webhook handler
+    // ensures by running authorise+capture inline on order_approved.
+    const body: Record<string, unknown> = {
       total_amount: {
         amount: params.amount,
         currency: 'SAR',
       },
     };
+    if (params.refundId) body.merchant_refund_id = params.refundId;
 
     const response = await this.fetchWithRetry(
       `${this.apiUrl}/payments/simplified-refund/${params.gatewayChargeId}`,

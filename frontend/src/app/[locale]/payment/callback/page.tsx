@@ -23,12 +23,28 @@ export default function PaymentCallbackPage() {
   // redirect even when the cross-origin verify() call below can't authenticate
   // (after a gateway redirect the in-memory access token is gone and the CSRF
   // cookie set on api.* can't be read by the storefront origin).
-  const gatewayStatus = searchParams.get("status");
+  //
+  // Param naming varies per gateway:
+  //   - Moyasar:  ?status=paid|failed
+  //   - Tamara:   ?paymentStatus=approved|declined|cancelled|failed
+  //   - Tabby:    ?payment_status=closed|rejected|expired
+  // Normalize all three into our internal vocabulary ('paid' | 'failed' |
+  // 'cancelled') before branching.
+  const gateway = searchParams.get("gateway");
+  const rawGatewayStatus =
+    searchParams.get("status") ||
+    searchParams.get("paymentStatus") ||
+    searchParams.get("payment_status");
+  const gatewayStatus = normalizeGatewayStatus(gateway, rawGatewayStatus);
 
   const [status, setStatus] = useState<string>("processing");
   const [error, setError] = useState<string | null>(null);
   const pollCount = useRef(0);
   const maxPolls = 20; // 60 seconds max (20 × 3s)
+  // Tamara's webhook fires slower than Moyasar's; give it more breathing room
+  // before bailing to the "Try again" timeout state. The buyer has already
+  // seen "Approved" on Tamara's page so a few extra seconds is fine.
+  const gracePeriodMs = gateway === "tamara" ? 8000 : 4000;
 
   useEffect(() => {
     if (!paymentId && !chargeId && !gatewayStatus) {
@@ -54,7 +70,7 @@ export default function PaymentCallbackPage() {
       if (gatewayStatus === "paid") goToCourses();
       else if (gatewayStatus === "failed" || gatewayStatus === "cancelled") goToFailed();
       else setStatus("timeout");
-    }, 4000);
+    }, gracePeriodMs);
 
     // Best-effort fast-path: if verify() does succeed (same-origin / token
     // present), redirect immediately instead of waiting for the grace timer.
@@ -91,7 +107,7 @@ export default function PaymentCallbackPage() {
       clearInterval(pollInterval);
       clearTimeout(graceTimer);
     };
-  }, [paymentId, chargeId, gatewayStatus, locale, router]);
+  }, [paymentId, chargeId, gatewayStatus, gracePeriodMs, locale, router]);
 
   return (
     <div className="min-h-screen bg-[#EEF3F7] flex flex-col">
@@ -147,4 +163,35 @@ export default function PaymentCallbackPage() {
       <Footer />
     </div>
   );
+}
+
+/**
+ * Collapse the per-gateway return-status vocabularies into our three
+ * actionable buckets. Unknown values return null so we fall through to
+ * the verify() poll / timeout state instead of misclassifying.
+ */
+function normalizeGatewayStatus(
+  gateway: string | null,
+  raw: string | null,
+): "paid" | "failed" | "cancelled" | null {
+  if (!raw) return null;
+  const v = raw.toLowerCase();
+  if (gateway === "tamara") {
+    if (v === "approved") return "paid";
+    if (v === "cancelled" || v === "canceled") return "cancelled";
+    if (v === "declined" || v === "failed") return "failed";
+    return null;
+  }
+  if (gateway === "tabby") {
+    if (v === "closed" || v === "captured" || v === "authorized") return "paid";
+    if (v === "rejected" || v === "expired") return "failed";
+    if (v === "cancelled" || v === "canceled") return "cancelled";
+    return null;
+  }
+  // Moyasar (and any future gateway that follows its convention): paid/failed
+  // are the terminal statuses; pending/initiated stay null so we keep polling.
+  if (v === "paid") return "paid";
+  if (v === "failed") return "failed";
+  if (v === "cancelled" || v === "canceled") return "cancelled";
+  return null;
 }

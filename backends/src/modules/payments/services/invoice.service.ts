@@ -15,6 +15,7 @@ import { StorageService } from '../../storage/storage.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { TaxComputationService } from './tax-computation.service';
 import { parseStartDate, parseEndDate } from '../../../common/date-range';
+import { decryptPII } from '../../../common/crypto';
 import {
   SiteSettingsService,
   SiteBranding,
@@ -155,7 +156,10 @@ export class InvoiceService {
       buyer: {
         name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
         email: userData.email,
-        nationalId: (userData as any).nationalId || null,
+        // nationalId is AES-GCM encrypted at rest via encryptPII; decrypt
+        // so invoice readers (and the snapshot we persist on the invoice
+        // row) see the plain national ID, not the v1:iv:tag:ct ciphertext.
+        nationalId: decryptPII((userData as any).nationalId) || null,
       },
       // Kept for backwards-compat with any reader that uses .course; first line.
       course: {
@@ -479,9 +483,10 @@ export class InvoiceService {
           .fontSize(9)
           .fillColor(MUTED)
           .text(userData.email, 52, sectionTop + 44, { width: cardW - 24 });
-        if ((userData as any).nationalId) {
+        const plainNationalId = decryptPII((userData as any).nationalId);
+        if (plainNationalId) {
           doc.text(
-            `National ID · ${(userData as any).nationalId}`,
+            `National ID · ${plainNationalId}`,
             52,
             sectionTop + 58,
             { width: cardW - 24 },
@@ -832,7 +837,7 @@ export class InvoiceService {
       buyer: {
         name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
         email: userData.email,
-        nationalId: (userData as any).nationalId || null,
+        nationalId: decryptPII((userData as any).nationalId) || null,
       },
       payment: {
         gateway: payment.gateway,

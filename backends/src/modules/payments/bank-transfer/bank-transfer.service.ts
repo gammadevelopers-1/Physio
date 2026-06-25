@@ -27,6 +27,7 @@ import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 import { StorageService } from '../../storage/storage.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { EmailService } from '../../email/email.service';
+import { decryptPII } from '../../../common/crypto';
 import { InvoiceService } from '../services/invoice.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { SubmitDraftDto } from './dto/submit-draft.dto';
@@ -621,7 +622,7 @@ export class BankTransferService {
           `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
           user.email,
         email: user.email,
-        nationalId: (userData as any)?.nationalId || null,
+        nationalId: decryptPII((userData as any)?.nationalId) || null,
       },
       courseIds: quote.courseIds,
       lineItems,

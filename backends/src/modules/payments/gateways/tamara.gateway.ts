@@ -382,12 +382,12 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
   async refund(params: RefundParams): Promise<RefundResult> {
     // Tamara's current documented refund endpoint is
     // `POST /payments/simplified-refund/{order_id}`. Body fields per their
-    // public API reference:
+    // public API reference (docs.tamara.co/reference/simplifiedrefund):
     //   total_amount       — required
-    //   comment            — listed as required in docs, but prior empirical
-    //                        testing here found it rejected as "unknown
-    //                        field"; left out to avoid regressing live
-    //                        refunds. Re-add if Tamara confirms the schema.
+    //   comment            — required; rejected as "comment is mandatory" if
+    //                        omitted. (An older code comment here claimed it
+    //                        was rejected as "unknown field" — that no
+    //                        longer matches the live API; the docs win.)
     //   merchant_refund_id — optional; we pass our internal refund row id
     //                        so the same row is identifiable in Tamara's
     //                        merchant portal AND so a retry after a
@@ -399,6 +399,9 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
         amount: params.amount,
         currency: 'SAR',
       },
+      // Mandatory per Tamara. Use the refund reason if present; otherwise a
+      // neutral default that still satisfies the schema.
+      comment: params.reason || 'Refund processed by merchant',
     };
     if (params.refundId) body.merchant_refund_id = params.refundId;
 

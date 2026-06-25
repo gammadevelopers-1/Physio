@@ -8520,7 +8520,7 @@
         "error": "فشل تقديم طلب الاسترداد",
         "reasons": {
           "policy": "طلب بموجب السياسة",
-          "cancelled": "الدورة ملغاة",
+          "cancelled": "المشتري غيّر رأيه",
           "duplicate": "دفع مكرر",
           "technical": "خطأ تقني",
           "other": "أخرى"
@@ -8789,7 +8789,7 @@
       },
       "reasonLabels": {
         "policy": "حسب السياسة",
-        "cancelled": "إلغاء دورة",
+        "cancelled": "المشتري غيّر رأيه",
         "duplicate": "دفعة مكررة",
         "technical": "خطأ تقني",
         "other": "أخرى"

@@ -346,7 +346,26 @@ export class RefundService {
       // discount, cancel future webinar regs) must run NOW rather than
       // wait for a webhook that never arrives. The actual wire is recorded
       // outside the system.
-      if (payment.gateway === 'mock' || payment.gateway === 'bank_transfer') {
+      //
+      // Additionally, honour the gateway's own terminal status from the sync
+      // refund response — Tabby returns SUCCEEDED inline (especially in
+      // sandbox where no real money moves and no separate webhook fires);
+      // Moyasar returns `refunded`; Tamara can return `succeeded`. Without
+      // this the refund got stuck in PROCESSING forever for those flows,
+      // because the webhook path was the only way out and Tabby sandbox
+      // never sends it.
+      const terminalSuccess = new Set([
+        'succeeded',
+        'refunded',
+        'completed',
+        'fully_refunded',
+      ]);
+      const syncStatus = (refundResult.status || '').toLowerCase();
+      if (
+        payment.gateway === 'mock' ||
+        payment.gateway === 'bank_transfer' ||
+        terminalSuccess.has(syncStatus)
+      ) {
         await this.completeRefund(refundId);
       }
     } catch (err) {

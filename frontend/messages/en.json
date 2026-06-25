@@ -8520,7 +8520,7 @@
         "error": "Failed to submit refund",
         "reasons": {
           "policy": "Policy Request",
-          "cancelled": "Course Cancelled",
+          "cancelled": "Buyer Changed Mind",
           "duplicate": "Duplicate Payment",
           "technical": "Technical Error",
           "other": "Other"
@@ -8789,7 +8789,7 @@
       },
       "reasonLabels": {
         "policy": "Policy Request",
-        "cancelled": "Course Cancelled",
+        "cancelled": "Buyer Changed Mind",
         "duplicate": "Duplicate Payment",
         "technical": "Technical Error",
         "other": "Other"

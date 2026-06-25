@@ -100,6 +100,109 @@ export class PaymentsService {
   ) {}
 
   /**
+   * Build the buyer-history snapshot BNPL gateways consume for underwriting.
+   *
+   * Tabby's docs (https://docs.tabby.ai/api-reference/checkout/create-a-session)
+   * call out two specific signals that materially affect approval rates:
+   *   - loyalty_level — total successful purchases (any gateway, any time).
+   *     We used to hardcode 0, which made every returning buyer look brand-new.
+   *   - order_history — up to 10 most-recent past orders excluding the current
+   *     row, with payment status, amount, and item context.
+   *
+   * Both are read with a single round-trip via a windowed query. Statuses are
+   * mapped from our internal vocab into Tabby's vocab here so the gateway
+   * layer stays a thin formatter.
+   */
+  private async buildBuyerHistory(
+    userId: string,
+    currentPaymentId: string,
+  ): Promise<{
+    loyaltyLevel: number;
+    pastOrders: Array<{
+      purchasedAt: string;
+      amount: string;
+      status:
+        | 'new'
+        | 'processing'
+        | 'complete'
+        | 'refunded'
+        | 'canceled'
+        | 'unknown';
+      itemTitle: string;
+    }>;
+  }> {
+    // Pull last 10 orders + per-user successful purchase count in a single
+    // query each. Excluding the current payment from order_history is
+    // explicit in Tabby's spec.
+    const [pastRows, [loyaltyRow]] = await Promise.all([
+      db
+        .select({
+          id: payments.id,
+          amount: payments.amount,
+          status: payments.status,
+          paidAt: payments.paidAt,
+          createdAt: payments.createdAt,
+          courseTitle: courses.title,
+        })
+        .from(payments)
+        .leftJoin(courses, eq(courses.id, payments.courseId))
+        .where(
+          and(eq(payments.userId, userId), ne(payments.id, currentPaymentId)),
+        )
+        .orderBy(desc(payments.createdAt))
+        .limit(10),
+      db
+        .select({ count: count() })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.userId, userId),
+            eq(payments.status, PAYMENT_STATUS.PAID),
+          ),
+        ),
+    ]);
+
+    const mapStatus = (
+      raw: string,
+    ):
+      | 'new'
+      | 'processing'
+      | 'complete'
+      | 'refunded'
+      | 'canceled'
+      | 'unknown' => {
+      switch (raw) {
+        case PAYMENT_STATUS.PAID:
+          return 'complete';
+        case PAYMENT_STATUS.PENDING:
+        case PAYMENT_STATUS.PROCESSING:
+        case PAYMENT_STATUS.AWAITING_APPROVAL:
+          return 'processing';
+        case PAYMENT_STATUS.REFUNDED:
+        case PAYMENT_STATUS.PARTIALLY_REFUNDED:
+        case PAYMENT_STATUS.CHARGEBACK:
+          return 'refunded';
+        case PAYMENT_STATUS.FAILED:
+        case 'abandoned':
+        case 'rejected':
+          return 'canceled';
+        default:
+          return 'unknown';
+      }
+    };
+
+    return {
+      loyaltyLevel: Number(loyaltyRow?.count || 0),
+      pastOrders: pastRows.map((r) => ({
+        purchasedAt: new Date(r.paidAt || r.createdAt).toISOString(),
+        amount: Number(r.amount).toFixed(2),
+        status: mapStatus(r.status),
+        itemTitle: r.courseTitle || 'Course',
+      })),
+    };
+  }
+
+  /**
    * Validate + price a cart without writing anything. Mirrors the read-only
    * pipeline in initiatePayment so the bank-transfer "draft" flow can show
    * accurate totals before any DB row exists. Throws the same exceptions
@@ -728,6 +831,31 @@ export class PaymentsService {
       normalizedPhone = candidate;
     }
 
+    // BNPL gateways (Tabby in particular) want a snapshot of the buyer's
+    // purchase history for underwriting — order_history + loyalty_level.
+    // Compute once here for the BNPL paths so the gateway stays I/O-free.
+    // Skipped for non-BNPL gateways to avoid two unused queries per checkout.
+    const buyerHistory =
+      dto.gateway === 'tabby' || dto.gateway === 'tamara'
+        ? await this.buildBuyerHistory(user.id, result.payment.id)
+        : undefined;
+
+    // For Tabby's `attachment` (educational vertical). Approx the program
+    // length from the primary course's date window; fall back to 1 month if
+    // it's open-ended.
+    const primaryCourse = lines[0].course;
+    const monthsToCompletion =
+      primaryCourse.startDate && primaryCourse.endDate
+        ? Math.max(
+            1,
+            Math.ceil(
+              (new Date(primaryCourse.endDate).getTime() -
+                new Date(primaryCourse.startDate).getTime()) /
+                (30 * 24 * 60 * 60 * 1000),
+            ),
+          )
+        : 1;
+
     let chargeResult: Awaited<ReturnType<typeof gateway.createCharge>>;
     try {
       chargeResult = await gateway.createCharge({
@@ -740,6 +868,13 @@ export class PaymentsService {
         customerRegisteredSince: userData?.createdAt
           ? new Date(userData.createdAt).toISOString()
           : undefined,
+        buyerHistory,
+        educationDetails: {
+          // PhysioGuidance is short-form continuing education / CME, not
+          // formal degree programs — matches Tabby's 'courses_training' bucket.
+          merchantSubtype: 'courses_training',
+          monthsToCompletion,
+        },
         redirectUrl: `${callbackUrl}?gateway=${dto.gateway}&payment_id=${result.payment.id}`,
         cancelUrl,
         webhookUrl: `${webhookBaseUrl}/${dto.gateway}`,

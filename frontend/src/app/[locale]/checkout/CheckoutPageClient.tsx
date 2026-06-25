@@ -278,17 +278,22 @@ export default function CheckoutPageClient({
     };
   }, []);
 
-  // Tabby background pre-scoring — per their docs we should check
-  // eligibility BEFORE the buyer clicks Pay Now so we can hide the radio
-  // for buyers Tabby would reject. Runs on mount + whenever the cart
-  // items change (debounced). Initial state is `eligible: false` so the
-  // radio doesn't render until pre-score confirms — otherwise buyers
-  // over the BNPL cap (e.g. SAR 5000+) see Tabby flash in then disappear.
-  // Fails open: if the check errors out, we surface Tabby anyway.
-  const [tabbyEligibility, setTabbyEligibility] = useState<{
-    eligible: boolean;
-    message?: string;
-  }>({ eligible: false });
+  // Tabby background pre-scoring — per their docs we run an eligibility
+  // check before the buyer clicks Pay Now. Three terminal states:
+  //   - 'checking' → request in flight / empty cart; don't render anything
+  //   - 'eligible' → render the Tabby radio normally
+  //   - 'rejected' → render the Tabby radio in a disabled state with the
+  //                  rejection message (the second option Tabby's docs
+  //                  permit — hide OR show-with-message; we picked show).
+  // Fails open to 'eligible' so a flaky pre-score endpoint doesn't hide
+  // Tabby from buyers it would actually approve.
+  type TabbyEligibility =
+    | { status: "checking" }
+    | { status: "eligible" }
+    | { status: "rejected"; message?: string };
+  const [tabbyEligibility, setTabbyEligibility] = useState<TabbyEligibility>({
+    status: "checking",
+  });
 
   // Totals
   const originalSubtotal = items.reduce((s, it) => s + it.price, 0);
@@ -307,8 +312,9 @@ export default function CheckoutPageClient({
   const cartIdsKey = items.map((it) => it.id).join(",");
   useEffect(() => {
     if (items.length === 0 || total <= 0) {
-      // Nothing to score yet — don't surface Tabby for an empty cart.
-      setTabbyEligibility({ eligible: false });
+      // Nothing to score yet — keep the slot in `checking` so we don't
+      // render a Tabby radio (eligible or rejected) for an empty cart.
+      setTabbyEligibility({ status: "checking" });
       return;
     }
     let cancelled = false;
@@ -321,17 +327,21 @@ export default function CheckoutPageClient({
         })
         .then((res) => {
           if (cancelled) return;
-          setTabbyEligibility({ eligible: res.eligible, message: res.message });
-          // If buyer was on Tabby and Tabby just got rejected, bump them
-          // off so the radio doesn't stay selected on a now-hidden option.
-          if (!res.eligible && gateway === "tabby") {
-            setGateway("moyasar");
-            setPaymentMethod("card");
+          if (res.eligible) {
+            setTabbyEligibility({ status: "eligible" });
+          } else {
+            setTabbyEligibility({ status: "rejected", message: res.message });
+            // If the buyer was already on Tabby and just got rejected,
+            // bump them onto a usable method so they can't submit.
+            if (gateway === "tabby") {
+              setGateway("moyasar");
+              setPaymentMethod("card");
+            }
           }
         })
         .catch(() => {
           // Fail open — keep Tabby visible.
-          if (!cancelled) setTabbyEligibility({ eligible: true });
+          if (!cancelled) setTabbyEligibility({ status: "eligible" });
         });
     }, 500);
     return () => {
@@ -996,32 +1006,46 @@ export default function CheckoutPageClient({
                     </div>
                   </div>
 
-                  {/* Tabby — hidden if Tabby's background pre-scoring
-                      rejected this buyer-cart pair. Their docs recommend
-                      hiding over showing-with-disabled-state. */}
-                  {tabbyEligibility.eligible && (
+                  {/* Tabby — three render states driven by background
+                      pre-scoring (see [[tabbyEligibility]]):
+                        checking → not rendered (avoids the flash-then-gone
+                                   problem when pre-score rejects)
+                        eligible → fully interactive radio + their widget
+                        rejected → disabled radio with Tabby's verbatim
+                                   rejection message below, per their docs
+                                   (https://docs.tabby.ai/pay-in-4-custom-
+                                    integration/checkout-flow#background-
+                                    pre-scoring-check). */}
+                  {tabbyEligibility.status !== "checking" && (
                   <div
                     role="radio"
                     aria-checked={gateway === "tabby"}
-                    tabIndex={0}
-                    onKeyDown={(e) => handleGatewayKeyDown(e, "tabby")}
-                    className={`cursor-pointer transition-colors border rounded-xl focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 outline-none ${gateway === "tabby" ? "border-[#005bd3]" : "border-[#e5e5e5]"}`}
-                    onClick={() => handleGatewayChange("tabby")}
+                    aria-disabled={tabbyEligibility.status === "rejected" ? true : undefined}
+                    tabIndex={tabbyEligibility.status === "rejected" ? -1 : 0}
+                    onKeyDown={(e) => {
+                      if (tabbyEligibility.status === "eligible") handleGatewayKeyDown(e, "tabby");
+                    }}
+                    className={`transition-colors border rounded-xl outline-none ${
+                      tabbyEligibility.status === "rejected"
+                        ? "border-[#e5e5e5] opacity-60 cursor-not-allowed"
+                        : `cursor-pointer focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 ${gateway === "tabby" ? "border-[#005bd3]" : "border-[#e5e5e5]"}`
+                    }`}
+                    onClick={() => {
+                      if (tabbyEligibility.status === "eligible") handleGatewayChange("tabby");
+                    }}
                   >
-                    <div className={`flex flex-col gap-2 p-[14px] ${gateway === "tabby" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
+                    <div className={`flex flex-col gap-2 p-[14px] ${gateway === "tabby" && tabbyEligibility.status === "eligible" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-[11px]">
-                          <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tabby" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
+                          <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tabby" && tabbyEligibility.status === "eligible" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
                           <span className="font-medium text-[var(--on-surface-default)]">{t("payment.tabby")}</span>
                         </div>
                         <Image src="/checkout_cart/tabby.svg" alt="Tabby" width={60} height={24} className="object-contain" />
                       </div>
-                      {/* Tabby's OFFICIAL checkout snippet — per their QA we
-                          must use this instead of custom text like "4
-                          interest-free payments of SAR X". The widget renders
-                          their own branding and copy that matches the rest of
-                          their pay-in-4 product. */}
-                      {total > 0 && (
+                      {/* Eligible state: Tabby's OFFICIAL checkout snippet —
+                          per their QA we must use this instead of custom
+                          text like "4 interest-free payments of SAR X". */}
+                      {tabbyEligibility.status === "eligible" && total > 0 && (
                         <div className={isRTL ? "pr-7" : "pl-7"}>
                           <BnplPromoWidgets
                             price={total}
@@ -1029,6 +1053,15 @@ export default function CheckoutPageClient({
                             source="checkout"
                             only="tabby"
                           />
+                        </div>
+                      )}
+                      {/* Rejected state: surface Tabby's localized rejection
+                          message (not_available / order_amount_too_high /
+                          order_amount_too_low) so the buyer knows why the
+                          option is disabled. */}
+                      {tabbyEligibility.status === "rejected" && tabbyEligibility.message && (
+                        <div className={`text-xs text-[#b42318] leading-snug ${isRTL ? "pr-7" : "pl-7"}`}>
+                          {tabbyEligibility.message}
                         </div>
                       )}
                     </div>

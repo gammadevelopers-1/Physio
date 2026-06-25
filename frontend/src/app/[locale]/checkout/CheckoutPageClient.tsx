@@ -1016,6 +1016,24 @@ export default function CheckoutPageClient({
                                    (https://docs.tabby.ai/pay-in-4-custom-
                                     integration/checkout-flow#background-
                                     pre-scoring-check). */}
+                  {/* Skeleton placeholder while the pre-score is in flight
+                      (debounce + network ≈ 500ms-1s). Keeps the layout
+                      stable so the Tamara/Bank Transfer rows don't jump
+                      up when the Tabby radio finally resolves. */}
+                  {tabbyEligibility.status === "checking" && (
+                    <div
+                      className="border border-[#e5e5e5] rounded-xl p-[14px] bg-white"
+                      aria-hidden="true"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-[11px]">
+                          <div className="w-[18px] h-[18px] rounded-full bg-[#f2f4f7] animate-pulse" />
+                          <div className="h-4 w-16 rounded bg-[#f2f4f7] animate-pulse" />
+                        </div>
+                        <div className="h-6 w-[60px] rounded bg-[#f2f4f7] animate-pulse" />
+                      </div>
+                    </div>
+                  )}
                   {tabbyEligibility.status !== "checking" && (
                   <div
                     role="radio"

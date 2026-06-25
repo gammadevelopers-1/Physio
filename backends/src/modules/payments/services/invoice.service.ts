@@ -928,284 +928,371 @@ export class InvoiceService {
     const taxSettings = await this.taxComputationService.getSettings();
     return new Promise(async (resolve, reject) => {
       try {
-        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        // Same engine + brand palette as the final invoice (generatePdf
+        // above) so a buyer's proforma → invoice journey looks like one
+        // continuous document instead of jumping between two templates.
+        // Differences: title says PROFORMA INVOICE, status pill always
+        // AWAITING PAYMENT, no QR / verify-URL (proforma numbers are not
+        // resolvable on /verify-invoice/), footer carries the "not a tax
+        // invoice" disclaimer.
+        const doc = new PDFDocument({ size: 'A4', margin: 0, bufferPages: true });
         const chunks: Buffer[] = [];
         doc.on('data', (c: Buffer) => chunks.push(c));
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
 
         const fontsDir = path.join(process.cwd(), 'src', 'assets', 'fonts');
-        doc.registerFont(
-          'NotoArabic',
-          path.join(fontsDir, 'NotoSansArabic-Regular.ttf'),
-        );
-        doc.registerFont(
-          'NotoArabicBold',
-          path.join(fontsDir, 'NotoSansArabic-Bold.ttf'),
-        );
+        doc.registerFont('NotoArabic', path.join(fontsDir, 'NotoSansArabic-Regular.ttf'));
+        doc.registerFont('NotoArabicBold', path.join(fontsDir, 'NotoSansArabic-Bold.ttf'));
         const ws = { wordSpacing: 2 };
 
-        // ── Header: company info (left) ──
-        // Render English siteName at fontSize 18 (was 20) so longer names
-        // don't run into the right-side title block.
+        const BRAND = '#1A2747';
+        const ACCENT = '#B8860B';
+        const MUTED = '#6B7280';
+        const SOFT = '#F3F4F6';
+
+        // Always AWAITING PAYMENT — proforma has no other state.
+        const statusBadge = {
+          bg: '#FEF3C7',
+          fg: '#92400E',
+          label: 'AWAITING PAYMENT',
+          ar: 'في انتظار الدفع',
+        };
+
+        const safeAr = (s: string | null | undefined): string => {
+          const stripped = (s || '')
+            .replace(/[​-‏‪-‮﻿]/g, '')
+            .trim();
+          if (!stripped) return 'فيزيو جايدنس';
+          return /[؀-ۿ]/.test(stripped) ? stripped : 'فيزيو جايدنس';
+        };
+        const siteNameArSafe = safeAr(args.branding.siteNameAr);
+
+        const fmtDT = (d: Date | string | null | undefined) => {
+          if (!d) return '';
+          const date = new Date(d);
+          const dd = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          });
+          const tt = date.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          });
+          return `${dd} · ${tt}`;
+        };
+
+        // ── Header band ──
+        doc.rect(0, 0, 595, 100).fill(BRAND);
         doc
+          .fillColor('#FFFFFF')
           .font('Helvetica-Bold')
-          .fontSize(18)
-          .fillColor('#1A2747')
-          .text(args.branding.siteNameEn, 50, 50, { width: 280 });
-        doc.fillColor('#000');
+          .fontSize(22)
+          .text(args.branding.siteNameEn, 40, 26, { width: 320 });
         doc
           .font('NotoArabic')
-          .fontSize(10)
-          .text(arRtl(args.branding.siteNameAr), 50, 78, { width: 280, ...ws });
+          .fontSize(12)
+          .fillColor('#FFFFFF')
+          .text(arRtl(siteNameArSafe), 40, 54, { width: 320, ...ws });
         doc
           .font('Helvetica')
-          .fontSize(10)
-          .text('nelc@physioguidance.org', 50, 95);
+          .fontSize(9)
+          .fillColor('#CBD5E1')
+          .text('nelc@physioguidance.org · physioguidance.org', 40, 76);
+        if (taxSettings.taxNumber) {
+          doc
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor('#CBD5E1')
+            .text(`VAT No: ${taxSettings.taxNumber}`, 40, 90);
+        }
 
-        // ── Header: proforma title (right, two stacked lines, NO continued) ──
-        // Stacking avoids the wrap overflow we hit with `continued: true` +
-        // `align: 'right'` at fontSize 18 in a 195px column.
         doc
+          .fillColor('#FFFFFF')
           .font('Helvetica-Bold')
-          .fontSize(16)
-          .fillColor('#B8860B')
-          .text('PROFORMA INVOICE', 350, 50, { width: 195, align: 'right' });
+          .fontSize(22)
+          .text('PROFORMA INVOICE', 320, 26, { width: 235, align: 'right' });
         doc
           .font('NotoArabicBold')
-          .fontSize(13)
-          .text(arRtl('فاتورة مبدئية'), 350, 70, {
-            width: 195,
+          .fontSize(12)
+          .fillColor('#CBD5E1')
+          .text(arRtl('فاتورة مبدئية'), 320, 58, {
+            width: 235,
             align: 'right',
             ...ws,
           });
-        doc.fillColor('#000');
+        doc.rect(0, 100, 595, 4).fill(ACCENT);
+        doc.fillColor('#000000');
 
-        // Number + date pushed below the two-line title.
+        // ── Status badge + meta strip ──
+        const metaTop = 124;
+        const badgeWidth = 140;
+        doc.roundedRect(40, metaTop, badgeWidth, 24, 4).fill(statusBadge.bg);
         doc
-          .font('Helvetica')
-          .fontSize(10)
-          .text(`No: ${args.proformaNumber}`, 350, 95, {
-            width: 195,
-            align: 'right',
-          })
-          .text(
-            `Date: ${args.issuedAt.toLocaleDateString('en-US')}`,
-            350,
-            110,
-            { width: 195, align: 'right' },
-          );
-
-        // Awaiting-payment status pill below the meta lines.
-        doc.rect(395, 128, 150, 18).fillColor('#FEF3C7').fill();
-        doc
-          .fillColor('#92400E')
+          .fillColor(statusBadge.fg)
           .font('Helvetica-Bold')
-          .fontSize(9)
-          .text('AWAITING PAYMENT', 395, 133, {
-            width: 150,
+          .fontSize(10)
+          .text(statusBadge.label, 40, metaTop + 7, {
+            width: badgeWidth,
             align: 'center',
           });
-        doc.fillColor('#000');
+        doc.fillColor('#000000');
 
-        // Divider — pushed down to clear the taller header block.
-        doc.moveTo(50, 160).lineTo(545, 160).stroke();
-
-        // ── Bill To (left) ──
-        const sectionTop = 180;
-        doc.font('Helvetica-Bold').fontSize(12).text('Bill To', 50, sectionTop);
-        doc
-          .font('NotoArabicBold')
-          .fontSize(11)
-          .text(arRtl('فاتورة إلى'), 50, sectionTop + 14, { width: 280, ...ws });
-        doc
-          .font('Helvetica')
-          .fontSize(10)
-          .text(args.buyer.name || args.buyer.email, 50, sectionTop + 32)
-          .text(args.buyer.email, 50, sectionTop + 47);
-
-        let customerInfoY = sectionTop + 62;
-        if (args.buyer.nationalId) {
-          doc.text(
-            `National ID: ${args.buyer.nationalId}`,
-            50,
-            customerInfoY,
-          );
-          customerInfoY += 15;
+        const metaLines: Array<[string, string]> = [
+          ['Proforma #', args.proformaNumber],
+          ['Issued', fmtDT(args.issuedAt)],
+        ];
+        let mY = metaTop;
+        for (const [label, value] of metaLines) {
+          doc
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor(MUTED)
+            .text(label, 320, mY, { width: 80, align: 'right' });
+          doc
+            .font('Helvetica-Bold')
+            .fontSize(10)
+            .fillColor('#111827')
+            .text(value, 405, mY - 1, { width: 150, align: 'right' });
+          mY += 13;
         }
 
-        // ── Payment intent (right) ──
+        // ── Bill-To / Payment-Details two-column block ──
+        const sectionTop = Math.max(metaTop + 40, mY + 12);
+        const cardW = 252;
+        const cardH = 92;
+
+        doc
+          .roundedRect(40, sectionTop, cardW, cardH, 6)
+          .lineWidth(1)
+          .strokeColor('#E5E7EB')
+          .stroke();
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(9)
+          .fillColor(MUTED)
+          .text('BILL TO', 52, sectionTop + 10);
         doc
           .font('Helvetica-Bold')
           .fontSize(12)
-          .text('Payment Method', 350, sectionTop, {
-            width: 195,
-            align: 'right',
-          });
-        doc
-          .font('NotoArabicBold')
-          .fontSize(11)
-          .text(arRtl('طريقة الدفع'), 350, sectionTop + 14, {
-            width: 195,
-            align: 'right',
-            ...ws,
+          .fillColor('#111827')
+          .text(args.buyer.name || args.buyer.email, 52, sectionTop + 26, {
+            width: cardW - 24,
           });
         doc
           .font('Helvetica')
-          .fontSize(10)
-          .text(
-            args.payment.gateway === 'bank_transfer'
-              ? 'Bank Transfer'
-              : args.payment.gateway,
-            350,
-            sectionTop + 32,
-            { width: 195, align: 'right' },
+          .fontSize(9)
+          .fillColor(MUTED)
+          .text(args.buyer.email, 52, sectionTop + 44, { width: cardW - 24 });
+        if (args.buyer.nationalId) {
+          doc.text(
+            `National ID · ${args.buyer.nationalId}`,
+            52,
+            sectionTop + 58,
+            { width: cardW - 24 },
           );
-
-        // ── Line items table ──
-        const tableTop = Math.max(customerInfoY, sectionTop + 65) + 20;
-        doc
-          .fontSize(10)
-          .font('Helvetica-Bold')
-          .text('Description', 50, tableTop);
-        doc
-          .font('Helvetica-Bold')
-          .text('Amount', 450, tableTop, { align: 'right' });
-        doc.moveTo(50, tableTop + 15).lineTo(545, tableTop + 15).stroke();
-
-        let y = tableTop + 25;
-        for (const item of args.lineItems) {
-          const rowTop = y;
-          doc
-            .font('Helvetica')
-            .fontSize(10)
-            .text(item.description, 50, y, { width: 380 });
-          let rowExtra = 0;
-          if (item.descriptionAr) {
-            doc
-              .font('NotoArabic')
-              .text(arRtl(item.descriptionAr), 50, y + 15, {
-                width: 380,
-                ...ws,
-              });
-            rowExtra += 15;
-          }
-          if (item.deliveryType) {
-            doc
-              .font('Helvetica')
-              .fontSize(9)
-              .text(`Delivery: ${item.deliveryType}`, 50, y + 15 + rowExtra);
-            doc.fontSize(10);
-            rowExtra += 15;
-          }
-          doc
-            .font('Helvetica')
-            .fontSize(10)
-            .text(`SAR ${Number(item.amount).toFixed(2)}`, 450, rowTop, {
-              align: 'right',
-            });
-          y += 25 + rowExtra;
         }
 
+        const rightX = 303;
         doc
-          .moveTo(50, y - 5)
-          .lineTo(545, y - 5)
-          .strokeColor('#e5e5e5')
-          .stroke()
-          .strokeColor('#000');
-
-        // Totals — render label / Arabic / amount as three separate text
-        // calls so a wrap on one doesn't push the others. The right-side
-        // amount uses absolute positioning so it always lines up regardless
-        // of the label's width.
-        const labelX = 50;
-        const arX = 130;
-        const amountX = 450;
-        const amountWidth = 95;
-        if (args.discountAmount > 0) {
-          doc.font('Helvetica').fontSize(10).text('Discount', labelX, y);
-          doc
-            .font('NotoArabic')
-            .text(arRtl('خصم'), arX, y, { width: 280, ...ws });
-          doc
-            .font('Helvetica')
-            .text(
-              `- SAR ${args.discountAmount.toFixed(2)}`,
-              amountX,
-              y,
-              { width: amountWidth, align: 'right' },
-            );
-          y += 20;
-        }
-
-        if (args.taxAmount > 0) {
-          doc.font('Helvetica').fontSize(10).text(`VAT (${taxSettings.vatRate}%)`, labelX, y);
-          doc
-            .font('NotoArabic')
-            .text(arRtl('ضريبة القيمة المضافة'), arX, y, {
-              width: 280,
-              ...ws,
-            });
-          doc
-            .font('Helvetica')
-            .text(`SAR ${args.taxAmount.toFixed(2)}`, amountX, y, {
-              width: amountWidth,
-              align: 'right',
-            });
-          y += 20;
-        }
-
-        doc.moveTo(50, y).lineTo(545, y).stroke();
-        y += 10;
-        doc.font('Helvetica-Bold').fontSize(14).text('Amount Due', labelX, y);
-        doc
-          .font('NotoArabicBold')
-          .text(arRtl('المبلغ المستحق'), arX, y + 2, { width: 280, ...ws });
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(14)
-          .text(`SAR ${args.totalAmount.toFixed(2)}`, amountX, y, {
-            width: amountWidth,
-            align: 'right',
-          });
-
-        // ── Disclaimer block ──
-        y += 50;
-        doc
-          .rect(50, y, 495, 50)
-          .fillColor('#F8FAFC')
-          .fill();
-        doc.fillColor('#000');
+          .roundedRect(rightX, sectionTop, cardW, cardH, 6)
+          .lineWidth(1)
+          .strokeColor('#E5E7EB')
+          .stroke();
         doc
           .font('Helvetica-Bold')
           .fontSize(9)
-          .fillColor('#1A2747')
-          .text('Notice', 60, y + 8);
+          .fillColor(MUTED)
+          .text('PAYMENT INTENT', rightX + 12, sectionTop + 10);
+        const gatewayLabel =
+          args.payment.gateway === 'bank_transfer'
+            ? 'Bank Transfer'
+            : args.payment.gateway.charAt(0).toUpperCase() +
+              args.payment.gateway.slice(1);
+        const intentRows: Array<[string, string]> = [
+          ['Method', gatewayLabel],
+          ['Status', 'Awaiting transfer'],
+        ];
+        let pY = sectionTop + 28;
+        for (const [k, v] of intentRows) {
+          doc
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor(MUTED)
+            .text(k, rightX + 12, pY, { width: 80 });
+          doc
+            .font('Helvetica-Bold')
+            .fontSize(10)
+            .fillColor('#111827')
+            .text(v, rightX + 90, pY, {
+              width: cardW - 102,
+              align: 'right',
+              lineBreak: false,
+            });
+          pY += 18;
+        }
+
+        // ── Line items table ──
+        const tableTop = sectionTop + cardH + 22;
+        doc.rect(40, tableTop, 515, 24).fill(SOFT);
+        doc
+          .fillColor(MUTED)
+          .font('Helvetica-Bold')
+          .fontSize(9)
+          .text('DESCRIPTION', 50, tableTop + 8, { width: 300 });
+        doc.text('QTY', 360, tableTop + 8, { width: 40, align: 'center' });
+        doc.text('UNIT', 400, tableTop + 8, { width: 75, align: 'right' });
+        doc.text('AMOUNT', 475, tableTop + 8, { width: 75, align: 'right' });
+        doc.fillColor('#000000');
+
+        let y = tableTop + 32;
+        let rowIdx = 0;
+        for (const item of args.lineItems) {
+          const rowTop = y;
+          if (rowIdx % 2 === 1) {
+            doc.rect(40, rowTop - 4, 515, 26).fill('#FAFAFA');
+            doc.fillColor('#000000');
+          }
+          doc
+            .font('Helvetica')
+            .fontSize(10)
+            .fillColor('#111827')
+            .text(item.description, 50, y, { width: 300 });
+          let rowExtra = 0;
+          if (item.deliveryType) {
+            doc
+              .font('Helvetica')
+              .fontSize(8)
+              .fillColor(MUTED)
+              .text(item.deliveryType.toUpperCase(), 50, y + 14, { width: 300 });
+            rowExtra += 12;
+          }
+          doc
+            .font('Helvetica')
+            .fontSize(10)
+            .fillColor('#111827')
+            .text('1', 360, rowTop + 1, { width: 40, align: 'center' });
+          doc.text(`SAR ${Number(item.amount).toFixed(2)}`, 400, rowTop + 1, {
+            width: 75,
+            align: 'right',
+          });
+          doc
+            .font('Helvetica-Bold')
+            .text(`SAR ${Number(item.amount).toFixed(2)}`, 475, rowTop + 1, {
+              width: 75,
+              align: 'right',
+            });
+          y += Math.max(24, 16 + rowExtra);
+          rowIdx += 1;
+        }
+
+        // ── Totals block ──
+        let tY = y + 12;
+        const totalsLeft = 320;
+        const totalsWidth = 235;
+        const totalsRow = (label: string, value: string, bold = false) => {
+          doc
+            .font(bold ? 'Helvetica-Bold' : 'Helvetica')
+            .fontSize(bold ? 11 : 10)
+            .fillColor(bold ? '#111827' : MUTED)
+            .text(label, totalsLeft, tY, { width: 120 });
+          doc
+            .font(bold ? 'Helvetica-Bold' : 'Helvetica')
+            .fontSize(bold ? 11 : 10)
+            .fillColor('#111827')
+            .text(value, totalsLeft, tY, { width: totalsWidth, align: 'right' });
+          tY += 16;
+        };
+
+        totalsRow('Subtotal', `SAR ${Number(args.subtotal).toFixed(2)}`);
+        if (args.discountAmount > 0) {
+          totalsRow('Discount', `- SAR ${Number(args.discountAmount).toFixed(2)}`);
+        }
+        if (args.taxAmount > 0) {
+          totalsRow(
+            `VAT (${taxSettings.vatRate}%)`,
+            `SAR ${Number(args.taxAmount).toFixed(2)}`,
+          );
+        }
+        doc
+          .moveTo(totalsLeft, tY + 2)
+          .lineTo(totalsLeft + totalsWidth, tY + 2)
+          .strokeColor('#E5E7EB')
+          .stroke()
+          .strokeColor('#000000');
+        tY += 8;
+
+        doc.rect(totalsLeft, tY, totalsWidth, 30).fill(BRAND);
+        doc
+          .fillColor('#FFFFFF')
+          .font('Helvetica-Bold')
+          .fontSize(12)
+          .text('AMOUNT DUE', totalsLeft + 12, tY + 9);
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(14)
+          .text(
+            `SAR ${Number(args.totalAmount).toFixed(2)}`,
+            totalsLeft,
+            tY + 8,
+            { width: totalsWidth - 12, align: 'right' },
+          );
+        doc.fillColor('#000000');
+
+        // ── Notice band (replaces the QR strip used on real invoices) ──
+        const noticeTop = Math.min(Math.max(tY + 44, 600), 660);
+        doc.roundedRect(40, noticeTop, 515, 64, 6).fill('#FFFBEB');
+        doc
+          .fillColor('#92400E')
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .text('Notice', 52, noticeTop + 10);
+        doc
+          .font('Helvetica')
+          .fontSize(9)
+          .fillColor('#78350F')
+          .text(
+            'This is a PROFORMA invoice issued before payment. It is NOT a tax invoice. A final tax invoice (with QR-verifiable invoice number) will be issued once your bank transfer is received and approved by our finance team.',
+            52,
+            noticeTop + 26,
+            { width: 491 },
+          );
+        doc.fillColor('#000000');
+
+        // ── Footer band ──
+        doc.rect(0, 770, 595, 72).fill('#F9FAFB');
+        doc
+          .fillColor(BRAND)
+          .font('Helvetica-Bold')
+          .fontSize(9)
+          .text(args.branding.siteNameEn, 40, 786);
         doc
           .font('Helvetica')
           .fontSize(8)
-          .fillColor('#475569')
+          .fillColor(MUTED)
           .text(
-            'This is a proforma invoice issued before payment. It is NOT a tax invoice. A final tax invoice will be issued once the bank transfer is received and approved by our finance team.',
-            60,
-            y + 22,
-            { width: 475 },
+            'Pay via bank transfer to activate your enrollment. Once received, a tax invoice will be emailed automatically.',
+            40,
+            802,
+            { width: 360 },
           );
-        doc.fillColor('#000');
-
-        // ── Footer ──
         doc
           .font('Helvetica')
           .fontSize(8)
-          .fillColor('#94A3B8')
-          .text(
-            `${args.branding.siteNameEn} · physioguidance.org · nelc@physioguidance.org`,
-            50,
-            780,
-            { align: 'center', width: 495 },
-          );
-        doc.fillColor('#000');
+          .fillColor(MUTED)
+          .text('Page 1 of 1', 440, 802, { width: 115, align: 'right' });
+        doc.fillColor('#000000');
 
+        const range = doc.bufferedPageRange();
+        if (range.count > 1) {
+          for (let i = range.start + range.count - 1; i > range.start; i--) {
+            doc.switchToPage(i);
+          }
+          doc.switchToPage(range.start);
+        }
+        doc.flushPages();
         doc.end();
       } catch (err) {
         reject(err);

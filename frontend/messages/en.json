@@ -19,7 +19,7 @@
       "sale": "Sale discount",
       "discount": "Coupon discount",
       "beforeTax": "Subtotal (before VAT)",
-      "vat": "VAT (15%)",
+      "vat": "VAT ({rate}%)",
       "amountDue": "Amount due",
       "secure": "Secure & encrypted"
     },

@@ -498,12 +498,63 @@ export class BankTransferService {
         })
         .returning({ id: payments.id });
 
+      // Reserve a pending_payment enrollment for every course in the cart
+      // and link it to its paymentItems row. Without this, approveReceipt
+      // flips the payment to PAID but has nothing to activate — the student
+      // ends up with status=paid but no enrollment and no course access.
+      // Mirrors PaymentsService.initiatePayment's enrollment-reservation
+      // dance (which the gateway flows go through but the bank-transfer
+      // draft skipped).
+      const enrollmentByCourseId = new Map<string, string>();
+      for (const it of quote.lineItems) {
+        const [existing] = await tx
+          .select({ id: enrollments.id, status: enrollments.status })
+          .from(enrollments)
+          .where(
+            and(
+              eq(enrollments.courseId, it.id),
+              eq(enrollments.studentId, user.id),
+            ),
+          )
+          .limit(1);
+        if (existing && existing.status === ENROLLMENT_STATUS.ACTIVE) {
+          throw new BadRequestException(
+            `You are already enrolled in "${it.title}"`,
+          );
+        }
+        let enrollmentId: string;
+        if (existing) {
+          // Reuse a prior pending_payment / dropped row instead of stacking
+          // duplicates (the unique constraint on (course_id, student_id)
+          // would block a second insert anyway).
+          await tx
+            .update(enrollments)
+            .set({ status: ENROLLMENT_STATUS.PENDING_PAYMENT })
+            .where(eq(enrollments.id, existing.id));
+          enrollmentId = existing.id;
+        } else {
+          const [created] = await tx
+            .insert(enrollments)
+            .values({
+              courseId: it.id,
+              studentId: user.id,
+              status: ENROLLMENT_STATUS.PENDING_PAYMENT,
+            })
+            .returning({ id: enrollments.id });
+          enrollmentId = created.id;
+        }
+        enrollmentByCourseId.set(it.id, enrollmentId);
+      }
+
       // Multi-line items so refund + invoice generation see the full cart.
+      // enrollmentId is set per row so approveReceipt can activate them on
+      // finance approval.
       if (quote.lineItems.length > 0) {
         await tx.insert(paymentItems).values(
           quote.lineItems.map((it) => ({
             paymentId: paymentRow.id,
             courseId: it.id,
+            enrollmentId: enrollmentByCourseId.get(it.id),
             unitPrice: it.price.toFixed(2),
             salePrice: it.effectivePrice.toFixed(2),
             discountAmount: '0.00',

@@ -422,6 +422,7 @@ export default function BankTransferPageClient({
   let saleDiscount: number;
   let discountAmount: number;
   let taxAmount: number;
+  let taxRate: number;
   let total: number;
   let currency: string;
   if (isDraftMode && draftQuote) {
@@ -430,6 +431,7 @@ export default function BankTransferPageClient({
     saleDiscount = draftQuote.totals.saleDiscount;
     discountAmount = draftQuote.totals.discountAmount;
     taxAmount = draftQuote.totals.taxAmount;
+    taxRate = (draftQuote.totals as { taxRate?: number }).taxRate ?? 0;
     total = draftQuote.totals.totalAmount;
     currency = draftQuote.totals.currency;
   } else {
@@ -439,6 +441,7 @@ export default function BankTransferPageClient({
           discountAmount?: number;
           saleDiscountAmount?: number;
           taxAmount?: number;
+          taxRate?: number;
           originalPrice?: number;
         }
       | null;
@@ -447,6 +450,7 @@ export default function BankTransferPageClient({
     saleDiscount = Number(meta?.saleDiscountAmount ?? 0);
     discountAmount = Number(meta?.discountAmount ?? 0);
     taxAmount = Number(meta?.taxAmount ?? 0);
+    taxRate = Number(meta?.taxRate ?? 0);
     total = Number(amountDue ?? 0);
     currency = paymentData!.payment.currency;
   }
@@ -523,7 +527,10 @@ export default function BankTransferPageClient({
                     />
                   )}
                   <Row label={t("summary.beforeTax")} value={fmt(subtotal - discountAmount, currency)} />
-                  <Row label={t("summary.vat")} value={fmt(taxAmount, currency)} />
+                  <Row
+                    label={t("summary.vat", { rate: taxRate })}
+                    value={fmt(taxAmount, currency)}
+                  />
                   <div className="border-t border-[var(--color-border)] my-2" />
                   <Row
                     label={t("summary.amountDue")}

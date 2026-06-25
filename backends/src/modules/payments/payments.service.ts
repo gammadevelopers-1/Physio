@@ -245,6 +245,9 @@ export class PaymentsService {
       // doesn't have one on file, mark them ineligible up-front (same as
       // the real Pay-Now check would do) so the radio hides cleanly.
       if (!plaintextPhone) {
+        this.logger.log(
+          `Tabby prescore short-circuit: user ${user.id} has no phone on profile`,
+        );
         return {
           eligible: false,
           reason: 'phone_required',

@@ -104,6 +104,10 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
         data?.rejection_reason ||
         'not_available';
 
+      this.logger.log(
+        `Tabby prescore REJECTED: reason=${reason} amount=${params.amount} ${params.currency} phone=${(params.customerPhone || '').slice(0, 5)}***`,
+      );
+
       const messages: Record<string, { en: string; ar: string }> = {
         not_available: {
           en: 'Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order.',
@@ -123,6 +127,9 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
       return { eligible: false, reason, message: messageBundle[localeKey] };
     }
 
+    this.logger.log(
+      `Tabby prescore ELIGIBLE: amount=${params.amount} ${params.currency}`,
+    );
     return { eligible: true };
   }
 

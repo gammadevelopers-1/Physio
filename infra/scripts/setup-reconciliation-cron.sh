@@ -169,12 +169,57 @@ else
     --description="Daily nag for stale reconciliation escalations"
 fi
 
+# ─── Create or update the BNPL status-poll job ─────────────────────────
+#
+# Webhook fallback for Tabby + Tamara per their published guidance.
+# Fires every 5 minutes — much higher frequency than the daily jobs above —
+# because its job is to progress stuck payments before the buyer notices.
+# Each run is cheap when nothing is stuck (single DB read returning [] is
+# typical), so the high cadence is fine.
+
+BNPL_JOB="bnpl-status-poll"
+BNPL_URI="${BACKEND_URL}/payments/reconciliation/cron/bnpl-status-poll"
+BNPL_SCHEDULE="*/5 * * * *"
+
+if gcloud scheduler jobs describe "${BNPL_JOB}" \
+    --location="${SCHEDULER_REGION}" \
+    --project="${GCP_PROJECT_ID}" &>/dev/null; then
+  echo "[INFO] Updating existing scheduler job ${BNPL_JOB}"
+  gcloud scheduler jobs update http "${BNPL_JOB}" \
+    --location="${SCHEDULER_REGION}" \
+    --project="${GCP_PROJECT_ID}" \
+    --schedule="${BNPL_SCHEDULE}" \
+    --time-zone="${DAILY_TZ}" \
+    --uri="${BNPL_URI}" \
+    --http-method=POST \
+    --headers="X-Cron-Token=${CRON_TOKEN}" \
+    --oidc-service-account-email="${CRON_SA}" \
+    --oidc-token-audience="${BACKEND_URL}" \
+    --attempt-deadline=120s
+else
+  echo "[INFO] Creating scheduler job ${BNPL_JOB}"
+  gcloud scheduler jobs create http "${BNPL_JOB}" \
+    --location="${SCHEDULER_REGION}" \
+    --project="${GCP_PROJECT_ID}" \
+    --schedule="${BNPL_SCHEDULE}" \
+    --time-zone="${DAILY_TZ}" \
+    --uri="${BNPL_URI}" \
+    --http-method=POST \
+    --headers="X-Cron-Token=${CRON_TOKEN}" \
+    --oidc-service-account-email="${CRON_SA}" \
+    --oidc-token-audience="${BACKEND_URL}" \
+    --attempt-deadline=120s \
+    --description="BNPL (Tabby+Tamara) webhook fallback — poll stuck pending/processing payments every 5min"
+fi
+
 echo ""
 echo "[DONE] Reconciliation cron jobs configured."
 echo ""
 echo "  Daily scan       : ${DAILY_SCHEDULE} (${DAILY_TZ}) → ${DAILY_URI}"
 echo "  Stale reminders  : ${STALE_SCHEDULE} (${DAILY_TZ}) → ${STALE_URI}"
+echo "  BNPL status poll : ${BNPL_SCHEDULE} (${DAILY_TZ}) → ${BNPL_URI}"
 echo ""
 echo "Manual trigger:"
 echo "  gcloud scheduler jobs run ${DAILY_JOB} --location=${SCHEDULER_REGION}"
 echo "  gcloud scheduler jobs run ${STALE_JOB} --location=${SCHEDULER_REGION}"
+echo "  gcloud scheduler jobs run ${BNPL_JOB}  --location=${SCHEDULER_REGION}"

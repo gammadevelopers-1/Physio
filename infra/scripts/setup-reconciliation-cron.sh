@@ -60,7 +60,7 @@ CRON_SA="${CRON_SERVICE_ACCOUNT:-reconciliation-cron@${GCP_PROJECT_ID}.iam.gserv
 # Stored in Secret Manager; we fetch it here to pass as a header.
 CRON_TOKEN=$(gcloud secrets versions access latest \
   --secret=RECONCILIATION_CRON_TOKEN \
-  --project="${GCP_PROJECT_ID}" 2>/dev/null) || true
+  --project="${GCP_PROJECT_ID}" 2>/dev/null | tr -d '\r\n') || true
 
 if [ -z "$CRON_TOKEN" ]; then
   echo "[ERROR] Secret RECONCILIATION_CRON_TOKEN not found in Secret Manager."
@@ -92,7 +92,7 @@ gcloud run services add-iam-policy-binding physioguidance-api \
 # ─── Create or update the daily scan job ───────────────────────────────
 
 DAILY_JOB="reconciliation-daily-scan"
-DAILY_URI="${BACKEND_URL}/payments/reconciliation/cron/daily-scan"
+DAILY_URI="${BACKEND_URL}/api/payments/reconciliation/cron/daily-scan"
 
 # 02:00 Asia/Riyadh daily. Quiet hours minimise gateway-API contention.
 DAILY_SCHEDULE="0 2 * * *"
@@ -109,7 +109,7 @@ if gcloud scheduler jobs describe "${DAILY_JOB}" \
     --time-zone="${DAILY_TZ}" \
     --uri="${DAILY_URI}" \
     --http-method=POST \
-    --headers="X-Cron-Token=${CRON_TOKEN}" \
+    --update-headers="X-Cron-Token=${CRON_TOKEN}" \
     --oidc-service-account-email="${CRON_SA}" \
     --oidc-token-audience="${BACKEND_URL}" \
     --attempt-deadline=300s
@@ -132,7 +132,7 @@ fi
 # ─── Create or update the stale-reminder job ───────────────────────────
 
 STALE_JOB="reconciliation-stale-reminders"
-STALE_URI="${BACKEND_URL}/payments/reconciliation/cron/stale-reminders"
+STALE_URI="${BACKEND_URL}/api/payments/reconciliation/cron/stale-reminders"
 
 # 10:00 Asia/Riyadh daily. Office hours so admins see the reminder while
 # they're at their desk.
@@ -149,7 +149,7 @@ if gcloud scheduler jobs describe "${STALE_JOB}" \
     --time-zone="${DAILY_TZ}" \
     --uri="${STALE_URI}" \
     --http-method=POST \
-    --headers="X-Cron-Token=${CRON_TOKEN}" \
+    --update-headers="X-Cron-Token=${CRON_TOKEN}" \
     --oidc-service-account-email="${CRON_SA}" \
     --oidc-token-audience="${BACKEND_URL}" \
     --attempt-deadline=60s
@@ -178,7 +178,7 @@ fi
 # typical), so the high cadence is fine.
 
 BNPL_JOB="bnpl-status-poll"
-BNPL_URI="${BACKEND_URL}/payments/reconciliation/cron/bnpl-status-poll"
+BNPL_URI="${BACKEND_URL}/api/payments/reconciliation/cron/bnpl-status-poll"
 BNPL_SCHEDULE="*/5 * * * *"
 
 if gcloud scheduler jobs describe "${BNPL_JOB}" \
@@ -192,7 +192,7 @@ if gcloud scheduler jobs describe "${BNPL_JOB}" \
     --time-zone="${DAILY_TZ}" \
     --uri="${BNPL_URI}" \
     --http-method=POST \
-    --headers="X-Cron-Token=${CRON_TOKEN}" \
+    --update-headers="X-Cron-Token=${CRON_TOKEN}" \
     --oidc-service-account-email="${CRON_SA}" \
     --oidc-token-audience="${BACKEND_URL}" \
     --attempt-deadline=120s

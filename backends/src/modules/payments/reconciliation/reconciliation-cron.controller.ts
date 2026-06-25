@@ -83,7 +83,15 @@ export class ReconciliationCronController {
   }
 
   private assertToken(provided: string | undefined): void {
-    const expected = process.env.RECONCILIATION_CRON_TOKEN;
+    // Trim both sides. The secret in Secret Manager was created with a
+    // trailing newline / carriage return (`openssl rand -hex 32` was piped
+    // through `gcloud secrets create --data-file=-` and the shell appended
+    // a newline). Cloud Run mounts the raw bytes, so the env value carries
+    // the trailing whitespace; without trimming, any caller that strips its
+    // copy (Cloud Scheduler does, after a recent infra script fix) would
+    // 401-mismatch on something invisible.
+    const expected = (process.env.RECONCILIATION_CRON_TOKEN || '').trim();
+    const received = (provided || '').trim();
     // In development we let it through to make local testing easy. In any
     // other environment, the token must be set AND match.
     if (process.env.NODE_ENV === 'development' && !expected) {
@@ -97,7 +105,7 @@ export class ReconciliationCronController {
         'Cron endpoint is not configured — RECONCILIATION_CRON_TOKEN env var is missing on the server.',
       );
     }
-    if (provided !== expected) {
+    if (received !== expected) {
       throw new UnauthorizedException('Invalid cron token');
     }
   }

@@ -45,6 +45,21 @@ export class InvoiceService {
   ) {}
 
   async generateInvoice(paymentId: string) {
+    // Idempotency guard. generateInvoice is called from BOTH the webhook
+    // path AND the verify path (self-heal); without this check a payment
+    // that gets settled inline by verify and then receives a delayed
+    // webhook would end up with two invoice rows pointing at the same
+    // payment (no DB-level UNIQUE on invoices.payment_id). Return the
+    // existing row so callers get a stable result either way.
+    const [existing] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.paymentId, paymentId))
+      .limit(1);
+    if (existing) {
+      return existing;
+    }
+
     // Get payment with user and course data
     const [payment] = await db
       .select()

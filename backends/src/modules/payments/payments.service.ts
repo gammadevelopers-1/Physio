@@ -1177,7 +1177,17 @@ export class PaymentsService {
             try {
               await this.invoiceService.generateInvoice(paymentId);
             } catch (err) {
-              this.logger.error(`Invoice generation failed for ${paymentId}: ${err.message}`);
+              const message = (err as Error).message;
+              this.logger.error(`Invoice generation failed for ${paymentId}: ${message}`);
+              try {
+                await this.auditLogService.log({
+                  entityType: 'payment',
+                  entityId: paymentId,
+                  action: 'invoice_generation_failed',
+                  performedBy: 'system',
+                  metadata: { gateway: payment.gateway, source: 'verify', error: message },
+                });
+              } catch {}
             }
             try {
               let pdfAttachment: { buffer: Buffer; filename: string } | undefined;

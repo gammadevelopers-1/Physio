@@ -181,6 +181,13 @@ export class AdminFinanceController {
 
     if (body.status === 'paid') {
       await this.paymentsService.processPaymentSuccess(paymentId);
+      // Run the same post-success cascade the webhook/verify paths run —
+      // without this, admin-force-paid payments were left invoice-less.
+      // generateInvoice is now idempotent so a later webhook arriving for
+      // the same payment won't duplicate.
+      try {
+        await this.invoiceService.generateInvoice(paymentId);
+      } catch {}
     } else {
       await this.paymentsService.processPaymentFailure(
         paymentId,

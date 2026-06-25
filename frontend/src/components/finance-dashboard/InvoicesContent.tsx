@@ -582,12 +582,12 @@ function InvoiceRowView({
       onClick={onClick}
       className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] cursor-pointer transition-colors"
     >
-      <td className="py-3 px-4">
-        <span className="text-[13px] font-medium text-[var(--color-primary)] font-mono">
+      <td className="py-3 px-4 align-top whitespace-nowrap">
+        <span className="block text-[13px] font-medium text-[var(--color-primary)] font-mono">
           {inv.invoiceNumber}
         </span>
         {inv.refundStatus && (
-          <span className="ms-2 text-[10px] font-medium text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded">
+          <span className="mt-1 inline-flex items-center text-[10px] font-medium text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded whitespace-nowrap">
             {t("invoicesPage.refundedBadge", { status: inv.refundStatus })}
           </span>
         )}

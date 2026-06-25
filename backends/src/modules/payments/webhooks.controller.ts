@@ -210,7 +210,17 @@ export class WebhooksController {
         try {
           await this.invoiceService.generateInvoice(payment.id);
         } catch (err) {
-          this.logger.error(`Invoice generation failed: ${err.message}`);
+          const message = (err as Error).message;
+          this.logger.error(`Invoice generation failed: ${message}`);
+          try {
+            await this.auditLogService.log({
+              entityType: 'payment',
+              entityId: payment.id,
+              action: 'invoice_generation_failed',
+              performedBy: 'system',
+              metadata: { gateway, source: 'webhook_sync', error: message },
+            });
+          } catch {}
         }
 
         // Get invoice PDF for email attachment

@@ -74,13 +74,29 @@ export class WebhookProcessor extends WorkerHost {
       if (status === 'paid') {
         await this.paymentsService.processPaymentSuccess(payment.id);
 
-        // Generate invoice
+        // Generate invoice. Failure is non-fatal for the webhook (payment
+        // is already marked PAID and enrollments activated) but admin
+        // visibility matters — surface to the audit log so a paid-but-not-
+        // invoiced row is searchable in the dashboard, not buried in stderr.
         try {
           await this.invoiceService.generateInvoice(payment.id);
         } catch (err) {
+          const message = (err as Error).message;
           this.logger.error(
-            `Failed to generate invoice for payment ${payment.id}: ${err.message}`,
+            `Failed to generate invoice for payment ${payment.id}: ${message}`,
           );
+          try {
+            await this.auditLogService.log({
+              entityType: 'payment',
+              entityId: payment.id,
+              action: 'invoice_generation_failed',
+              performedBy: 'system',
+              metadata: { gateway, source: 'webhook', error: message },
+            });
+          } catch {
+            // swallow — audit log failure shouldn't block the rest of the
+            // success cascade
+          }
         }
 
         // Get invoice PDF for email attachment

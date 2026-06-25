@@ -325,6 +325,7 @@ export class RefundService {
         gatewayChargeId: payment.gatewayChargeId,
         amount: Number(refund.refundAmount),
         reason: refund.reason,
+        refundId,
       });
 
       gatewayRefundId = refundResult.refundId;

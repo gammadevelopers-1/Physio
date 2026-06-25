@@ -324,9 +324,15 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
       throw err;
     }
 
-    const body = {
+    // Per Tabby docs (POST /api/v2/payments/{id}/refunds):
+    //   amount       — string, up to 2 decimals for SAR
+    //   reference_id — idempotency key; replay-safe with the same key
+    //   reason       — human-readable explanation (shown in merchant portal)
+    const body: Record<string, unknown> = {
       amount: params.amount.toFixed(2),
     };
+    if (params.refundId) body.reference_id = params.refundId;
+    if (params.reason) body.reason = params.reason;
 
     const response = await this.fetchWithRetry(
       `${this.apiUrl}/payments/${params.gatewayChargeId}/refunds`,
@@ -343,31 +349,46 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
     const data = await response.json();
 
     if (!response.ok) {
-      this.logger.error(`Tabby refund failed: ${JSON.stringify(data)}`);
-      const code = this.normalizeErrorCode(data.error || data.message);
-      throw new PaymentGatewayError(
-        'tabby',
-        data.error || 'Refund failed',
-        code,
-        data,
+      this.logger.error(
+        `Tabby refund failed (HTTP ${response.status}): ${JSON.stringify(data)}`,
       );
+      // 409 is documented as "refund unavailable — payment is disputed".
+      // Surface this as a distinct code so finance can tell at a glance vs.
+      // a generic gateway error.
+      const code =
+        response.status === 409
+          ? 'payment_disputed'
+          : this.normalizeErrorCode(data.error || data.message);
+      const message =
+        response.status === 409
+          ? data.error || 'Cannot refund — payment is disputed at Tabby'
+          : data.error || 'Refund failed';
+      throw new PaymentGatewayError('tabby', message, code, data);
     }
 
     // Tabby's /payments/{id}/refunds returns the updated Payment object
-    // (status: CLOSED for full refund, AUTHORIZED for partial), not a
-    // refund-shaped object with status: SUCCEEDED. Mapping that raw payment
-    // status into our terminal-success set kept refunds stuck in PROCESSING.
+    // (status: CLOSED for full refund, AUTHORIZED for partial), NOT a
+    // refund-shaped object with status: SUCCEEDED — verified against their
+    // public docs. Refunds are documented as synchronous: "By default
+    // refunds reflect instantly". So HTTP 200 is our terminal-success
+    // signal, regardless of what payment.status the response carries.
     //
-    // Treat HTTP 200 itself as the success signal — Tabby has accepted the
-    // refund instruction and will execute it. If their settlement later
-    // fails on their side, they fire a separate webhook with the failure
-    // (handled in processWebhook). Any pre-acceptance failure already threw
-    // above on the !response.ok branch.
+    // The response includes a `refunds` array; the newest entry is the
+    // refund we just created. Prefer its id for cross-referencing in the
+    // Tabby merchant portal over the payment id.
+    const refundsArr: Array<{ id?: string }> = Array.isArray(data.refunds)
+      ? data.refunds
+      : [];
+    const tabbyRefundId =
+      refundsArr.length > 0
+        ? refundsArr[refundsArr.length - 1].id
+        : undefined;
+
     this.logger.log(
-      `Tabby refund accepted for ${params.gatewayChargeId}: payment.status=${data.status}`,
+      `Tabby refund accepted for ${params.gatewayChargeId}: payment.status=${data.status}, refundId=${tabbyRefundId || 'n/a'}`,
     );
     return {
-      refundId: data.id || params.gatewayChargeId,
+      refundId: tabbyRefundId || data.id || params.gatewayChargeId,
       status: 'succeeded',
       rawResponse: data,
     };

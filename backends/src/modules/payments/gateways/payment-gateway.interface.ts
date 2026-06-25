@@ -46,6 +46,10 @@ export interface RefundParams {
   gatewayChargeId: string;
   amount: number;
   reason?: string;
+  // Our internal refund row id. Passed to gateways that support an
+  // idempotency / reference key (e.g. Tabby's `reference_id`) so a retried
+  // gateway call after a timeout / network blip can't double-refund.
+  refundId?: string;
 }
 
 export interface RefundResult {

@@ -8,6 +8,7 @@ export type NormalizedErrorCode =
   | 'gateway_timeout'
   | 'gateway_error'
   | 'network_error'
+  | 'payment_disputed'
   | 'unknown';
 
 export class PaymentGatewayError extends Error {

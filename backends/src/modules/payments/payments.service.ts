@@ -37,6 +37,7 @@ import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 import { getEffectivePrice } from '../courses/pricing.util';
 import { PaymentGatewayError } from './gateways/payment-gateway.error';
+import { decryptPII } from '../../common/crypto';
 
 /**
  * Validate and normalize a Saudi phone number to E.164 format (+9665XXXXXXXX).
@@ -699,19 +700,26 @@ export class PaymentsService {
         : `${lines.length} courses: ${lines[0].course.title}` +
           (lines.length > 1 ? ` (+${lines.length - 1} more)` : '');
 
+    // `users.phone` is stored encrypted (AES-GCM, `v1:...` blob) for PII at
+    // rest. We need the plaintext both for the Saudi-phone validation below
+    // and for handoff to the gateway as `customerPhone`. decryptPII is a
+    // no-op on legacy plaintext rows, so this is safe regardless of when the
+    // row was written.
+    const plaintextPhone = decryptPII(userData?.phone);
+
     // Both BNPL gateways (Tabby, Tamara) require a Saudi phone number on the
     // buyer. Tabby silently auto-declines its Pre-Scoring without one; Tamara
     // returns a PII-tokenized error ("Invalid v1:...==") that's unreadable
     // when surfaced to the user. Validate + normalize up front so callers get
     // a clear, actionable error instead of a gateway-side failure.
-    let normalizedPhone: string | undefined = userData?.phone || undefined;
+    let normalizedPhone: string | undefined = plaintextPhone || undefined;
     if (dto.gateway === 'tabby' || dto.gateway === 'tamara') {
-      if (!userData?.phone) {
+      if (!plaintextPhone) {
         throw new BadRequestException(
           `${dto.gateway === 'tabby' ? 'Tabby' : 'Tamara'} requires a Saudi phone number on your profile. Please add one in account settings, or use a different payment method.`,
         );
       }
-      const candidate = normalizeSaudiPhone(userData.phone);
+      const candidate = normalizeSaudiPhone(plaintextPhone);
       if (!candidate) {
         throw new BadRequestException(
           `${dto.gateway === 'tabby' ? 'Tabby' : 'Tamara'} only accepts Saudi Arabian phone numbers (e.g. 05XXXXXXXX or +9665XXXXXXXX). Please update your profile or pick a different payment method.`,

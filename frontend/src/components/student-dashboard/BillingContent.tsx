@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Receipt } from "lucide-react";
+import SaudiRiyalIcon from "@/components/shared/SaudiRiyalIcon";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
@@ -130,7 +130,7 @@ const BillingContent = () => {
                 className={`mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <Receipt className="w-5 h-5 text-[var(--color-primary)]" />
+                  <SaudiRiyalIcon className="text-[var(--color-primary)]" size={20} />
                   <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
                     {t("title")}
                   </h1>
@@ -140,7 +140,7 @@ const BillingContent = () => {
 
               {/* Tab bar */}
               <nav
-                className="bg-white rounded-xl border border-[#E5E7EB] mb-4 overflow-x-auto"
+                className="bg-white rounded-xl border border-[#E5E7EB] mb-4 overflow-x-auto overflow-y-hidden"
                 aria-label={t("title")}
               >
                 <div

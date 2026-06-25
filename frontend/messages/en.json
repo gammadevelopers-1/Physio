@@ -2385,12 +2385,17 @@
         "awaiting_approval": "Awaiting verification",
         "paid": "Paid",
         "failed": "Failed",
+        "abandoned": "Abandoned",
         "refunded": "Refunded",
         "partially_refunded": "Partially refunded",
         "chargeback": "Chargeback",
         "approved": "Approved",
         "completed": "Completed",
-        "rejected": "Rejected"
+        "rejected": "Rejected",
+        "unknown": "—"
+      },
+      "drawerExtras": {
+        "invoiceNumber": "Invoice number"
       },
       "method": {
         "card": "Card",

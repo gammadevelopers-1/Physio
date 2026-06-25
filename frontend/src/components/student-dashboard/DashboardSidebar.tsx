@@ -19,11 +19,11 @@ import {
   Upload,
   Trash2,
   Headphones,
-  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
 import SidebarBadge from "@/components/SidebarBadge";
+import SaudiRiyalIcon from "@/components/shared/SaudiRiyalIcon";
 import type { StudentProfile } from "@/hooks/useStudentProfile";
 
 interface DashboardSidebarProps {
@@ -114,7 +114,7 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
     {
       label: t("sidebar.billing"),
       href: `/${locale}/dashboard/student/billing`,
-      icon: Receipt,
+      icon: SaudiRiyalIcon,
     },
     {
       label: t("sidebar.settings"),

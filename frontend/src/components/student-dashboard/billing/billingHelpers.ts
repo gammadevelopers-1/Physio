@@ -101,6 +101,38 @@ export function formatDateTime(
   }
 }
 
+/**
+ * Translate a payment/refund status key safely. Falls back to `status.unknown`
+ * (translated dash) when the backend returns a status we don't have a label
+ * for (e.g. when the schema gains a new value before i18n catches up). Without
+ * this guard, `t(`status.${unknown}`)` renders the raw key path to the user
+ * (e.g. `studentDashboard.billing.status.abandoned`).
+ */
+const KNOWN_STATUS_KEYS = new Set([
+  "pending",
+  "processing",
+  "awaiting_approval",
+  "paid",
+  "failed",
+  "abandoned",
+  "refunded",
+  "partially_refunded",
+  "chargeback",
+  "approved",
+  "completed",
+  "rejected",
+]);
+
+export function statusLabel(
+  raw: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (!raw) return t("status.unknown");
+  return KNOWN_STATUS_KEYS.has(raw)
+    ? t(`status.${raw}`)
+    : t("status.unknown");
+}
+
 /** Pick the user-facing course title for the active locale, with EN fallback. */
 export function pickCourseTitle(
   titleEn: string | null | undefined,

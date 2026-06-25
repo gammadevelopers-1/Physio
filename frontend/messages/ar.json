@@ -2385,12 +2385,17 @@
         "awaiting_approval": "بانتظار التحقق",
         "paid": "مدفوع",
         "failed": "فشل",
+        "abandoned": "متروك",
         "refunded": "تم الاسترداد",
         "partially_refunded": "استرداد جزئي",
         "chargeback": "رد المبلغ من البنك",
         "approved": "موافق عليه",
         "completed": "مكتمل",
-        "rejected": "مرفوض"
+        "rejected": "مرفوض",
+        "unknown": "—"
+      },
+      "drawerExtras": {
+        "invoiceNumber": "رقم الفاتورة"
       },
       "method": {
         "card": "بطاقة",

@@ -21,8 +21,8 @@ import {
   Calendar,
   Users,
   Headphones,
-  Receipt,
 } from "lucide-react";
+import SaudiRiyalIcon from "@/components/shared/SaudiRiyalIcon";
 import { useAuth } from "@/contexts";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -101,7 +101,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
     {
       label: tDashboard("sidebar.billing"),
       href: `/${locale}/dashboard/student/billing`,
-      icon: Receipt,
+      icon: SaudiRiyalIcon,
     },
     {
       label: tDashboard("sidebar.settings"),

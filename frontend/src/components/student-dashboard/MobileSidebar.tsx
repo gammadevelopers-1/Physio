@@ -20,8 +20,8 @@ import {
   Upload,
   Trash2,
   Headphones,
-  Receipt,
 } from "lucide-react";
+import SaudiRiyalIcon from "@/components/shared/SaudiRiyalIcon";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi } from "@/lib/api";
 import type { StudentProfile } from "@/hooks/useStudentProfile";
@@ -115,7 +115,7 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
     {
       label: t("sidebar.billing"),
       href: `/${locale}/dashboard/student/billing`,
-      icon: Receipt,
+      icon: SaudiRiyalIcon,
     },
     {
       label: t("sidebar.settings"),

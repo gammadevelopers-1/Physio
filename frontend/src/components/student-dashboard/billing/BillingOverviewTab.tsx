@@ -24,6 +24,7 @@ import {
   formatDate,
   pickCourseTitle,
   statusPillClasses,
+  statusLabel,
 } from "./billingHelpers";
 
 type Props = {
@@ -296,7 +297,7 @@ const BillingOverviewTab = ({
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(p.status)}`}
                   >
-                    {t(`status.${p.status}`)}
+                    {statusLabel(p.status, t)}
                   </span>
                   <ChevronRight
                     className={`w-4 h-4 text-[#9CA3AF] shrink-0 ${isRTL ? "rotate-180" : ""}`}

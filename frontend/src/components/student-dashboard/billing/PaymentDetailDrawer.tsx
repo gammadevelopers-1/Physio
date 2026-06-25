@@ -22,6 +22,7 @@ import {
   formatDateTime,
   pickCourseTitle,
   statusPillClasses,
+  statusLabel,
 } from "./billingHelpers";
 import StudentRefundRequestModal from "./StudentRefundRequestModal";
 
@@ -220,7 +221,7 @@ function DrawerBody({
           <span
             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(payment.status)}`}
           >
-            {t(`status.${payment.status}` as never)}
+            {statusLabel(payment.status, t)}
           </span>
           <span className="text-xs text-[#6B7280]">
             {formatDateTime(payment.paidAt ?? payment.createdAt, locale)}
@@ -269,6 +270,16 @@ function DrawerBody({
 
       {/* Meta block */}
       <section className="border border-[#E5E7EB] rounded-lg p-3 space-y-1 text-sm">
+        {payment.invoiceNumber && (
+          <Row
+            label={t("drawerExtras.invoiceNumber")}
+            value={
+              <code className="text-xs font-mono text-[#1F2937] break-all">
+                {payment.invoiceNumber}
+              </code>
+            }
+          />
+        )}
         <Row
           label={t("drawer.paymentMethod")}
           value={
@@ -367,7 +378,7 @@ function DrawerBody({
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(r.status)}`}
                   >
-                    {t(`status.${r.status}` as never)}
+                    {statusLabel(r.status, t)}
                   </span>
                   <span className="text-xs text-[#6B7280] tabular-nums">
                     {formatDateTime(r.createdAt, locale)}

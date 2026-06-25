@@ -8,6 +8,7 @@ import {
   ChevronRight,
   FileText,
   ChevronDown,
+  Check,
 } from "lucide-react";
 import {
   studentFinanceApi,
@@ -15,10 +16,18 @@ import {
   type StudentPaymentsFilters,
 } from "@/lib/api";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import DatePicker from "@/components/ui/DatePicker";
+import {
   formatSar,
   formatDate,
   pickCourseTitle,
   statusPillClasses,
+  statusLabel,
 } from "./billingHelpers";
 
 type Props = {
@@ -31,6 +40,7 @@ const STATUS_FILTER_OPTIONS = [
   "pending",
   "awaiting_approval",
   "failed",
+  "abandoned",
   "refunded",
   "partially_refunded",
 ] as const;
@@ -90,7 +100,7 @@ const BillingPaymentsTab = ({ onOpenPayment }: Props) => {
       {/* Filters */}
       <div className="bg-white rounded-xl border border-[#E5E7EB] p-3 sm:p-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 items-end">
-          <SelectField
+          <FilterDropdown
             label={t("payments.filters.status")}
             value={draftFilters.status ?? "all"}
             onChange={(v) =>
@@ -98,10 +108,12 @@ const BillingPaymentsTab = ({ onOpenPayment }: Props) => {
             }
             options={STATUS_FILTER_OPTIONS.map((s) => ({
               value: s,
-              label: s === "all" ? t("payments.filters.all") : t(`status.${s}`),
+              label:
+                s === "all" ? t("payments.filters.all") : statusLabel(s, t),
             }))}
+            isRTL={isRTL}
           />
-          <SelectField
+          <FilterDropdown
             label={t("payments.filters.method")}
             value={draftFilters.gateway ?? "all"}
             onChange={(v) =>
@@ -111,15 +123,16 @@ const BillingPaymentsTab = ({ onOpenPayment }: Props) => {
               value: g,
               label: g === "all" ? t("payments.filters.all") : t(`gateway.${g}`),
             }))}
+            isRTL={isRTL}
           />
-          <DateField
+          <DateFilter
             label={t("payments.filters.from")}
             value={draftFilters.dateFrom ?? ""}
             onChange={(v) =>
               setDraftFilters((f) => ({ ...f, dateFrom: v || undefined }))
             }
           />
-          <DateField
+          <DateFilter
             label={t("payments.filters.to")}
             value={draftFilters.dateTo ?? ""}
             onChange={(v) =>
@@ -202,7 +215,7 @@ const BillingPaymentsTab = ({ onOpenPayment }: Props) => {
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(p.status)}`}
                       >
-                        {t(`status.${p.status}`)}
+                        {statusLabel(p.status, t)}
                       </span>
                     </Td>
                     <Td>
@@ -241,7 +254,7 @@ const BillingPaymentsTab = ({ onOpenPayment }: Props) => {
                     <span
                       className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusPillClasses(p.status)}`}
                     >
-                      {t(`status.${p.status}`)}
+                      {statusLabel(p.status, t)}
                     </span>
                   </div>
                 </button>
@@ -331,39 +344,60 @@ function Td({
   );
 }
 
-function SelectField({
+function FilterDropdown({
   label,
   value,
   onChange,
   options,
+  isRTL,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
+  isRTL: boolean;
 }) {
+  const selected = options.find((o) => o.value === value);
   return (
-    <label className="flex flex-col gap-1 text-xs text-[#6B7280]">
+    <div className="flex flex-col gap-1 text-xs text-[#6B7280]">
       <span>{label}</span>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full h-9 ps-3 pe-7 border border-[#E5E7EB] rounded-md text-sm bg-white text-[#1F2937] appearance-none focus:outline-none focus:border-[var(--color-primary)]"
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="w-full h-9 ps-3 pe-2 flex items-center justify-between gap-2 border border-[#E5E7EB] rounded-md text-sm bg-white text-[#1F2937] hover:border-[var(--color-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-colors"
+          >
+            <span className="truncate">{selected?.label ?? "—"}</span>
+            <ChevronDown className="w-4 h-4 text-[#9CA3AF] shrink-0" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align={isRTL ? "end" : "start"}
+          sideOffset={4}
+          className="min-w-(--radix-dropdown-menu-trigger-width) max-h-72 overflow-y-auto"
         >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="w-4 h-4 text-[#9CA3AF] absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-      </div>
-    </label>
+          {options.map((o) => {
+            const isSelected = o.value === value;
+            return (
+              <DropdownMenuItem
+                key={o.value}
+                onSelect={() => onChange(o.value)}
+                className={isSelected ? "bg-[#F3F4F6] text-[#1F2937]" : ""}
+              >
+                <span className="flex-1">{o.label}</span>
+                {isSelected && (
+                  <Check className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                )}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
-function DateField({
+function DateFilter({
   label,
   value,
   onChange,
@@ -373,14 +407,14 @@ function DateField({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs text-[#6B7280]">
+    <div className="flex flex-col gap-1 text-xs text-[#6B7280]">
       <span>{label}</span>
-      <input
-        type="date"
+      <DatePicker
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-9 px-3 border border-[#E5E7EB] rounded-md text-sm bg-white text-[#1F2937] focus:outline-none focus:border-[var(--color-primary)]"
+        onChange={onChange}
+        className="py-1.5! rounded-md!"
+        placeholder="—"
       />
-    </label>
+    </div>
   );
 }

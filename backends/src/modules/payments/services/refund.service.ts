@@ -519,16 +519,46 @@ export class RefundService {
     // (partial or full). The "partial credit while keeping access" use
     // case is intentionally not supported — partials are still a closed
     // door.
-    const courseId = payment?.courseId;
     const studentId = payment?.userId;
 
-    // Find future-dated WEBINAR sessions for this course (we only cancel
-    // upcoming attendance — past sessions already happened). We also
-    // pull the Zoom webinar ID so we can revoke at the Zoom layer after
-    // the DB commit (defense-in-depth: even if a refunded learner has
-    // their join URL cached, Zoom denies entry).
+    // Multi-line cart payments leave payments.course_id / enrollment_id
+    // null and store per-line ids on payment_items. Collect ALL course +
+    // enrollment ids so refund revocation drops every enrollment the buyer
+    // got from this payment, not just the primary one. Without this, a
+    // bank-transfer cart refund only dropped the first course (and for
+    // genuinely null primaries, nothing at all — the bug Amna spotted on
+    // INV-2026-00020).
+    const lineRows = await db
+      .select({
+        enrollmentId: paymentItems.enrollmentId,
+        courseId: paymentItems.courseId,
+      })
+      .from(paymentItems)
+      .where(eq(paymentItems.paymentId, refund.paymentId));
+    const enrollmentIdsToDrop = Array.from(
+      new Set(
+        [
+          payment?.enrollmentId,
+          ...lineRows.map((r) => r.enrollmentId),
+        ].filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const courseIdsForRevocation = Array.from(
+      new Set(
+        [
+          payment?.courseId,
+          ...lineRows.map((r) => r.courseId),
+        ].filter((id): id is string => Boolean(id)),
+      ),
+    );
+
+    // Find future-dated WEBINAR sessions for the refunded courses (we only
+    // cancel upcoming attendance — past sessions already happened). Pull
+    // the Zoom webinar ID so we can revoke at the Zoom layer after the DB
+    // commit (defense-in-depth: even if a refunded learner has their join
+    // URL cached, Zoom denies entry).
     const futureWebinarSessions =
-      courseId && studentId
+      courseIdsForRevocation.length > 0 && studentId
         ? await db
             .select({
               id: sessions.id,
@@ -537,7 +567,7 @@ export class RefundService {
             .from(sessions)
             .where(
               and(
-                eq(sessions.courseId, courseId),
+                inArray(sessions.courseId, courseIdsForRevocation),
                 gte(sessions.scheduledAt, new Date()),
               ),
             )
@@ -617,12 +647,14 @@ export class RefundService {
           .where(eq(invoices.id, refund.invoiceId));
       }
 
-      // 1. Drop enrollment
-      if (payment?.enrollmentId) {
+      // 1. Drop every enrollment tied to this payment (multi-line cart
+      // payments have one per line, single-line gateway payments have one
+      // on payment.enrollmentId). Either path feeds enrollmentIdsToDrop.
+      if (enrollmentIdsToDrop.length > 0) {
         await tx
           .update(enrollments)
           .set({ status: ENROLLMENT_STATUS.DROPPED })
-          .where(eq(enrollments.id, payment.enrollmentId));
+          .where(inArray(enrollments.id, enrollmentIdsToDrop));
         cascade.enrollmentDropped = true;
       }
 
@@ -643,8 +675,9 @@ export class RefundService {
       }
 
       // 3. Revoke certificate eligibility (covers CME/CPD — the certificate
-      // IS the CME credential; there is no separate CME table)
-      if (courseId && studentId) {
+      // IS the CME credential; there is no separate CME table) for every
+      // course in the refunded payment, not just the primary.
+      if (courseIdsForRevocation.length > 0 && studentId) {
         const revoked = await tx
           .update(certificateRequests)
           .set({
@@ -655,7 +688,7 @@ export class RefundService {
           })
           .where(
             and(
-              eq(certificateRequests.courseId, courseId),
+              inArray(certificateRequests.courseId, courseIdsForRevocation),
               eq(certificateRequests.studentId, studentId),
               sql`${certificateRequests.status} <> 'revoked'`,
             ),

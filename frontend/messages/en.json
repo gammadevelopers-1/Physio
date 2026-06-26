@@ -8819,6 +8819,10 @@
         "confirm": "Mark as Failed"
       },
       "initiateModal": {
+        "policyBlock": {
+          "title": "Refund policy blocked",
+          "adminHint": "You can still proceed as an admin override — the bypass and the reason will be recorded in the audit log."
+        },
         "title": "Initiate Refund on Behalf of Learner",
         "description": "Search a paid payment, pick a reason, and add a justification. The learner is notified the same way as a self-initiated refund.",
         "searchPlaceholder": "Search by name, email, course, or charge ID...",

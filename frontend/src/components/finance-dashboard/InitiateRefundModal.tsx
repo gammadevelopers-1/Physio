@@ -526,6 +526,29 @@ function PreviewStep({
 
   return (
     <div className="space-y-4">
+      {/* Policy eligibility banner — visible BEFORE the operator chooses an
+          amount / reason so they know up-front whether the refund violates
+          the configured rules (course started, attendance recorded, certificate
+          issued, CME granted). Admin can still proceed via the existing
+          bypass flow in adminInitiateRefund; this just makes the implicit
+          override explicit. */}
+      {!preview.eligibility.eligible && preview.eligibility.reason && (
+        <div className="rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] p-3 flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-[#B91C1C] mt-0.5 shrink-0" />
+          <div className="text-xs leading-relaxed">
+            <div className="font-semibold text-[#991B1B] mb-0.5">
+              {t("refundsPage.initiateModal.policyBlock.title") ||
+                "Refund policy blocked"}
+            </div>
+            <div className="text-[#7F1D1D]">{preview.eligibility.reason}</div>
+            <div className="text-[#7F1D1D] mt-1.5">
+              {t("refundsPage.initiateModal.policyBlock.adminHint") ||
+                "You can still proceed as an admin override — the bypass and the reason will be recorded in the audit log."}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Invoice + Buyer + Course + Enrollment */}
       <div className="bg-[var(--color-surface-page)] border border-[var(--color-border-subtle)] rounded-xl p-4 space-y-2">
         <Row

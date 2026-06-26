@@ -7975,6 +7975,16 @@ export const refundApi = {
         status: string;
         enrolledAt: string | null;
       } | null;
+      eligibility: {
+        eligible: boolean;
+        blockedBy:
+          | 'course_started'
+          | 'attendance_recorded'
+          | 'certificate_issued'
+          | 'cme_granted'
+          | null;
+        reason: string | null;
+      };
       capabilities: {
         supportsPartial: boolean;
         maxRefundAmount: number;

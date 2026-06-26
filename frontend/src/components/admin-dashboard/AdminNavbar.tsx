@@ -28,6 +28,7 @@ import {
 import { useAuth } from "@/contexts";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
+import NotificationBell from "@/components/shared/NotificationBell";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
@@ -171,6 +172,9 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
               <Search className="w-5 h-5" strokeWidth={1.67} />
             </button>
           )}
+
+          {/* In-app notifications */}
+          <NotificationBell />
 
           {/* User Avatar with Dropdown - Hidden on mobile */}
           <div className="hidden lg:block relative">

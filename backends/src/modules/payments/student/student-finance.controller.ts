@@ -9,7 +9,18 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { and, count, desc, eq, gte, inArray, lte, sql, SQL } from 'drizzle-orm';
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  lte,
+  sql,
+  SQL,
+} from 'drizzle-orm';
 import { db } from '../../../database';
 import {
   payments,
@@ -288,11 +299,31 @@ export class StudentFinanceController {
 
     // Live eligibility check — uses the same RefundPolicyService that the
     // server-side refund POST will re-validate against. Source of truth.
+    //
+    // Multi-line cart payments (bank-transfer drafts and any other cart
+    // checkout) leave payments.enrollmentId null and store per-line
+    // enrollment ids on payment_items. Fall back to the first line's
+    // enrollment id so the UI doesn't say "No enrollment found" and the
+    // refund button stays enabled for legitimately enrolled buyers.
     let eligibility: Awaited<
       ReturnType<RefundPolicyService['checkEligibility']>
     > = { eligible: false, blockedBy: null, reason: 'No enrollment found' };
-    if (row.enrollmentId) {
-      eligibility = await this.refundPolicy.checkEligibility(row.enrollmentId);
+    let primaryEnrollmentId: string | null = row.enrollmentId;
+    if (!primaryEnrollmentId) {
+      const [firstItem] = await db
+        .select({ enrollmentId: paymentItems.enrollmentId })
+        .from(paymentItems)
+        .where(
+          and(
+            eq(paymentItems.paymentId, id),
+            isNotNull(paymentItems.enrollmentId),
+          ),
+        )
+        .limit(1);
+      primaryEnrollmentId = firstItem?.enrollmentId ?? null;
+    }
+    if (primaryEnrollmentId) {
+      eligibility = await this.refundPolicy.checkEligibility(primaryEnrollmentId);
     }
 
     // Hard gates that aren't part of policy:

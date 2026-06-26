@@ -22,6 +22,7 @@ import { db } from '../../../database';
 import {
   refunds,
   payments,
+  paymentItems,
   invoices,
   enrollments,
   courses,
@@ -67,6 +68,31 @@ export class RefundService {
     // with any callers that may still rely on prior wiring. The tabby
     // override is now configured via the policy row.
     void this.configService;
+  }
+
+  /**
+   * Resolve the enrollment id that drives refund-policy gating + enrollment
+   * revocation for a payment. Single-line gateway flows store it on
+   * payments.enrollment_id directly. Multi-line cart payments (bank-transfer
+   * drafts, cart checkouts) leave that column null and put per-line ids on
+   * payment_items — fall back to the first one so policy still applies.
+   */
+  private async resolvePrimaryEnrollmentId(
+    paymentId: string,
+    paymentEnrollmentId: string | null,
+  ): Promise<string | null> {
+    if (paymentEnrollmentId) return paymentEnrollmentId;
+    const [firstItem] = await db
+      .select({ enrollmentId: paymentItems.enrollmentId })
+      .from(paymentItems)
+      .where(
+        and(
+          eq(paymentItems.paymentId, paymentId),
+          sql`${paymentItems.enrollmentId} IS NOT NULL`,
+        ),
+      )
+      .limit(1);
+    return firstItem?.enrollmentId ?? null;
   }
 
   /**
@@ -183,9 +209,16 @@ export class RefundService {
     // finance-managed lifecycle gates (course not started, no attendance,
     // no certificate). Bypassing is not allowed for student-initiated
     // requests; admin can override via adminInitiateRefund.
-    if (payment.enrollmentId) {
+    // Resolves payments.enrollment_id OR the first payment_items.enrollment_id
+    // so policy applies to multi-line cart purchases (bank-transfer drafts
+    // and any cart checkout) the same way it applies to single-line ones.
+    const policyEnrollmentId = await this.resolvePrimaryEnrollmentId(
+      dto.paymentId,
+      payment.enrollmentId,
+    );
+    if (policyEnrollmentId) {
       const eligibility = await this.refundPolicyService.checkEligibility(
-        payment.enrollmentId,
+        policyEnrollmentId,
       );
       if (!eligibility.eligible) {
         throw new BadRequestException(
@@ -1145,10 +1178,16 @@ export class RefundService {
     // Policy eligibility — admin can bypass with `bypassPolicy: true`.
     // The bypass + the underlying reason are captured in the audit log
     // so finance can see WHO overrode WHAT for compliance reviews.
+    // Multi-line cart payments fall back to payment_items so admins still
+    // see (and have to consciously bypass) the same policy on cart refunds.
     let bypassedBlockReason: string | null = null;
-    if (payment.enrollmentId) {
+    const adminPolicyEnrollmentId = await this.resolvePrimaryEnrollmentId(
+      dto.paymentId,
+      payment.enrollmentId,
+    );
+    if (adminPolicyEnrollmentId) {
       const eligibility = await this.refundPolicyService.checkEligibility(
-        payment.enrollmentId,
+        adminPolicyEnrollmentId,
       );
       if (!eligibility.eligible) {
         if (!dto.bypassPolicy) {
@@ -1387,9 +1426,15 @@ export class RefundService {
     );
 
     // Policy eligibility status for the UI — preview shows this so the
-    // operator can see what's blocking BEFORE attempting the refund.
-    const eligibility = payment.enrollmentId
-      ? await this.refundPolicyService.checkEligibility(payment.enrollmentId)
+    // operator can see what's blocking BEFORE attempting the refund. Use
+    // payment_items fallback so multi-line cart refunds show the same
+    // policy verdict as single-line ones.
+    const previewPolicyEnrollmentId = await this.resolvePrimaryEnrollmentId(
+      payment.id,
+      payment.enrollmentId,
+    );
+    const eligibility = previewPolicyEnrollmentId
+      ? await this.refundPolicyService.checkEligibility(previewPolicyEnrollmentId)
       : { eligible: true, blockedBy: null, reason: null };
 
     const gatewayLabels: Record<string, string> = {

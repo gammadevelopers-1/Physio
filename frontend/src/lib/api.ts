@@ -2163,6 +2163,20 @@ export const adminFinanceApi = {
       applied: 'paid' | 'failed' | 'no_change';
     }>(`/admin/finance/payments/${paymentId}/sync-from-gateway`, body),
 
+  /**
+   * Cancel a Tamara order that hasn't been captured yet. Kills the order on
+   * Tamara's side (releases the buyer + voids the authorisation hold), flips
+   * our payment row to FAILED with errorCode='merchant_cancelled', and drops
+   * pending enrollments. Only valid for gateway='tamara' AND pre-capture
+   * statuses (pending/processing/awaiting_approval). Once paid, use refund.
+   */
+  cancelTamaraOrder: (paymentId: string, body: { reason: string }) =>
+    api.post<{
+      paymentId: string;
+      status: string;
+      tamaraStatus: string;
+    }>(`/finance/tamara/cancel/${paymentId}`, body),
+
   // ── Invoice super-actions ────────────────────────────────────────
 
   /** Cancel an invoice — works even on paid invoices. */

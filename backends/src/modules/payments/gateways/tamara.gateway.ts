@@ -379,6 +379,68 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
     }
   }
 
+  /**
+   * Merchant-initiated cancellation. Kills a Tamara order that is still in
+   * a pre-capture state (Approved or Authorised) so the buyer is released
+   * from the instalment plan and any authorised hold is voided.
+   *
+   * Docs: POST /orders/{order_id}/cancel — accepts `total_amount` (required,
+   * must match the original order total) and an optional `comment` for the
+   * merchant portal. We pass our internal `cancelId` (paymentId + timestamp
+   * salt is unnecessary: paymentId is enough because cancel is a one-shot
+   * per order) so a retried call after a network blip is idempotent.
+   *
+   * Do NOT call this on captured orders — Tamara will refuse; use `refund()`
+   * once money has settled. The caller is expected to enforce that gate
+   * via the payment status check.
+   */
+  async cancelOrder(
+    orderId: string,
+    params: { amount: number; currency: string; comment?: string; cancelId?: string },
+  ): Promise<{ status: string; rawResponse: any }> {
+    const body: Record<string, unknown> = {
+      total_amount: { amount: params.amount, currency: params.currency },
+    };
+    if (params.comment) body.comment = params.comment;
+    if (params.cancelId) body.cancel_id = params.cancelId;
+
+    const response = await this.fetchWithRetry(
+      `${this.apiUrl}/orders/${orderId}/cancel`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    // 409 = already cancelled. Treat as success — the caller wanted the
+    // order in the cancelled state, and it's there.
+    if (response.status === 409) {
+      this.logger.log(`Tamara order ${orderId} was already cancelled (409)`);
+      return { status: 'cancelled', rawResponse: data };
+    }
+
+    if (!response.ok) {
+      this.logger.error(`Tamara cancelOrder failed: ${JSON.stringify(data)}`);
+      throw new PaymentGatewayError(
+        'tamara',
+        data.message || `Cancel failed with HTTP ${response.status}`,
+        this.normalizeErrorCode(data.error_code || data.message),
+        data,
+      );
+    }
+
+    return {
+      status: data.status || 'cancelled',
+      rawResponse: data,
+    };
+  }
+
   async refund(params: RefundParams): Promise<RefundResult> {
     // Tamara's current documented refund endpoint is
     // `POST /payments/simplified-refund/{order_id}`. Body fields per their

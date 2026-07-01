@@ -8358,7 +8358,10 @@
         "forcePaidToast": "Payment marked as paid",
         "forceFailedToast": "Payment marked as failed",
         "replayWebhookToast": "Webhook replayed",
-        "syncFromGatewayToast": "Synced from gateway"
+        "syncFromGatewayToast": "Synced from gateway",
+        "cancelTamara": "Cancel Tamara order",
+        "cancelTamaraDesc": "Kills the order on Tamara so the buyer is released and any authorisation hold is voided. Only valid before capture — use refund once paid.",
+        "cancelTamaraToast": "Tamara order cancelled"
       },
       "invoice": {
         "forceCancel": "Force-cancel invoice",

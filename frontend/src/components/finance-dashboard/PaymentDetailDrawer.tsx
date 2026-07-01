@@ -124,6 +124,16 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
         : data?.payment.status || "pending";
   const statusStyle = STATUS_PILL[data?.payment.status || "pending"] || STATUS_PILL.pending;
 
+  // Tamara cancel is only meaningful before capture — once paid, the refund
+  // flow is the correct tool. Restrict to the states where our webhook
+  // handler / retry service haven't yet reached the terminal "paid" node.
+  const canCancelTamara =
+    data?.payment.gateway === "tamara" &&
+    !!data?.payment.gatewayChargeId &&
+    ["pending", "processing", "awaiting_approval"].includes(
+      data?.payment.status || "",
+    );
+
   const adminActions: AdminOverrideAction[] = paymentId
     ? [
         {
@@ -157,6 +167,19 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
           successToast: tAdmin("payment.syncFromGatewayToast"),
           run: (reason) => adminFinanceApi.syncPaymentFromGateway(paymentId, { reason }),
         },
+        ...(canCancelTamara
+          ? [
+              {
+                key: "cancel-tamara",
+                label: tAdmin("payment.cancelTamara"),
+                description: tAdmin("payment.cancelTamaraDesc"),
+                danger: true,
+                successToast: tAdmin("payment.cancelTamaraToast"),
+                run: (reason: string) =>
+                  adminFinanceApi.cancelTamaraOrder(paymentId, { reason }),
+              } as AdminOverrideAction,
+            ]
+          : []),
       ]
     : [];
 

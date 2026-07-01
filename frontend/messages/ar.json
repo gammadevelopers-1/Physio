@@ -8358,7 +8358,10 @@
         "forcePaidToast": "تمّ اعتبار الدفعة مدفوعة",
         "forceFailedToast": "تمّ اعتبار الدفعة فاشلة",
         "replayWebhookToast": "تمّت إعادة تشغيل الـ webhook",
-        "syncFromGatewayToast": "تمّت المزامنة من البوابة"
+        "syncFromGatewayToast": "تمّت المزامنة من البوابة",
+        "cancelTamara": "إلغاء طلب تمارا",
+        "cancelTamaraDesc": "يُلغي الطلب على تمارا فيتحرّر المشتري ويُلغى تحفّظ التفويض. صالح فقط قبل السحب — استخدم الاسترداد بعد الدفع.",
+        "cancelTamaraToast": "تمّ إلغاء طلب تمارا"
       },
       "invoice": {
         "forceCancel": "إلغاء الفاتورة قسراً",

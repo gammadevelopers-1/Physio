@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param, Query, Res, UseGuards, BadRequestException } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { Req } from '@nestjs/common';
 import { FinanceService } from '../services/finance.service';
 import { TamaraRetryService } from '../services/tamara-retry.service';
+import { PaymentsService } from '../payments.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
@@ -15,6 +16,7 @@ export class FinanceController {
   constructor(
     private readonly financeService: FinanceService,
     private readonly tamaraRetryService: TamaraRetryService,
+    private readonly paymentsService: PaymentsService,
     private readonly auditLogService: AuditLogService,
   ) {}
 
@@ -41,6 +43,40 @@ export class FinanceController {
       metadata: { triggeredBy: user.email },
     });
     return this.tamaraRetryService.retryOne(paymentId, user.id);
+  }
+
+  /**
+   * Merchant-initiated cancellation of a pre-capture Tamara order. Kills the
+   * order on Tamara's side (releases the buyer from the instalment plan and
+   * voids any authorisation hold), flips our payment row to FAILED with
+   * errorCode='merchant_cancelled', and drops any pending enrollments.
+   *
+   * Only valid before capture. Once money has settled (status=paid), use the
+   * refund flow instead — the service layer enforces this and returns 409.
+   *
+   * Reason is required (min 5 chars, matches AdminOverridePanel client-side
+   * validation) so every cancellation is attributable and shows in the
+   * merchant portal comment for Tamara.
+   */
+  @Post('tamara/cancel/:paymentId')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async cancelTamaraOrder(
+    @Param('paymentId') paymentId: string,
+    @Body() body: { reason?: string },
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    const reason = (body?.reason || '').trim();
+    if (reason.length < 5) {
+      throw new BadRequestException('Reason must be at least 5 characters');
+    }
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.paymentsService.cancelTamaraPayment(
+      paymentId,
+      { id: user.id, email: user.email },
+      reason,
+      ipAddress,
+    );
   }
 
   @Get('summary')

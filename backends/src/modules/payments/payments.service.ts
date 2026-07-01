@@ -38,6 +38,7 @@ import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 import { getEffectivePrice } from '../courses/pricing.util';
 import { PaymentGatewayError } from './gateways/payment-gateway.error';
+import { TamaraGateway } from './gateways/tamara.gateway';
 import { decryptPII } from '../../common/crypto';
 import { XapiService } from '../xapi/xapi.service';
 import { EnrollmentsService } from '../enrollments/enrollments.service';
@@ -1360,6 +1361,140 @@ export class PaymentsService {
       ipAddress: 'system-webhook',
       metadata: { gateway: payment.gateway, reason },
     });
+  }
+
+  /**
+   * Merchant-initiated cancellation of a Tamara order that hasn't been
+   * captured yet. Kills the Tamara-side order so the buyer is released from
+   * the instalment plan and any authorised hold is voided, then reuses the
+   * same downstream cleanup as processPaymentFailure — payment flips to
+   * FAILED (schema has no CANCELLED enum value; we distinguish via
+   * errorCode='merchant_cancelled' and a dedicated audit action), and any
+   * pending enrollments are dropped.
+   *
+   * Called from the finance admin controller via a reason-gated action.
+   * Refuses to cancel:
+   *   - non-Tamara payments (refund is the right tool for captured money)
+   *   - payments already in a terminal state (paid/failed/refunded/chargeback)
+   *   - payments that never reached Tamara (no gatewayChargeId)
+   *
+   * This matches Tamara's own cancel API contract: their endpoint accepts
+   * cancellation only for orders in Approved or Authorised state, not
+   * Captured. Captured orders must go through refund.
+   */
+  async cancelTamaraPayment(
+    paymentId: string,
+    actor: { id: string; email?: string },
+    reason: string,
+    ipAddress: string,
+  ) {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, paymentId))
+      .limit(1);
+
+    if (!payment) {
+      throw new NotFoundException(`Payment ${paymentId} not found`);
+    }
+    if (payment.gateway !== 'tamara') {
+      throw new BadRequestException(
+        `Cancel is only supported for Tamara payments (this one is ${payment.gateway})`,
+      );
+    }
+    const terminalStatuses: string[] = [
+      PAYMENT_STATUS.PAID,
+      PAYMENT_STATUS.FAILED,
+      PAYMENT_STATUS.REJECTED,
+      PAYMENT_STATUS.REFUNDED,
+      PAYMENT_STATUS.PARTIALLY_REFUNDED,
+      PAYMENT_STATUS.CHARGEBACK,
+      PAYMENT_STATUS.ABANDONED,
+    ];
+    if (terminalStatuses.includes(payment.status)) {
+      throw new ConflictException(
+        `Payment ${paymentId} is in terminal state '${payment.status}' — cancel is only valid before capture. Use refund for captured payments.`,
+      );
+    }
+    if (!payment.gatewayChargeId) {
+      throw new BadRequestException(
+        `Payment ${paymentId} never reached Tamara (no gatewayChargeId) — nothing to cancel on their side. Mark abandoned instead.`,
+      );
+    }
+
+    const gateway = this.gatewayFactory.getGateway('tamara') as TamaraGateway;
+    const cancelResult = await gateway.cancelOrder(payment.gatewayChargeId, {
+      amount: Number(payment.amount),
+      currency: payment.currency || 'SAR',
+      comment: reason,
+      cancelId: paymentId,
+    });
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(payments)
+        .set({
+          status: PAYMENT_STATUS.FAILED,
+          failedAt: new Date(),
+          failureReason: `Cancelled by admin: ${reason}`,
+          errorCode: 'merchant_cancelled',
+          gatewayResponse: cancelResult.rawResponse || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(payments.id, paymentId));
+
+      const lineEnrollmentRows = await tx
+        .select({ enrollmentId: paymentItems.enrollmentId })
+        .from(paymentItems)
+        .where(eq(paymentItems.paymentId, paymentId));
+
+      const enrollmentIdsToDrop = lineEnrollmentRows
+        .map((r) => r.enrollmentId)
+        .filter((id): id is string => Boolean(id));
+
+      if (enrollmentIdsToDrop.length === 0 && payment.enrollmentId) {
+        enrollmentIdsToDrop.push(payment.enrollmentId);
+      }
+
+      if (enrollmentIdsToDrop.length > 0) {
+        await tx
+          .update(enrollments)
+          .set({ status: ENROLLMENT_STATUS.DROPPED })
+          .where(
+            and(
+              inArray(enrollments.id, enrollmentIdsToDrop),
+              eq(enrollments.status, ENROLLMENT_STATUS.PENDING_PAYMENT),
+            ),
+          );
+      }
+    });
+
+    await this.auditLogService.log({
+      entityType: 'payment',
+      entityId: paymentId,
+      action: 'payment_cancelled_by_admin',
+      performedBy: actor.id,
+      ipAddress,
+      metadata: {
+        gateway: 'tamara',
+        gatewayChargeId: payment.gatewayChargeId,
+        amount: Number(payment.amount),
+        currency: payment.currency,
+        reason,
+        actorEmail: actor.email,
+        tamaraStatus: cancelResult.status,
+      },
+    });
+
+    this.logger.log(
+      `Tamara payment ${paymentId} cancelled by ${actor.email || actor.id}: ${reason}`,
+    );
+
+    return {
+      paymentId,
+      status: PAYMENT_STATUS.FAILED,
+      tamaraStatus: cancelResult.status,
+    };
   }
 
   /**

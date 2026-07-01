@@ -13,6 +13,7 @@ import {
 } from '../../database/schema';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { XapiService } from '../xapi/xapi.service';
 import { matchParticipantToUser, matchParticipantByPlatformId, getSessionInstructorId, parseTAId } from './zoom.helpers';
 import { courseAssistants } from '../../database/schema/course-assistants';
 import { users } from '../../database/schema';
@@ -27,6 +28,7 @@ export class ZoomSyncService {
   constructor(
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
     private readonly auditService: NelcAuditService,
+    private readonly xapiService: XapiService,
   ) {}
 
   /**
@@ -525,6 +527,13 @@ export class ZoomSyncService {
           leftAt: leaveTime,
           durationMinutes: durationMinutes > 0 ? durationMinutes : null,
         });
+
+        // NELC xAPI — emit when the auto-sync determines the learner
+        // was actually present (≥70% of session). Absences are skipped
+        // (no meaningful xAPI event for "did not attend").
+        if (autoStatus === 'present') {
+          void this.xapiService.emitWebinarAttended(matchedUser.id, sessionId);
+        }
 
         synced++;
       }

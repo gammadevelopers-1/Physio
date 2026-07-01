@@ -39,6 +39,8 @@ import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 import { getEffectivePrice } from '../courses/pricing.util';
 import { PaymentGatewayError } from './gateways/payment-gateway.error';
 import { decryptPII } from '../../common/crypto';
+import { XapiService } from '../xapi/xapi.service';
+import { EnrollmentsService } from '../enrollments/enrollments.service';
 
 /**
  * Validate and normalize a Saudi phone number to E.164 format (+9665XXXXXXXX).
@@ -98,6 +100,8 @@ export class PaymentsService {
     private readonly emailService: EmailService,
     private readonly storageService: StorageService,
     private readonly taxComputationService: TaxComputationService,
+    private readonly xapiService: XapiService,
+    private readonly enrollmentsService: EnrollmentsService,
   ) {}
 
   /**
@@ -898,10 +902,26 @@ export class PaymentsService {
     const frontendBase =
       (callbackUrl || '').replace(/\/payment\/callback.*$/, '') ||
       'https://physioguidance.org';
-    const cancelUrl =
+    const checkoutBackUrl =
       lines.length === 1
         ? `${frontendBase}/${dto.locale || 'en'}/checkout?expressCourseId=${lines[0].course.id}`
         : `${frontendBase}/${dto.locale || 'en'}/checkout`;
+
+    // Tabby's QA requires the buyer to land on a page showing their
+    // prescribed verbatim copy after cancel/failure — different messages
+    // for each outcome. Route both to /payment/failed with distinct
+    // outcome params so the failed page renders the right Tabby copy
+    // bucket (see tabbyOutcomes.{cancelled,failed} translations).
+    // Non-Tabby gateways still go back to /checkout — no QA requirement
+    // there and the buyer expects the cart context to retry.
+    const cancelUrl =
+      dto.gateway === 'tabby'
+        ? `${frontendBase}/${dto.locale || 'en'}/payment/failed?gateway=tabby&outcome=cancelled`
+        : checkoutBackUrl;
+    const failureUrl =
+      dto.gateway === 'tabby'
+        ? `${frontendBase}/${dto.locale || 'en'}/payment/failed?gateway=tabby&outcome=failed`
+        : undefined;
 
     const [userData] = await db
       .select({
@@ -998,6 +1018,7 @@ export class PaymentsService {
         },
         redirectUrl: `${callbackUrl}?gateway=${dto.gateway}&payment_id=${result.payment.id}`,
         cancelUrl,
+        ...(failureUrl ? { failureUrl } : {}),
         webhookUrl: `${webhookBaseUrl}/${dto.gateway}`,
         metadata: {
           paymentId: result.payment.id,
@@ -1165,6 +1186,7 @@ export class PaymentsService {
     // Single-winner status flip: exactly one concurrent caller flips
     // pending -> paid, so duplicate webhooks can't double-process the order.
     let won = false;
+    const activatedEnrollments: { id: string; courseId: string }[] = [];
     await db.transaction(async (tx) => {
       const flipped = await tx
         .update(payments)
@@ -1204,17 +1226,40 @@ export class PaymentsService {
       }
 
       if (enrollmentIdsToActivate.length > 0) {
-        await tx
+        const activated = await tx
           .update(enrollments)
           .set({
             status: 'active',
             enrolledAt: new Date(),
           })
-          .where(inArray(enrollments.id, enrollmentIdsToActivate));
+          .where(inArray(enrollments.id, enrollmentIdsToActivate))
+          .returning({ id: enrollments.id, courseId: enrollments.courseId });
+        activatedEnrollments.push(...activated);
       }
     });
 
     if (!won) return; // lost the race — don't double-record usage / audit
+
+    // NELC xAPI — emit 'registered' for each enrollment that just went
+    // active. Done outside the transaction so a queue/LRS hiccup can't
+    // roll back the payment. Fire-and-forget; the xapi service swallows
+    // its own errors.
+    for (const e of activatedEnrollments) {
+      void this.xapiService.emitCourseEnrollment(
+        payment.userId,
+        e.courseId,
+        e.id,
+      );
+      // Webinar auto-register — paid checkout path was missing this;
+      // students who paid for a course with future webinars need to
+      // land in Zoom without filling the registration form themselves.
+      // Past webinars are skipped inside the helper.
+      void this.enrollmentsService
+        .autoRegisterStudentForWebinarCourse(e.courseId, payment.userId)
+        .catch((err) =>
+          this.logger.warn(`Webinar auto-register (paid) failed: ${err.message}`),
+        );
+    }
 
     // Record discount usage if applicable. recordUsage is itself atomic +
     // idempotent; guard it so a usage hiccup can't abort an already-paid order.

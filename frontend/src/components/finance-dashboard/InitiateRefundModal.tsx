@@ -90,6 +90,8 @@ const InitiateRefundModal = ({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState<string>("");
   const [customAmountError, setCustomAmountError] = useState<string | null>(null);
+  // Per-line selection (empty = full refund of all refundable lines).
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
   // Step 3 — reason
   const [reason, setReason] = useState<(typeof REASONS)[number]>("policy");
@@ -125,6 +127,7 @@ const InitiateRefundModal = ({
     setJustification("");
     setCustomAmount("");
     setCustomAmountError(null);
+    setSelectedItemIds(new Set());
     lastPaymentIdRef.current = null;
     fetchPayments("");
   }, [open, fetchPayments]);
@@ -136,12 +139,39 @@ const InitiateRefundModal = ({
   };
 
   const fetchPreview = useCallback(
-    async (paymentId: string, amount?: number) => {
+    async (
+      paymentId: string,
+      amount?: number,
+      paymentItemIds?: string[],
+    ) => {
       setPreviewLoading(true);
       setPreviewError(null);
       try {
-        const res = await refundApi.getPreview(paymentId, amount);
+        const res = await refundApi.getPreview(
+          paymentId,
+          amount,
+          paymentItemIds,
+        );
         setPreview(res);
+        // First load (no explicit selection yet) — seed selectedItemIds to
+        // every refundable line so the modal defaults to "refund all" and
+        // operator de-selects to make it partial.
+        if (
+          (!paymentItemIds || paymentItemIds.length === 0) &&
+          res.lineItems
+        ) {
+          setSelectedItemIds(
+            new Set(
+              res.lineItems
+                .filter(
+                  (l) =>
+                    !l.alreadyRefundedByRefundId &&
+                    l.paymentItemId !== null,
+                )
+                .map((l) => l.paymentItemId as string),
+            ),
+          );
+        }
       } catch (e: any) {
         setPreviewError(
           e?.message || t("refundsPage.initiateModal.preview.error"),
@@ -157,8 +187,35 @@ const InitiateRefundModal = ({
     lastPaymentIdRef.current = p.id;
     setCustomAmount("");
     setCustomAmountError(null);
+    setSelectedItemIds(new Set());
     setStep(2);
     await fetchPreview(p.id);
+  };
+
+  /** Toggle a line in the multi-select. Debounces a preview refetch so the
+   *  breakdown math (refundAmount, merchantFee, supported) refreshes from
+   *  the backend with the new selection. */
+  const handleToggleLine = (paymentItemId: string) => {
+    if (!preview) return;
+    const next = new Set(selectedItemIds);
+    if (next.has(paymentItemId)) next.delete(paymentItemId);
+    else next.add(paymentItemId);
+    setSelectedItemIds(next);
+    if (previewDebounce.current) clearTimeout(previewDebounce.current);
+    // Clear any explicit custom amount when the operator changes the
+    // selection — the line-derived sum becomes the new baseline.
+    setCustomAmount("");
+    setCustomAmountError(null);
+    previewDebounce.current = setTimeout(() => {
+      if (!lastPaymentIdRef.current) return;
+      const ids = Array.from(next);
+      // Empty selection refetches the full preview (full refund baseline).
+      fetchPreview(
+        lastPaymentIdRef.current,
+        undefined,
+        ids.length > 0 ? ids : undefined,
+      );
+    }, 250);
   };
 
   /**
@@ -172,12 +229,17 @@ const InitiateRefundModal = ({
     if (!preview) return;
     if (previewDebounce.current) clearTimeout(previewDebounce.current);
 
+    const selectedIds = Array.from(selectedItemIds);
+    const idsForRequest =
+      selectedIds.length > 0 ? selectedIds : undefined;
+
     if (!raw.trim()) {
       setCustomAmountError(null);
-      // Refetch full preview
+      // Refetch preview with the current line selection but no explicit
+      // amount — backend recomputes refundAmount from the lines.
       previewDebounce.current = setTimeout(() => {
         if (lastPaymentIdRef.current)
-          fetchPreview(lastPaymentIdRef.current);
+          fetchPreview(lastPaymentIdRef.current, undefined, idsForRequest);
       }, 350);
       return;
     }
@@ -195,7 +257,8 @@ const InitiateRefundModal = ({
     }
     setCustomAmountError(null);
     previewDebounce.current = setTimeout(() => {
-      if (lastPaymentIdRef.current) fetchPreview(lastPaymentIdRef.current, n);
+      if (lastPaymentIdRef.current)
+        fetchPreview(lastPaymentIdRef.current, n, idsForRequest);
     }, 350);
   };
 
@@ -208,6 +271,19 @@ const InitiateRefundModal = ({
       preview.capabilities.supportsPartial && preview.breakdown.isPartial
         ? preview.breakdown.refundAmount
         : undefined;
+    const selectedIds = Array.from(selectedItemIds);
+    // Only pass paymentItemIds when the operator actually deselected
+    // something. Otherwise omitting lets the backend default to "every
+    // refundable line" — same shape the preview was computed against.
+    const isFullSelection =
+      preview.lineItems.length > 0 &&
+      selectedIds.length ===
+        preview.lineItems.filter(
+          (l) =>
+            !l.alreadyRefundedByRefundId && l.paymentItemId !== null,
+        ).length;
+    const paymentItemIds =
+      selectedIds.length > 0 && !isFullSelection ? selectedIds : undefined;
     setSubmitting(true);
     try {
       const res = await refundApi.adminInitiate({
@@ -216,6 +292,7 @@ const InitiateRefundModal = ({
         reasonNote: note || undefined,
         justification: justification || undefined,
         refundAmount: partialAmount,
+        paymentItemIds,
       });
       toast.success(t("refundsPage.initiateModal.successToast"));
       onCreated?.(res?.id);
@@ -285,6 +362,8 @@ const InitiateRefundModal = ({
               customAmount={customAmount}
               customAmountError={customAmountError}
               onCustomAmountChange={handleCustomAmountChange}
+              selectedItemIds={selectedItemIds}
+              onToggleLine={handleToggleLine}
             />
           )}
 
@@ -330,7 +409,10 @@ const InitiateRefundModal = ({
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:opacity-90 transition-opacity ${isRTL ? "flex-row-reverse" : ""}`}
+                disabled={
+                  preview.lineItems.length > 1 && selectedItemIds.size === 0
+                }
+                className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? "flex-row-reverse" : ""}`}
               >
                 {t("refundsPage.initiateModal.next")}
                 <NextIcon className="w-4 h-4" />
@@ -493,6 +575,8 @@ function PreviewStep({
   customAmount,
   customAmountError,
   onCustomAmountChange,
+  selectedItemIds,
+  onToggleLine,
 }: {
   preview: RefundPreview | null;
   loading: boolean;
@@ -503,6 +587,8 @@ function PreviewStep({
   customAmount: string;
   customAmountError: string | null;
   onCustomAmountChange: (v: string) => void;
+  selectedItemIds: Set<string>;
+  onToggleLine: (paymentItemId: string) => void;
 }) {
   if (loading) {
     return (
@@ -611,13 +697,15 @@ function PreviewStep({
           label={t("refundsPage.initiateModal.preview.course")}
           value={
             <span className="text-sm text-[var(--color-text-primary)]">
-              {locale === "ar"
-                ? preview.course?.titleAr || preview.course?.title || "—"
-                : preview.course?.title || "—"}
+              {preview.lineItems.length > 1
+                ? `${preview.lineItems.length} courses`
+                : locale === "ar"
+                  ? preview.course?.titleAr || preview.course?.title || "—"
+                  : preview.course?.title || "—"}
             </span>
           }
         />
-        {preview.enrollment && (
+        {preview.enrollment && preview.lineItems.length <= 1 && (
           <>
             <Row
               label={t("refundsPage.initiateModal.preview.enrolledOn")}
@@ -667,6 +755,92 @@ function PreviewStep({
           />
         )}
       </div>
+
+      {/* Per-course line selection — only when payment has more than one
+          refundable line. Single-course payments skip this and use the
+          flat partial-amount input below. */}
+      {preview.lineItems.length > 1 && (
+        <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] font-semibold">
+              {t("refundsPage.initiateModal.preview.lineItemsTitle")}
+            </h4>
+            {preview.selection.isPartialCartRefund && (
+              <span className="text-[10px] uppercase tracking-wide bg-[#FEF3C7] text-[#92400E] rounded px-1.5 py-0.5 font-medium">
+                {t("refundsPage.initiateModal.preview.partialCartBadge")}
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-[var(--color-text-secondary)] mb-2">
+            {t("refundsPage.initiateModal.preview.lineItemsHint")}
+          </p>
+          <ul className="space-y-1.5">
+            {preview.lineItems.map((li) => {
+              const title =
+                locale === "ar"
+                  ? li.courseTitleAr || li.courseTitle || "—"
+                  : li.courseTitle || "—";
+              const disabled =
+                !!li.alreadyRefundedByRefundId || li.paymentItemId === null;
+              const checked =
+                !!li.paymentItemId && selectedItemIds.has(li.paymentItemId);
+              return (
+                <li
+                  key={li.paymentItemId ?? li.courseId}
+                  className={`flex items-start gap-3 p-2 rounded-md border ${
+                    li.alreadyRefundedByRefundId
+                      ? "border-[var(--color-border-subtle)] bg-[var(--color-surface-page)] opacity-60"
+                      : checked
+                        ? "border-[var(--color-primary)] bg-[#FFFBF0]"
+                        : "border-[var(--color-border-subtle)]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-1 accent-[var(--color-primary)]"
+                    disabled={disabled}
+                    checked={checked}
+                    onChange={() => {
+                      if (li.paymentItemId) onToggleLine(li.paymentItemId);
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={`text-sm font-medium ${
+                        li.alreadyRefundedByRefundId
+                          ? "text-[var(--color-text-secondary)] line-through"
+                          : "text-[var(--color-text-primary)]"
+                      }`}
+                    >
+                      {title}
+                    </p>
+                    {li.alreadyRefundedByRefundId ? (
+                      <p className="text-[10px] text-[#16A34A] mt-0.5">
+                        {t("refundsPage.initiateModal.preview.lineAlreadyRefunded")}
+                      </p>
+                    ) : li.enrollmentStatus ? (
+                      <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5 capitalize">
+                        {li.enrollmentStatus.replace(/_/g, " ")}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="text-right shrink-0 tabular-nums">
+                    <Money
+                      amount={li.lineTotal}
+                      className={`text-sm font-semibold ${
+                        li.alreadyRefundedByRefundId
+                          ? "text-[var(--color-text-secondary)]"
+                          : "text-[var(--color-text-primary)]"
+                      }`}
+                      iconSize={11}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       {/* Partial refund amount input */}
       <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl p-4">

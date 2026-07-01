@@ -716,6 +716,12 @@ function RefundRow({
         <span className="truncate inline-block max-w-[160px] align-middle">
           {courseTitle}
         </span>
+        {typeof r.refundedCourseCount === "number" &&
+          r.refundedCourseCount > 1 && (
+            <span className="ms-1 text-[10px] uppercase tracking-wide bg-[#EDE9FE] text-[#6D28D9] rounded px-1.5 py-0.5 font-medium align-middle">
+              +{r.refundedCourseCount - 1}
+            </span>
+          )}
       </td>
       <td className="py-3 px-4 hidden md:table-cell">
         {gw && (

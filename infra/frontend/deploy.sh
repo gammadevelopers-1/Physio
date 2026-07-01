@@ -86,6 +86,29 @@ log_info "NEXT_PUBLIC_TABBY_PUBLIC_KEY  = ${TABBY_PUBLIC_KEY_FE:0:18}…"
 log_info "NEXT_PUBLIC_TABBY_MERCHANT_CODE = ${TABBY_MERCHANT_CODE_FE}"
 log_info "NEXT_PUBLIC_TAMARA_PUBLIC_KEY = ${TAMARA_PUBLIC_KEY_FE:0:8}…"
 
+# Sentry frontend monitoring — DSN is public, the build token is sensitive
+# but only used at build time (source-map upload). Both come from Secret
+# Manager so they survive every deploy without rebaking the script.
+SENTRY_DSN_FE=""
+SENTRY_AUTH_TOKEN_FE=""
+SENTRY_ORG_FE="${SENTRY_ORG:-physioguidance}"
+SENTRY_PROJECT_FE="${SENTRY_PROJECT:-physioguidance-web}"
+SENTRY_APP_ENV_FE="${SENTRY_APP_ENV:-production}"
+if gcloud secrets describe NEXT_PUBLIC_SENTRY_DSN &>/dev/null 2>&1; then
+    SENTRY_DSN_FE=$(gcloud secrets versions access latest --secret=NEXT_PUBLIC_SENTRY_DSN)
+    log_info "NEXT_PUBLIC_SENTRY_DSN = (loaded from Secret Manager)"
+else
+    log_warning "NEXT_PUBLIC_SENTRY_DSN not in Secret Manager — frontend error capture disabled"
+fi
+if gcloud secrets describe SENTRY_AUTH_TOKEN &>/dev/null 2>&1; then
+    SENTRY_AUTH_TOKEN_FE=$(gcloud secrets versions access latest --secret=SENTRY_AUTH_TOKEN)
+    log_info "SENTRY_AUTH_TOKEN = (loaded — source maps will upload)"
+else
+    log_warning "SENTRY_AUTH_TOKEN not in Secret Manager — source maps won't upload (prod stack traces will be minified)"
+fi
+# Release tag pins each deploy to its source-map bundle in Sentry.
+SENTRY_RELEASE_FE="${TIMESTAMP}"
+
 # Step 4: Build Docker image
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building Docker image..."
@@ -99,6 +122,12 @@ if [ "$SKIP_BUILD" = false ]; then
         --build-arg NEXT_PUBLIC_TABBY_PUBLIC_KEY="${TABBY_PUBLIC_KEY_FE}" \
         --build-arg NEXT_PUBLIC_TABBY_MERCHANT_CODE="${TABBY_MERCHANT_CODE_FE}" \
         --build-arg NEXT_PUBLIC_TAMARA_PUBLIC_KEY="${TAMARA_PUBLIC_KEY_FE}" \
+        --build-arg NEXT_PUBLIC_SENTRY_DSN="${SENTRY_DSN_FE}" \
+        --build-arg NEXT_PUBLIC_APP_ENV="${SENTRY_APP_ENV_FE}" \
+        --build-arg NEXT_PUBLIC_SENTRY_RELEASE="${SENTRY_RELEASE_FE}" \
+        --build-arg SENTRY_ORG="${SENTRY_ORG_FE}" \
+        --build-arg SENTRY_PROJECT="${SENTRY_PROJECT_FE}" \
+        --build-arg SENTRY_AUTH_TOKEN="${SENTRY_AUTH_TOKEN_FE}" \
         -t ${IMAGE_TAG} \
         -t ${IMAGE_LATEST} \
         .

@@ -235,9 +235,13 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                   <Row
                     label={t("paymentDetail.course")}
                     value={
-                      (locale === "ar" && data.payment.courseTitleAr) ||
-                      data.payment.courseTitle ||
-                      "—"
+                      data.lineItems.length > 1
+                        ? t("paymentDetail.multiCourse", {
+                            count: data.lineItems.length,
+                          })
+                        : (locale === "ar" && data.payment.courseTitleAr) ||
+                          data.payment.courseTitle ||
+                          "—"
                     }
                     isRTL={isRTL}
                   />
@@ -294,6 +298,66 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                     </p>
                   )}
                 </Card>
+
+                {/* Per-course line items — visible whenever this payment
+                    covers more than one course OR at least one line has
+                    been refunded. Helps finance trace which course a
+                    partial refund hit without opening the refund row. */}
+                {(data.lineItems.length > 1 ||
+                  data.lineItems.some((l) => l.alreadyRefundedByRefundId)) && (
+                  <Card
+                    title={t("paymentDetail.lineItems") || "Courses in payment"}
+                    icon={<FileText className="w-4 h-4" />}
+                    isRTL={isRTL}
+                  >
+                    <ul className="space-y-2">
+                      {data.lineItems.map((li) => {
+                        const title =
+                          (locale === "ar" && li.courseTitleAr) ||
+                          li.courseTitle ||
+                          "—";
+                        const refunded = !!li.alreadyRefundedByRefundId;
+                        return (
+                          <li
+                            key={li.paymentItemId ?? li.courseId}
+                            className={`flex items-start justify-between gap-2 p-2 rounded-md ${
+                              refunded
+                                ? "bg-[var(--color-surface-page)] opacity-70"
+                                : "bg-[var(--color-surface-page)]"
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <p
+                                className={`text-[12px] font-medium ${
+                                  refunded
+                                    ? "line-through text-[var(--color-text-secondary)]"
+                                    : "text-[var(--color-text-primary)]"
+                                }`}
+                              >
+                                {title}
+                              </p>
+                              <p className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] mt-0.5">
+                                {refunded
+                                  ? t("paymentDetail.lineRefunded") ||
+                                    "Refunded"
+                                  : li.enrollmentStatus || ""}
+                              </p>
+                            </div>
+                            <Money
+                              amount={Number(li.lineTotal)}
+                              className={`text-[12px] font-semibold ${
+                                refunded
+                                  ? "text-[var(--color-text-secondary)]"
+                                  : "text-[var(--color-text-primary)]"
+                              }`}
+                              iconSize={11}
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </Card>
+                )}
 
                 {/* Refunds */}
                 {data.refunds.length > 0 && (

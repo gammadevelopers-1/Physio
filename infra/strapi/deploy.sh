@@ -81,7 +81,8 @@ CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 # Strapi DB connection uses direct IP (not Cloud SQL proxy)
 # These values match the current production configuration.
 # To change DB credentials, update them here or use Secret Manager.
-STRAPI_DB_HOST="${STRAPI_DB_HOST:-104.154.109.61}"
+# IP is the public IP of the me-central2 Cloud SQL instance (physioguidance-db-me).
+STRAPI_DB_HOST="${STRAPI_DB_HOST:-34.166.25.208}"
 STRAPI_DB_PORT="${STRAPI_DB_PORT:-5432}"
 STRAPI_DB_NAME="${STRAPI_DB_NAME:-strapi}"
 STRAPI_DB_USER="${STRAPI_DB_USER:-apiuser}"
@@ -126,6 +127,8 @@ gcloud run deploy ${STRAPI_SERVICE_NAME} \
     --cpu=${STRAPI_CPU} \
     --min-instances=${STRAPI_MIN_INSTANCES} \
     --max-instances=${STRAPI_MAX_INSTANCES} \
+    --vpc-connector=physio-vpc-connector-me \
+    --vpc-egress=all-traffic \
     --set-env-vars="${ENV_VARS}" \
     --set-secrets="${SECRETS}" \
     --quiet

@@ -35,6 +35,7 @@ import { ModuleRef } from '@nestjs/core';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 import { PasswordSetupService } from './password-setup.service';
+import { XapiService } from '../xapi/xapi.service';
 import { encryptPII, decryptPII, decryptUserPII } from '../../common/crypto';
 import { validatePasswordPolicy } from '../../common/password-policy';
 import { normalizeSaudiPhone } from '../../common/validators/saudi-phone.validator';
@@ -75,6 +76,7 @@ export class AuthService {
     private auditLogService: AuditLogService,
     private adminSettings: AdminSettingsService,
     private passwordSetupService: PasswordSetupService,
+    private xapiService: XapiService,
   ) {}
 
   /**
@@ -333,6 +335,10 @@ export class AuthService {
       { activeRole: user.activeRole },
       ipAddress,
     );
+
+    // NELC xAPI — fire & forget. emitLogin swallows its own errors so a
+    // missing national_id or LRS hiccup never blocks the auth response.
+    void this.xapiService.emitLogin(user.id);
 
     return {
       user: {

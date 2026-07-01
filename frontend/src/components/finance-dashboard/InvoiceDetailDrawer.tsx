@@ -44,6 +44,7 @@ const STATUS_PILL: Record<string, { bg: string; text: string }> = {
   issued: { bg: FINANCE_COLORS.info.bg, text: FINANCE_COLORS.info.textDark },
   overdue: { bg: FINANCE_COLORS.warning.bg, text: FINANCE_COLORS.warning.textDark },
   refunded: { bg: FINANCE_COLORS.violet.bg, text: FINANCE_COLORS.violet.textDark },
+  partially_refunded: { bg: FINANCE_COLORS.violet.bgSoft, text: FINANCE_COLORS.violet.textDark },
   cancelled: { bg: FINANCE_COLORS.slate.bg, text: FINANCE_COLORS.slate.textDark },
   draft: { bg: FINANCE_COLORS.slate.bg, text: FINANCE_COLORS.slate.textDark },
 };

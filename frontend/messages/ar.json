@@ -1291,7 +1291,7 @@
       "subtitle": "جميع المعاملات آمنة ومشفرة",
       "creditCard": "بطاقة إئتمان",
       "moyasar": "ميسر",
-      "tabby": "Tabby",
+      "tabby": "ادفع لاحقًا مع تابي",
       "tamara": "تمارا",
       "bankTransfer": "تحويل بنكي",
       "selectGateway": "اختر طريقة الدفع",
@@ -2429,7 +2429,10 @@
         "refundHistory": "سجل الاستردادات",
         "noRefunds": "لا توجد استردادات لهذه الدفعة.",
         "refundIneligible": "هذه الدفعة غير مؤهلة للاسترداد حاليًا.",
-        "viewCourse": "عرض الدورة"
+        "viewCourse": "عرض الدورة",
+        "multiCourseSummary": "{count} دورات",
+        "lineItemsTitle": "الدورات في هذه الدفعة",
+        "lineRefunded": "تم استرداده"
       },
       "policy": {
         "title": "سياسة الاسترداد باختصار",
@@ -2453,13 +2456,19 @@
       },
       "refundModal": {
         "title": "طلب استرداد",
-        "subtitleForm": "أخبرنا بالسبب — سنقوم بالمراجعة واسترداد المبلغ بالكامل إلى طريقة الدفع الأصلية.",
+        "subtitleForm": "أخبرنا بالسبب — سنقوم بالمراجعة واسترداد الدورات المختارة إلى طريقة الدفع الأصلية.",
         "subtitleConfirm": "يرجى التأكيد — بعد الإرسال، سيقوم فريق المالية بمراجعة طلبك.",
         "paymentLabel": "الدفعة",
         "courseLabel": "الدورة",
         "originalAmount": "المبلغ الأصلي",
         "youReceive": "سوف تستلم",
         "fullRefundNote": "استرداد كامل — نتحمّل نحن رسوم معالجة البوابة.",
+        "partialRefundNote": "استرداد جزئي — سيتم استرداد الدورات التي اخترتها فقط، وتبقى البقية نشطة.",
+        "selectCoursesLabel": "ما الدورات التي تريد استردادها؟",
+        "selectCoursesHint": "أزل التحديد عن أي دورة تريد الاحتفاظ بها.",
+        "selectAtLeastOneCourse": "اختر دورة واحدة على الأقل لاستردادها.",
+        "selectedCoursesTitle": "الدورات الجاري استردادها",
+        "partialCartNotice": "ستبقى الدورات الأخرى في هذه الدفعة نشطة كما هي.",
         "reasonLabel": "ما سبب طلب الاسترداد؟",
         "reasonSelect": "يرجى اختيار سبب",
         "reasons": {
@@ -5904,6 +5913,7 @@
       "points": "نظام النقاط",
       "security": "الأمان",
       "compliance": "الامتثال لـ NELC",
+      "nelcIntegration": "تكامل NELC",
       "reports": "التقارير",
       "logs": "سجلات المراجعة",
       "templates": "القوالب",
@@ -6621,6 +6631,167 @@
         "allClearBody": "نقاط الأمان {score}٪. لا شيء يستدعي إجراءً خلال آخر 24 ساعة."
       }
     },
+    "nelcIntegration": {
+      "title": "تكامل NELC",
+      "subtitle": "إرسال مباشر لعبارات xAPI إلى مخزن سجلات التعلّم (LRS) التابع لـ NELC.",
+      "mode": {
+        "title": "بيئة LRS",
+        "modeLabel": {
+          "staging": "تجريبي",
+          "production": "إنتاج"
+        },
+        "source": {
+          "db": "تعيين من المدير",
+          "env": "افتراضي من البيئة",
+          "default": "افتراضي آمن"
+        },
+        "descriptionStaging": "تُرسل جميع عبارات xAPI إلى بيئة NELC التجريبية. لا تُحتسب السجلات هنا ضمن تقارير الامتثال الرسمية.",
+        "descriptionProd": "تُرسل جميع عبارات xAPI إلى بيئة NELC الإنتاجية. السجلات هنا تُعدّ دليل امتثال رسمياً ولا يمكن حذفها.",
+        "switchToProd": "التبديل إلى الإنتاج",
+        "switchToStaging": "التبديل إلى التجريبي",
+        "passwordMissingProd": "كلمة مرور الإنتاج غير مهيّأة في Secret Manager",
+        "passwordMissingStaging": "كلمة مرور البيئة التجريبية غير مهيّأة في Secret Manager",
+        "confirmProdTitle": "التبديل إلى بيئة الإنتاج؟",
+        "confirmProdBody": "ستُرسل جميع عبارات المتعلّمين القادمة إلى بيئة NELC الإنتاجية وتصبح سجلات امتثال دائمة. لا تقم بذلك إلا حين تكون المنصة جاهزة لاستقبال البيانات الحيّة.",
+        "confirmProdButton": "نعم، انتقل إلى الإنتاج",
+        "confirmStagingTitle": "العودة إلى البيئة التجريبية؟",
+        "confirmStagingBody": "ستُرسل جميع العبارات القادمة إلى البيئة التجريبية بدلاً من الإنتاج. استخدم هذا للاختبار أو أثناء التراجع عن حادث.",
+        "confirmStagingButton": "التبديل إلى التجريبي",
+        "cancel": "إلغاء",
+        "switched": "تم التبديل إلى بيئة {mode}",
+        "switchFailed": "فشل تبديل البيئة"
+      },
+      "refresh": "تحديث",
+      "adminActions": "إجراءات الإدارة",
+      "testConnection": "اختبار الاتصال",
+      "testSuccess": "نجح الاتصال",
+      "testFailure": "فشل الاتصال",
+      "triggerJoined": "إرسال إشعار 'joined'",
+      "triggerJoinedShort": "إشعار الانضمام — مرة واحدة عند ربط التكامل.",
+      "triggerJoinedHint": "يُرسل عبارة 'joined' لإعلام NELC بربط المنصة. يُرسل مرة واحدة عند الانتهاء من ربط التكامل.",
+      "triggerJoinedSuccess": "تم إرسال إشعار 'joined' بنجاح",
+      "triggerLeft": "إرسال إشعار 'left'",
+      "triggerLeftShort": "إشعار الانهاء — فقط عند إيقاف التكامل.",
+      "triggerLeftHint": "يُرسل عبارة 'left' لإعلام NELC بإنهاء التكامل. يُستخدم فقط عند إيقاف التكامل.",
+      "triggerLeftSuccess": "تم إرسال إشعار 'left' بنجاح",
+      "triggerFailed": "فشل إرسال عبارة الإشعار",
+      "confirmLeft": "هل تريد إرسال إشعار 'left' لإنهاء التكامل مع NELC؟ هذا يعني إنهاء استخدام المنصة. استخدم 'joined' للربط العادي.",
+      "retry": "إعادة المحاولة",
+      "retryQueued": "تم وضع إعادة المحاولة في قائمة الانتظار — جاري التحديث",
+      "retryNotEnqueued": "تم إرسال العبارة مسبقاً أو قائمة الانتظار غير متاحة",
+      "retryFailed": "فشل وضع إعادة المحاولة في قائمة الانتظار",
+      "viewJson": "عرض JSON",
+      "loading": "جاري التحميل…",
+      "emptyLog": "لا توجد عبارات بعد",
+      "emptyLogHint": "ستظهر هنا عبارات xAPI المُرسَلة لحظة قيام المتعلّم بأي إجراء.",
+      "emptyFiltered": "لا توجد عبارات تطابق هذه الفلاتر",
+      "emptyFilteredHint": "جرّب تعديل الفلاتر أو مسحها لرؤية المزيد من النتائج.",
+      "clearFilters": "مسح الفلاتر",
+      "filterStatus": "الحالة",
+      "filterVerb": "الفعل",
+      "showDetails": "إظهار التفاصيل",
+      "hideDetails": "إخفاء التفاصيل",
+      "copy": "نسخ",
+      "copied": "تم النسخ إلى الحافظة",
+      "copyFailed": "فشل النسخ",
+      "close": "إغلاق",
+      "logTitle": "سجل الإرسال",
+      "logCount": "{count} إجمالاً",
+      "configTitle": "الإعدادات",
+      "configUnavailable": "الإعدادات غير متاحة",
+      "configHint": "الإعدادات هنا للقراءة فقط — يتم ضبطها عبر متغيرات البيئة في Cloud Run / Secret Manager.",
+      "enabled": "مفعّل",
+      "disabled": "معطّل",
+      "pagination": "صفحة {page} من {totalPages}",
+      "prev": "السابق",
+      "next": "التالي",
+      "configGroups": {
+        "connection": "الاتصال",
+        "auth": "المصادقة",
+        "platform": "هوية المنصة"
+      },
+      "testResult": {
+        "copyDebug": "نسخ معلومات التشخيص"
+      },
+      "kpi": {
+        "last24hTotal": "آخر 24 ساعة (الإجمالي)",
+        "statementsTried": "العبارات المُرسَلة",
+        "last24hSent": "آخر 24 ساعة (تم إرسالها)",
+        "lastSync": "آخر مزامنة",
+        "never": "لا توجد مزامنة ناجحة بعد",
+        "pending": "قيد الانتظار",
+        "awaitingRetry": "بانتظار الإرسال",
+        "failed": "فشل",
+        "needsAttention": "يتطلب الانتباه"
+      },
+      "config": {
+        "endpoint": "عنوان LRS",
+        "xapiVersion": "إصدار xAPI",
+        "username": "اسم المستخدم",
+        "password": "كلمة المرور",
+        "platformIdentifier": "معرّف المنصة",
+        "lmsUrl": "رابط نظام إدارة التعلّم",
+        "platformNameEn": "اسم المنصة (إنجليزي)",
+        "platformNameAr": "اسم المنصة (عربي)",
+        "maxAttempts": "أقصى عدد محاولات",
+        "timeoutMs": "المهلة"
+      },
+      "filters": {
+        "allStatuses": "كل الحالات",
+        "allVerbs": "كل الأفعال"
+      },
+      "status": {
+        "sent": "تم الإرسال",
+        "failed": "فشل",
+        "pending": "قيد الانتظار"
+      },
+      "table": {
+        "time": "الوقت",
+        "verb": "الفعل",
+        "activity": "النشاط",
+        "status": "الحالة",
+        "attempts": "المحاولات",
+        "actions": "الإجراءات"
+      },
+      "verbLoggedIn": "تسجيل دخول",
+      "verbRegistered": "تسجيل",
+      "verbInitialized": "بدء",
+      "verbWatched": "مشاهدة",
+      "verbCompleted": "اكتمل",
+      "verbAttempted": "محاولة",
+      "verbRated": "تقييم",
+      "verbEarned": "كسب",
+      "verbProgressed": "تقدّم",
+      "verbAttended": "حضور",
+      "verbUnknown": "غير معروف",
+      "drawerTitle": "تفاصيل العبارة",
+      "drawer": {
+        "payload": "حمولة xAPI",
+        "transmissions": "محاولات الإرسال ({count})",
+        "attempt": "المحاولة #{n}",
+        "noTransmissions": "لا توجد محاولات إرسال بعد.",
+        "notFound": "العبارة غير موجودة.",
+        "tabs": {
+          "structured": "منظَّم",
+          "raw": "JSON خام"
+        },
+        "structured": {
+          "actor": "الفاعل",
+          "verb": "الفعل",
+          "object": "الهدف",
+          "context": "السياق",
+          "instructor": "المُحاضِر",
+          "timestamp": "الطابع الزمني",
+          "nationalId": "الهوية الوطنية",
+          "email": "البريد الإلكتروني",
+          "name": "الاسم",
+          "activityId": "معرّف النشاط",
+          "activityType": "نوع النشاط",
+          "language": "اللغة",
+          "platform": "المنصة"
+        }
+      }
+    },
     "compliancePage": {
       "title": "امتثال NELC",
       "subtitle": "بطاقات أداء امتثال مباشرة لكل دورة، مستمدة من بيانات التسجيل والجلسات والمواد والتقييم.",
@@ -6990,6 +7161,7 @@
         "payments": "المدفوعات",
         "integrations": "التكاملات",
         "backups": "النسخ الاحتياطية",
+        "error-monitoring": "مراقبة الأخطاء",
         "service-status": "حالة الخدمات",
         "maintenance": "الصيانة"
       },
@@ -7470,6 +7642,45 @@
         "rollingBack": "جارٍ الإرجاع…",
         "rolledBackToast": "تخدم حركة المرور المباشرة الآن الإصدار {revision}",
         "rollbackFailedToast": "فشل الإرجاع. يرجى المحاولة مجددًا أو مراجعة سجل التدقيق."
+      },
+      "errorMonitoring": {
+        "title": "مراقبة الأخطاء",
+        "subtitle": "رؤية لحظية للأخطاء التي يلتقطها Sentry من جانب المتصفّح. يتم تجميع الأخطاء وإزالة التكرار وتوجيهها إلى المشرفين تلقائيًا.",
+        "loadFailed": "تعذر تحميل بيانات مراقبة الأخطاء",
+        "refresh": "تحديث",
+        "openSentry": "فتح Sentry",
+        "view": "عرض",
+        "statusHeader": "الحالة",
+        "lastError": "آخر خطأ",
+        "trendTitle": "الاتجاه ({period})",
+        "trendEmpty": "لا توجد أحداث في هذه الفترة",
+        "topIssuesTitle": "أبرز المشكلات",
+        "topIssuesSubtitle": "{period} · مرتبة حسب التكرار",
+        "noIssues": "لا توجد مشكلات نشطة — لا شيء للمعاينة الآن.",
+        "eventsLabel": "حدث",
+        "usersLabel": "مستخدم",
+        "footerNote": "متّصل بمشروع Sentry: {org}/{project}. تتحدّث البيانات كل 5 دقائق (ذاكرة مؤقتة) أو عند الطلب.",
+        "periods": {
+          "24h": "آخر 24 ساعة",
+          "7d": "آخر 7 أيام",
+          "30d": "آخر 30 يوماً"
+        },
+        "counts": {
+          "last24h": "آخر 24 ساعة",
+          "last7d": "آخر 7 أيام",
+          "last30d": "آخر 30 يوماً"
+        },
+        "status": {
+          "ok": "كل شيء سليم",
+          "no_recent": "مستقر",
+          "errors_present": "توجد أخطاء",
+          "not_configured": "غير مُهيَّأ",
+          "unknown": "الحالة غير معروفة"
+        },
+        "notConfigured": {
+          "title": "واجهة Sentry غير مُهيَّأة على هذا الخادم",
+          "body": "متغير SENTRY_API_TOKEN غير محدد، لذا لا يمكننا قراءة الإحصاءات المجمّعة. لا يزال التقاط الأخطاء يعمل من المتصفّح ما دام DSN معرّفاً. أضف الرمز إلى متغيرات البيئة لتفعيل هذه اللوحة."
+        }
       },
       "serviceStatusTab": {
         "intro": {
@@ -8637,6 +8848,8 @@
         "overdue": "متأخرة",
         "draft": "مسودة",
         "refunded": "مستردة",
+        "partiallyRefunded": "مستردة جزئياً",
+        "partially_refunded": "مستردة جزئياً",
         "cancelled": "ملغاة"
       },
       "stats": {
@@ -8863,13 +9076,17 @@
           "loading": "جارٍ تحميل المعاينة...",
           "error": "تعذّر تحميل المعاينة",
           "partialTitle": "مبلغ الاسترداد",
-          "partialHelpFull": "بوابات BNPL تشترط استرداداً كاملاً. الاسترداد الجزئي غير مدعوم لهذه البوابة.",
-          "partialHelpPartial": "يمكنك استرداد مبلغ جزئي (بين 1 ومبلغ الدفعة الأصلي).",
+          "partialHelpFull": "هذه البوابة تتطلب استرداداً كاملاً.",
+          "partialHelpPartial": "يمكنك استرداد مبلغ جزئي (بين 1 والحد الأقصى القابل للاسترداد).",
           "partialBadge": "استرداد جزئي",
           "deductionNote": "تُسوّى من قبل البوابة عند التسوية. يحصل المتعلّم على كامل مبلغ الاسترداد.",
           "learnerReceives": "ما يحصل عليه المتعلّم",
-          "consequenceCertRevoked": "ستُلغى أهلية الشهادة / CME-CPD لهذه الدورة.",
-          "consequenceWebinarCancelled": "ستُلغى تسجيلات الجلسات القادمة لهذه الدورة."
+          "consequenceCertRevoked": "ستُلغى أهلية الشهادة / CME-CPD للدورات المستردّة.",
+          "consequenceWebinarCancelled": "ستُلغى تسجيلات الجلسات القادمة للدورات المستردّة.",
+          "lineItemsTitle": "الدورات المُختارة للاسترداد",
+          "lineItemsHint": "حدّد الدورات التي تريد استردادها فقط. يحتفظ المتعلّم بالباقي.",
+          "lineAlreadyRefunded": "تم استرداده مسبقاً",
+          "partialCartBadge": "استرداد حسب الدورة"
         }
       },
       "drawer": {
@@ -10495,6 +10712,9 @@
       "failureReason": "سبب الفشل",
       "invoice": "الفاتورة",
       "noInvoice": "لم يتم إنشاء فاتورة بعد.",
+      "lineItems": "الدورات في هذه الدفعة",
+      "lineRefunded": "تم استرداده",
+      "multiCourse": "{count} دورات",
       "refundsHistory": "الاستردادات ({count})",
       "viewRefunds": "عرض جميع الاستردادات",
       "receipt": "إيصال التحويل البنكي",

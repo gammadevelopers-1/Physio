@@ -10,7 +10,8 @@ import {
  *
  * Format rules:
  *   - exactly 10 digits
- *   - first digit must be 1 (citizen) or 2 (resident)
+ *   - first digit must be 1 (citizen), 2 (resident), or 4 (extended
+ *     identifier category accepted by NELC's validation checklist)
  *
  * Checksum: Saudi IDs use a Luhn-style algorithm. The 10th digit is a
  * check digit derived from the first 9. Valid IDs satisfy:
@@ -24,7 +25,9 @@ import {
 export function isValidSaudiNationalId(input: unknown): boolean {
   if (typeof input !== 'string') return false;
   const id = input.trim();
-  if (!/^[12]\d{9}$/.test(id)) return false;
+  // Prefix 4 added per NELC's Auto Validation Checklist (Section 4 —
+  // Learner Identity): "10 digits, starts with 1, 2, or 4."
+  if (!/^[124]\d{9}$/.test(id)) return false;
 
   let sum = 0;
   for (let i = 0; i < 10; i++) {

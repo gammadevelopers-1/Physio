@@ -412,11 +412,33 @@ const RefundDetailDrawer = ({
                   icon={<BookOpen className="w-4 h-4 text-[var(--color-text-secondary)]" />}
                   label={t("refundsPage.drawer.overview.course")}
                   value={
-                    <span className="text-sm text-[var(--color-text-primary)]">
-                      {locale === "ar"
-                        ? data.courseTitleAr || data.courseTitle || "—"
-                        : data.courseTitle || "—"}
-                    </span>
+                    data.refundedItems && data.refundedItems.length > 0 ? (
+                      <div className="text-right">
+                        {data.refundedItems.map((ri) => {
+                          const title =
+                            (locale === "ar" && ri.courseTitleAr) ||
+                            ri.courseTitle ||
+                            "—";
+                          return (
+                            <p
+                              key={ri.paymentItemId}
+                              className="text-sm text-[var(--color-text-primary)]"
+                            >
+                              {title}
+                              <span className="text-[11px] text-[var(--color-text-secondary)] ms-1">
+                                · <Money amount={Number(ri.lineTotal)} iconSize={10} />
+                              </span>
+                            </p>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-[var(--color-text-primary)]">
+                        {locale === "ar"
+                          ? data.courseTitleAr || data.courseTitle || "—"
+                          : data.courseTitle || "—"}
+                      </span>
+                    )
                   }
                 />
                 <Row

@@ -97,16 +97,33 @@ export class RefundsController {
   async getRefundPreview(
     @Param('paymentId') paymentId: string,
     @Query('amount') amount?: string,
+    @Query('paymentItemIds') paymentItemIds?: string,
   ) {
     const requestedAmount =
       amount !== undefined && amount !== '' ? Number(amount) : undefined;
+    // CSV of UUIDs — keep the GET cacheable. The service validates ids.
+    const itemIds =
+      paymentItemIds && paymentItemIds.trim()
+        ? paymentItemIds
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined;
     if (
       requestedAmount !== undefined &&
       (Number.isNaN(requestedAmount) || requestedAmount <= 0)
     ) {
-      return this.refundService.getRefundPreview(paymentId);
+      return this.refundService.getRefundPreview(
+        paymentId,
+        undefined,
+        itemIds,
+      );
     }
-    return this.refundService.getRefundPreview(paymentId, requestedAmount);
+    return this.refundService.getRefundPreview(
+      paymentId,
+      requestedAmount,
+      itemIds,
+    );
   }
 
   @Get('my-refunds')

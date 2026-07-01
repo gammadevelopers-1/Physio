@@ -60,8 +60,14 @@ export interface CreateChargeParams {
   educationDetails?: EducationDetails;
   redirectUrl: string;
   /** Where to send the buyer if they click "Back"/cancel on the gateway's
-   *  hosted page — should be the checkout page, NOT the post-payment callback. */
+   *  hosted page. For Tabby per their QA this should land on a page that
+   *  shows the buyer the prescribed cancellation copy. */
   cancelUrl?: string;
+  /** Where to send the buyer when the gateway itself rejects the payment
+   *  (e.g. Tabby returns FAILED). Distinct from cancelUrl so the
+   *  landing page can show "we couldn't approve" vs "you cancelled"
+   *  copy. Falls back to cancelUrl when omitted (backwards-compat). */
+  failureUrl?: string;
   webhookUrl: string;
   metadata: {
     paymentId: string;
@@ -84,6 +90,23 @@ export interface ChargeResult {
   rawResponse?: any;
 }
 
+/** Per-line breakdown that Tabby's optional `items[]` accepts. Surfaces
+ *  in the merchant portal so ops can trace WHICH cart lines a partial
+ *  refund covered without joining tables. Tamara's simplified-refund
+ *  endpoint ignores it; Moyasar/Bank Transfer don't accept it either. */
+export interface RefundLineItem {
+  /** Course id — passed as reference_id to Tabby. */
+  referenceId: string;
+  /** Short display name (course title). */
+  title: string;
+  /** Line refund amount in major units. */
+  unitPrice: number;
+  /** Always 1 in our model (a course is owned or not). */
+  quantity: number;
+  /** Same category we send on createCharge. */
+  category?: string;
+}
+
 export interface RefundParams {
   gatewayChargeId: string;
   amount: number;
@@ -92,6 +115,11 @@ export interface RefundParams {
   // idempotency / reference key (e.g. Tabby's `reference_id`) so a retried
   // gateway call after a timeout / network blip can't double-refund.
   refundId?: string;
+  /** Optional per-line breakdown. Only consumed by Tabby (sent as the
+   *  optional `items[]` array on POST /payments/{id}/refunds). Other
+   *  gateways ignore it — the total `amount` above is the source of truth
+   *  for what the buyer actually receives. */
+  items?: RefundLineItem[];
 }
 
 export interface RefundResult {

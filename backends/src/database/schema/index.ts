@@ -122,9 +122,13 @@ export * from './sidebar-views';
 // Extended payment schemas (invoices/refunds/discounts)
 export * from './invoices';
 export * from './refunds';
+export * from './refund-items';
 export * from './discount-codes';
 export * from './coupon-campaigns';
 export * from './reconciliation';
+
+// NELC xAPI transmission log
+export * from './xapi-statements';
 
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';

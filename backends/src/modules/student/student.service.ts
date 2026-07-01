@@ -58,6 +58,8 @@ import { RateTicketDto } from './dto/rate-ticket.dto';
 import { CertificatesService } from '../certificates/certificates.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EmailService } from '../email/email.service';
+import { XapiService } from '../xapi/xapi.service';
+import { EnrollmentsService } from '../enrollments/enrollments.service';
 import { createHash } from 'crypto';
 
 /** Deterministic seeded shuffle using LCG PRNG (Fisher-Yates) */
@@ -100,6 +102,8 @@ export class StudentService {
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
     private readonly thresholdEvaluationService: ThresholdEvaluationService,
+    private readonly xapiService: XapiService,
+    private readonly enrollmentsService: EnrollmentsService,
   ) {}
 
   // ─── Dashboard Stats ────────────────────────────────────
@@ -1329,6 +1333,11 @@ export class StudentService {
       );
       const totalSec = dto.totalSeconds || existing?.totalSeconds || 0;
       const isComplete = totalSec > 0 && furthestWatched / totalSec >= 0.9;
+      // NELC xAPI — capture the watched-complete TRANSITION (null → set)
+      // BEFORE the update, so we only emit once per material.
+      const watchedJustCompleted =
+        isComplete &&
+        ((existing && !existing.completedAt) || !existing);
 
       if (existing) {
         await db
@@ -1342,6 +1351,23 @@ export class StudentService {
           })
           .where(eq(materialProgress.id, existing.id));
       } else {
+        // NELC xAPI — first material_progress row for this (student,
+        // course) means this is their first content access. Check
+        // FIRST so the insert below doesn't make our own check return
+        // true. emitCourseInitialized is fire-and-forget.
+        const [{ count: priorCount }] = await db
+          .select({ count: sql<number>`COUNT(*)::int` })
+          .from(materialProgress)
+          .where(
+            and(
+              eq(materialProgress.studentId, studentId),
+              eq(materialProgress.courseId, courseId),
+            ),
+          );
+        if (priorCount === 0) {
+          void this.xapiService.emitCourseInitialized(studentId, courseId);
+        }
+
         await db.insert(materialProgress).values({
           studentId,
           materialId: dto.materialId,
@@ -1352,6 +1378,18 @@ export class StudentService {
           furthestWatchedSecond: furthestWatched,
           completedAt: isComplete ? new Date() : null,
         });
+      }
+
+      // NELC xAPI — emit watched ONCE when the video transitions to
+      // complete. We pass totalSec (the player-reported total) since
+      // courseMaterials doesn't store duration directly.
+      if (watchedJustCompleted) {
+        void this.xapiService.emitVideoWatched(
+          studentId,
+          dto.materialId,
+          totalSec,
+          true,
+        );
       }
     }
 
@@ -1423,19 +1461,39 @@ export class StudentService {
     // Persist the per-module completion record (idempotent via UNIQUE).
     // Replaces the previous in-place "progress +=" increment that drifted
     // on repeat clicks and was delivery-type-conditional.
-    await db
+    const insertedCompletion = await db
       .insert(moduleCompletions)
       .values({
         studentId,
         courseId,
         moduleId: dto.moduleId,
       })
-      .onConflictDoNothing();
+      .onConflictDoNothing()
+      .returning({ id: moduleCompletions.id });
+
+    // NELC xAPI — only emit when a NEW completion row was actually
+    // inserted (onConflictDoNothing returns [] on repeats), so the
+    // student doesn't get a duplicate completed statement per click.
+    if (insertedCompletion.length > 0) {
+      void this.xapiService.emitLessonCompleted(studentId, courseId, dto.moduleId);
+    }
 
     // Recompute the unified progress aggregate (modules + attendance +
     // assessments) — applies the same formula to every delivery type, so
     // zoom courses no longer stay stuck at 0% when modules get done.
-    await recomputeEnrollmentProgress(studentId, courseId);
+    const progressResult = await recomputeEnrollmentProgress(studentId, courseId);
+
+    // NELC xAPI — monotonic progressed statement (checklist 1.4).
+    // Gate on progressIncreased (NOT current>prior) so concurrent
+    // recomputes don't both emit at the same millisecond. See
+    // RecomputeResult docs in progress.helper.ts.
+    if (progressResult.progressIncreased) {
+      void this.xapiService.emitCourseProgressed(
+        studentId,
+        courseId,
+        progressResult.current,
+      );
+    }
 
     const [updated] = await db
       .select()
@@ -1578,6 +1636,18 @@ export class StudentService {
         .checkAndNotify(courseId)
         .catch((err) => this.logger.warn('TA threshold evaluation failed after self-enrollment', err));
 
+      // NELC xAPI — re-activation counts as a fresh enrolment for NELC.
+      void this.xapiService.emitCourseEnrollment(studentId, courseId, reactivated.id);
+
+      // Webinar auto-register — student should land in Zoom for every
+      // upcoming webinar in this course without filling Zoom's form
+      // again. Past webinars are skipped inside the helper.
+      void this.enrollmentsService
+        .autoRegisterStudentForWebinarCourse(courseId, studentId)
+        .catch((err) =>
+          this.logger.warn(`Webinar auto-register (self-reenroll) failed: ${err.message}`),
+        );
+
       return reactivated;
     }
 
@@ -1606,6 +1676,20 @@ export class StudentService {
     this.thresholdEvaluationService
       .checkAndNotify(courseId)
       .catch((err) => this.logger.warn('TA threshold evaluation failed after self-enrollment', err));
+
+    // NELC xAPI — the 'registered' statement is the first event in NELC's
+    // validator pipeline; 'initialized' follows on first content access.
+    void this.xapiService.emitCourseEnrollment(studentId, courseId, enrollment.id);
+
+    // Webinar auto-register — covers the case where a webinar already
+    // existed on the course before the student self-enrolled. The
+    // counterpart in SessionsService.autoRegisterEnrolledStudentsForWebinar
+    // handles the reverse (webinar created after student enrolls).
+    void this.enrollmentsService
+      .autoRegisterStudentForWebinarCourse(courseId, studentId)
+      .catch((err) =>
+        this.logger.warn(`Webinar auto-register (self-enroll) failed: ${err.message}`),
+      );
 
     return enrollment;
   }
@@ -2344,6 +2428,22 @@ export class StudentService {
         .where(eq(assessmentRetakeGrants.id, activeRetakeGrant.id));
     }
 
+    // NELC xAPI — emit attempted on every submission (NELC checklist
+    // 1.6 + 5.2). Manual-grading items report passed=false here; the
+    // final grade event re-emits with the real pass/fail.
+    const xapiPassed =
+      !hasManualGrading &&
+      assessment.passingMarks > 0 &&
+      totalScore >= assessment.passingMarks;
+    void this.xapiService.emitAssessmentSubmitted(
+      studentId,
+      assessmentId,
+      totalScore,
+      assessment.passingMarks,
+      totalPossibleMarks,
+      xapiPassed,
+    );
+
     // Enrich graded answers with question details for per-question breakdown
     const enrichedAnswers = gradedAnswers.map((a) => {
       const q = questionMap.get(a.questionId);
@@ -2366,12 +2466,22 @@ export class StudentService {
 
     // Refresh the unified progress aggregate — assessment submission is
     // one of the signals (alongside module completion and attendance).
-    await recomputeEnrollmentProgress(studentId, assessment.courseId).catch(
-      (err) =>
+    const quizProgress = await recomputeEnrollmentProgress(studentId, assessment.courseId).catch(
+      (err) => {
         this.logger.warn(
           `Failed to recompute progress after submission: ${err?.message || err}`,
-        ),
+        );
+        return null;
+      },
     );
+    // NELC xAPI — gate on race-safe progressIncreased.
+    if (quizProgress && quizProgress.progressIncreased) {
+      void this.xapiService.emitCourseProgressed(
+        studentId,
+        assessment.courseId,
+        quizProgress.current,
+      );
+    }
 
     return {
       submissionId: submission.id,
@@ -2720,6 +2830,18 @@ export class StudentService {
         .where(eq(assessmentRetakeGrants.id, activeRetakeGrant.id));
     }
 
+    // NELC xAPI — emit attempted at upload time. Score is null until the
+    // instructor grades; report 0 with passed=false now, the grade event
+    // will re-emit with the real score.
+    void this.xapiService.emitAssessmentSubmitted(
+      studentId,
+      assessmentId,
+      0,
+      assessment.passingMarks,
+      assessment.totalMarks,
+      false,
+    );
+
     // Notify instructor about assignment submission (fire-and-forget)
     this.notifyInstructorOfSubmission(
       assessment.courseId,
@@ -2730,12 +2852,22 @@ export class StudentService {
     ).catch((err) => this.logger.warn(`Failed to notify instructor: ${err.message}`));
 
     // Refresh unified progress (same as other submission paths).
-    await recomputeEnrollmentProgress(studentId, assessment.courseId).catch(
-      (err) =>
+    const assnProgress = await recomputeEnrollmentProgress(studentId, assessment.courseId).catch(
+      (err) => {
         this.logger.warn(
           `Failed to recompute progress after assignment submission: ${err?.message || err}`,
-        ),
+        );
+        return null;
+      },
     );
+    // NELC xAPI — gate on race-safe progressIncreased.
+    if (assnProgress && assnProgress.progressIncreased) {
+      void this.xapiService.emitCourseProgressed(
+        studentId,
+        assessment.courseId,
+        assnProgress.current,
+      );
+    }
 
     return {
       submissionId: submission.id,

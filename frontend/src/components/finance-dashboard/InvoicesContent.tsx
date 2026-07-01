@@ -191,6 +191,7 @@ const InvoicesContent = ({ embedded = false }: InvoicesContentProps) => {
     { value: "all", label: t("invoicesPage.filters.allStatuses") },
     { value: "paid", label: t("invoicesPage.statuses.paid") },
     { value: "issued", label: t("invoicesPage.statuses.issued") },
+    { value: "partially_refunded", label: t("invoicesPage.statuses.partiallyRefunded") },
     { value: "refunded", label: t("invoicesPage.statuses.refunded") },
     { value: "cancelled", label: t("invoicesPage.statuses.cancelled") },
   ];
@@ -552,6 +553,7 @@ const STATUS_PILL: Record<string, string> = {
   issued: "bg-blue-50 text-blue-700",
   overdue: "bg-amber-50 text-amber-700",
   refunded: "bg-violet-50 text-violet-700",
+  partially_refunded: "bg-violet-50 text-violet-700",
   cancelled: "bg-slate-100 text-slate-600",
   draft: "bg-slate-100 text-slate-600",
 };

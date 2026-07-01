@@ -2,7 +2,32 @@
 // API Client - Fetch wrapper for backend calls
 // ===========================================
 
+import * as Sentry from '@sentry/nextjs';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+
+/**
+ * Report a failed API call to Sentry. We deliberately skip 4xx because those
+ * are usually user-facing validation errors, not bugs — flooding Sentry with
+ * "400: invalid email" events would burn through the free tier. 5xx and
+ * network failures are real reliability signals.
+ */
+function reportApiFailure(
+  endpoint: string,
+  method: string,
+  err: unknown,
+  status?: number,
+): void {
+  if (status && status >= 400 && status < 500) return;
+  Sentry.withScope((scope) => {
+    scope.setTag('component', 'api_client');
+    scope.setTag('http_method', method.toUpperCase());
+    scope.setTag('endpoint', endpoint);
+    if (status) scope.setTag('http_status', String(status));
+    scope.setLevel('error');
+    Sentry.captureException(err);
+  });
+}
 
 // ===========================================
 // In-Memory Token Storage (OWASP compliant)
@@ -193,6 +218,7 @@ async function fetchApi<T>(
       await new Promise((r) => setTimeout(r, retryDelayMs(_attempt)));
       return fetchApi<T>(endpoint, { ...options, _attempt: _attempt + 1 });
     }
+    reportApiFailure(endpoint, fetchOptions.method || 'GET', networkErr);
     throw networkErr;
   }
 
@@ -233,7 +259,17 @@ async function fetchApi<T>(
       } catch (readErr) {
         if (readErr instanceof ApiError) throw readErr;
       }
-      throw new ApiError(response.status, `Request failed with status ${response.status}`);
+      const fallbackErr = new ApiError(
+        response.status,
+        `Request failed with status ${response.status}`,
+      );
+      reportApiFailure(
+        endpoint,
+        fetchOptions.method || 'GET',
+        fallbackErr,
+        response.status,
+      );
+      throw fallbackErr;
     }
     return {} as T;
   }
@@ -247,6 +283,7 @@ async function fetchApi<T>(
     const err = new ApiError(response.status, message, Array.isArray(data.message) ? data.message : undefined);
     if (typeof data.code === 'string') err.code = data.code;
     if (data.meta && typeof data.meta === 'object') err.meta = data.meta;
+    reportApiFailure(endpoint, fetchOptions.method || 'GET', err, response.status);
     throw err;
   }
 
@@ -1969,6 +2006,80 @@ export const adminSettingsApi = {
         { configured: boolean; required: boolean; description: string }
       >
     >('/admin/settings/integrations/health'),
+};
+
+// ===========================================
+// Admin Error Monitoring (Sentry-backed)
+// ===========================================
+
+export type ErrorMonitoringPeriod = '24h' | '7d' | '30d';
+
+export type ErrorMonitoringStatus =
+  | 'ok'
+  | 'no_recent'
+  | 'errors_present'
+  | 'not_configured'
+  | 'unknown';
+
+export interface ErrorMonitoringOverview {
+  configured: boolean;
+  apiHost: string;
+  orgSlug: string;
+  projectSlug: string;
+  dashboardUrl: string;
+  issuesUrl: string;
+  status: ErrorMonitoringStatus;
+  lastEventAt: string | null;
+  counts: {
+    last24h: { events: number; users: number };
+    last7d: { events: number; users: number };
+    last30d: { events: number; users: number };
+  };
+}
+
+export interface SentryIssueSummary {
+  id: string;
+  shortId: string;
+  title: string;
+  culprit: string | null;
+  level: string;
+  status: string;
+  eventCount: number;
+  userCount: number;
+  firstSeen: string;
+  lastSeen: string;
+  permalink: string;
+  project: string;
+  metadata: {
+    type?: string;
+    value?: string;
+    filename?: string;
+    function?: string;
+  };
+}
+
+export interface ErrorMonitoringTrendBucket {
+  timestamp: string;
+  count: number;
+}
+
+export const errorMonitoringApi = {
+  getOverview: () =>
+    api.get<ErrorMonitoringOverview>('/admin/error-monitoring/overview'),
+  getTopIssues: (period: ErrorMonitoringPeriod = '7d', limit = 10) =>
+    api.get<SentryIssueSummary[]>(
+      `/admin/error-monitoring/top?period=${period}&limit=${limit}`,
+    ),
+  getTrend: (period: ErrorMonitoringPeriod = '7d') =>
+    api.get<ErrorMonitoringTrendBucket[]>(
+      `/admin/error-monitoring/trend?period=${period}`,
+    ),
+  getIssue: (issueId: string) =>
+    api.get<unknown>(`/admin/error-monitoring/issue/${encodeURIComponent(issueId)}`),
+  resolveIssue: (issueId: string) =>
+    api.post<unknown>(
+      `/admin/error-monitoring/issue/${encodeURIComponent(issueId)}/resolve`,
+    ),
 };
 
 // ===========================================
@@ -4444,6 +4555,153 @@ export const nelcComplianceApi = {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   },
+};
+
+// ===========================================
+// NELC xAPI Integration API (admin only)
+// ===========================================
+export type NelcXapiStatementStatus = 'pending' | 'sent' | 'failed';
+
+export type NelcLrsMode = 'staging' | 'production';
+
+export interface NelcXapiConfig {
+  enabled: boolean;
+  endpoint: string;
+  username: string;
+  passwordMasked: string;
+  /** Active mode the endpoint+password reflect. Same value as
+   *  {@link NelcXapiMode.mode} — duplicated for convenience. */
+  mode: NelcLrsMode;
+  platformIdentifier: string;
+  platformNameEn: string;
+  platformNameAr: string;
+  lmsUrl: string;
+  xapiVersion: string;
+  maxAttempts: number;
+  timeoutMs: number;
+}
+
+export interface NelcXapiMode {
+  mode: NelcLrsMode;
+  /** Where mode resolved from: db (admin toggle), env (NELC_LRS_MODE),
+   *  default ('staging' fail-safe). */
+  source: 'db' | 'env' | 'default';
+  defaultMode: NelcLrsMode;
+  endpoints: { staging: string; production: string };
+  activeEndpoint: string;
+  username: string;
+  passwordsAvailable: { staging: boolean; production: boolean };
+}
+
+export interface NelcXapiStats {
+  last24h: { total: number; sent: number; failed: number; pending: number };
+  lastSuccessAt: string | null;
+  pendingTotal: number;
+  failedTotal: number;
+}
+
+export interface NelcXapiLogRow {
+  id: string;
+  verb: string;
+  objectActivityId: string;
+  objectType: string;
+  actorUserId: string | null;
+  courseId: string | null;
+  status: NelcXapiStatementStatus;
+  createdAt: string;
+  sentAt: string | null;
+  lastHttpStatus: number | null;
+  lastError: string | null;
+  attemptCount: number;
+}
+
+export interface NelcXapiLogDetail {
+  id: string;
+  payload: unknown;
+  transmissions: Array<{
+    attemptNo: number;
+    httpStatus: number | null;
+    responseBody: string | null;
+    errorText: string | null;
+    sentAt: string;
+  }>;
+}
+
+export interface NelcXapiTestConnectionResult {
+  ok: boolean;
+  httpStatus: number | null;
+  responseBody: string;
+  errorText: string | null;
+  endpoint: string;
+}
+
+export const nelcXapiApi = {
+  getConfig: () => api.get<NelcXapiConfig>('/admin/integrations/nelc/config'),
+
+  getStats: () => api.get<NelcXapiStats>('/admin/integrations/nelc/stats'),
+
+  getLog: (params?: {
+    status?: NelcXapiStatementStatus;
+    verb?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.status) sp.set('status', params.status);
+    if (params?.verb) sp.set('verb', params.verb);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.pageSize) sp.set('pageSize', String(params.pageSize));
+    const qs = sp.toString();
+    return api.get<{
+      rows: NelcXapiLogRow[];
+      total: number;
+      page: number;
+      pageSize: number;
+    }>(`/admin/integrations/nelc/log${qs ? `?${qs}` : ''}`);
+  },
+
+  getLogDetail: (id: string) =>
+    api.get<NelcXapiLogDetail | null>(`/admin/integrations/nelc/log/${id}`),
+
+  retry: (id: string) =>
+    api.post<{ enqueued: boolean }>(`/admin/integrations/nelc/retry/${id}`, {}),
+
+  testConnection: () =>
+    api.post<NelcXapiTestConnectionResult>(
+      '/admin/integrations/nelc/test-connection',
+      {},
+    ),
+
+  /** Send the NELC "joined" administrative trigger statement. One-shot,
+   *  fired after the platform is wired up — before any learner activity. */
+  triggerJoined: () =>
+    api.post<{ ok: boolean; statementId: string | null }>(
+      '/admin/integrations/nelc/trigger/joined',
+      {},
+    ),
+
+  /** Send the NELC "left" trigger — counterpart to joined, fired when
+   *  the platform is offboarding from NELC. */
+  triggerLeft: () =>
+    api.post<{ ok: boolean; statementId: string | null }>(
+      '/admin/integrations/nelc/trigger/left',
+      {},
+    ),
+
+  /** Get current active mode + both endpoint URLs + which passwords
+   *  are loaded in Secret Manager. Source field reveals whether the
+   *  value came from the DB toggle, env default, or fail-safe. */
+  getMode: () => api.get<NelcXapiMode>('/admin/integrations/nelc/mode'),
+
+  /** Switch the active LRS environment. SUPER_ADMIN only — flipping to
+   *  production routes every learner statement into NELC's permanent
+   *  compliance record. The backend refuses if the target mode's
+   *  password isn't loaded in Secret Manager. */
+  setMode: (mode: NelcLrsMode) =>
+    api.post<{ mode: NelcLrsMode; endpoint: string }>(
+      '/admin/integrations/nelc/mode',
+      { mode },
+    ),
 };
 
 // ===========================================
@@ -6979,6 +7237,20 @@ export const paymentApi = {
         escalationUrgency: string | null;
         escalationActionTaken: string | null;
       } | null;
+      lineItems: Array<{
+        paymentItemId: string | null;
+        courseId: string;
+        courseTitle: string | null;
+        courseTitleAr: string | null;
+        enrollmentId: string | null;
+        enrollmentStatus: string | null;
+        unitPrice: number;
+        lineSubtotal: number;
+        lineDiscount: number;
+        lineVat: number;
+        lineTotal: number;
+        alreadyRefundedByRefundId: string | null;
+      }>;
     }>(`/payments/${paymentId}/detail`),
 
   getAudit: (paymentId: string, limit = 50) =>
@@ -7816,8 +8088,14 @@ export const invoiceApi = {
 // ===========================================
 
 export const refundApi = {
-  request: (data: { paymentId: string; reason: string; reasonNote?: string }) =>
-    api.post<any>('/refunds', data),
+  request: (data: {
+    paymentId: string;
+    reason: string;
+    reasonNote?: string;
+    /** Optional subset of payment_items.id to refund. Absent = refund
+     *  the whole payment (backwards-compatible). */
+    paymentItemIds?: string[];
+  }) => api.post<any>('/refunds', data),
 
   // Student-only: returns refunds where requesterId === current user.
   getMyRefunds: (page = 1, limit = 10) =>
@@ -7918,6 +8196,16 @@ export const refundApi = {
       invoiceNumber: string | null;
       processorName: string | null;
       processorEmail: string | null;
+      refundedItems: Array<{
+        paymentItemId: string;
+        courseId: string;
+        courseTitle: string | null;
+        courseTitleAr: string | null;
+        lineAmount: string;
+        lineVat: string;
+        lineDiscount: string;
+        lineTotal: string;
+      }>;
     }>(`/refunds/${refundId}/detail`),
 
   getAudit: (refundId: string) =>
@@ -7949,10 +8237,26 @@ export const refundApi = {
     justification?: string;
     /** Optional partial refund amount. Backend enforces gateway support. */
     refundAmount?: number;
+    /** Optional subset of payment_items.id to refund. Absent = refund
+     *  every refundable line. */
+    paymentItemIds?: string[];
+    /** Bypass the lifecycle policy (course started / attendance / cert /
+     *  CME). The bypass + the underlying reason are recorded in the audit
+     *  log. */
+    bypassPolicy?: boolean;
   }) => api.post<any>('/refunds/admin-initiate', data),
 
-  getPreview: (paymentId: string, amount?: number) => {
-    const qs = amount !== undefined ? `?amount=${amount}` : '';
+  getPreview: (
+    paymentId: string,
+    amount?: number,
+    paymentItemIds?: string[],
+  ) => {
+    const sp = new URLSearchParams();
+    if (amount !== undefined) sp.set('amount', String(amount));
+    if (paymentItemIds && paymentItemIds.length > 0) {
+      sp.set('paymentItemIds', paymentItemIds.join(','));
+    }
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
     return api.get<{
       payment: {
         id: string;
@@ -7989,6 +8293,27 @@ export const refundApi = {
         supportsPartial: boolean;
         maxRefundAmount: number;
         minRefundAmount: number;
+      };
+      lineItems: Array<{
+        paymentItemId: string | null;
+        courseId: string;
+        courseTitle: string | null;
+        courseTitleAr: string | null;
+        enrollmentId: string | null;
+        enrollmentStatus: string | null;
+        unitPrice: number;
+        lineSubtotal: number;
+        lineDiscount: number;
+        lineVat: number;
+        lineTotal: number;
+        alreadyRefundedByRefundId: string | null;
+        selected: boolean;
+      }>;
+      selection: {
+        paymentItemIds: string[];
+        selectedTotal: number;
+        isFullPaymentRefund: boolean;
+        isPartialCartRefund: boolean;
       };
       breakdown: {
         originalAmount: number;
@@ -8167,6 +8492,22 @@ export interface StudentPaymentDetailResponse {
     completedAt: string | null;
     rejectedAt: string | null;
     rejectionNote: string | null;
+  }>;
+  /** Per-course breakdown — drives the per-line refund UI in the drawer
+   *  and the multi-select in StudentRefundRequestModal. */
+  lineItems: Array<{
+    paymentItemId: string | null;
+    courseId: string;
+    courseTitle: string | null;
+    courseTitleAr: string | null;
+    enrollmentId: string | null;
+    enrollmentStatus: string | null;
+    unitPrice: number;
+    lineSubtotal: number;
+    lineDiscount: number;
+    lineVat: number;
+    lineTotal: number;
+    alreadyRefundedByRefundId: string | null;
   }>;
   refundability: {
     canRequest: boolean;

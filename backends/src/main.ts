@@ -9,7 +9,11 @@ import { RequestContextService } from './common/request-context.service';
 import { createRequestContextMiddleware } from './common/request-context.middleware';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody:true preserves the original POST body bytes on req.rawBody so
+  // webhook receivers (Sentry, etc.) can HMAC-verify against the exact
+  // payload the sender signed — JSON.stringify can't be trusted to
+  // reproduce byte-identical output.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   const configService = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 

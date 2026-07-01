@@ -24,6 +24,7 @@ import { or } from 'drizzle-orm';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { PasswordSetupService } from '../auth/password-setup.service';
 import { EmailService } from '../email/email.service';
+import { XapiService } from '../xapi/xapi.service';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { matchParticipantToUser, getSessionInstructorId, isParticipantHost } from './zoom.helpers';
 import { recomputeProgressForCohort } from '../enrollments/progress.helper';
@@ -48,6 +49,7 @@ export class ZoomWebhookService {
     private readonly passwordSetupService: PasswordSetupService,
     private readonly emailService: EmailService,
     private readonly moduleRef: ModuleRef,
+    private readonly xapiService: XapiService,
   ) {}
 
   /**
@@ -367,17 +369,35 @@ export class ZoomWebhookService {
         ),
       )
       .limit(1);
+    let enrollmentIdForXapi: string | null = null;
+    let emitRegisteredForXapi = false;
     if (existingEnrollment) {
       if (existingEnrollment.status !== 'active') {
         await db
           .update(enrollments)
           .set({ status: 'active' })
           .where(eq(enrollments.id, existingEnrollment.id));
+        enrollmentIdForXapi = existingEnrollment.id;
+        emitRegisteredForXapi = true;
       }
     } else {
-      await db
+      const [created] = await db
         .insert(enrollments)
-        .values({ courseId: course.id, studentId: userId });
+        .values({ courseId: course.id, studentId: userId })
+        .returning({ id: enrollments.id });
+      enrollmentIdForXapi = created.id;
+      emitRegisteredForXapi = true;
+    }
+
+    // NELC xAPI — emit 'registered' for new + re-activated enrollments so
+    // the validator sees the webinar auto-enroll as the first event in the
+    // learner pipeline. Skip when the enrollment was already active.
+    if (emitRegisteredForXapi && enrollmentIdForXapi) {
+      void this.xapiService.emitCourseEnrollment(
+        userId,
+        course.id,
+        enrollmentIdForXapi,
+      );
     }
 
     // Send the set-password email only for newly created users.
@@ -978,6 +998,13 @@ export class ZoomWebhookService {
           .update(attendance)
           .set({ status: newStatus })
           .where(eq(attendance.id, row.id));
+
+        // NELC xAPI — emit webinar attended ONLY when the student
+        // actually met the 75% threshold. Absences are not reported
+        // (xAPI has no concept of "did not attend").
+        if (newStatus === 'present') {
+          void this.xapiService.emitWebinarAttended(row.studentId, session.id);
+        }
       }
 
       // ── 4. Auto-create absent rows for enrolled no-shows ─────────

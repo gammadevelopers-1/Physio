@@ -2680,4 +2680,95 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
       );
     }
   }
+
+  /**
+   * Sentry alert summary email — fires when a Sentry alert rule (e.g. new
+   * issue, frequency spike) trips, fanned out to every admin + super-admin.
+   * Intentionally minimal HTML — these go to ops people who want the title,
+   * the count, and a link.
+   */
+  async sendSentryAlert(
+    to: string,
+    recipientName: string,
+    summary: {
+      title: string;
+      subtitle: string;
+      level: string;
+      permalink: string | null;
+      triggeredRule: string | null;
+    },
+  ): Promise<void> {
+    const subjectLevel = summary.level
+      ? summary.level.toUpperCase()
+      : 'ALERT';
+    const subject = `[Sentry / ${subjectLevel}] ${summary.title.slice(0, 120)}`;
+    const safeTitle = escapeHtml(summary.title);
+    const safeSubtitle = escapeHtml(summary.subtitle);
+    const safeRule = summary.triggeredRule
+      ? escapeHtml(summary.triggeredRule)
+      : null;
+    const adminPanelUrl = `${this.frontendUrlFromEnv()}/dashboard/admin/settings?tab=system&panel=error-monitoring`;
+    const sentryLink = summary.permalink ?? adminPanelUrl;
+
+    const html = `
+      <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+        <h2 style="margin: 0 0 8px 0; color: #b91c1c; font-size: 18px;">${escapeHtml(subjectLevel)} alert</h2>
+        <p style="margin: 0 0 16px 0; color: #64748b; font-size: 13px;">Hi ${escapeHtml(recipientName)}, a frontend error tripped a Sentry alert rule on PhysioGuidance.</p>
+        <div style="border: 1px solid #fee2e2; background: #fef2f2; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 6px;">${safeTitle}</div>
+          <div style="font-size: 13px; color: #475569;">${safeSubtitle}</div>
+          ${safeRule ? `<div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Rule: ${safeRule}</div>` : ''}
+        </div>
+        <p style="margin: 0 0 16px 0;">
+          <a href="${sentryLink}" style="display: inline-block; padding: 10px 16px; background: #0f172a; color: #f8fafc; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600;">Open in Sentry</a>
+          &nbsp;
+          <a href="${adminPanelUrl}" style="display: inline-block; padding: 10px 16px; background: #f1f5f9; color: #0f172a; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600;">Admin dashboard</a>
+        </p>
+        <p style="margin: 0; color: #94a3b8; font-size: 11px;">This is an automated alert. Adjust delivery rules in Sentry → Alerts.</p>
+      </div>
+    `;
+
+    const text = [
+      `${subjectLevel} alert: ${summary.title}`,
+      summary.subtitle,
+      summary.triggeredRule ? `Rule: ${summary.triggeredRule}` : null,
+      ``,
+      `Open in Sentry: ${sentryLink}`,
+      `Admin dashboard: ${adminPanelUrl}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    try {
+      await this.send({
+        to,
+        subject,
+        html,
+        text,
+        skipPreferenceCheck: true,
+      });
+      this.logger.log(`Sentry alert email sent to ${to} — ${summary.title.slice(0, 80)}`);
+    } catch (err) {
+      this.logger.warn(
+        `Sentry alert email to ${to} failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  private frontendUrlFromEnv(): string {
+    return (
+      process.env.FRONTEND_URL ||
+      this.configService.get<string>('FRONTEND_URL') ||
+      'https://physioguidance.org'
+    );
+  }
+}
+
+function escapeHtml(input: string): string {
+  return String(input)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

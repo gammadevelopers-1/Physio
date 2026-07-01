@@ -570,7 +570,7 @@ const CourseManagerCourseDetailContent = ({
                             </button>
                           </>
                         )}
-                        {(course.status === "archived" || course.status === "completed") && (
+                        {course.status === "archived" && (
                           <button
                             onClick={handleActivate}
                             disabled={updatingStatus}

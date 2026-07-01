@@ -1291,7 +1291,7 @@
       "subtitle": "All transactions are secure and encrypted",
       "creditCard": "Credit card",
       "moyasar": "Moyasar",
-      "tabby": "Tabby",
+      "tabby": "Pay later with Tabby",
       "tamara": "Tamara",
       "bankTransfer": "Bank Transfer",
       "selectGateway": "Select payment method",
@@ -2429,7 +2429,10 @@
         "refundHistory": "Refund history",
         "noRefunds": "No refunds for this payment.",
         "refundIneligible": "This payment isn't eligible for a refund right now.",
-        "viewCourse": "View course"
+        "viewCourse": "View course",
+        "multiCourseSummary": "{count} courses",
+        "lineItemsTitle": "Courses in this payment",
+        "lineRefunded": "Refunded"
       },
       "policy": {
         "title": "Refund policy at a glance",
@@ -2453,13 +2456,19 @@
       },
       "refundModal": {
         "title": "Request refund",
-        "subtitleForm": "Tell us why — we'll review and refund the full amount to your original payment method.",
+        "subtitleForm": "Tell us why — we'll review and refund the selected courses to your original payment method.",
         "subtitleConfirm": "Please confirm — once submitted, our finance team will review your request.",
         "paymentLabel": "Payment",
         "courseLabel": "Course",
         "originalAmount": "Original amount",
         "youReceive": "You'll receive",
         "fullRefundNote": "Full refund — we cover the gateway processing fee.",
+        "partialRefundNote": "Partial refund — only the courses you selected will be refunded. The rest stay active.",
+        "selectCoursesLabel": "Which courses do you want refunded?",
+        "selectCoursesHint": "Uncheck any course you'd like to keep.",
+        "selectAtLeastOneCourse": "Select at least one course to refund.",
+        "selectedCoursesTitle": "Courses being refunded",
+        "partialCartNotice": "Other courses on this payment will keep their enrollments active.",
         "reasonLabel": "Why do you want a refund?",
         "reasonSelect": "Please select a reason",
         "reasons": {
@@ -5904,6 +5913,7 @@
       "points": "Points System",
       "security": "Security",
       "compliance": "NELC Compliance",
+      "nelcIntegration": "NELC Integration",
       "reports": "Reports",
       "logs": "Audit Logs",
       "templates": "Templates",
@@ -6621,6 +6631,167 @@
         "allClearBody": "Security score is {score}%. Nothing actionable in the last 24 hours."
       }
     },
+    "nelcIntegration": {
+      "title": "NELC Integration",
+      "subtitle": "Live xAPI transmission to NELC's Learning Record Store.",
+      "mode": {
+        "title": "LRS Environment",
+        "modeLabel": {
+          "staging": "STAGING",
+          "production": "PRODUCTION"
+        },
+        "source": {
+          "db": "admin override",
+          "env": "env default",
+          "default": "fail-safe default"
+        },
+        "descriptionStaging": "All xAPI statements are being sent to NELC's staging LRS. Records here do not appear on official compliance reports.",
+        "descriptionProd": "All xAPI statements are being sent to NELC's production LRS. Records here ARE official compliance evidence and cannot be removed.",
+        "switchToProd": "Switch to Production",
+        "switchToStaging": "Switch to Staging",
+        "passwordMissingProd": "Production password is not configured in Secret Manager",
+        "passwordMissingStaging": "Staging password is not configured in Secret Manager",
+        "confirmProdTitle": "Switch to Production LRS?",
+        "confirmProdBody": "All future learner statements will be sent to NELC's production LRS and become permanent compliance records. Only do this when the platform is ready for live traffic.",
+        "confirmProdButton": "Yes, switch to production",
+        "confirmStagingTitle": "Switch back to Staging?",
+        "confirmStagingBody": "All future learner statements will be sent to NELC's staging LRS instead of production. Use this for testing or during incident rollback.",
+        "confirmStagingButton": "Switch to staging",
+        "cancel": "Cancel",
+        "switched": "Environment switched to {mode}",
+        "switchFailed": "Failed to switch environment"
+      },
+      "refresh": "Refresh",
+      "adminActions": "Admin actions",
+      "testConnection": "Test Connection",
+      "testSuccess": "Connection successful",
+      "testFailure": "Connection failed",
+      "triggerJoined": "Send 'joined' trigger",
+      "triggerJoinedShort": "Onboarding statement — one-time when wiring up.",
+      "triggerJoinedHint": "Sends the NELC LMS-Provider 'joined' onboarding statement. Required once when the integration is wired up.",
+      "triggerJoinedSuccess": "'joined' trigger sent successfully",
+      "triggerLeft": "Send 'left' trigger",
+      "triggerLeftShort": "Offboarding — only when terminating integration.",
+      "triggerLeftHint": "Sends the NELC LMS-Provider 'left' offboarding statement. Only use when terminating the integration.",
+      "triggerLeftSuccess": "'left' trigger sent successfully",
+      "triggerFailed": "Failed to send trigger statement",
+      "confirmLeft": "Send the 'left' offboarding trigger to NELC? This signals that the platform is terminating its integration. Use 'joined' for normal onboarding.",
+      "retry": "Retry",
+      "retryQueued": "Retry enqueued — refreshing shortly",
+      "retryNotEnqueued": "Statement was already sent or queue unavailable",
+      "retryFailed": "Failed to enqueue retry",
+      "viewJson": "View JSON",
+      "loading": "Loading…",
+      "emptyLog": "No statements yet",
+      "emptyLogHint": "Once a learner takes an action, transmitted xAPI statements will appear here in real time.",
+      "emptyFiltered": "No statements match these filters",
+      "emptyFilteredHint": "Try adjusting or clearing the filters to see more results.",
+      "clearFilters": "Clear filters",
+      "filterStatus": "Status",
+      "filterVerb": "Verb",
+      "showDetails": "Show details",
+      "hideDetails": "Hide details",
+      "copy": "Copy",
+      "copied": "Copied to clipboard",
+      "copyFailed": "Failed to copy",
+      "close": "Close",
+      "logTitle": "Transmission log",
+      "logCount": "{count} total",
+      "configTitle": "Configuration",
+      "configUnavailable": "Configuration unavailable",
+      "configHint": "Configuration is read-only here — set via environment variables in Cloud Run / Secret Manager.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "pagination": "Page {page} of {totalPages}",
+      "prev": "Previous",
+      "next": "Next",
+      "configGroups": {
+        "connection": "Connection",
+        "auth": "Authentication",
+        "platform": "Platform Identity"
+      },
+      "testResult": {
+        "copyDebug": "Copy debug info"
+      },
+      "kpi": {
+        "last24hTotal": "Last 24h (total)",
+        "statementsTried": "Statements emitted",
+        "last24hSent": "Last 24h (sent)",
+        "lastSync": "Last sync",
+        "never": "No successful sync yet",
+        "pending": "Pending",
+        "awaitingRetry": "Awaiting transmission",
+        "failed": "Failed",
+        "needsAttention": "Needs attention"
+      },
+      "config": {
+        "endpoint": "LRS Endpoint",
+        "xapiVersion": "xAPI Version",
+        "username": "Username",
+        "password": "Password",
+        "platformIdentifier": "Platform Identifier",
+        "lmsUrl": "LMS URL",
+        "platformNameEn": "Platform Name (EN)",
+        "platformNameAr": "Platform Name (AR)",
+        "maxAttempts": "Max Attempts",
+        "timeoutMs": "Timeout"
+      },
+      "filters": {
+        "allStatuses": "All statuses",
+        "allVerbs": "All verbs"
+      },
+      "status": {
+        "sent": "Sent",
+        "failed": "Failed",
+        "pending": "Pending"
+      },
+      "table": {
+        "time": "Time",
+        "verb": "Verb",
+        "activity": "Activity",
+        "status": "Status",
+        "attempts": "Attempts",
+        "actions": "Actions"
+      },
+      "verbLoggedIn": "Logged in",
+      "verbRegistered": "Registered",
+      "verbInitialized": "Initialized",
+      "verbWatched": "Watched",
+      "verbCompleted": "Completed",
+      "verbAttempted": "Attempted",
+      "verbRated": "Rated",
+      "verbEarned": "Earned",
+      "verbProgressed": "Progressed",
+      "verbAttended": "Attended",
+      "verbUnknown": "Unknown",
+      "drawerTitle": "Statement detail",
+      "drawer": {
+        "payload": "xAPI Payload",
+        "transmissions": "Transmission attempts ({count})",
+        "attempt": "Attempt #{n}",
+        "noTransmissions": "No transmission attempts yet.",
+        "notFound": "Statement not found.",
+        "tabs": {
+          "structured": "Structured",
+          "raw": "Raw JSON"
+        },
+        "structured": {
+          "actor": "Actor",
+          "verb": "Verb",
+          "object": "Object",
+          "context": "Context",
+          "instructor": "Instructor",
+          "timestamp": "Timestamp",
+          "nationalId": "National ID",
+          "email": "Email",
+          "name": "Name",
+          "activityId": "Activity ID",
+          "activityType": "Activity Type",
+          "language": "Language",
+          "platform": "Platform"
+        }
+      }
+    },
     "compliancePage": {
       "title": "NELC Compliance",
       "subtitle": "Live per-course compliance scorecards driven by enrolment, sessions, materials and assessment data.",
@@ -6990,6 +7161,7 @@
         "payments": "Payments",
         "integrations": "Integrations",
         "backups": "Backups",
+        "error-monitoring": "Error monitoring",
         "service-status": "Service status",
         "maintenance": "Maintenance"
       },
@@ -7470,6 +7642,45 @@
         "rollingBack": "Rolling back…",
         "rolledBackToast": "Live traffic now serving {revision}",
         "rollbackFailedToast": "Rollback failed. Please try again or check the audit log."
+      },
+      "errorMonitoring": {
+        "title": "Error Monitoring",
+        "subtitle": "Real-time visibility into client-side errors detected by Sentry. Errors are auto-grouped, deduplicated, and routed to admins.",
+        "loadFailed": "Failed to load error monitoring data",
+        "refresh": "Refresh",
+        "openSentry": "Open Sentry",
+        "view": "View",
+        "statusHeader": "Status",
+        "lastError": "Last error",
+        "trendTitle": "Trend ({period})",
+        "trendEmpty": "No events in this window",
+        "topIssuesTitle": "Top issues",
+        "topIssuesSubtitle": "{period} · grouped by frequency",
+        "noIssues": "No unresolved issues — nothing to investigate right now.",
+        "eventsLabel": "events",
+        "usersLabel": "users",
+        "footerNote": "Connected to Sentry project {org}/{project}. Data refreshes every 5 minutes (cache) and on demand.",
+        "periods": {
+          "24h": "Last 24h",
+          "7d": "Last 7 days",
+          "30d": "Last 30 days"
+        },
+        "counts": {
+          "last24h": "Last 24h",
+          "last7d": "Last 7 days",
+          "last30d": "Last 30 days"
+        },
+        "status": {
+          "ok": "All clear",
+          "no_recent": "Stable",
+          "errors_present": "Errors present",
+          "not_configured": "Not configured",
+          "unknown": "Status unknown"
+        },
+        "notConfigured": {
+          "title": "Sentry API not configured on this server",
+          "body": "SENTRY_API_TOKEN is unset, so we can't read aggregated error data. Frontend events are still being captured if the DSN is configured. Add the token to your environment to enable this dashboard."
+        }
       },
       "serviceStatusTab": {
         "intro": {
@@ -8637,6 +8848,8 @@
         "overdue": "Overdue",
         "draft": "Draft",
         "refunded": "Refunded",
+        "partiallyRefunded": "Partially refunded",
+        "partially_refunded": "Partially refunded",
         "cancelled": "Cancelled"
       },
       "stats": {
@@ -8863,13 +9076,17 @@
           "loading": "Loading preview...",
           "error": "Could not load preview",
           "partialTitle": "Refund amount",
-          "partialHelpFull": "BNPL providers require a full refund. Partial refunds are not supported for this gateway.",
-          "partialHelpPartial": "You can refund a partial amount (between 1 and the original payment).",
+          "partialHelpFull": "This gateway requires a full refund.",
+          "partialHelpPartial": "You can refund a partial amount (between 1 and the maximum refundable).",
           "partialBadge": "Partial refund",
           "deductionNote": "Reconciled by the gateway on settlement. Learner receives the full refund amount.",
           "learnerReceives": "Learner receives",
-          "consequenceCertRevoked": "Certificate / CME-CPD eligibility for this course will be revoked.",
-          "consequenceWebinarCancelled": "Upcoming webinar registrations for this course will be cancelled."
+          "consequenceCertRevoked": "Certificate / CME-CPD eligibility for the refunded courses will be revoked.",
+          "consequenceWebinarCancelled": "Upcoming webinar registrations for the refunded courses will be cancelled.",
+          "lineItemsTitle": "Courses to refund",
+          "lineItemsHint": "Tick only the courses you want to refund. The learner keeps the rest.",
+          "lineAlreadyRefunded": "Already refunded",
+          "partialCartBadge": "Per-course refund"
         }
       },
       "drawer": {
@@ -10495,6 +10712,9 @@
       "failureReason": "Failure",
       "invoice": "Invoice",
       "noInvoice": "No invoice generated yet.",
+      "lineItems": "Courses in payment",
+      "lineRefunded": "Refunded",
+      "multiCourse": "{count} courses",
       "refundsHistory": "Refunds ({count})",
       "viewRefunds": "View all refunds",
       "receipt": "Bank Transfer Receipt",

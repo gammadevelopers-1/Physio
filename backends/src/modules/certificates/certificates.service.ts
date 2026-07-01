@@ -30,6 +30,7 @@ import { EmailService } from '../email/email.service';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { XapiService } from '../xapi/xapi.service';
 import {
   formatPlatformDate as fmtPlatformDate,
   toArabicIndic,
@@ -53,6 +54,7 @@ export class CertificatesService {
     private readonly auditService: NelcAuditService,
     private readonly auditLogService: AuditLogService,
     private readonly adminSettings: AdminSettingsService,
+    private readonly xapiService: XapiService,
   ) {}
 
   /** Fetch admin-configured locale settings — used for certificate date rendering. */
@@ -760,6 +762,14 @@ export class CertificatesService {
     } catch (error) {
       this.logger.error(`Failed to send certificate approval email for request ${id}`, error);
     }
+
+    // NELC xAPI — certificate earned. Fire-and-forget.
+    void this.xapiService.emitCertificateIssued(
+      request.studentId,
+      request.courseId,
+      id,
+      certificateUrl,
+    );
 
     return updated;
   }

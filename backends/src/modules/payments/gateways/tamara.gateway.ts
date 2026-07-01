@@ -383,7 +383,11 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
     // Tamara's current documented refund endpoint is
     // `POST /payments/simplified-refund/{order_id}`. Body fields per their
     // public API reference (docs.tamara.co/reference/simplifiedrefund):
-    //   total_amount       — required
+    //   total_amount       — required. Partial refunds work natively: send
+    //                        a smaller amount than the original payment and
+    //                        Tamara returns status: "partially_refunded".
+    //                        Remaining installments stay open with Tamara
+    //                        on the customer side.
     //   comment            — required; rejected as "comment is mandatory" if
     //                        omitted. (An older code comment here claimed it
     //                        was rejected as "unknown field" — that no
@@ -392,6 +396,8 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
     //                        so the same row is identifiable in Tamara's
     //                        merchant portal AND so a retry after a
     //                        timeout doesn't double-refund.
+    // params.items is ignored — Tamara has no per-line breakdown field on
+    // simplified-refund (only the bulk capture-and-refund endpoint does).
     // The order must already be in CAPTURED state, which our webhook handler
     // ensures by running authorise+capture inline on order_approved.
     const body: Record<string, unknown> = {

@@ -20,6 +20,7 @@ import {
   Wrench,
   DatabaseBackup,
   Activity,
+  Bug,
 } from "lucide-react";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 
@@ -36,6 +37,7 @@ import IntegrationsTab from "./settings/IntegrationsTab";
 import MaintenanceTab from "./settings/MaintenanceTab";
 import BackupsTab from "./settings/BackupsTab";
 import ServiceStatusTab from "./settings/ServiceStatusTab";
+import ErrorMonitoringTab from "./settings/ErrorMonitoringTab";
 
 type SubTabId =
   | "general"
@@ -46,6 +48,7 @@ type SubTabId =
   | "payments"
   | "integrations"
   | "backups"
+  | "error-monitoring"
   | "service-status"
   | "maintenance";
 
@@ -91,6 +94,7 @@ const mainTabs: MainTab[] = [
       { id: "payments", icon: CreditCard },
       { id: "integrations", icon: Link2 },
       { id: "backups", icon: DatabaseBackup },
+      { id: "error-monitoring", icon: Bug },
       { id: "service-status", icon: Activity },
       { id: "maintenance", icon: AlertTriangle },
     ],
@@ -203,6 +207,7 @@ const AdminSettingsContent = () => {
                   {activeSub === "payments" && <PaymentsTab />}
                   {activeSub === "integrations" && <IntegrationsTab />}
                   {activeSub === "backups" && <BackupsTab />}
+                  {activeSub === "error-monitoring" && <ErrorMonitoringTab />}
                   {activeSub === "service-status" && <ServiceStatusTab />}
                   {activeSub === "maintenance" && <MaintenanceTab />}
                 </div>

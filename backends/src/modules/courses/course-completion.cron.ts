@@ -7,6 +7,7 @@ import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { CertificatesService } from '../certificates/certificates.service';
 import { PointsService } from '../points/points.service';
+import { XapiService } from '../xapi/xapi.service';
 
 /**
  * Auto-completes courses whose end date has passed.
@@ -22,6 +23,7 @@ export class CourseCompletionCronService {
     private readonly notificationsService: UserNotificationsService,
     private readonly certificatesService: CertificatesService,
     private readonly pointsService: PointsService,
+    private readonly xapiService: XapiService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -92,6 +94,13 @@ export class CourseCompletionCronService {
               } catch {
                 // Skip duplicates silently
               }
+            }
+
+            // NELC xAPI — one course-completed statement per
+            // finalized enrollment. Fire-and-forget; per-student
+            // errors are logged inside the emitter.
+            for (const student of activeStudents) {
+              void this.xapiService.emitCourseCompleted(student.studentId, course.id);
             }
 
             // Award course-completion points (idempotent per enrollment).

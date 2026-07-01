@@ -73,9 +73,15 @@ export default function BnplPromoWidgets({
     //   - TabbyPromo (product / cart pages): takes `source: 'product' | 'cart'`
     //   - TabbyCard  (checkout page): no `source` param, sits next to the
     //     payment method radio.
-    // Same loader script; instantiated imperatively (no auto-mount). Wait
-    // for the script + mount node, then construct the right class for the
-    // surface we're on.
+    // Different loader scripts (see the Script tag below).
+    //
+    // Re-init allowed by resetting the ref — React's `key` on the mount
+    // div below also unmounts/remounts the DOM node when price changes
+    // so the widget always sees a fresh empty target. (Previous attempt
+    // here manually cleared innerHTML, which broke the cart widget on
+    // unrelated re-renders by wiping Tabby's mounted content.)
+    tabbyInstantiatedRef.current = false;
+
     const isCheckout = source === "checkout";
     const tryInstantiate = () => {
       if (tabbyInstantiatedRef.current) return;
@@ -88,10 +94,15 @@ export default function BnplPromoWidgets({
           currency,
           price: price.toFixed(2),
           lang,
-          // shouldInheritBg lets the widget pick up the surrounding card's
-          // background instead of a hard white block — matters most on the
-          // checkout radio cards (light blue when selected, white otherwise).
-          shouldInheritBg: isCheckout,
+          // Tabby's canonical docs example uses shouldInheritBg: false on
+          // BOTH the checkout TabbyCard and the product/cart TabbyPromo.
+          // The previous `isCheckout` toggle was a cosmetic tweak (let the
+          // widget inherit the radio's selected-blue background) but it
+          // diverged from the docs example Tabby's QA bot compares against.
+          // Match the docs verbatim so the widget renders the priced
+          // installment view (their compact "Split your purchase" fallback
+          // can otherwise appear when the config doesn't match the docs).
+          shouldInheritBg: false,
           publicKey: TABBY_PUBLIC_KEY,
           merchantCode: TABBY_MERCHANT_CODE,
         };
@@ -133,11 +144,29 @@ export default function BnplPromoWidgets({
     <div className={`flex flex-col gap-2 ${className}`} aria-label="Buy now, pay later options">
       {showTabby && TABBY_PUBLIC_KEY && TABBY_MERCHANT_CODE ? (
         <>
+          {/* Tabby ships two SEPARATE loader scripts — one per widget class.
+              Product/cart uses tabby-promo.js (exposes window.TabbyPromo);
+              checkout uses tabby-card.js (exposes window.TabbyCard). Loading
+              tabby-promo.js on checkout — the old behaviour — never defined
+              window.TabbyCard so the checkout snippet silently failed to
+              render. This was the "checkout snippet missing" line item
+              in Tabby's QA report. */}
           <Script
-            src="https://checkout.tabby.ai/tabby-promo.js"
+            src={
+              source === "checkout"
+                ? "https://checkout.tabby.ai/tabby-card.js"
+                : "https://checkout.tabby.ai/tabby-promo.js"
+            }
             strategy="lazyOnload"
           />
+          {/* `key` includes the rounded price — when the cart total or
+              checkout total changes, React unmounts the old div and
+              mounts a fresh one, guaranteeing TabbyPromo/TabbyCard sees
+              an empty target instead of doubling up content. The widget
+              has no documented destroy() method, so DOM remount is the
+              reliable way to swap prices. */}
           <div
+            key={`${tabbyMountId}-${price.toFixed(2)}`}
             id={tabbyMountId}
             ref={tabbyMountRef}
           />

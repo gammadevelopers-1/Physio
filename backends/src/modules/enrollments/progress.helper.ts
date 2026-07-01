@@ -1,4 +1,4 @@
-import { and, count, eq, isNotNull, lt, ne, sql } from 'drizzle-orm';
+import { and, count, eq, gt, gte, isNotNull, lt, ne, or, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -35,21 +35,75 @@ import {
  * Idempotent: re-running with no state change produces the same percent.
  * No-op when there's no content yet (denominator = 0 → 0%).
  */
+/** Result of a recompute. `prior` is the enrollment's progress value
+ *  BEFORE this recompute (0 when no enrollment row existed yet),
+ *  `current` is the value after.
+ *
+ *  Callers firing NELC `progressed` xAPI statements MUST gate on
+ *  `progressIncreased` (NOT `current > prior`). Two concurrent
+ *  recomputes can both read the same `prior` and compute the same
+ *  `current`, so `current > prior` would be true in BOTH, causing
+ *  duplicate xAPI statements at the same millisecond (NELC checklist
+ *  SEQ003). `progressIncreased` is set ONLY on the request that
+ *  actually wrote the new value to disk — the race winner. */
+export interface RecomputeResult {
+  prior: number;
+  current: number;
+  progressIncreased: boolean;
+}
+
 export async function recomputeEnrollmentProgress(
   studentId: string,
   courseId: string,
-): Promise<number> {
+): Promise<RecomputeResult> {
+  // Snapshot prior progress + enrolledAt BEFORE recomputing. `prior` is
+  // returned to callers; `enrolledAt` gates the session denominator so
+  // students enrolling AFTER a webinar has already happened aren't
+  // penalised by an inflated denominator (they couldn't have attended,
+  // so the past session shouldn't count toward their 100%).
+  const [priorRow] = await db
+    .select({
+      progress: enrollments.progress,
+      enrolledAt: enrollments.enrolledAt,
+    })
+    .from(enrollments)
+    .where(
+      and(
+        eq(enrollments.studentId, studentId),
+        eq(enrollments.courseId, courseId),
+      ),
+    )
+    .limit(1);
+  const prior = Number(priorRow?.progress ?? 0);
+  const enrolledAt = priorRow?.enrolledAt ?? null;
+
   // ── DENOMINATOR ────────────────────────────────────────────
   const [moduleTotalRow] = await db
     .select({ c: count() })
     .from(courseModules)
     .where(eq(courseModules.courseId, courseId));
 
+  // Sessions count toward the denominator only when the student had
+  // (or still has) a real chance to attend them: future sessions OR
+  // sessions that happened AFTER the student enrolled. Past sessions
+  // from before the student joined are excluded so late enrollees can
+  // still hit 100% — matches the expected webinar-enrolment flow.
+  const sessionDenominatorCondition = enrolledAt
+    ? or(
+        gte(sessions.scheduledAt, new Date()),
+        gte(sessions.scheduledAt, enrolledAt),
+      )
+    : gte(sessions.scheduledAt, new Date());
+
   const [sessionTotalRow] = await db
     .select({ c: count() })
     .from(sessions)
     .where(
-      and(eq(sessions.courseId, courseId), ne(sessions.status, 'cancelled')),
+      and(
+        eq(sessions.courseId, courseId),
+        ne(sessions.status, 'cancelled'),
+        sessionDenominatorCondition,
+      ),
     );
 
   const [assessmentTotalRow] = await db
@@ -77,7 +131,7 @@ export async function recomputeEnrollmentProgress(
           eq(enrollments.courseId, courseId),
         ),
       );
-    return 0;
+    return { prior, current: 0, progressIncreased: false };
   }
 
   // ── NUMERATOR ──────────────────────────────────────────────
@@ -172,17 +226,43 @@ export async function recomputeEnrollmentProgress(
     Math.max(0, Math.round((numerator / denominator) * 100)),
   );
 
-  await db
+  // Atomic conditional write — only update if the new value is STRICTLY
+  // greater than what's currently on disk. Two concurrent recomputes
+  // can both compute the same `progress`; exactly one will see
+  // `progress < new` and win the race. The loser's UPDATE matches 0
+  // rows and `progressIncreased` stays false, so it skips the xAPI
+  // emit. lastAccessedAt is updated in a separate non-conditional
+  // pass so both paths still bump it.
+  const winnerRows = await db
     .update(enrollments)
     .set({ progress, lastAccessedAt: new Date() })
     .where(
       and(
         eq(enrollments.studentId, studentId),
         eq(enrollments.courseId, courseId),
+        lt(enrollments.progress, progress),
       ),
-    );
+    )
+    .returning({ id: enrollments.id });
 
-  return progress;
+  const progressIncreased = winnerRows.length > 0;
+
+  // If we lost the race or the value didn't change, still bump
+  // lastAccessedAt so the dashboard "recently accessed" surface stays
+  // accurate. No-op for the winner (already updated above).
+  if (!progressIncreased) {
+    await db
+      .update(enrollments)
+      .set({ lastAccessedAt: new Date() })
+      .where(
+        and(
+          eq(enrollments.studentId, studentId),
+          eq(enrollments.courseId, courseId),
+        ),
+      );
+  }
+
+  return { prior, current: progress, progressIncreased };
 }
 
 /**

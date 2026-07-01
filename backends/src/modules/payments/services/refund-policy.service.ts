@@ -64,22 +64,28 @@ const DEFAULT_POLICY: RefundPolicy = {
   },
   autoApproveEligible: false,
   perGateway: {
+    // All four gateways support partial refunds per their respective API
+    // docs — verified before flipping the BNPL flags from false to true:
+    //   * Moyasar:     amount field on POST /payments/{id}/refund
+    //   * Tabby:       amount + optional items[] on POST /payments/{id}/refunds
+    //                  (per docs.tabby.ai/api-reference/payments/refund-a-payment)
+    //   * Tamara:      total_amount on POST /payments/simplified-refund/{id}
+    //                  (per docs.tamara.co/reference/simplifiedrefund — returns
+    //                   status: "partially_refunded" if less than full sent)
+    //   * Bank Transf: manual wire — finance enters whatever amount
     moyasar:       { deductionPercent: 0,  partialRefundCapable: true },
-    tamara:        { deductionPercent: 10, partialRefundCapable: false },
-    tabby:         { deductionPercent: 10, partialRefundCapable: false },
+    tamara:        { deductionPercent: 10, partialRefundCapable: true },
+    tabby:         { deductionPercent: 10, partialRefundCapable: true },
     bank_transfer: { deductionPercent: 0,  partialRefundCapable: true },
     mock:          { deductionPercent: 0,  partialRefundCapable: true },
   },
 };
 
-// BNPL gateways physically reject partial refund API calls — the API
-// either 4xx's or marks the order as fully refunded anyway. Enforcing
-// this at the policy layer prevents a finance manager from saving a
-// setting that would leave refunds stuck in APPROVED state.
-const NO_PARTIAL_REFUND_GATEWAYS: ReadonlySet<GatewayKey> = new Set([
-  'tamara',
-  'tabby',
-]);
+// Reserved for any gateway that genuinely does not support partial refunds.
+// Currently empty — all four production gateways do (see DEFAULT_POLICY note).
+// Kept as a one-line escape hatch so a future read-only or settle-only gateway
+// can opt out without touching the policy merge code.
+const NO_PARTIAL_REFUND_GATEWAYS: ReadonlySet<GatewayKey> = new Set();
 
 const CATEGORY = 'refund_policy';
 const CACHE_TTL_MS = 30_000;
@@ -327,11 +333,11 @@ export class RefundPolicyService {
   }
 
   /**
-   * Force `partialRefundCapable: false` on BNPL gateways no matter what's
-   * stored — the upstream Tamara/Tabby APIs don't accept partial refunds,
-   * so honouring a saved `true` would just leave refunds stuck in APPROVED.
-   * Applied on read AND write to keep the cache, the DB row, and the
-   * runtime in sync.
+   * Force `partialRefundCapable: false` on any gateway listed in
+   * NO_PARTIAL_REFUND_GATEWAYS. Currently empty — kept as a guard against
+   * future read-only gateways being toggled on with partial refunds
+   * enabled in the DB row. Applied on read AND write to keep the cache,
+   * the DB row, and the runtime in sync.
    */
   private enforceGatewayConstraints(policy: RefundPolicy): RefundPolicy {
     const perGateway = { ...policy.perGateway };

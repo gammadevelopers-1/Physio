@@ -11,12 +11,12 @@
 
 set -e
 
-# Load config
+# Load config (provides GCP_PROJECT_ID, GCP_REGION, DB_INSTANCE_NAME)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "${SCRIPT_DIR}/../config.sh"
 
-# Database configuration
-DB_INSTANCE_NAME="physioguidance-db"
+# Database connection — instance name comes from config.sh
+# (currently physioguidance-db-me in me-central2)
 CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 
 print_banner

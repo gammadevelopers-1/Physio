@@ -32,6 +32,8 @@ import { InvoiceService } from '../services/invoice.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { SubmitDraftDto } from './dto/submit-draft.dto';
 import { PaymentsService } from '../payments.service';
+import { XapiService } from '../../xapi/xapi.service';
+import { EnrollmentsService } from '../../enrollments/enrollments.service';
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -76,6 +78,8 @@ export class BankTransferService {
     private readonly emailService: EmailService,
     private readonly invoiceService: InvoiceService,
     private readonly paymentsService: PaymentsService,
+    private readonly xapiService: XapiService,
+    private readonly enrollmentsService: EnrollmentsService,
   ) {}
 
   /**
@@ -1082,6 +1086,7 @@ export class BankTransferService {
       );
     }
 
+    const activatedEnrollments: { id: string; courseId: string; studentId: string }[] = [];
     const result = await db.transaction(async (tx) => {
       // Optimistic lock: only the first concurrent caller succeeds.
       const updated = await tx
@@ -1140,10 +1145,16 @@ export class BankTransferService {
       }
 
       if (enrollmentIdsToActivate.length > 0) {
-        await tx
+        const activated = await tx
           .update(enrollments)
           .set({ status: ENROLLMENT_STATUS.ACTIVE, enrolledAt: new Date() })
-          .where(inArray(enrollments.id, enrollmentIdsToActivate));
+          .where(inArray(enrollments.id, enrollmentIdsToActivate))
+          .returning({
+            id: enrollments.id,
+            courseId: enrollments.courseId,
+            studentId: enrollments.studentId,
+          });
+        activatedEnrollments.push(...activated);
       }
 
       return payment;
@@ -1169,6 +1180,21 @@ export class BankTransferService {
     // transaction (both can block on network IO). All failures are logged but
     // don't roll back the approval — the payment is paid either way.
     void this.completeApprovalAsync(receipt.paymentId);
+
+    // NELC xAPI — emit 'registered' for each enrollment that just went
+    // active on this approval. Outside the transaction so a queue/LRS
+    // hiccup can't roll back the approval.
+    for (const e of activatedEnrollments) {
+      void this.xapiService.emitCourseEnrollment(e.studentId, e.courseId, e.id);
+      // Webinar auto-register — bank-transfer approval is the third
+      // self-service enrollment path that was missing this hook. Past
+      // webinars are skipped inside the helper.
+      void this.enrollmentsService
+        .autoRegisterStudentForWebinarCourse(e.courseId, e.studentId)
+        .catch((err) =>
+          this.logger.warn(`Webinar auto-register (bank-transfer) failed: ${err.message}`),
+        );
+    }
 
     return {
       receiptId,

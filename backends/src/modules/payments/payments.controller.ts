@@ -15,6 +15,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { PaymentsService } from './payments.service';
+import { RefundService } from './services/refund.service';
 import { ReconciliationCronService } from './reconciliation/reconciliation-cron.service';
 import { GatewayFactory } from './gateways/gateway.factory';
 import { MockGateway, MockConfig } from './gateways/mock.gateway';
@@ -31,6 +32,7 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 export class PaymentsController {
   constructor(
     private readonly paymentsService: PaymentsService,
+    private readonly refundService: RefundService,
     private readonly gatewayFactory: GatewayFactory,
     private readonly reconciliationCron: ReconciliationCronService,
   ) {}
@@ -200,7 +202,28 @@ export class PaymentsController {
   @Get(':paymentId/detail')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async getPaymentDetail(@Param('paymentId') paymentId: string) {
-    return this.paymentsService.getPaymentDetail(paymentId);
+    const detail = await this.paymentsService.getPaymentDetail(paymentId);
+    // Enrich with per-course line breakdown so the admin drawer + future
+    // per-line UI can render which courses each refund covered. Same
+    // projection the refund POST consumes.
+    const breakdown = await this.refundService.getPaymentLineBreakdown(paymentId);
+    return {
+      ...detail,
+      lineItems: breakdown.lines.map((l) => ({
+        paymentItemId: l.paymentItemId,
+        courseId: l.courseId,
+        courseTitle: l.courseTitle,
+        courseTitleAr: l.courseTitleAr,
+        enrollmentId: l.enrollmentId,
+        enrollmentStatus: l.enrollmentStatus,
+        unitPrice: l.unitPrice,
+        lineSubtotal: l.lineSubtotal,
+        lineDiscount: l.lineDiscount,
+        lineVat: l.lineVat,
+        lineTotal: l.lineTotal,
+        alreadyRefundedByRefundId: l.refundedByRefundId,
+      })),
+    };
   }
 
   @Get(':paymentId/audit')

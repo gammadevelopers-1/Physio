@@ -9,6 +9,7 @@ import {
   Download,
   Info,
   AlertCircle,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -181,6 +182,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose, policy }: Props) => {
             courseTitleAr: data.payment.courseTitleAr,
             invoiceNumber: data.payment.invoiceNumber,
           }}
+          lineItems={data.lineItems}
         />
       )}
     </>
@@ -206,12 +208,19 @@ function DrawerBody({
   downloadingPdf: boolean;
   onRequestRefund: () => void;
 }) {
-  const { payment, refunds, refundability } = data;
+  const { payment, refunds, refundability, lineItems } = data;
   const courseTitle = pickCourseTitle(
     payment.courseTitle,
     payment.courseTitleAr,
     locale,
   );
+  // Cart purchases ALWAYS have at least one payment_items row (created by
+  // the cart flow); single-course legacy payments get a fabricated single
+  // line by the backend. We show the breakdown section whenever there's
+  // more than one course OR at least one line carries a refund history.
+  const showLineBreakdown =
+    lineItems.length > 1 ||
+    lineItems.some((l) => l.alreadyRefundedByRefundId);
 
   return (
     <>
@@ -230,8 +239,74 @@ function DrawerBody({
         <div className="text-2xl font-bold text-[#1F2937] tabular-nums">
           {formatSar(payment.amount)} {t("common.sar")}
         </div>
-        <div className="text-sm text-[#6B7280] mt-1">{courseTitle}</div>
+        <div className="text-sm text-[#6B7280] mt-1">
+          {lineItems.length > 1
+            ? t("drawer.multiCourseSummary", { count: lineItems.length })
+            : courseTitle}
+        </div>
       </div>
+
+      {/* Per-course line items — only for cart purchases or after at least
+          one course has been refunded. Single-course payments don't need
+          the redundant breakdown. */}
+      {showLineBreakdown && (
+        <section className="border border-[#E5E7EB] rounded-lg p-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6B7280] mb-2">
+            {t("drawer.lineItemsTitle")}
+          </h3>
+          <ul className="space-y-2">
+            {lineItems.map((li) => {
+              const title = pickCourseTitle(
+                li.courseTitle,
+                li.courseTitleAr,
+                locale,
+              );
+              const isRefunded = !!li.alreadyRefundedByRefundId;
+              return (
+                <li
+                  key={li.paymentItemId ?? li.courseId}
+                  className={`flex items-start justify-between gap-3 p-2.5 rounded-md ${
+                    isRefunded
+                      ? "bg-[#F3F4F6] opacity-70"
+                      : "bg-white border border-[#F3F4F6]"
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={`text-sm font-medium ${
+                        isRefunded
+                          ? "text-[#6B7280] line-through"
+                          : "text-[#1F2937]"
+                      }`}
+                    >
+                      {title}
+                    </p>
+                    {isRefunded ? (
+                      <p className="text-[11px] text-[#16A34A] flex items-center gap-1 mt-0.5">
+                        <Check className="w-3 h-3" />
+                        {t("drawer.lineRefunded")}
+                      </p>
+                    ) : li.enrollmentStatus ? (
+                      <p className="text-[11px] text-[#6B7280] mt-0.5 capitalize">
+                        {li.enrollmentStatus.replace(/_/g, " ")}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="text-right shrink-0 tabular-nums">
+                    <p
+                      className={`text-sm font-semibold ${
+                        isRefunded ? "text-[#9CA3AF]" : "text-[#1F2937]"
+                      }`}
+                    >
+                      {formatSar(li.lineTotal)} {t("common.sar")}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* Tax / VAT breakdown */}
       {payment.vatBreakdown.vatSar > 0 && (

@@ -21,6 +21,7 @@ import {
 import { db } from '../../../database';
 import {
   refunds,
+  refundItems,
   payments,
   paymentItems,
   invoices,
@@ -93,6 +94,298 @@ export class RefundService {
       )
       .limit(1);
     return firstItem?.enrollmentId ?? null;
+  }
+
+  /**
+   * Build the line-by-line refund breakdown for a payment. VAT and any
+   * coupon discount are apportioned by each line's subtotal share so totals
+   * reconcile back to the original payment.amount (within ≤0.01 SAR
+   * rounding drift). For single-course legacy payments without
+   * payment_items rows, fabricates a single virtual line so downstream
+   * math stays uniform.
+   *
+   * Public so the payment-detail endpoints (admin + student) can reuse
+   * the exact same line projection the refund preview and refund POST
+   * see — single source of truth, no drift between what the buyer is
+   * shown and what gets refunded.
+   */
+  async getPaymentLineBreakdown(paymentId: string): Promise<{
+    lines: Array<{
+      paymentItemId: string | null;
+      courseId: string;
+      courseTitle: string | null;
+      courseTitleAr: string | null;
+      enrollmentId: string | null;
+      enrollmentStatus: string | null;
+      unitPrice: number;
+      lineSubtotal: number;
+      lineDiscount: number;
+      lineVat: number;
+      lineTotal: number;
+      refundedByRefundId: string | null;
+    }>;
+    totals: {
+      subtotal: number;
+      discount: number;
+      vat: number;
+      total: number;
+    };
+  }> {
+    const [payment] = await db
+      .select({
+        id: payments.id,
+        amount: payments.amount,
+        courseId: payments.courseId,
+        metadata: payments.metadata,
+        enrollmentId: payments.enrollmentId,
+      })
+      .from(payments)
+      .where(eq(payments.id, paymentId))
+      .limit(1);
+
+    if (!payment) {
+      throw new NotFoundException(`Payment ${paymentId} not found`);
+    }
+
+    const items = await db
+      .select({
+        id: paymentItems.id,
+        courseId: paymentItems.courseId,
+        enrollmentId: paymentItems.enrollmentId,
+        unitPrice: paymentItems.unitPrice,
+        salePrice: paymentItems.salePrice,
+        discountAmount: paymentItems.discountAmount,
+        lineTotal: paymentItems.lineTotal,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        enrollmentStatus: enrollments.status,
+      })
+      .from(paymentItems)
+      .leftJoin(courses, eq(paymentItems.courseId, courses.id))
+      .leftJoin(
+        enrollments,
+        eq(paymentItems.enrollmentId, enrollments.id),
+      )
+      .where(eq(paymentItems.paymentId, paymentId));
+
+    // Track which payment_items have been refunded by a COMPLETED refund —
+    // these get badged "Refunded" in the UI and rejected if re-selected.
+    const refundedRows = await db
+      .select({
+        paymentItemId: refundItems.paymentItemId,
+        refundId: refundItems.refundId,
+        refundStatus: refunds.status,
+      })
+      .from(refundItems)
+      .innerJoin(refunds, eq(refunds.id, refundItems.refundId))
+      .where(
+        and(
+          eq(refunds.paymentId, paymentId),
+          sql`${refunds.status} IN ('completed','pending','approved','processing')`,
+        ),
+      );
+    const refundedItemMap = new Map<string, string>();
+    for (const r of refundedRows) {
+      // First-write-wins; a payment_item can only be in one in-flight refund.
+      if (!refundedItemMap.has(r.paymentItemId)) {
+        refundedItemMap.set(r.paymentItemId, r.refundId);
+      }
+    }
+
+    const totalPaymentAmount = Number(payment.amount);
+    const meta = (payment.metadata || {}) as Record<string, unknown>;
+    const totalVat = numFromMeta(meta.taxAmount) ?? 0;
+    const totalDiscount = numFromMeta(meta.discountAmount) ?? 0;
+    const totalSubtotal =
+      numFromMeta(meta.subtotal) ?? totalPaymentAmount - totalVat + totalDiscount;
+
+    if (items.length === 0) {
+      // Legacy single-course payment with no payment_items rows. Fabricate
+      // one line so downstream code never branches on "have lines / don't".
+      // courseId comes off payments; refundedItemId is N/A because there's
+      // no payment_item to key on — these payments only support full refund.
+      const [course] = payment.courseId
+        ? await db
+            .select({ id: courses.id, title: courses.title, titleAr: courses.titleAr })
+            .from(courses)
+            .where(eq(courses.id, payment.courseId))
+            .limit(1)
+        : [undefined];
+      let enrollmentStatus: string | null = null;
+      if (payment.enrollmentId) {
+        const [enr] = await db
+          .select({ status: enrollments.status })
+          .from(enrollments)
+          .where(eq(enrollments.id, payment.enrollmentId))
+          .limit(1);
+        enrollmentStatus = enr?.status ?? null;
+      }
+      return {
+        lines: [
+          {
+            paymentItemId: null,
+            courseId: payment.courseId,
+            courseTitle: course?.title ?? null,
+            courseTitleAr: course?.titleAr ?? null,
+            enrollmentId: payment.enrollmentId,
+            enrollmentStatus,
+            unitPrice: totalSubtotal,
+            lineSubtotal: totalSubtotal,
+            lineDiscount: totalDiscount,
+            lineVat: totalVat,
+            lineTotal: totalPaymentAmount,
+            refundedByRefundId: null,
+          },
+        ],
+        totals: {
+          subtotal: totalSubtotal,
+          discount: totalDiscount,
+          vat: totalVat,
+          total: totalPaymentAmount,
+        },
+      };
+    }
+
+    // Apportion VAT + coupon discount by each line's gross subtotal share.
+    // We use salePrice (after course-level sale, before coupon) as the base
+    // — line_total already nets the per-line coupon allocation, but the
+    // payment-level totals (taxAmount / discountAmount) were computed
+    // pre-allocation so apportioning by sale_price keeps the math
+    // consistent with how it was originally calculated at checkout.
+    const grossSubtotalSum = items.reduce(
+      (sum, it) => sum + Number(it.salePrice),
+      0,
+    );
+    const lines = items.map((it) => {
+      const linePreDiscount = Number(it.salePrice);
+      const lineCouponShare = Number(it.discountAmount);
+      const share =
+        grossSubtotalSum > 0 ? linePreDiscount / grossSubtotalSum : 0;
+      // Apportion any payment-level VAT and any payment-level coupon over and
+      // above what's already on the line (payment_items.discountAmount
+      // captures the per-line coupon allocation; in case the payment
+      // metadata records a different total — e.g. campaign-level discount —
+      // we apportion the delta).
+      const lineVat = round2(totalVat * share);
+      const apportionedDiscount = round2(totalDiscount * share);
+      const effectiveDiscount = Math.max(lineCouponShare, apportionedDiscount);
+      const lineTotal = round2(
+        linePreDiscount - lineCouponShare + lineVat,
+      );
+      return {
+        paymentItemId: it.id,
+        courseId: it.courseId,
+        courseTitle: it.courseTitle,
+        courseTitleAr: it.courseTitleAr,
+        enrollmentId: it.enrollmentId,
+        enrollmentStatus: it.enrollmentStatus,
+        unitPrice: Number(it.unitPrice),
+        lineSubtotal: linePreDiscount,
+        lineDiscount: effectiveDiscount,
+        lineVat,
+        lineTotal,
+        refundedByRefundId: refundedItemMap.get(it.id) ?? null,
+      };
+    });
+
+    // Distribute any rounding drift to the largest line so the sum
+    // reconciles to the payment.amount. Keeps gateway totals exact.
+    const linesSum = lines.reduce((s, l) => s + l.lineTotal, 0);
+    const drift = round2(totalPaymentAmount - linesSum);
+    if (Math.abs(drift) >= 0.01 && lines.length > 0) {
+      const largest = lines.reduce(
+        (a, b) => (b.lineTotal > a.lineTotal ? b : a),
+        lines[0],
+      );
+      largest.lineTotal = round2(largest.lineTotal + drift);
+    }
+
+    return {
+      lines,
+      totals: {
+        subtotal: totalSubtotal,
+        discount: totalDiscount,
+        vat: totalVat,
+        total: totalPaymentAmount,
+      },
+    };
+  }
+
+  /**
+   * Narrow the full line breakdown down to whichever lines the caller
+   * actually wants to refund. Rejects any line that was already covered
+   * by a completed/in-flight refund, and (if explicit ids were passed)
+   * rejects unknown ids so a tampered request fails loudly instead of
+   * silently refunding nothing.
+   */
+  private pickRefundableLines<
+    T extends {
+      paymentItemId: string | null;
+      refundedByRefundId: string | null;
+    },
+  >(allLines: T[], explicitIds?: string[]): T[] {
+    const refundable = allLines.filter((l) => l.refundedByRefundId === null);
+    if (refundable.length === 0) {
+      throw new BadRequestException(
+        'No payment lines remain that can be refunded — every line has already been refunded.',
+      );
+    }
+    if (!explicitIds || explicitIds.length === 0) {
+      return refundable;
+    }
+    // Legacy single-course payments produce one line with paymentItemId
+    // === null — they can't be partially refunded by item id (there's no
+    // id to key on). Caller passing explicit ids against such a payment
+    // is a bad request.
+    if (refundable.every((l) => l.paymentItemId === null)) {
+      throw new BadRequestException(
+        'This payment has no per-line items — refund the full amount instead.',
+      );
+    }
+    const idSet = new Set(explicitIds);
+    const selected = refundable.filter(
+      (l) => l.paymentItemId !== null && idSet.has(l.paymentItemId),
+    );
+    if (selected.length !== explicitIds.length) {
+      throw new BadRequestException(
+        'One or more selected items is already refunded or does not belong to this payment.',
+      );
+    }
+    return selected;
+  }
+
+  /**
+   * Insert refund_items rows tying a newly-created refund to the lines it
+   * covers. Skips lines with paymentItemId === null (legacy single-course
+   * payments) — those have no payment_items row to reference; the cascade
+   * reader falls back to payments.enrollmentId.
+   */
+  private async insertRefundItemsForLines(
+    refundId: string,
+    lines: Array<{
+      paymentItemId: string | null;
+      courseId: string;
+      enrollmentId: string | null;
+      lineSubtotal: number;
+      lineDiscount: number;
+      lineVat: number;
+      lineTotal: number;
+    }>,
+  ): Promise<void> {
+    const insertable = lines.filter((l) => l.paymentItemId !== null);
+    if (insertable.length === 0) return;
+    await db.insert(refundItems).values(
+      insertable.map((l) => ({
+        refundId,
+        paymentItemId: l.paymentItemId as string,
+        courseId: l.courseId,
+        enrollmentId: l.enrollmentId,
+        lineAmount: l.lineSubtotal.toFixed(2),
+        lineVat: l.lineVat.toFixed(2),
+        lineDiscount: l.lineDiscount.toFixed(2),
+        lineTotal: l.lineTotal.toFixed(2),
+      })),
+    );
   }
 
   /**
@@ -185,23 +478,27 @@ export class RefundService {
       throw new BadRequestException('Only paid payments can be refunded');
     }
 
-    // Block if ANY active or completed refund exists for this payment.
-    // Multi-refund (e.g., a second partial after one completed) is not
-    // supported in v1.
+    // Block if ANY pending/approved/processing refund is already in flight
+    // for this payment. We DO allow a second refund AFTER a completed
+    // partial refund — that's the per-course refund workflow (refund
+    // course A today, then course B next week). When a new refund
+    // arrives, the line-selection logic below excludes any payment_items
+    // an earlier completed refund already covered, so a buyer can't
+    // double-claim a course.
     const [existingRefund] = await db
       .select()
       .from(refunds)
       .where(
         and(
           eq(refunds.paymentId, dto.paymentId),
-          sql`${refunds.status} IN ('pending', 'approved', 'processing', 'completed')`,
+          sql`${refunds.status} IN ('pending', 'approved', 'processing')`,
         ),
       )
       .limit(1);
 
     if (existingRefund) {
       throw new BadRequestException(
-        'A refund already exists for this payment',
+        'A refund is already in progress for this payment',
       );
     }
 
@@ -227,11 +524,27 @@ export class RefundService {
       }
     }
 
-    // Student-initiated requests are always FULL refunds. Partial is an
-    // admin-only action (see adminInitiateRefund).
+    // Resolve the line breakdown so we know which payment_items to refund
+    // and what each line's apportioned VAT/discount/total is. If the
+    // student selected a subset (multi-course cart with per-course
+    // refund), narrow to those lines; otherwise refund every still-
+    // refundable line.
+    const breakdown = await this.getPaymentLineBreakdown(dto.paymentId);
+    const selectedLines = this.pickRefundableLines(
+      breakdown.lines,
+      dto.paymentItemIds,
+    );
+    const refundedTotal = round2(
+      selectedLines.reduce((s, l) => s + l.lineTotal, 0),
+    );
+
     const originalAmount = Number(payment.amount);
-    const { refundAmount, merchantFeeAmount, merchantFeeReason } =
-      await this.computeRefundMath(payment.gateway, originalAmount);
+    const { refundAmount, merchantFeeAmount, merchantFeeReason, isPartial } =
+      await this.computeRefundMath(
+        payment.gateway,
+        originalAmount,
+        refundedTotal,
+      );
 
     const [invoice] = await db
       .select()
@@ -258,6 +571,13 @@ export class RefundService {
       })
       .returning();
 
+    // Record which payment_items this refund covers. Single virtual lines
+    // (legacy single-course payments without payment_items rows) have
+    // paymentItemId === null — skip the insert for those, the cascade
+    // reader falls back to payments.enrollmentId / courseId.
+    await this.insertRefundItemsForLines(refund.id, selectedLines);
+    void isPartial;
+
     try {
       await this.emailService.sendRefundRequested(userId, refund.id);
     } catch (err) {
@@ -276,7 +596,9 @@ export class RefundService {
         originalAmount,
         refundAmount,
         merchantFeeAmount,
-        isPartial: false,
+        isPartial,
+        paymentItemIds: dto.paymentItemIds ?? null,
+        selectedCourseIds: selectedLines.map((l) => l.courseId),
       },
     });
 
@@ -350,15 +672,36 @@ export class RefundService {
         .where(eq(refunds.id, refundId));
     }
 
-    // Step 2: Call gateway to initiate the actual refund transfer
+    // Step 2: Call gateway to initiate the actual refund transfer.
+    // Pull the refund_items rows so we can hand Tabby its optional items[]
+    // breakdown — surfaces in their merchant portal so ops can see WHICH
+    // cart courses a partial refund covered. Other gateways ignore items.
     let gatewayRefundId: string | null = null;
     try {
+      const refundLineRows = await db
+        .select({
+          courseId: refundItems.courseId,
+          lineTotal: refundItems.lineTotal,
+          courseTitle: courses.title,
+        })
+        .from(refundItems)
+        .leftJoin(courses, eq(refundItems.courseId, courses.id))
+        .where(eq(refundItems.refundId, refundId));
+      const gatewayItems = refundLineRows.map((r) => ({
+        referenceId: r.courseId,
+        title: r.courseTitle || 'Course',
+        unitPrice: Number(r.lineTotal),
+        quantity: 1,
+        category: 'Education',
+      }));
+
       const gateway = this.gatewayFactory.getGateway(payment.gateway);
       const refundResult = await gateway.refund({
         gatewayChargeId: payment.gatewayChargeId,
         amount: Number(refund.refundAmount),
         reason: refund.reason,
         refundId,
+        ...(gatewayItems.length > 0 ? { items: gatewayItems } : {}),
       });
 
       gatewayRefundId = refundResult.refundId;
@@ -384,15 +727,19 @@ export class RefundService {
       // Additionally, honour the gateway's own terminal status from the sync
       // refund response — Tabby returns SUCCEEDED inline (especially in
       // sandbox where no real money moves and no separate webhook fires);
-      // Moyasar returns `refunded`; Tamara can return `succeeded`. Without
-      // this the refund got stuck in PROCESSING forever for those flows,
-      // because the webhook path was the only way out and Tabby sandbox
-      // never sends it.
+      // Moyasar returns `refunded`; Tamara's simplified-refund endpoint
+      // returns `approved` (full refund accepted) or `partially_refunded`
+      // (the response Amna's per-course Tamara test hit and that left the
+      // larger refund stuck in PROCESSING because we didn't recognise it).
+      // All of these mean "Tamara/the gateway accepted the refund and the
+      // money is moving" — completeRefund's cascade is safe to run.
       const terminalSuccess = new Set([
         'succeeded',
         'refunded',
         'completed',
         'fully_refunded',
+        'approved',
+        'partially_refunded',
       ]);
       const syncStatus = (refundResult.status || '').toLowerCase();
       if (
@@ -521,24 +868,44 @@ export class RefundService {
     // door.
     const studentId = payment?.userId;
 
-    // Multi-line cart payments leave payments.course_id / enrollment_id
-    // null and store per-line ids on payment_items. Collect ALL course +
-    // enrollment ids so refund revocation drops every enrollment the buyer
-    // got from this payment, not just the primary one. Without this, a
-    // bank-transfer cart refund only dropped the first course (and for
-    // genuinely null primaries, nothing at all — the bug Amna spotted on
-    // INV-2026-00020).
-    const lineRows = await db
+    // Per-course refund cascade. Prefer refund_items (the explicit list of
+    // payment_items this refund covers); fall back to every payment_items
+    // row for the payment only when refund_items is empty — that's the
+    // legacy-data path for refunds created before this junction existed.
+    // Without that fallback, every pre-migration refund would silently
+    // stop dropping enrollments.
+    const refundItemRows = await db
       .select({
-        enrollmentId: paymentItems.enrollmentId,
-        courseId: paymentItems.courseId,
+        enrollmentId: refundItems.enrollmentId,
+        courseId: refundItems.courseId,
       })
-      .from(paymentItems)
-      .where(eq(paymentItems.paymentId, refund.paymentId));
+      .from(refundItems)
+      .where(eq(refundItems.refundId, refundId));
+
+    let lineRows: Array<{
+      enrollmentId: string | null;
+      courseId: string;
+    }> = refundItemRows;
+    if (lineRows.length === 0) {
+      lineRows = await db
+        .select({
+          enrollmentId: paymentItems.enrollmentId,
+          courseId: paymentItems.courseId,
+        })
+        .from(paymentItems)
+        .where(eq(paymentItems.paymentId, refund.paymentId));
+    }
+
     const enrollmentIdsToDrop = Array.from(
       new Set(
         [
-          payment?.enrollmentId,
+          // Only include the payment-level enrollment when refund_items is
+          // empty (legacy/full-refund) OR refund_items explicitly names it.
+          // Otherwise a partial refund covering courses {B,C} on a payment
+          // whose enrollmentId == enrollment(A) would incorrectly drop A.
+          ...(refundItemRows.length === 0
+            ? [payment?.enrollmentId]
+            : []),
           ...lineRows.map((r) => r.enrollmentId),
         ].filter((id): id is string => Boolean(id)),
       ),
@@ -546,7 +913,9 @@ export class RefundService {
     const courseIdsForRevocation = Array.from(
       new Set(
         [
-          payment?.courseId,
+          ...(refundItemRows.length === 0
+            ? [payment?.courseId]
+            : []),
           ...lineRows.map((r) => r.courseId),
         ].filter((id): id is string => Boolean(id)),
       ),
@@ -607,6 +976,9 @@ export class RefundService {
       zoomRegistrantsCancelled: 0,
       zoomRegistrantsFailed: 0,
     };
+    // Lifted out of the tx so post-commit branches (discount reversal,
+    // audit log) can read the final verdict.
+    let allLinesRefundedOut = false;
 
     await db.transaction(async (tx) => {
       // Update refund to completed
@@ -619,14 +991,41 @@ export class RefundService {
         })
         .where(eq(refunds.id, refundId));
 
-      // Payment status: partial vs full. With BNPL deductions now removed,
-      // PARTIALLY_REFUNDED only fires on a TRUE admin-set partial amount.
+      // Payment status: PARTIALLY_REFUNDED unless every payment_items
+      // row is now covered by a completed refund (= the whole purchase is
+      // unwound). Money-based comparison alone gets it wrong for per-line
+      // refunds — e.g., refunding the larger of two unequal lines could
+      // exceed half the payment in amount but still leave a course paid for.
       const originalAmount = Number(refund.originalAmount);
       const refundAmount = Number(refund.refundAmount);
-      const paymentStatus =
-        refundAmount >= originalAmount
-          ? PAYMENT_STATUS.REFUNDED
-          : PAYMENT_STATUS.PARTIALLY_REFUNDED;
+
+      const [{ itemCount }] = await tx
+        .select({ itemCount: sql<number>`COUNT(*)::int` })
+        .from(paymentItems)
+        .where(eq(paymentItems.paymentId, refund.paymentId));
+      // After this commit there will be N completed refund_items rows.
+      // Pre-count what's already completed plus what this refund now adds.
+      const [{ refundedItemCount }] = await tx
+        .select({
+          refundedItemCount: sql<number>`COUNT(DISTINCT ${refundItems.paymentItemId})::int`,
+        })
+        .from(refundItems)
+        .innerJoin(refunds, eq(refunds.id, refundItems.refundId))
+        .where(
+          and(
+            eq(refunds.paymentId, refund.paymentId),
+            sql`(${refunds.status} = 'completed' OR ${refunds.id} = ${refundId})`,
+          ),
+        );
+
+      const allLinesRefunded =
+        itemCount > 0
+          ? refundedItemCount >= itemCount
+          : refundAmount >= originalAmount;
+      allLinesRefundedOut = allLinesRefunded;
+      const paymentStatus = allLinesRefunded
+        ? PAYMENT_STATUS.REFUNDED
+        : PAYMENT_STATUS.PARTIALLY_REFUNDED;
 
       await tx
         .update(payments)
@@ -636,12 +1035,18 @@ export class RefundService {
         })
         .where(eq(payments.id, refund.paymentId));
 
-      // Invoice status
+      // Invoice status mirrors payment status — REFUNDED on a full
+      // unwind, PARTIALLY_REFUNDED on a per-course refund. Leaving it as
+      // 'paid' (the old behaviour) made the invoice list misleadingly
+      // show "Paid" for invoices the buyer had already been partially
+      // refunded on.
       if (refund.invoiceId) {
         await tx
           .update(invoices)
           .set({
-            status: INVOICE_STATUS.REFUNDED,
+            status: allLinesRefunded
+              ? INVOICE_STATUS.REFUNDED
+              : INVOICE_STATUS.PARTIALLY_REFUNDED,
             updatedAt: new Date(),
           })
           .where(eq(invoices.id, refund.invoiceId));
@@ -698,13 +1103,19 @@ export class RefundService {
       }
     });
 
-    // Reverse discount usage so the coupon can be reused
-    try {
-      await this.discountService.reverseUsage(refund.paymentId);
-    } catch (err) {
-      this.logger.error(
-        `Failed to reverse discount usage for payment ${refund.paymentId}: ${err.message}`,
-      );
+    // Reverse discount usage so the coupon can be reused — only on a
+    // full unwind. A partial refund leaves the coupon "used" because the
+    // buyer kept at least one course the coupon was applied against;
+    // reversing would let them reuse the coupon AND keep the discounted
+    // course.
+    if (allLinesRefundedOut) {
+      try {
+        await this.discountService.reverseUsage(refund.paymentId);
+      } catch (err) {
+        this.logger.error(
+          `Failed to reverse discount usage for payment ${refund.paymentId}: ${err.message}`,
+        );
+      }
     }
 
     // Zoom-side registrant cancellation — best-effort, runs AFTER the DB
@@ -803,8 +1214,31 @@ export class RefundService {
     paymentId: refunds.paymentId,
     requesterName: sql<string>`CONCAT(requester.first_name, ' ', requester.last_name)`,
     requesterEmail: sql<string>`requester.email`,
-    courseTitle: sql<string>`${courses.title}`,
-    courseTitleAr: sql<string>`${courses.titleAr}`,
+    // Course title = the FIRST course the refund actually covers (via
+    // refund_items → courses). For multi-course refunds, the UI uses
+    // refundedCourseCount to render "(+N more)". Falls back to
+    // payments.courseId for genuinely-empty refund_items rows.
+    //
+    // Implemented as scalar subqueries instead of LATERAL because drizzle's
+    // sql template doesn't compose cleanly into leftJoin; subqueries here
+    // are 1:1 per refund and the refund_items index makes them cheap.
+    courseTitle: sql<string | null>`COALESCE(
+      (SELECT c.title FROM ${refundItems} ri JOIN ${courses} c ON c.id = ri.course_id
+       WHERE ri.refund_id = ${refunds.id}
+       ORDER BY ri.created_at ASC, c.title ASC LIMIT 1),
+      ${courses.title}
+    )`,
+    courseTitleAr: sql<string | null>`COALESCE(
+      (SELECT c.title_ar FROM ${refundItems} ri JOIN ${courses} c ON c.id = ri.course_id
+       WHERE ri.refund_id = ${refunds.id}
+       ORDER BY ri.created_at ASC, c.title ASC LIMIT 1),
+      ${courses.titleAr}
+    )`,
+    refundedCourseCount: sql<number>`COALESCE(
+      (SELECT COUNT(DISTINCT ri.course_id)::int FROM ${refundItems} ri
+       WHERE ri.refund_id = ${refunds.id}),
+      0
+    )`,
     gateway: payments.gateway,
     reason: refunds.reason,
     reasonNote: refunds.reasonNote,
@@ -1102,10 +1536,29 @@ export class RefundService {
       processorEmail = proc?.email ?? null;
     }
 
+    // Per-course refunded items so the refund drawer can list exactly
+    // which courses were covered (instead of just the payment's first
+    // course). Empty array = legacy refund without refund_items rows.
+    const refundedItems = await db
+      .select({
+        paymentItemId: refundItems.paymentItemId,
+        courseId: refundItems.courseId,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        lineAmount: refundItems.lineAmount,
+        lineVat: refundItems.lineVat,
+        lineDiscount: refundItems.lineDiscount,
+        lineTotal: refundItems.lineTotal,
+      })
+      .from(refundItems)
+      .leftJoin(courses, eq(courses.id, refundItems.courseId))
+      .where(eq(refundItems.refundId, refundId));
+
     return {
       ...base,
       processorName,
       processorEmail,
+      refundedItems,
     };
   }
 
@@ -1168,8 +1621,10 @@ export class RefundService {
     adminId: string,
     dto: CreateRefundDto & {
       justification?: string;
-      /** Optional partial refund amount. Defaults to full payment. Only
-       * honored for Moyasar / Bank Transfer; BNPL forces full. */
+      /** Optional explicit refund amount override. Used only when the
+       * admin is overriding the line-derived total (e.g. waiving a
+       * partial portion). When omitted, the amount is summed from the
+       * selected paymentItemIds (or the full payment if none selected). */
       refundAmount?: number;
       /** When true, the policy eligibility gate is bypassed. The bypass
        * (with the gate's reason) is recorded in the audit log. */
@@ -1197,14 +1652,14 @@ export class RefundService {
       .where(
         and(
           eq(refunds.paymentId, dto.paymentId),
-          sql`${refunds.status} IN ('pending', 'approved', 'processing', 'completed')`,
+          sql`${refunds.status} IN ('pending', 'approved', 'processing')`,
         ),
       )
       .limit(1);
 
     if (existingRefund) {
       throw new BadRequestException(
-        'A refund already exists for this payment',
+        'A refund is already in progress for this payment',
       );
     }
 
@@ -1232,12 +1687,28 @@ export class RefundService {
       }
     }
 
+    const breakdown = await this.getPaymentLineBreakdown(dto.paymentId);
+    const selectedLines = this.pickRefundableLines(
+      breakdown.lines,
+      dto.paymentItemIds,
+    );
+    const linesSum = round2(
+      selectedLines.reduce((s, l) => s + l.lineTotal, 0),
+    );
+
     const originalAmount = Number(payment.amount);
+    // dto.refundAmount, when provided, is an admin override that wins
+    // over the line-derived sum — used when finance wants to waive a
+    // portion (e.g. SAR 50 goodwill against a SAR 200 line). We still
+    // record the selected lines so the cascade drops the right
+    // enrollments; the per-line monetary snapshot is the override-scaled
+    // share.
+    const requestedAmount = dto.refundAmount ?? linesSum;
     const { refundAmount, merchantFeeAmount, merchantFeeReason, isPartial } =
       await this.computeRefundMath(
         payment.gateway,
         originalAmount,
-        dto.refundAmount,
+        requestedAmount,
       );
 
     const [invoice] = await db
@@ -1262,6 +1733,23 @@ export class RefundService {
         status: REFUND_STATUS.PENDING,
       })
       .returning();
+
+    // Scale per-line snapshots when admin overrode the total so each
+    // refund_items row sums back to the actual refundAmount. Without
+    // scaling, a SAR 50 override on a SAR 200 line would record line
+    // snapshot 200 + refund snapshot 50 — finance reports would diverge.
+    const scale =
+      linesSum > 0 && Math.abs(requestedAmount - linesSum) >= 0.01
+        ? refundAmount / linesSum
+        : 1;
+    const scaledLines = selectedLines.map((l) => ({
+      ...l,
+      lineSubtotal: round2(l.lineSubtotal * scale),
+      lineDiscount: round2(l.lineDiscount * scale),
+      lineVat: round2(l.lineVat * scale),
+      lineTotal: round2(l.lineTotal * scale),
+    }));
+    await this.insertRefundItemsForLines(refund.id, scaledLines);
 
     try {
       await this.emailService.sendRefundRequested(payment.userId, refund.id);
@@ -1288,6 +1776,8 @@ export class RefundService {
         merchantFeeAmount,
         isPartial,
         justification: dto.justification || null,
+        paymentItemIds: dto.paymentItemIds ?? null,
+        selectedCourseIds: selectedLines.map((l) => l.courseId),
         ...(bypassedBlockReason
           ? { bypassedBlockReason }
           : {}),
@@ -1357,7 +1847,11 @@ export class RefundService {
    * BEFORE submitting. Math is identical to adminInitiateRefund so the
    * preview is the single source of truth.
    */
-  async getRefundPreview(paymentId: string, requestedAmount?: number) {
+  async getRefundPreview(
+    paymentId: string,
+    requestedAmount?: number,
+    paymentItemIds?: string[],
+  ) {
     const [payment] = await db
       .select()
       .from(payments)
@@ -1368,9 +1862,12 @@ export class RefundService {
       throw new NotFoundException('Payment not found');
     }
 
-    if (payment.status !== PAYMENT_STATUS.PAID) {
+    if (
+      payment.status !== PAYMENT_STATUS.PAID &&
+      payment.status !== PAYMENT_STATUS.PARTIALLY_REFUNDED
+    ) {
       throw new BadRequestException(
-        'Only paid payments are eligible for a refund preview',
+        'Only paid (or partially-refunded) payments are eligible for a refund preview',
       );
     }
 
@@ -1384,7 +1881,10 @@ export class RefundService {
       .where(
         and(
           eq(refunds.paymentId, paymentId),
-          sql`${refunds.status} IN ('pending', 'approved', 'processing','completed')`,
+          // Block only in-flight refunds. Completed refunds are OK — we
+          // allow a SECOND refund covering remaining (not-yet-refunded)
+          // lines for per-course partial refunds.
+          sql`${refunds.status} IN ('pending', 'approved', 'processing')`,
         ),
       )
       .limit(1);
@@ -1444,7 +1944,34 @@ export class RefundService {
       enrollment = enr || null;
     }
 
+    // Build the line breakdown so the preview can show each cart course
+    // with its own per-line refund amount. If a specific subset was
+    // requested, narrow to those lines and use their sum as the default
+    // refund amount; otherwise default to the full refundable total.
+    const breakdown = await this.getPaymentLineBreakdown(paymentId);
+    const refundableLines = breakdown.lines.filter(
+      (l) => l.refundedByRefundId === null,
+    );
+    let selectedLines = refundableLines;
+    if (paymentItemIds && paymentItemIds.length > 0) {
+      const idSet = new Set(paymentItemIds);
+      const filtered = refundableLines.filter(
+        (l) => l.paymentItemId !== null && idSet.has(l.paymentItemId),
+      );
+      if (filtered.length > 0) selectedLines = filtered;
+    }
+    const linesSum = round2(
+      selectedLines.reduce((s, l) => s + l.lineTotal, 0),
+    );
+
     const originalAmount = Number(payment.amount);
+    // Precedence: explicit requestedAmount > sum of selected lines >
+    // refundable total. Lets the admin override per-line totals if they
+    // need to waive part of a partial refund.
+    const refundTargetAmount =
+      requestedAmount !== undefined && requestedAmount !== null
+        ? requestedAmount
+        : linesSum;
     const {
       refundAmount,
       merchantFeeAmount,
@@ -1455,7 +1982,7 @@ export class RefundService {
     } = await this.computeRefundMath(
       payment.gateway,
       originalAmount,
-      requestedAmount,
+      refundTargetAmount,
     );
 
     // Policy eligibility status for the UI — preview shows this so the
@@ -1501,6 +2028,13 @@ export class RefundService {
       };
     })();
 
+    // Maximum the operator can refund right now = sum of every still-
+    // refundable line. On a payment with prior partial refunds this is
+    // less than originalAmount.
+    const maxRefundableNow = round2(
+      refundableLines.reduce((s, l) => s + l.lineTotal, 0),
+    );
+
     return {
       payment: {
         id: payment.id,
@@ -1517,8 +2051,42 @@ export class RefundService {
       eligibility,
       capabilities: {
         supportsPartial: partialRefundCapable,
-        maxRefundAmount: originalAmount,
-        minRefundAmount: partialRefundCapable ? 1 : originalAmount,
+        maxRefundAmount: maxRefundableNow,
+        minRefundAmount: partialRefundCapable ? 1 : maxRefundableNow,
+      },
+      // Per-course breakdown so the modal can render checkboxes. UI
+      // disables already-refunded lines and badges them with the prior
+      // refundId so finance can navigate to that refund's drawer.
+      lineItems: breakdown.lines.map((l) => ({
+        paymentItemId: l.paymentItemId,
+        courseId: l.courseId,
+        courseTitle: l.courseTitle,
+        courseTitleAr: l.courseTitleAr,
+        enrollmentId: l.enrollmentId,
+        enrollmentStatus: l.enrollmentStatus,
+        unitPrice: l.unitPrice,
+        lineSubtotal: l.lineSubtotal,
+        lineDiscount: l.lineDiscount,
+        lineVat: l.lineVat,
+        lineTotal: l.lineTotal,
+        alreadyRefundedByRefundId: l.refundedByRefundId,
+        selected:
+          paymentItemIds && paymentItemIds.length > 0
+            ? l.paymentItemId !== null && paymentItemIds.includes(l.paymentItemId)
+            : l.refundedByRefundId === null,
+      })),
+      selection: {
+        paymentItemIds:
+          paymentItemIds && paymentItemIds.length > 0
+            ? paymentItemIds
+            : selectedLines
+                .map((l) => l.paymentItemId)
+                .filter((id): id is string => id !== null),
+        selectedTotal: linesSum,
+        isFullPaymentRefund: selectedLines.length === breakdown.lines.length,
+        isPartialCartRefund:
+          selectedLines.length > 0 &&
+          selectedLines.length < breakdown.lines.length,
       },
       breakdown: {
         originalAmount,
@@ -1530,8 +2098,9 @@ export class RefundService {
       },
       refundDestination,
       consequences: {
-        dropsEnrollment: !!payment.enrollmentId,
-        reversesDiscount: true,
+        dropsEnrollment: selectedLines.some((l) => l.enrollmentId !== null),
+        reversesDiscount:
+          selectedLines.length === breakdown.lines.length, // only on full unwind
         revokesCertificate: true,
         cancelsFutureWebinarRegistrations: true,
       },
@@ -1653,4 +2222,23 @@ export class RefundService {
 
     return lines.join('\n');
   }
+}
+
+// ─── Pure helpers ──────────────────────────────────────────────────
+
+/** 2dp rounding using bankers' floor — avoids the floating-point drift
+ *  toFixed gives on values like 0.575 (→ 0.57 instead of 0.58). */
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+/** Accept number, numeric string, or undefined/null/non-number from a
+ *  JSONB metadata blob and return a plain number (or undefined). */
+function numFromMeta(v: unknown): number | undefined {
+  if (typeof v === 'number' && !Number.isNaN(v)) return v;
+  if (typeof v === 'string') {
+    const n = Number(v);
+    return Number.isNaN(n) ? undefined : n;
+  }
+  return undefined;
 }

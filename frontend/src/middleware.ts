@@ -49,6 +49,12 @@ function buildCsp(nonce: string): string {
     'https://www.facebook.com',
     'https://www.google.com',
     'https://www.gstatic.com',
+    // Sentry frontend error ingest. Project lives in the EU region
+    // (de.sentry.io); subdomain is the numeric org id which can change
+    // if the org is moved, so we whitelist the full ingest subdomain
+    // pattern rather than a specific host.
+    'https://*.ingest.de.sentry.io',
+    'https://*.ingest.sentry.io',
   ];
   if (!IS_PROD) {
     connect.push('http://localhost:8080', 'http://localhost:*', 'ws://localhost:*');

@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -105,4 +106,33 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+const baseConfig = withNextIntl(nextConfig);
+
+// Sentry build-time wrapper. Uploads source maps to the EU Sentry project
+// after `next build` so production stack traces show original TypeScript
+// line numbers. Skipped automatically if SENTRY_AUTH_TOKEN is unset, so
+// local `next build` without prod creds still succeeds.
+export default withSentryConfig(baseConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Silence the source-map upload chatter when there's no token (local dev).
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+
+  // Strip the uploaded source maps from the public bundle so we don't ship
+  // them to browsers (they're already in Sentry for our use).
+  sourcemaps: { disable: false, deleteSourcemapsAfterUpload: true },
+
+  // Avoid touching the Vercel-only ad-blocker bypass route.
+  disableLogger: true,
+
+  // Reduce bundle size — tree-shake debug-only Sentry code in prod.
+  reactComponentAnnotation: { enabled: false },
+
+  // Don't fail the build if Sentry's API is down at deploy time.
+  errorHandler: (err) => {
+    // eslint-disable-next-line no-console
+    console.warn("[sentry] source-map upload failed (non-fatal):", err.message);
+  },
+});

@@ -44,6 +44,7 @@ import { PointsService } from '../points/points.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 import { SessionsService } from '../sessions/sessions.service';
+import { XapiService } from '../xapi/xapi.service';
 import { toArabicIndic } from '../../common/platform-locale';
 import { sanitizeRichText } from '../../common/sanitize-html';
 import { getEffectivePrice } from './pricing.util';
@@ -62,6 +63,7 @@ export class CoursesService {
     private readonly adminSettings: AdminSettingsService,
     @Inject(forwardRef(() => SessionsService))
     private readonly sessionsService: SessionsService,
+    private readonly xapiService: XapiService,
   ) {}
 
   /**
@@ -2195,11 +2197,25 @@ export class CoursesService {
       throw new BadRequestException('Course is already active');
     }
 
+    // Completed courses cannot be re-activated. Completion fans out
+    // many irreversible side-effects — finalizeEnrollments flips every
+    // active enrollment to 'completed', issues certificate requests,
+    // awards points, and emits xAPI `completed` to NELC. Re-activating
+    // the course leaves enrollments stuck on 'completed', so the new
+    // assessments / content the manager adds are inaccessible to
+    // students whose enrollment never went back to 'active'. The
+    // expected remedy is to duplicate the course as a new offering
+    // rather than try to undo a completion in place.
+    if (course.status === COURSE_STATUS.COMPLETED) {
+      throw new BadRequestException(
+        'This course has already been completed and cannot be re-activated. Please duplicate the course to start a new offering — student enrollments, certificates, and NELC reporting cannot be safely rolled back.',
+      );
+    }
+
     const allowedStatuses = [
       COURSE_STATUS.PENDING_REVIEW,
       COURSE_STATUS.DRAFT,
       COURSE_STATUS.ARCHIVED,
-      COURSE_STATUS.COMPLETED,
     ];
 
     if (!allowedStatuses.includes(course.status as any)) {
@@ -2208,9 +2224,7 @@ export class CoursesService {
       );
     }
 
-    const isReactivation =
-      course.status === COURSE_STATUS.ARCHIVED ||
-      course.status === COURSE_STATUS.COMPLETED;
+    const isReactivation = course.status === COURSE_STATUS.ARCHIVED;
 
     // Only validate readiness and materials for first-time activation (not reactivation)
     if (!isReactivation) {
@@ -2510,6 +2524,13 @@ export class CoursesService {
             `Course-completion points failed for enrollment ${student.id}: ${(err as Error).message}`,
           ),
         );
+    }
+
+    // NELC xAPI — emit course-completed per finalized enrollment.
+    // Mirrors the cron path's behaviour so manual completion via the
+    // instructor / manager UI produces the same statement stream.
+    for (const student of activeStudents) {
+      void this.xapiService.emitCourseCompleted(student.studentId, courseId);
     }
 
     this.logger.log(
@@ -2890,6 +2911,11 @@ export class CoursesService {
     this.notifyManagerOfPendingReview(courseId, created.id, studentId, rating, reviewText || null).catch((err) =>
       this.logger.warn(`Failed to notify manager of pending review: ${(err as Error).message}`),
     );
+
+    // NELC xAPI — rating statement. Emitted on first submission even
+    // though the review is still pending moderation (NELC's validator
+    // cares about the learner action, not staff approval).
+    void this.xapiService.emitCourseRated(studentId, courseId, rating, reviewText || '');
 
     return created;
   }

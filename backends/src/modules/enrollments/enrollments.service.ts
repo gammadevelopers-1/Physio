@@ -5,7 +5,7 @@ import {
   Inject,
   Logger,
 } from '@nestjs/common';
-import { eq, and, ne, desc, count, sql, or, inArray, isNull } from 'drizzle-orm';
+import { eq, and, ne, desc, count, sql, or, inArray, isNull, notInArray, gte } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -37,6 +37,7 @@ import {
   classifyCourse,
   getNelcMaxEnrollment,
 } from '../courses/nelc-config';
+import { XapiService } from '../xapi/xapi.service';
 
 @Injectable()
 export class EnrollmentsService {
@@ -50,6 +51,7 @@ export class EnrollmentsService {
     private readonly emailService: EmailService,
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
     private readonly adminSettings: AdminSettingsService,
+    private readonly xapiService: XapiService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -239,6 +241,11 @@ export class EnrollmentsService {
         this.logger.error('Failed to send enrollment notification', err),
       );
 
+      // NELC xAPI — fire & forget. Re-activation counts as a fresh
+      // enrolment for NELC: the learner is now "registered" on this
+      // course again.
+      void this.xapiService.emitCourseEnrollment(studentId, courseId, reactivated.id);
+
       return reactivated;
     }
 
@@ -281,6 +288,11 @@ export class EnrollmentsService {
       this.logger.error('Failed to send enrollment notification', err),
     );
 
+    // NELC xAPI — fire & forget. The 'registered' statement is the
+    // first event in NELC's validator pipeline; 'initialized' follows
+    // when the student opens course content (hooked in StudentService).
+    void this.xapiService.emitCourseEnrollment(studentId, courseId, enrollment.id);
+
     return enrollment;
   }
 
@@ -297,7 +309,7 @@ export class EnrollmentsService {
    * never thrown — the enrollment itself must not be blocked by Zoom
    * downtime.
    */
-  private async autoRegisterStudentForWebinarCourse(
+  async autoRegisterStudentForWebinarCourse(
     courseId: string,
     studentId: string,
   ): Promise<void> {
@@ -319,6 +331,14 @@ export class EnrollmentsService {
     // table (denormalized cache that mirrors what Zoom received).
     const student = decryptUserPII(rawStudent);
 
+    // Only register for webinars the student can actually attend:
+    // upcoming + non-cancelled + not already ended. Past webinars
+    // (status ended/completed/missed OR scheduledAt < now) would
+    // pointlessly register them for an event that already happened,
+    // and downstream code would treat the registration as "missed
+    // attendance" — bad UX. The progress.helper denominator filter
+    // mirrors this so late enrollees still hit 100%.
+    const now = new Date();
     const webinarSessions = await db
       .select({
         id: sessions.id,
@@ -329,7 +349,13 @@ export class EnrollmentsService {
         and(
           eq(sessions.courseId, courseId),
           eq(sessions.isWebinar, true),
-          ne(sessions.status, 'cancelled'),
+          notInArray(sessions.status, [
+            'cancelled',
+            'ended',
+            'completed',
+            'missed',
+          ]),
+          gte(sessions.scheduledAt, now),
         ),
       );
 
@@ -816,6 +842,15 @@ export class EnrollmentsService {
       },
     });
 
+    // NELC xAPI — emit ONLY when status is 'present'. Absent / late /
+    // excused don't map to a meaningful xAPI event in NELC's pipeline.
+    // Upsert means this can flip a learner from absent→present; the
+    // statement is still correct (NELC dedupes by statement id, and
+    // each emit creates a new row anyway).
+    if (dto.status === 'present') {
+      void this.xapiService.emitWebinarAttended(dto.studentId, sessionId);
+    }
+
     return record;
   }
 
@@ -873,6 +908,13 @@ export class EnrollmentsService {
         .returning();
 
       results.push(upserted);
+
+      // NELC xAPI — only 'present' rows generate a statement. Fire
+      // inside the loop so even a partial-failure bulk still records
+      // the successful ones.
+      if (record.status === 'present') {
+        void this.xapiService.emitWebinarAttended(record.studentId, sessionId);
+      }
 
       await this.auditService.log({
         eventType: NELC_EVENT_TYPE.ATTENDANCE_MARKED_MANUAL,

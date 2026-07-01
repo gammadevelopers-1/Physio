@@ -248,15 +248,15 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
       },
       lang: params.locale || 'en',
       merchant_code: this.merchantCode,
-      // success goes to our /payment/callback handler. cancel + failure both
-      // send the buyer back to the checkout page (params.cancelUrl) so they
-      // can pick a different gateway or retry — without that fallback the
-      // old code's string-replace was a no-op (the redirect URL has no
-      // status=paid substring) and every outcome landed on the success spinner.
+      // success goes to our /payment/callback handler. cancel/failure go
+      // to distinct URLs when the caller provides them (so /payment/failed
+      // can render Tabby's prescribed verbatim copy for each outcome per
+      // https://docs.tabby.ai/pay-in-4-custom-integration/checkout-flow#redirection-to-the-store).
+      // Falls back to cancelUrl → redirectUrl for backwards compat.
       merchant_urls: {
         success: params.redirectUrl,
         cancel: params.cancelUrl || params.redirectUrl,
-        failure: params.cancelUrl || params.redirectUrl,
+        failure: params.failureUrl || params.cancelUrl || params.redirectUrl,
       },
     };
   }
@@ -589,14 +589,27 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
     }
 
     // Per Tabby docs (POST /api/v2/payments/{id}/refunds):
-    //   amount       — string, up to 2 decimals for SAR
+    //   amount       — string, up to 2 decimals for SAR (partial allowed)
     //   reference_id — idempotency key; replay-safe with the same key
     //   reason       — human-readable explanation (shown in merchant portal)
+    //   items        — optional per-line breakdown; surfaces in the Tabby
+    //                  merchant portal so ops can see WHICH cart courses a
+    //                  partial refund covered without joining tables.
+    //                  Total of unit_price * quantity should match amount.
     const body: Record<string, unknown> = {
       amount: params.amount.toFixed(2),
     };
     if (params.refundId) body.reference_id = params.refundId;
     if (params.reason) body.reason = params.reason;
+    if (params.items && params.items.length > 0) {
+      body.items = params.items.map((it) => ({
+        title: it.title,
+        reference_id: it.referenceId,
+        quantity: it.quantity,
+        unit_price: it.unitPrice.toFixed(2),
+        category: it.category || 'Education',
+      }));
+    }
 
     const response = await this.fetchWithRetry(
       `${this.apiUrl}/payments/${params.gatewayChargeId}/refunds`,

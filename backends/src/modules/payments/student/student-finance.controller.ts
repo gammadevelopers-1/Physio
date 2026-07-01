@@ -37,6 +37,7 @@ import { CurrentUser, Roles } from '../../auth/decorators';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 import { GatewayCredentialsService } from '../gateways/gateway-credentials.service';
 import { RefundPolicyService } from '../services/refund-policy.service';
+import { RefundService } from '../services/refund.service';
 
 /**
  * Student-facing finance API. Read-only for the most part — students see
@@ -60,6 +61,7 @@ export class StudentFinanceController {
   constructor(
     private readonly credentials: GatewayCredentialsService,
     private readonly refundPolicy: RefundPolicyService,
+    private readonly refundService: RefundService,
   ) {}
 
   // ─── Overview ─────────────────────────────────────────────────────
@@ -366,12 +368,32 @@ export class StudentFinanceController {
       partialRefundCapable: false,
     };
 
+    // Per-course line breakdown for the drawer + refund modal. Same
+    // projection the refund POST will consume — so what the student
+    // sees (per-course price, per-course refund status) matches exactly
+    // what they can request.
+    const breakdown = await this.refundService.getPaymentLineBreakdown(id);
+
     return {
       payment: {
         ...row,
         vatBreakdown: extractVatBreakdown(row.metadata, row.amount),
       },
       refunds: refundRows,
+      lineItems: breakdown.lines.map((l) => ({
+        paymentItemId: l.paymentItemId,
+        courseId: l.courseId,
+        courseTitle: l.courseTitle,
+        courseTitleAr: l.courseTitleAr,
+        enrollmentId: l.enrollmentId,
+        enrollmentStatus: l.enrollmentStatus,
+        unitPrice: l.unitPrice,
+        lineSubtotal: l.lineSubtotal,
+        lineDiscount: l.lineDiscount,
+        lineVat: l.lineVat,
+        lineTotal: l.lineTotal,
+        alreadyRefundedByRefundId: l.refundedByRefundId,
+      })),
       refundability: {
         canRequest: canRequestRefund,
         blockedBy: refundBlockedBy,

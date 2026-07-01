@@ -25,6 +25,7 @@ import {
   Mail,
   Headphones,
   UserPlus,
+  Wifi,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { roleRequestsApi, profileApi, adminApi, supportApi } from "@/lib/api";
@@ -196,6 +197,11 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
       label: t("sidebar.compliance"),
       href: `/${locale}/dashboard/admin/compliance`,
       icon: FileText,
+    },
+    {
+      label: t("sidebar.nelcIntegration"),
+      href: `/${locale}/dashboard/admin/integrations/nelc`,
+      icon: Wifi,
     },
     {
       label: t("sidebar.logs"),

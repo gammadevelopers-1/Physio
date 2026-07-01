@@ -40,9 +40,11 @@ import { AdminNotificationsModule } from './modules/admin-notifications/admin-no
 import { AdminSettingsModule } from './modules/admin-settings/admin-settings.module';
 import { TemplatesModule } from './modules/templates/templates.module';
 import { BackupsModule } from './modules/backups/backups.module';
+import { ErrorMonitoringModule } from './modules/error-monitoring/error-monitoring.module';
 import { ServiceStatusModule } from './modules/service-status/service-status.module';
 import { ScheduledMaintenanceModule } from './modules/scheduled-maintenance/scheduled-maintenance.module';
 import { SidebarBadgesModule } from './modules/sidebar-badges/sidebar-badges.module';
+import { XapiModule } from './modules/xapi/xapi.module';
 import { MaintenanceMiddleware } from './common/maintenance.middleware';
 import { JwtAuthGuard } from './modules/auth/guards';
 import { ThrottlerGuard } from '@nestjs/throttler';
@@ -52,13 +54,14 @@ import storageConfig from './config/storage.config';
 import zoomConfig from './config/zoom.config';
 import processingConfig from './config/processing.config';
 import paymentsConfig from './config/payments.config';
+import nelcConfig from './config/nelc.config';
 
 @Module({
   imports: [
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, storageConfig, zoomConfig, processingConfig, paymentsConfig],
+      load: [appConfig, databaseConfig, storageConfig, zoomConfig, processingConfig, paymentsConfig, nelcConfig],
       envFilePath: [
         `.env.${process.env.NODE_ENV || 'local'}`,
         '.env.local',
@@ -137,6 +140,7 @@ import paymentsConfig from './config/payments.config';
     PreferencesModule,
     AuditLogModule,
     BackupsModule,
+    ErrorMonitoringModule,
     StudentModule,
     SupportModule,
     UserNotificationsModule,
@@ -149,6 +153,7 @@ import paymentsConfig from './config/payments.config';
     ServiceStatusModule,
     ScheduledMaintenanceModule,
     SidebarBadgesModule,
+    XapiModule,
   ],
   controllers: [AppController],
   providers: [

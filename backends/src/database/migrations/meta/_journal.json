@@ -561,6 +561,27 @@
       "when": 1783411200000,
       "tag": "0094_courses_vat_treatment",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1783497600000,
+      "tag": "0095_refund_items",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1783584000000,
+      "tag": "0096_invoice_partially_refunded",
+      "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1783670400000,
+      "tag": "0097_xapi_log",
+      "breakpoints": true
     }
   ]
 }

@@ -39,6 +39,15 @@ const REASON_KEYS = [
 
 type ReasonKey = (typeof REASON_KEYS)[number];
 
+type LineItem = {
+  paymentItemId: string | null;
+  courseId: string;
+  courseTitle: string | null;
+  courseTitleAr: string | null;
+  lineTotal: number;
+  alreadyRefundedByRefundId: string | null;
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -51,6 +60,7 @@ type Props = {
     courseTitleAr: string | null;
     invoiceNumber: string | null;
   };
+  lineItems: LineItem[];
 };
 
 type Step = "form" | "confirm" | "success";
@@ -60,16 +70,38 @@ const StudentRefundRequestModal = ({
   onClose,
   onSuccess,
   payment,
+  lineItems,
 }: Props) => {
   const t = useTranslations("studentDashboard.billing.refundModal");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Lines the student can actually refund — anything already refunded by
+  // a prior completed refund is shown but disabled. paymentItemId === null
+  // means a legacy single-course payment with no payment_items row; that
+  // path forces a full refund (no checkbox UI needed).
+  const refundableLines = lineItems.filter(
+    (l) => !l.alreadyRefundedByRefundId,
+  );
+  const supportsPerLineRefund =
+    refundableLines.length > 1 &&
+    refundableLines.every((l) => l.paymentItemId !== null);
 
   const [step, setStep] = useState<Step>("form");
   const [reason, setReason] = useState<ReasonKey | "">("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Multi-select state — default to every refundable line so the modal
+  // behaves like a full refund when the student doesn't deselect anything.
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
+    () =>
+      new Set(
+        refundableLines
+          .map((l) => l.paymentItemId)
+          .filter((id): id is string => id !== null),
+      ),
+  );
 
   if (!open) return null;
 
@@ -79,8 +111,20 @@ const StudentRefundRequestModal = ({
     locale,
   );
   const amountNum = Number(payment.amount) || 0;
-  // Customer always receives full amount; merchant fee is borne by us.
-  const customerReceivesSar = amountNum;
+  // When per-line selection is supported and the student deselected some,
+  // refund only the sum of remaining lines. Otherwise full payment amount.
+  const selectedLines = supportsPerLineRefund
+    ? refundableLines.filter(
+        (l) => l.paymentItemId !== null && selectedItemIds.has(l.paymentItemId),
+      )
+    : refundableLines;
+  const customerReceivesSar = supportsPerLineRefund
+    ? selectedLines.reduce((s, l) => s + l.lineTotal, 0)
+    : amountNum;
+  const isPartialCart =
+    supportsPerLineRefund &&
+    selectedLines.length > 0 &&
+    selectedLines.length < refundableLines.length;
 
   const resetAndClose = () => {
     setStep("form");
@@ -100,8 +144,21 @@ const StudentRefundRequestModal = ({
       setError(t("noteRequired"));
       return;
     }
+    if (supportsPerLineRefund && selectedLines.length === 0) {
+      setError(t("selectAtLeastOneCourse"));
+      return;
+    }
     setError(null);
     setStep("confirm");
+  };
+
+  const toggleLine = (paymentItemId: string) => {
+    setSelectedItemIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(paymentItemId)) next.delete(paymentItemId);
+      else next.add(paymentItemId);
+      return next;
+    });
   };
 
   const goBack = () => {
@@ -114,11 +171,20 @@ const StudentRefundRequestModal = ({
     setSubmitting(true);
     setError(null);
     try {
-      await refundApi.request({
+      const payload: Parameters<typeof refundApi.request>[0] = {
         paymentId: payment.id,
         reason,
         reasonNote: note.trim() || undefined,
-      });
+      };
+      // Pass paymentItemIds only when the user actually selected a subset
+      // (partial cart). Omitting the field defaults to a full refund on
+      // the backend — same behaviour the old code path had.
+      if (isPartialCart) {
+        payload.paymentItemIds = selectedLines
+          .map((l) => l.paymentItemId)
+          .filter((id): id is string => id !== null);
+      }
+      await refundApi.request(payload);
       setStep("success");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("submitError"));
@@ -214,6 +280,61 @@ const StudentRefundRequestModal = ({
 
               {step === "form" ? (
                 <>
+                  {supportsPerLineRefund && (
+                    <fieldset>
+                      <legend className="block text-sm font-medium text-[#374151] mb-2">
+                        {t("selectCoursesLabel")}
+                      </legend>
+                      <p className="text-[11px] text-[#6B7280] mb-2">
+                        {t("selectCoursesHint")}
+                      </p>
+                      <div className="space-y-1.5">
+                        {refundableLines.map((li) => {
+                          if (!li.paymentItemId) return null;
+                          const checked = selectedItemIds.has(li.paymentItemId);
+                          const title = pickCourseTitle(
+                            li.courseTitle,
+                            li.courseTitleAr,
+                            locale,
+                          );
+                          return (
+                            <label
+                              key={li.paymentItemId}
+                              className={`flex items-center gap-3 p-2.5 border rounded-lg cursor-pointer transition ${
+                                checked
+                                  ? "border-[var(--color-primary)] bg-[#FFFBF0]"
+                                  : "border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => {
+                                  toggleLine(li.paymentItemId!);
+                                  setError(null);
+                                }}
+                                className="accent-[var(--color-primary)]"
+                              />
+                              <span className="flex-1 text-sm text-[#374151] truncate">
+                                {title}
+                              </span>
+                              <span className="text-sm text-[#1F2937] tabular-nums shrink-0">
+                                {formatSar(li.lineTotal)}{" "}
+                                {locale === "ar" ? "ر.س" : "SAR"}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {isPartialCart && (
+                        <p className="mt-2 text-[11px] text-[#6B7280] flex items-start gap-1.5">
+                          <Info className="w-3 h-3 mt-0.5 shrink-0" />
+                          <span>{t("partialCartNotice")}</span>
+                        </p>
+                      )}
+                    </fieldset>
+                  )}
+
                   <fieldset>
                     <legend className="block text-sm font-medium text-[#374151] mb-2">
                       {t("reasonLabel")}
@@ -272,6 +393,36 @@ const StudentRefundRequestModal = ({
               ) : (
                 /* Confirm step */
                 <>
+                  {isPartialCart && (
+                    <section className="border border-[#E5E7EB] rounded-lg p-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6B7280] mb-2">
+                        {t("selectedCoursesTitle")}
+                      </h3>
+                      <ul className="space-y-1 text-sm">
+                        {selectedLines.map((li) => {
+                          const title = pickCourseTitle(
+                            li.courseTitle,
+                            li.courseTitleAr,
+                            locale,
+                          );
+                          return (
+                            <li
+                              key={li.paymentItemId ?? li.courseId}
+                              className="flex items-center justify-between gap-3"
+                            >
+                              <span className="text-[#1F2937] truncate">
+                                {title}
+                              </span>
+                              <span className="text-[#1F2937] tabular-nums shrink-0">
+                                {formatSar(li.lineTotal)}{" "}
+                                {locale === "ar" ? "ر.س" : "SAR"}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  )}
                   <section className="border border-[#E5E7EB] rounded-lg p-3 space-y-1.5 text-sm">
                     <Row
                       label={t("reasonLabel")}
@@ -300,7 +451,9 @@ const StudentRefundRequestModal = ({
                   <p className="text-xs text-[#6B7280] flex items-start gap-1.5">
                     <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                     <span>
-                      {t("fullRefundNote")}
+                      {isPartialCart
+                        ? t("partialRefundNote")
+                        : t("fullRefundNote")}
                       <br />
                       {t(`gatewayHints.${gatewayKey}`)}
                     </span>

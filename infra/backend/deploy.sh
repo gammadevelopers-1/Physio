@@ -92,7 +92,7 @@ log_info "CORS_ORIGIN will include: ${FRONTEND_URL}"
 log_step "Deploying to Cloud Run..."
 
 # Check if Cloud SQL instance exists
-DB_INSTANCE_NAME="physioguidance-db"
+# DB_INSTANCE_NAME comes from infra/config.sh (currently physioguidance-db-me in me-central2)
 CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 
 # Common env vars for all backend deployments
@@ -250,6 +250,64 @@ TABBY_PUBLIC_KEY="${TABBY_PUBLIC_KEY:-pk_test_019e2e71-0358-6bb2-e50b-73334f9ec1
 ENV_VARS="${ENV_VARS}||TABBY_API_URL=${TABBY_API_URL}||TABBY_MERCHANT_CODE=${TABBY_MERCHANT_CODE}||TABBY_PUBLIC_KEY=${TABBY_PUBLIC_KEY}"
 log_info "Tabby merchant code: ${TABBY_MERCHANT_CODE}"
 
+# NELC LRS (xAPI integration) — Saudi National eLearning Center.
+# Passwords are sensitive (NELC-issued Basic-auth credentials) → Secret
+# Manager. Everything else is non-sensitive config → plain env vars.
+# The deploy script overwrites env vars on each run, so this block has
+# to be present here for the NELC config to survive future deploys.
+#
+# Two environments live side-by-side: staging + production. The active
+# one is admin-toggleable (system_settings.nelc.mode); NELC_LRS_MODE is
+# only the bootstrap default applied when the DB hasn't been written yet.
+# Default = staging — accidental production traffic requires an explicit
+# admin click in the UI.
+if gcloud secrets describe NELC_LRS_PASSWORD &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},NELC_LRS_PASSWORD=NELC_LRS_PASSWORD:latest"
+    log_info "NELC LRS staging password secret found"
+else
+    log_warning "NELC_LRS_PASSWORD (staging) secret not found - staging transmission will fail"
+fi
+if gcloud secrets describe NELC_LRS_PASSWORD_PROD &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},NELC_LRS_PASSWORD_PROD=NELC_LRS_PASSWORD_PROD:latest"
+    log_info "NELC LRS production password secret found"
+else
+    log_warning "NELC_LRS_PASSWORD_PROD secret not found - admin cannot switch to production"
+fi
+NELC_LRS_ENABLED="${NELC_LRS_ENABLED:-true}"
+NELC_LRS_MODE="${NELC_LRS_MODE:-staging}"
+NELC_LRS_ENDPOINT_STAGING="${NELC_LRS_ENDPOINT_STAGING:-https://lrs.nelc.gov.sa/lrs-license-stg/xapi/statements}"
+NELC_LRS_ENDPOINT_PROD="${NELC_LRS_ENDPOINT_PROD:-https://lrs.nelc.gov.sa/lrs-nelc/xapi/statements}"
+NELC_LRS_USERNAME="${NELC_LRS_USERNAME:-physioguidance_org}"
+NELC_PLATFORM_IDENTIFIER="${NELC_PLATFORM_IDENTIFIER:-https://physioguidance.org/}"
+NELC_PLATFORM_NAME_EN="${NELC_PLATFORM_NAME_EN:-PhysioGuidance}"
+NELC_PLATFORM_NAME_AR="${NELC_PLATFORM_NAME_AR:-فيزيو جايدنس}"
+NELC_LMS_URL="${NELC_LMS_URL:-https://physioguidance.org}"
+ENV_VARS="${ENV_VARS}||NELC_LRS_ENABLED=${NELC_LRS_ENABLED}||NELC_LRS_MODE=${NELC_LRS_MODE}||NELC_LRS_ENDPOINT_STAGING=${NELC_LRS_ENDPOINT_STAGING}||NELC_LRS_ENDPOINT_PROD=${NELC_LRS_ENDPOINT_PROD}||NELC_LRS_USERNAME=${NELC_LRS_USERNAME}||NELC_PLATFORM_IDENTIFIER=${NELC_PLATFORM_IDENTIFIER}||NELC_PLATFORM_NAME_EN=${NELC_PLATFORM_NAME_EN}||NELC_PLATFORM_NAME_AR=${NELC_PLATFORM_NAME_AR}||NELC_LMS_URL=${NELC_LMS_URL}"
+log_info "NELC LRS enabled: ${NELC_LRS_ENABLED}, default mode: ${NELC_LRS_MODE} (admin can toggle from UI)"
+
+# Sentry — non-sensitive config as env vars; API token + webhook secret
+# pulled from Secret Manager only if both secrets exist. Without the API
+# token the admin Error Monitoring tab renders a "not configured" panel
+# rather than erroring; without the webhook secret the alert receiver
+# rejects every POST (defense-in-depth in production).
+SENTRY_ORG_BE="${SENTRY_ORG:-physioguidance}"
+SENTRY_PROJECT_BE="${SENTRY_PROJECT:-physioguidance-web}"
+SENTRY_API_HOST_BE="${SENTRY_API_HOST:-de.sentry.io}"
+ENV_VARS="${ENV_VARS}||SENTRY_ORG=${SENTRY_ORG_BE}||SENTRY_PROJECT=${SENTRY_PROJECT_BE}||SENTRY_API_HOST=${SENTRY_API_HOST_BE}"
+if gcloud secrets describe SENTRY_API_TOKEN &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},SENTRY_API_TOKEN=SENTRY_API_TOKEN:latest"
+    log_info "Sentry API token found — admin Error Monitoring tab enabled"
+else
+    log_warning "SENTRY_API_TOKEN not in Secret Manager — admin Error Monitoring will show 'not configured'"
+fi
+if gcloud secrets describe SENTRY_WEBHOOK_SECRET &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},SENTRY_WEBHOOK_SECRET=SENTRY_WEBHOOK_SECRET:latest"
+    log_info "Sentry webhook secret found — alert webhook signature-verified"
+else
+    log_warning "SENTRY_WEBHOOK_SECRET not in Secret Manager — alert webhook will be rejected in production"
+fi
+log_info "Sentry: ${SENTRY_ORG_BE}/${SENTRY_PROJECT_BE} via ${SENTRY_API_HOST_BE}"
+
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
     log_info "Connecting to Cloud SQL: ${DB_INSTANCE_NAME}"
     gcloud run deploy ${BACKEND_SERVICE_NAME} \
@@ -263,8 +321,8 @@ if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
         --min-instances=${BACKEND_MIN_INSTANCES} \
         --max-instances=${BACKEND_MAX_INSTANCES} \
         --add-cloudsql-instances=${CONNECTION_NAME} \
-        --vpc-connector=physio-vpc-connector \
-        --vpc-egress=private-ranges-only \
+        --vpc-connector=physio-vpc-connector-me \
+        --vpc-egress=all-traffic \
         --set-env-vars="${ENV_VARS}" \
         --set-secrets="${SECRETS}" \
         --quiet
@@ -280,8 +338,8 @@ else
         --no-cpu-throttling \
         --min-instances=${BACKEND_MIN_INSTANCES} \
         --max-instances=${BACKEND_MAX_INSTANCES} \
-        --vpc-connector=physio-vpc-connector \
-        --vpc-egress=private-ranges-only \
+        --vpc-connector=physio-vpc-connector-me \
+        --vpc-egress=all-traffic \
         --set-env-vars="${ENV_VARS}" \
         --set-secrets="${SECRETS}" \
         --quiet

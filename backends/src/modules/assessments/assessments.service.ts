@@ -36,6 +36,7 @@ import { UserNotificationsService } from '../user-notifications/user-notificatio
 import { StorageService } from '../storage/storage.service';
 import { EmailService } from '../email/email.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { XapiService } from '../xapi/xapi.service';
 import { toArabicIndic } from '../../common/platform-locale';
 import { assessmentRetakeGrants } from '../../database/schema/assessment-retake-grants';
 import { sanitizeRichText } from '../../common/sanitize-html';
@@ -68,6 +69,7 @@ export class AssessmentsService {
     private readonly storageService: StorageService,
     private readonly emailService: EmailService,
     private readonly adminSettings: AdminSettingsService,
+    private readonly xapiService: XapiService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -752,6 +754,21 @@ export class AssessmentsService {
         status: submissionStatus,
       })
       .returning();
+
+    // NELC xAPI — emit attempted with sequential attempt-id +
+    // passingMarks-as-min (NELC checklist 1.6 + 5.2). Manual-grading
+    // assessments report passed=false here; the grade event will
+    // re-emit with the final pass/fail.
+    const passed =
+      assessment.passingMarks > 0 && score >= assessment.passingMarks;
+    void this.xapiService.emitAssessmentSubmitted(
+      user.id,
+      assessmentId,
+      score,
+      assessment.passingMarks,
+      totalMarks,
+      passed,
+    );
 
     return submission;
   }

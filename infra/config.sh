@@ -8,7 +8,7 @@
 
 # GCP Configuration
 export GCP_PROJECT_ID="${GCP_PROJECT_ID:-nelc-elearning-platform-479319}"
-export GCP_REGION="${GCP_REGION:-us-central1}"
+export GCP_REGION="${GCP_REGION:-me-central2}"
 export GCP_ARTIFACT_REPO="physioguidance"
 
 # Frontend Configuration
@@ -36,8 +36,8 @@ export STRAPI_MIN_INSTANCES=0
 export STRAPI_MAX_INSTANCES=2
 
 # Cloud SQL Configuration
-export DB_INSTANCE_NAME="physioguidance-db"
-export DB_TIER="db-f1-micro"
+export DB_INSTANCE_NAME="physioguidance-db-me"
+export DB_TIER="db-g1-small"
 export DB_VERSION="POSTGRES_15"
 
 # ===========================================

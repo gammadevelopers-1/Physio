@@ -24,3 +24,4 @@ export { default as AdminSettingsContent } from "./AdminSettingsContent";
 export { default as RoleRequestsContent } from "./RoleRequestsContent";
 export { default as RoleRequestReviewContent } from "./RoleRequestReviewContent";
 export { default as PointsSystemContent } from "./PointsSystemContent";
+export { default as NelcIntegrationContent } from "./NelcIntegrationContent";

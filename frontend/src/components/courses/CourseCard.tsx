@@ -18,6 +18,7 @@ import { useFavourites } from "@/contexts/FavouritesContext";
 import { useAuth } from "@/contexts";
 import { FmtDate } from "@/components/ui/Fmt";
 import DiscountBadge from "./DiscountBadge";
+import TamaraProductBadge from "@/components/marketing/TamaraProductBadge";
 
 interface CourseCardProps {
   course: PublicCourse;
@@ -255,6 +256,9 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
                 {isFree ? t("card.free") : `${effectivePrice} SAR`}
               </span>
             )}
+            {/* Tamara "split with" badge — self-hides for free courses,
+                sub-50 SAR, or when the Tamara key isn't configured. */}
+            <TamaraProductBadge price={effectivePrice} />
           </div>
           <span className="flex-shrink-0 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors whitespace-nowrap self-center">
             {t("card.viewDetails")}

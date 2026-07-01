@@ -8,6 +8,7 @@ import BecomeTrainer from "@/components/BecomeTrainer";
 import ExpertInstructors from "@/components/ExpertInstructors";
 import Testimonials from "@/components/Testimonials";
 import CTASection from "@/components/CTASection";
+import TamaraSplitBanner from "@/components/marketing/TamaraSplitBanner";
 import Footer from "@/components/Footer";
 import { getHomePage, getHomePageData, getSiteSettings } from "@/lib/strapi";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
@@ -97,6 +98,13 @@ export default async function Home({
       {/* Section 6: Testimonials */}
       <Testimonials testimonials={testimonials} sectionData={homePage} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-6')} sideLoadedData={sideLoadedData} />
+
+      {/* Tamara "Split your payments" promo strip. Rendered ABOVE the CTA
+          so buyers see the BNPL option before hitting the final "join now"
+          nudge — matches Tamara's merchant-kit guidance and gives the CTA
+          a supporting reason to click. Component self-hides when the
+          Tamara public key isn't configured. */}
+      <TamaraSplitBanner />
 
       {/* CTA + bottom blocks */}
       <div className="hidden lg:block">

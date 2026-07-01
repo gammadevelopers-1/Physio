@@ -12,6 +12,13 @@ RUN npm ci --only=production
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Next.js 16 with Turbopack ships SWC as a native module. On Alpine
+# (musl libc) the glibc-linked variant needs a compatibility shim to
+# find ld-linux-x86-64.so.2. Without it, SWC falls back to WASM which
+# Turbopack can't use — `turbo.createProject is not supported by the
+# wasm bindings`. libc6-compat is Alpine's official glibc shim.
+RUN apk add --no-cache libc6-compat
+
 # Build-time args for production environment variables
 # Next.js inlines NEXT_PUBLIC_* vars at build time, so they must be set here
 ARG NEXT_PUBLIC_API_URL

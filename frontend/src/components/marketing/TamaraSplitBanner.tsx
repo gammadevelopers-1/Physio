@@ -51,12 +51,13 @@ export default function TamaraSplitBanner({
           href={linkHref}
           className="block rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
         >
-          {/* Tamara's website-banner PNGs from the merchant kit are 3334×1042
-              (~3.2:1). The 10/3 aspect ratio matches almost exactly so the
-              image renders edge-to-edge without cropping or CLS. sizes tells
-              next/image which srcset breakpoint to serve so we don't ship
-              the full-res PNG on mobile. */}
-          <div className="relative w-full aspect-[10/3] bg-[var(--color-surface-card)]">
+          {/* Tamara's Branding & Marketing PDF specifies the website banner
+              as 1600×500 (aspect 16:5 = 3.2:1). Their brand kit forbids
+              "stretching the banner" — we hold the exact spec ratio so the
+              image renders edge-to-edge without cropping or letterboxing.
+              sizes tells next/image which srcset breakpoint to serve so we
+              don't ship the full-res PNG on mobile. */}
+          <div className="relative w-full aspect-[16/5] bg-[var(--color-surface-card)]">
             <Image
               src={src}
               alt={t("imageAlt")}

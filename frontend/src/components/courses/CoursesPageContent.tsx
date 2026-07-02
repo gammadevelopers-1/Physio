@@ -10,7 +10,6 @@ import {
   CourseCTA,
 } from "@/components/courses";
 import ActiveCampaignBanner from "@/components/courses/ActiveCampaignBanner";
-import TamaraSplitBanner from "@/components/marketing/TamaraSplitBanner";
 import type { CourseFiltersLabels } from "@/components/courses/CourseFilters";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useLocale } from "next-intl";
@@ -179,7 +178,6 @@ const CoursesPageContent = ({
   return (
     <>
       <ActiveCampaignBanner />
-      <TamaraSplitBanner compact />
       {/* Desktop Layout */}
       <div className="hidden lg:block" dir={isRTL ? "rtl" : "ltr"}>
         <section className="px-16 py-12">

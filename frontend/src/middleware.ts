@@ -55,6 +55,19 @@ function buildCsp(nonce: string): string {
     // pattern rather than a specific host.
     'https://*.ingest.de.sentry.io',
     'https://*.ingest.sentry.io',
+    // Tamara BNPL widget V2 (product/cart/checkout snippets) — the
+    // <tamara-widget> custom element fetches the actual instalment
+    // schedule from Tamara's backend at render time. Without this
+    // whitelist the widget script loads but silently no-ops when its
+    // fetch() to api.tamara.co is blocked, leaving an empty box. The
+    // wildcard covers both api-sandbox.tamara.co and api.tamara.co
+    // plus CDN endpoints the widget lazy-loads its sub-chunks from.
+    'https://*.tamara.co',
+    // Tabby BNPL widget — its promo card renders locally from price
+    // arithmetic (that's why it kept rendering without this rule)
+    // but the checkout snippet + pre-scoring path hit api.tabby.ai
+    // and checkout.tabby.ai. Adding it here future-proofs Tabby too.
+    'https://*.tabby.ai',
   ];
   if (!IS_PROD) {
     connect.push('http://localhost:8080', 'http://localhost:*', 'ws://localhost:*');

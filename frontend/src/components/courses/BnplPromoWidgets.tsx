@@ -290,7 +290,7 @@ export default function BnplPromoWidgets({
               }
             >
               <Image
-                src={`/tamara/${lang}/gradient.svg`}
+                src={`/tamara/${lang}/gradient.png`}
                 alt="Tamara"
                 width={72}
                 height={28}

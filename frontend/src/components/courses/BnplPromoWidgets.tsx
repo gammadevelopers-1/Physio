@@ -1,6 +1,7 @@
 "use client";
 
-import { createElement, useEffect, useRef } from "react";
+import { createElement, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Script from "next/script";
 import { useLocale } from "next-intl";
 
@@ -70,6 +71,15 @@ export default function BnplPromoWidgets({
   const locale = useLocale();
   const lang = locale === "ar" ? "ar" : "en";
   const tabbyMountRef = useRef<HTMLDivElement>(null);
+  const tamaraWrapperRef = useRef<HTMLDivElement>(null);
+  // Fallback strip when Tamara's widget config JSON isn't provisioned on
+  // their CDN yet (currently the case during sandbox onboarding — the
+  // <tamara-widget> element mounts but stays empty because the loader
+  // script 404s on merchant_widget_config/{key}_sa_sar_*.json). KSA §1.1
+  // requires "clear indication that Tamara is available as a payment
+  // option" on every purchase-flow page; without a fallback, PDP + cart
+  // silently show nothing when the widget fails.
+  const [tamaraRenderFailed, setTamaraRenderFailed] = useState(false);
   // Per-source-AND-filter mount id so the same page can mount Tabby twice
   // (e.g. checkout has one near the Tabby radio and one near Tamara — the
   // Tamara render still includes the wrapping element ref but no Tabby
@@ -199,6 +209,22 @@ export default function BnplPromoWidgets({
     }
   }, [price, lang, currency, source, showWidgets, showTamara]);
 
+  // Detect widget render failure. The custom element mounts synchronously
+  // but stays empty (offsetHeight ~= 0) when Tamara's widget config JSON
+  // 404s — which happens whenever merchant onboarding is incomplete or
+  // the CDN hasn't provisioned the config file for our public key. Give
+  // the widget 3s to render; if the wrapper is still 0-height, flip on
+  // the fallback strip.
+  useEffect(() => {
+    if (!showWidgets || !showTamara || !TAMARA_PUBLIC_KEY) return;
+    setTamaraRenderFailed(false);
+    const timer = setTimeout(() => {
+      const el = tamaraWrapperRef.current;
+      if (el && el.offsetHeight < 20) setTamaraRenderFailed(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [price, lang, currency, source, showWidgets, showTamara]);
+
   if (!showWidgets) return null;
 
   return (
@@ -234,16 +260,50 @@ export default function BnplPromoWidgets({
         </>
       ) : null}
       {showTamara && TAMARA_PUBLIC_KEY ? (
-        // Tamara V2's <tamara-widget> element takes ZERO configuration
-        // attributes — it reads everything from window.tamaraWidgetConfig
-        // (set in the useEffect above). Passing type/amount/currency as
-        // HTML attributes is a no-op — the element's observedAttributes is
-        // just ["uuid"]. Keying by price + source + lang forces React to
-        // remount a fresh element when any of those change, so a stale
-        // widget from a previous price never lingers on screen.
-        createElement("tamara-widget", {
-          key: `tamara-${source}-${lang}-${price.toFixed(2)}`,
-        })
+        <>
+          <div ref={tamaraWrapperRef}>
+            {/* Tamara V2's <tamara-widget> element takes ZERO configuration
+                attributes — it reads everything from window.tamaraWidgetConfig
+                (set in the render body above). Passing type/amount/currency
+                as HTML attributes is a no-op — the element's observedAttributes
+                is just ["uuid"]. Keying by price + source + lang forces React
+                to remount a fresh element when any of those change, so a stale
+                widget from a previous price never lingers on screen. */}
+            {createElement("tamara-widget", {
+              key: `tamara-${source}-${lang}-${price.toFixed(2)}`,
+            })}
+          </div>
+          {tamaraRenderFailed && (
+            // KSA §1.1 fallback strip. Shows Tamara's official gradient logo
+            // + 3 messaging pillars (4-payment option, Sharia-compliant, logo)
+            // when the widget itself can't render. Deliberately omits the
+            // per-month price pillar — KSA §1.3.2 forbids hardcoded amounts,
+            // and we can't compute the split ourselves without the widget's
+            // plan config.
+            <div
+              className="flex items-center gap-3 rounded-2xl border border-[#e5e5e5] bg-white px-4 py-3"
+              role="note"
+              aria-label={
+                lang === "ar"
+                  ? "ادفع مع تمارا — أقساط مرنة"
+                  : "Pay with Tamara — flexible installments"
+              }
+            >
+              <Image
+                src={`/tamara/${lang}/gradient.svg`}
+                alt="Tamara"
+                width={72}
+                height={28}
+                className="h-7 w-auto shrink-0 object-contain"
+              />
+              <span className="text-sm font-medium leading-snug text-[#111827]">
+                {lang === "ar"
+                  ? "ادفع على 4 دفعات. متوافق مع الشريعة."
+                  : "Pay in 4 payments. Sharia-compliant."}
+              </span>
+            </div>
+          )}
+        </>
       ) : null}
     </div>
   );

@@ -1125,7 +1125,7 @@ export default function CheckoutPageClient({
                           <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tamara" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
                           <span className="font-medium text-[var(--on-surface-default)]">{t("payment.tamara")}</span>
                         </div>
-                        <Image src="/checkout_cart/tamara.svg" alt="Tamara" width={70} height={24} className="object-contain" />
+                        <Image src={`/tamara/${isRTL ? "ar" : "en"}/gradient.svg`} alt="Tamara" width={70} height={24} className="object-contain" />
                       </div>
                       {/* Tamara's own widget — consistent with the Tabby
                           treatment above, no hand-rolled custom text. */}

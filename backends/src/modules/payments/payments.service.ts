@@ -930,6 +930,8 @@ export class PaymentsService {
         lastName: users.lastName,
         email: users.email,
         phone: users.phone,
+        nationalId: users.nationalId,
+        dateOfBirth: users.dateOfBirth,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -945,12 +947,14 @@ export class PaymentsService {
         : `${lines.length} courses: ${lines[0].course.title}` +
           (lines.length > 1 ? ` (+${lines.length - 1} more)` : '');
 
-    // `users.phone` is stored encrypted (AES-GCM, `v1:...` blob) for PII at
-    // rest. We need the plaintext both for the Saudi-phone validation below
-    // and for handoff to the gateway as `customerPhone`. decryptPII is a
-    // no-op on legacy plaintext rows, so this is safe regardless of when the
-    // row was written.
+    // `users.phone` + `users.national_id` are stored encrypted (AES-GCM,
+    // `v1:...` blob) for PII at rest. We need the plaintext both for the
+    // Saudi-phone validation below and for handoff to the gateway as
+    // `customerPhone` / `customerNationalId`. decryptPII is a no-op on
+    // legacy plaintext rows, so this is safe regardless of when the row
+    // was written.
     const plaintextPhone = decryptPII(userData?.phone);
+    const plaintextNationalId = decryptPII(userData?.nationalId);
 
     // Both BNPL gateways (Tabby, Tamara) require a Saudi phone number on the
     // buyer. Tabby silently auto-declines its Pre-Scoring without one; Tamara
@@ -1007,6 +1011,14 @@ export class PaymentsService {
         customerName: `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim(),
         customerEmail: userData?.email || user.email,
         customerPhone: normalizedPhone,
+        // Tamara needs national_id on the consumer to run their SIMAH check
+        // (without it, all installment plans lock at their hosted checkout).
+        // Tabby doesn't consume this field. Omit gracefully when the buyer
+        // has no NID on file — legacy accounts may still lack one.
+        customerNationalId: plaintextNationalId || undefined,
+        // ISO YYYY-MM-DD from users.date_of_birth (nullable). Tamara
+        // formats to dd-mm-yyyy internally; the gateway does the conversion.
+        customerDateOfBirth: userData?.dateOfBirth || undefined,
         customerRegisteredSince: userData?.createdAt
           ? new Date(userData.createdAt).toISOString()
           : undefined,
@@ -1016,6 +1028,15 @@ export class PaymentsService {
           // formal degree programs — matches Tabby's 'courses_training' bucket.
           merchantSubtype: 'courses_training',
           monthsToCompletion,
+          // Course window (ISO). Tamara requires these on its `education`
+          // object; open-ended / self-paced courses omit them and the
+          // Tamara gateway falls back to (now, now + monthsToCompletion).
+          courseStartDate: primaryCourse.startDate
+            ? new Date(primaryCourse.startDate).toISOString().slice(0, 10)
+            : undefined,
+          courseEndDate: primaryCourse.endDate
+            ? new Date(primaryCourse.endDate).toISOString().slice(0, 10)
+            : undefined,
         },
         redirectUrl: `${callbackUrl}?gateway=${dto.gateway}&payment_id=${result.payment.id}`,
         cancelUrl,

@@ -33,13 +33,20 @@ export interface BuyerHistory {
 
 /** Vertical-specific info Tabby asks for in the `attachment` field. For
  *  PhysioGuidance this is always educational. Caller fills in what they
- *  know about the course; gateway defaults the rest. */
+ *  know about the course; gateway defaults the rest. Also feeds Tamara's
+ *  `education` object (educational-services onboarding requirement — see
+ *  docs.tamara.co/docs/other-educational-services) so the fields overlap. */
 export interface EducationDetails {
   /** Tabby vocab: 'formal_education' (degree programs) | 'courses_training'
    *  (continuing education / short courses). PhysioGuidance is the latter. */
   merchantSubtype: 'formal_education' | 'courses_training';
   /** Expected months from purchase to course completion. Defaults to 1. */
   monthsToCompletion: number;
+  /** Course start / end (ISO YYYY-MM-DD). Tamara wants these on the
+   *  `education` object; Tabby ignores. Omit for open-ended / self-paced
+   *  courses — the gateway falls back to "now" and "now + monthsToCompletion". */
+  courseStartDate?: string;
+  courseEndDate?: string;
 }
 
 export interface CreateChargeParams {
@@ -49,6 +56,16 @@ export interface CreateChargeParams {
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
+  /** Plaintext KSA National ID / Iqama (10 digits). Tamara REQUIRES this
+   *  on `consumer.national_id` to run their SIMAH risk check — omitting it
+   *  causes all installment plans to lock at their hosted checkout, leaving
+   *  only Pay-in-Full available. Caller decrypts from users.national_id
+   *  (AES-GCM at rest). Also fed into Tamara's risk_assessment context. */
+  customerNationalId?: string;
+  /** ISO 8601 date (YYYY-MM-DD). Tamara accepts on `consumer.date_of_birth`
+   *  and uses it as a soft eligibility signal; omit if the buyer has no
+   *  DOB on file. */
+  customerDateOfBirth?: string;
   /** ISO timestamp of when the buyer first registered. BNPL gateways
    *  (Tabby in particular) feed this into their risk model — passing
    *  "now" hurts approval rates for established customers. */

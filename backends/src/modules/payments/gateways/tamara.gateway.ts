@@ -62,7 +62,60 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
   }
 
   async createCharge(params: CreateChargeParams): Promise<ChargeResult> {
-    const body = {
+    const firstName = params.customerName.split(' ')[0] || '';
+    const lastName = params.customerName.split(' ').slice(1).join(' ') || '';
+
+    // Tamara wants dd-mm-yyyy; we receive ISO YYYY-MM-DD (or full ISO
+    // timestamp). Slice + reorder. Returns undefined on empty input so we
+    // can spread-omit the field cleanly.
+    const toDdMmYyyy = (isoOrDate: string | undefined): string | undefined => {
+      if (!isoOrDate) return undefined;
+      const iso = isoOrDate.slice(0, 10); // "2026-07-06"
+      const [y, m, d] = iso.split('-');
+      return y && m && d ? `${d}-${m}-${y}` : undefined;
+    };
+
+    // Whether this is the buyer's first successful purchase on the platform.
+    // Buyer history isn't populated for non-BNPL gateways, but it always is
+    // for Tamara (see payments.service.ts's `dto.gateway === 'tamara'` branch).
+    const isFirstOrder =
+      !params.buyerHistory || params.buyerHistory.loyaltyLevel === 0;
+
+    // Course window for the education object. Fall back to (today,
+    // today + monthsToCompletion) when the caller couldn't provide dates
+    // (self-paced / open-ended courses). Tamara rejects the checkout if
+    // education fields are missing for merchants onboarded under the
+    // educational-services vertical — see docs.tamara.co/docs/other-educational-services.
+    const monthsToCompletion = params.educationDetails?.monthsToCompletion ?? 1;
+    const courseStartIso =
+      params.educationDetails?.courseStartDate ??
+      new Date().toISOString().slice(0, 10);
+    const courseEndIso =
+      params.educationDetails?.courseEndDate ??
+      (() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() + monthsToCompletion);
+        return d.toISOString().slice(0, 10);
+      })();
+
+    // Risk-assessment snapshot Tamara feeds into their eligibility model.
+    // Without a populated risk_assessment object Tamara can't score the
+    // buyer and defaults to the most conservative outcome — all installment
+    // plans locked, only Pay-in-Full offered. Fields are per Tamara's
+    // additional-customer-details-for-risk-assessment doc; dates in dd-mm-yyyy.
+    const past = params.buyerHistory?.pastOrders ?? [];
+    const paidOrders = past.filter((o) => o.status === 'complete');
+    const registeredSinceDate = params.customerRegisteredSince
+      ? new Date(params.customerRegisteredSince).toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+    const firstPaidDate = paidOrders.length
+      ? paidOrders[paidOrders.length - 1].purchasedAt.slice(0, 10)
+      : undefined;
+    const lastPaidDate = paidOrders.length
+      ? paidOrders[0].purchasedAt.slice(0, 10)
+      : undefined;
+
+    const body: Record<string, unknown> = {
       order_reference_id: params.metadata.paymentId,
       total_amount: {
         amount: params.amount,
@@ -82,13 +135,20 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
       },
       description: params.description,
       country_code: 'SA',
-      payment_type: 'PAY_BY_INSTALMENTS',
-      instalments: 3,
+      // Deliberately NO `payment_type` and NO top-level `instalments`.
+      // Sending `payment_type: 'PAY_BY_INSTALMENTS'` with `instalments: 3`
+      // pinned the buyer to a 3-month plan and Tamara locked every other
+      // installment option (verified against their live /checkout/payment-types
+      // which shows our merchant has 2, 3, AND 4 all enabled). Omitting both
+      // lets Tamara render every eligible plan on their hosted checkout.
       locale: params.locale || 'en_US',
+      // "One Time - Digital" is Tamara's expected item.type for
+      // educational-services merchants selling one-off course access. Their
+      // legacy generic "Digital" value gets scored more conservatively.
       items: [
         {
           reference_id: params.metadata.courseId,
-          type: 'Digital',
+          type: 'One Time - Digital',
           name: params.description,
           // sku is REQUIRED per item (same 500-on-omit behaviour). We reuse
           // the courseId since each item maps 1:1 to a course in our model.
@@ -105,18 +165,62 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
         },
       ],
       consumer: {
-        first_name: params.customerName.split(' ')[0] || '',
-        last_name: params.customerName.split(' ').slice(1).join(' ') || '',
+        first_name: firstName,
+        last_name: lastName,
         email: params.customerEmail,
         phone_number: params.customerPhone || '',
+        // Tamara REQUIRES national_id on the consumer for KSA merchants —
+        // it's how they run SIMAH credit checks. Omitting causes every
+        // installment plan to lock at their hosted checkout, only Pay-in-Full
+        // remains. Send when we have it; Tamara returns a clear 400 if we
+        // don't and the merchant is set up to require it.
+        ...(params.customerNationalId
+          ? { national_id: params.customerNationalId }
+          : {}),
+        // Optional but improves scoring. Tamara expects dd-mm-yyyy.
+        ...(params.customerDateOfBirth
+          ? { date_of_birth: toDdMmYyyy(params.customerDateOfBirth) }
+          : {}),
+        is_first_order: isFirstOrder,
       },
       shipping_address: {
-        first_name: params.customerName.split(' ')[0] || '',
-        last_name: params.customerName.split(' ').slice(1).join(' ') || '',
+        first_name: firstName,
+        last_name: lastName,
         country_code: 'SA',
         city: 'Riyadh',
         line1: 'Digital Delivery',
       },
+      // Educational-services vertical: Tamara requires the education
+      // object with these four fields (education_type, start_date,
+      // end_date, event_location). See
+      // docs.tamara.co/docs/other-educational-services.
+      education: {
+        education_type: 'course',
+        start_date: toDdMmYyyy(courseStartIso),
+        end_date: toDdMmYyyy(courseEndIso),
+        event_location: 'online',
+      },
+      // Risk assessment: merchant-side eligibility signal. All 5 core
+      // fields required; account_security is optional but helps scoring.
+      risk_assessment: {
+        is_premium_customer: false,
+        account_creation_date: toDdMmYyyy(registeredSinceDate),
+        total_order_count: past.length,
+        // For first-time buyers Tamara accepts the same date as
+        // account_creation_date rather than a hard null.
+        date_first_paid: firstPaidDate
+          ? toDdMmYyyy(firstPaidDate)
+          : toDdMmYyyy(registeredSinceDate),
+        date_last_paid: lastPaidDate
+          ? toDdMmYyyy(lastPaidDate)
+          : toDdMmYyyy(registeredSinceDate),
+        account_security: {
+          is_email_verified: true,
+          is_phone_verified: Boolean(params.customerPhone),
+        },
+      },
+      // Identifies our integration in Tamara's merchant portal logs.
+      platform: 'PhysioGuidance/NestJS',
       // success → our /payment/callback handler. failure + cancel both send
       // the buyer back to the checkout page so they can pick a different
       // gateway or retry — the previous .replace('status=paid', ...) was
@@ -585,8 +689,11 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
   async healthCheck(): Promise<GatewayHealthResult> {
     const start = Date.now();
     try {
+      // Correct endpoint is `/checkout/payment-types` — the old
+      // `/payment-types` returns 404 and had our health check
+      // permanently reporting `degraded`.
       const res = await this.fetchWithTimeout(
-        `${this.apiUrl}/payment-types?country=SA&currency=SAR&order_value=100`,
+        `${this.apiUrl}/checkout/payment-types?country=SA&currency=SAR&order_value=100`,
         { headers: { Authorization: `Bearer ${this.apiToken}` } },
         5000,
       );

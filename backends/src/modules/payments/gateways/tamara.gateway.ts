@@ -235,6 +235,26 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
       metadata: params.metadata,
     };
 
+    // Redacted-payload log for post-checkout eligibility debugging. When
+    // Tamara locks all installment plans at their hosted page it's opaque
+    // whether the merchant score, the buyer profile, or an order-shape
+    // mismatch is the cause — surfacing the exact body we sent (with PII
+    // masked) is the only way to hand this back to Tamara's tech team with
+    // evidence instead of guessing.
+    const consumer = body.consumer as Record<string, unknown>;
+    const redactedBody = {
+      ...body,
+      consumer: {
+        ...consumer,
+        email: typeof consumer.email === 'string' ? consumer.email.replace(/(.{2}).+(@.+)/, '$1***$2') : consumer.email,
+        phone_number: typeof consumer.phone_number === 'string' && consumer.phone_number.length > 4
+          ? `${consumer.phone_number.slice(0, 4)}***${consumer.phone_number.slice(-2)}`
+          : consumer.phone_number,
+        national_id: consumer.national_id ? '***REDACTED***' : undefined,
+      },
+    };
+    this.logger.log(`Tamara createCharge outbound body: ${JSON.stringify(redactedBody)}`);
+
     const response = await this.fetchWithRetry(`${this.apiUrl}/checkout`, {
       method: 'POST',
       headers: {
@@ -245,6 +265,8 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
     });
 
     const data = await response.json();
+
+    this.logger.log(`Tamara createCharge response status=${response.status} order_id=${data.order_id || 'n/a'} body=${JSON.stringify(data)}`);
 
     if (!response.ok) {
       this.logger.error(`Tamara createCharge failed: ${JSON.stringify(data)}`);

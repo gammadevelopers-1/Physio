@@ -82,9 +82,16 @@ fi
 TABBY_PUBLIC_KEY_FE="${NEXT_PUBLIC_TABBY_PUBLIC_KEY:-pk_test_019e2e71-0358-6bb2-e50b-73334f9ec199}"
 TABBY_MERCHANT_CODE_FE="${NEXT_PUBLIC_TABBY_MERCHANT_CODE:-PHYS}"
 TAMARA_PUBLIC_KEY_FE="${NEXT_PUBLIC_TAMARA_PUBLIC_KEY:-c53610b1-8ba1-461e-bb4c-1df00ddbdf1e}"
+# CDN base URL the widget script + merchant config JSON live on. Tamara
+# Widget V2 fetches its config from the SAME CDN the widget was loaded
+# from, so this MUST match the environment of TAMARA_API_URL — sandbox
+# API ↔ cdn-sandbox.tamara.co, prod API ↔ cdn.tamara.co. Flipping one
+# without the other means the widget never renders.
+TAMARA_CDN_URL_FE="${NEXT_PUBLIC_TAMARA_CDN_URL:-https://cdn-sandbox.tamara.co}"
 log_info "NEXT_PUBLIC_TABBY_PUBLIC_KEY  = ${TABBY_PUBLIC_KEY_FE:0:18}…"
 log_info "NEXT_PUBLIC_TABBY_MERCHANT_CODE = ${TABBY_MERCHANT_CODE_FE}"
 log_info "NEXT_PUBLIC_TAMARA_PUBLIC_KEY = ${TAMARA_PUBLIC_KEY_FE:0:8}…"
+log_info "NEXT_PUBLIC_TAMARA_CDN_URL    = ${TAMARA_CDN_URL_FE}"
 
 # Sentry frontend monitoring — DSN is public, the build token is sensitive
 # but only used at build time (source-map upload). Both come from Secret
@@ -122,6 +129,7 @@ if [ "$SKIP_BUILD" = false ]; then
         --build-arg NEXT_PUBLIC_TABBY_PUBLIC_KEY="${TABBY_PUBLIC_KEY_FE}" \
         --build-arg NEXT_PUBLIC_TABBY_MERCHANT_CODE="${TABBY_MERCHANT_CODE_FE}" \
         --build-arg NEXT_PUBLIC_TAMARA_PUBLIC_KEY="${TAMARA_PUBLIC_KEY_FE}" \
+        --build-arg NEXT_PUBLIC_TAMARA_CDN_URL="${TAMARA_CDN_URL_FE}" \
         --build-arg NEXT_PUBLIC_SENTRY_DSN="${SENTRY_DSN_FE}" \
         --build-arg NEXT_PUBLIC_APP_ENV="${SENTRY_APP_ENV_FE}" \
         --build-arg NEXT_PUBLIC_SENTRY_RELEASE="${SENTRY_RELEASE_FE}" \

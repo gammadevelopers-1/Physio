@@ -23,6 +23,15 @@ interface BnplPromoWidgetsProps {
 const TABBY_PUBLIC_KEY = process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || "";
 const TABBY_MERCHANT_CODE = process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "";
 const TAMARA_PUBLIC_KEY = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "";
+// Tamara Widget V2 fetches the merchant config JSON from the SAME CDN it
+// was loaded from — so a widget served by cdn.tamara.co looks for
+// cdn.tamara.co/merchant_widget_config/{key}_...json, and a sandbox
+// widget from cdn-sandbox.tamara.co looks in the sandbox bucket. Merchant
+// configs live in one bucket or the other, never both, so a mismatch means
+// the config 404s and the <tamara-widget> element stays empty. Default to
+// prod; sandbox deploys set NEXT_PUBLIC_TAMARA_CDN_URL to the sandbox CDN.
+const TAMARA_CDN_URL =
+  process.env.NEXT_PUBLIC_TAMARA_CDN_URL || "https://cdn.tamara.co";
 
 declare global {
   interface Window {
@@ -191,7 +200,7 @@ export default function BnplPromoWidgets({
     // above always beats this.
     if (!document.querySelector('script[data-tamara-widget-v2]')) {
       const script = document.createElement("script");
-      script.src = "https://cdn.tamara.co/widget-v2/tamara-widget.js";
+      script.src = `${TAMARA_CDN_URL}/widget-v2/tamara-widget.js`;
       script.async = true;
       script.setAttribute("data-tamara-widget-v2", "1");
       document.head.appendChild(script);

@@ -292,17 +292,19 @@ export default function BnplPromoWidgets({
       ) : null}
       {showTamara && TAMARA_PUBLIC_KEY ? (
         <>
-          {/* Widget stays mounted at all times so the offsetHeight poll can
-              observe when it grows to real content. Widget flows normally
-              (so offsetHeight reflects its natural height), and the skeleton
-              is layered on top with `absolute inset-0` while loading — its
-              opaque background hides the still-loading bare widget behind it.
-              On definitive failure we make the widget invisible so the
-              fallback strip below is the only visible Tamara element. */}
-          <div className="relative min-h-14">
+          {/* Widget stays mounted while loading so the offsetHeight poll
+              can observe when it grows to real content. When we've decided
+              the widget failed (bare-logo, 3s window elapsed) we drop it
+              from layout entirely with `hidden` so the fallback strip below
+              is the only visible Tamara element — otherwise a bare-logo
+              widget still reserved ~40px above the fallback and created
+              a visible empty gap. The outer wrapper only reserves min
+              height while the skeleton is showing; after that the wrapper
+              collapses so the layout tightens up. */}
+          <div className={`relative ${tamaraLoading ? "min-h-14" : ""}`}>
             <div
               ref={tamaraWrapperRef}
-              className={tamaraRenderFailed ? "invisible" : ""}
+              className={tamaraRenderFailed ? "hidden" : ""}
             >
               {/* Tamara V2's <tamara-widget> element takes ZERO configuration
                   attributes — it reads everything from window.tamaraWidgetConfig

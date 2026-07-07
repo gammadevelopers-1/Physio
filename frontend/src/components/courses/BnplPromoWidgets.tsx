@@ -1,7 +1,6 @@
 "use client";
 
 import { createElement, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Script from "next/script";
 import { useLocale } from "next-intl";
 
@@ -80,21 +79,17 @@ export default function BnplPromoWidgets({
   const locale = useLocale();
   const lang = locale === "ar" ? "ar" : "en";
   const tabbyMountRef = useRef<HTMLDivElement>(null);
-  const tamaraWrapperRef = useRef<HTMLDivElement>(null);
-  // Fallback strip when Tamara's widget config JSON isn't provisioned on
-  // their CDN yet (currently the case during sandbox onboarding — the
-  // <tamara-widget> element mounts but stays empty because the loader
-  // script 404s on merchant_widget_config/{key}_sa_sar_*.json). KSA §1.1
-  // requires "clear indication that Tamara is available as a payment
-  // option" on every purchase-flow page; without a fallback, PDP + cart
-  // silently show nothing when the widget fails.
-  const [tamaraRenderFailed, setTamaraRenderFailed] = useState(false);
-  // Skeleton shown while the widget script fetches its config JSON and
-  // renders. Custom elements mount synchronously but stay ~0px tall until
-  // the loader parses config; user sees a bare rounded logo tile for
-  // ~1s otherwise. Flipped off as soon as the widget renders content
-  // (offsetHeight > threshold) or the 3s timeout fires (fallback wins).
+  // Skeleton shown while the Tamara widget script fetches config and
+  // paints. Custom elements mount synchronously but the visible content
+  // takes a moment to appear; otherwise buyers see a bare rounded tile
+  // for the first ~1s. Flipped off once the widget wrapper reports a
+  // non-trivial height (real content painted) OR the 2.5s timeout fires
+  // — whichever comes first. Whatever the widget looks like after that
+  // (bare-logo while Tamara Ops finishes CDN provisioning, or the full
+  // installment breakdown once they finish) is what we show; no
+  // hardcoded fallback strip.
   const [tamaraLoading, setTamaraLoading] = useState(true);
+  const tamaraWrapperRef = useRef<HTMLDivElement>(null);
   // Per-source-AND-filter mount id so the same page can mount Tabby twice
   // (e.g. checkout has one near the Tabby radio and one near Tamara — the
   // Tamara render still includes the wrapping element ref but no Tabby
@@ -224,32 +219,26 @@ export default function BnplPromoWidgets({
     }
   }, [price, lang, currency, source, showWidgets, showTamara]);
 
-  // Detect widget render state via offsetHeight polling. Custom elements
-  // don't fire load events for the internal config fetch, so we poll:
-  //   - offsetHeight >= 60px → real content painted; hide skeleton
-  //   - after 3s still < 60px → widget stuck (config 404 or bare-logo
-  //     fallback); show our own fallback strip and hide skeleton so the
-  //     user sees SOMETHING within a reasonable window.
-  // 60px is above the ~40px bare-logo height Tamara paints when the
-  // merchant config JSON is missing on their CDN.
+  // Poll for the widget rendering something (any content). We're not
+  // deciding success vs failure — we're just deciding when to hide the
+  // skeleton and reveal whatever the widget produced. 40px covers both
+  // the bare-logo state (current sandbox) and the full breakdown; 2.5s
+  // hard cap so the skeleton doesn't stall forever if the widget stays
+  // 0px tall for any reason.
   useEffect(() => {
     if (!showWidgets || !showTamara || !TAMARA_PUBLIC_KEY) return;
-    setTamaraRenderFailed(false);
     setTamaraLoading(true);
-
     const poll = setInterval(() => {
       const el = tamaraWrapperRef.current;
-      if (el && el.offsetHeight >= 60) {
+      if (el && el.offsetHeight >= 40) {
         setTamaraLoading(false);
         clearInterval(poll);
       }
-    }, 300);
+    }, 200);
     const timeout = setTimeout(() => {
       clearInterval(poll);
-      const el = tamaraWrapperRef.current;
-      if (!el || el.offsetHeight < 60) setTamaraRenderFailed(true);
       setTamaraLoading(false);
-    }, 3000);
+    }, 2500);
     return () => {
       clearInterval(poll);
       clearTimeout(timeout);
@@ -291,74 +280,35 @@ export default function BnplPromoWidgets({
         </>
       ) : null}
       {showTamara && TAMARA_PUBLIC_KEY ? (
-        <>
-          {/* Widget stays mounted while loading so the offsetHeight poll
-              can observe when it grows to real content. When we've decided
-              the widget failed (bare-logo, 3s window elapsed) we drop it
-              from layout entirely with `hidden` so the fallback strip below
-              is the only visible Tamara element — otherwise a bare-logo
-              widget still reserved ~40px above the fallback and created
-              a visible empty gap. The outer wrapper only reserves min
-              height while the skeleton is showing; after that the wrapper
-              collapses so the layout tightens up. */}
-          <div className={`relative ${tamaraLoading ? "min-h-14" : ""}`}>
-            <div
-              ref={tamaraWrapperRef}
-              className={tamaraRenderFailed ? "hidden" : ""}
-            >
-              {/* Tamara V2's <tamara-widget> element takes ZERO configuration
-                  attributes — it reads everything from window.tamaraWidgetConfig
-                  (set in the render body above). Passing type/amount/currency
-                  as HTML attributes is a no-op — the element's observedAttributes
-                  is just ["uuid"]. Keying by price + source + lang forces React
-                  to remount a fresh element when any of those change, so a stale
-                  widget from a previous price never lingers on screen. */}
-              {createElement("tamara-widget", {
-                key: `tamara-${source}-${lang}-${price.toFixed(2)}`,
-              })}
-            </div>
-            {tamaraLoading && (
-              // Skeleton placeholder overlaid on top of the still-loading
-              // widget. `absolute inset-0` grows with the parent so it
-              // matches the widget's natural height once real content
-              // starts painting. Opaque bg hides the loading widget behind.
-              <div
-                aria-hidden
-                className="absolute inset-0 rounded-2xl bg-[var(--color-border-subtle)] animate-pulse"
-              />
-            )}
+        // Widget flows naturally so the offsetHeight poll measures its
+        // true rendered height. Skeleton overlays it while loading; once
+        // hidden, whatever the widget rendered (bare-logo during current
+        // sandbox onboarding, or full installment breakdown once Tamara
+        // Ops finishes provisioning our CDN config) is what buyers see.
+        <div className={`relative ${tamaraLoading ? "min-h-14" : ""}`}>
+          <div ref={tamaraWrapperRef}>
+            {/* Tamara V2's <tamara-widget> element takes ZERO configuration
+                attributes — it reads everything from window.tamaraWidgetConfig
+                (set in the render body above). Passing type/amount/currency
+                as HTML attributes is a no-op — the element's observedAttributes
+                is just ["uuid"]. Keying by price + source + lang forces React
+                to remount a fresh element when any of those change, so a stale
+                widget from a previous price never lingers on screen. */}
+            {createElement("tamara-widget", {
+              key: `tamara-${source}-${lang}-${price.toFixed(2)}`,
+            })}
           </div>
-          {tamaraRenderFailed && (
-            // KSA §1.1 fallback strip. Shows Tamara's official gradient logo
-            // + 3 messaging pillars (4-payment option, Sharia-compliant, logo)
-            // when the widget itself can't render. Deliberately omits the
-            // per-month price pillar — KSA §1.3.2 forbids hardcoded amounts,
-            // and we can't compute the split ourselves without the widget's
-            // plan config.
+          {tamaraLoading && (
+            // Opaque pulse tile that hides the still-mounting widget
+            // behind it. `absolute inset-0` matches the wrapper's size
+            // — the min-h-14 above guarantees at least the Tabby-promo
+            // tile height until the widget grows past it.
             <div
-              className="flex items-center gap-3 rounded-2xl border border-[#e5e5e5] bg-white px-4 py-3"
-              role="note"
-              aria-label={
-                lang === "ar"
-                  ? "ادفع مع تمارا — أقساط مرنة"
-                  : "Pay with Tamara — flexible installments"
-              }
-            >
-              <Image
-                src={`/tamara/${lang}/gradient.png`}
-                alt="Tamara"
-                width={72}
-                height={28}
-                className="h-7 w-auto shrink-0 object-contain"
-              />
-              <span className="text-sm font-medium leading-snug text-[#111827]">
-                {lang === "ar"
-                  ? "ادفع على 4 دفعات. متوافق مع الشريعة."
-                  : "Pay in 4 payments. Sharia-compliant."}
-              </span>
-            </div>
+              aria-hidden
+              className="absolute inset-0 rounded-2xl bg-[var(--color-border-subtle)] animate-pulse"
+            />
           )}
-        </>
+        </div>
       ) : null}
     </div>
   );

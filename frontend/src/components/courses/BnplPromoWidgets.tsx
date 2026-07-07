@@ -89,6 +89,12 @@ export default function BnplPromoWidgets({
   // option" on every purchase-flow page; without a fallback, PDP + cart
   // silently show nothing when the widget fails.
   const [tamaraRenderFailed, setTamaraRenderFailed] = useState(false);
+  // Skeleton shown while the widget script fetches its config JSON and
+  // renders. Custom elements mount synchronously but stay ~0px tall until
+  // the loader parses config; user sees a bare rounded logo tile for
+  // ~1s otherwise. Flipped off as soon as the widget renders content
+  // (offsetHeight > threshold) or the 3s timeout fires (fallback wins).
+  const [tamaraLoading, setTamaraLoading] = useState(true);
   // Per-source-AND-filter mount id so the same page can mount Tabby twice
   // (e.g. checkout has one near the Tabby radio and one near Tamara — the
   // Tamara render still includes the wrapping element ref but no Tabby
@@ -218,20 +224,36 @@ export default function BnplPromoWidgets({
     }
   }, [price, lang, currency, source, showWidgets, showTamara]);
 
-  // Detect widget render failure. The custom element mounts synchronously
-  // but stays empty (offsetHeight ~= 0) when Tamara's widget config JSON
-  // 404s — which happens whenever merchant onboarding is incomplete or
-  // the CDN hasn't provisioned the config file for our public key. Give
-  // the widget 3s to render; if the wrapper is still 0-height, flip on
-  // the fallback strip.
+  // Detect widget render state via offsetHeight polling. Custom elements
+  // don't fire load events for the internal config fetch, so we poll:
+  //   - offsetHeight >= 60px → real content painted; hide skeleton
+  //   - after 3s still < 60px → widget stuck (config 404 or bare-logo
+  //     fallback); show our own fallback strip and hide skeleton so the
+  //     user sees SOMETHING within a reasonable window.
+  // 60px is above the ~40px bare-logo height Tamara paints when the
+  // merchant config JSON is missing on their CDN.
   useEffect(() => {
     if (!showWidgets || !showTamara || !TAMARA_PUBLIC_KEY) return;
     setTamaraRenderFailed(false);
-    const timer = setTimeout(() => {
+    setTamaraLoading(true);
+
+    const poll = setInterval(() => {
       const el = tamaraWrapperRef.current;
-      if (el && el.offsetHeight < 20) setTamaraRenderFailed(true);
+      if (el && el.offsetHeight >= 60) {
+        setTamaraLoading(false);
+        clearInterval(poll);
+      }
+    }, 300);
+    const timeout = setTimeout(() => {
+      clearInterval(poll);
+      const el = tamaraWrapperRef.current;
+      if (!el || el.offsetHeight < 60) setTamaraRenderFailed(true);
+      setTamaraLoading(false);
     }, 3000);
-    return () => clearTimeout(timer);
+    return () => {
+      clearInterval(poll);
+      clearTimeout(timeout);
+    };
   }, [price, lang, currency, source, showWidgets, showTamara]);
 
   if (!showWidgets) return null;
@@ -270,17 +292,39 @@ export default function BnplPromoWidgets({
       ) : null}
       {showTamara && TAMARA_PUBLIC_KEY ? (
         <>
-          <div ref={tamaraWrapperRef}>
-            {/* Tamara V2's <tamara-widget> element takes ZERO configuration
-                attributes — it reads everything from window.tamaraWidgetConfig
-                (set in the render body above). Passing type/amount/currency
-                as HTML attributes is a no-op — the element's observedAttributes
-                is just ["uuid"]. Keying by price + source + lang forces React
-                to remount a fresh element when any of those change, so a stale
-                widget from a previous price never lingers on screen. */}
-            {createElement("tamara-widget", {
-              key: `tamara-${source}-${lang}-${price.toFixed(2)}`,
-            })}
+          {/* Widget stays mounted at all times so the offsetHeight poll can
+              observe when it grows to real content. Widget flows normally
+              (so offsetHeight reflects its natural height), and the skeleton
+              is layered on top with `absolute inset-0` while loading — its
+              opaque background hides the still-loading bare widget behind it.
+              On definitive failure we make the widget invisible so the
+              fallback strip below is the only visible Tamara element. */}
+          <div className="relative min-h-14">
+            <div
+              ref={tamaraWrapperRef}
+              className={tamaraRenderFailed ? "invisible" : ""}
+            >
+              {/* Tamara V2's <tamara-widget> element takes ZERO configuration
+                  attributes — it reads everything from window.tamaraWidgetConfig
+                  (set in the render body above). Passing type/amount/currency
+                  as HTML attributes is a no-op — the element's observedAttributes
+                  is just ["uuid"]. Keying by price + source + lang forces React
+                  to remount a fresh element when any of those change, so a stale
+                  widget from a previous price never lingers on screen. */}
+              {createElement("tamara-widget", {
+                key: `tamara-${source}-${lang}-${price.toFixed(2)}`,
+              })}
+            </div>
+            {tamaraLoading && (
+              // Skeleton placeholder overlaid on top of the still-loading
+              // widget. `absolute inset-0` grows with the parent so it
+              // matches the widget's natural height once real content
+              // starts painting. Opaque bg hides the loading widget behind.
+              <div
+                aria-hidden
+                className="absolute inset-0 rounded-2xl bg-[var(--color-border-subtle)] animate-pulse"
+              />
+            )}
           </div>
           {tamaraRenderFailed && (
             // KSA §1.1 fallback strip. Shows Tamara's official gradient logo

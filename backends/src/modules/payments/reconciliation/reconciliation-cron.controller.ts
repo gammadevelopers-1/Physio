@@ -8,6 +8,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { ReconciliationCronService } from './reconciliation-cron.service';
 import { InvoiceService } from '../services/invoice.service';
+import { Public } from '../../auth/decorators/public.decorator';
 
 /**
  * HTTP entry point for Cloud Scheduler. Cloud Scheduler authenticates the
@@ -23,6 +24,11 @@ import { InvoiceService } from '../services/invoice.service';
  * takes 60s, Scheduler waits. That's fine for our scale; if it grows we
  * can move to a fire-and-forget BullMQ pattern.
  */
+// Cloud Scheduler calls these endpoints without a user JWT (it authenticates
+// with OIDC + a shared secret in X-Cron-Token). Without @Public() the global
+// JwtAuthGuard rejects every request as 401 before assertToken() even runs.
+// The shared-secret check inside each handler is what actually gates access.
+@Public()
 @Controller('payments/reconciliation/cron')
 export class ReconciliationCronController {
   private readonly logger = new Logger(ReconciliationCronController.name);

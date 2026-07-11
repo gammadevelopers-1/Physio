@@ -36,8 +36,14 @@ const redisEnabled = !!process.env.REDIS_HOST;
   ],
   providers: [
     ProcessingService,
-    // Only register processors when Redis is available
-    ...(redisEnabled
+    // Only register processors when Redis is available AND this
+    // container is running as a BullMQ worker. When
+    // SKIP_BULLMQ_WORKERS=true (set on the HTTP-serving api-web service
+    // after the worker split), these classes are NOT registered — no
+    // BullMQ Workers are created for these queues, so this container
+    // won't consume jobs. Queue producers still work because
+    // BullModule.registerQueue is unaffected by this gate.
+    ...(redisEnabled && process.env.SKIP_BULLMQ_WORKERS !== 'true'
       ? [
           TranscodingProcessor,
           CaptionsProcessor,

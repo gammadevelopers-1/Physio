@@ -34,7 +34,16 @@ const redisEnabled = !!process.env.REDIS_HOST;
     NelcModeService,
     XapiService,
     LrsClient,
-    ...(redisEnabled ? [XapiProcessor] : []),
+    // XapiProcessor only when Redis is available AND this container is
+    // running as a BullMQ worker. When SKIP_BULLMQ_WORKERS=true (set on
+    // the HTTP-serving api-web service after the worker split), the
+    // processor is NOT registered — no BullMQ Worker is created for
+    // the xAPI statements queue, so this container won't consume jobs.
+    // Queue producers (XapiFlushCron, XapiService) still work because
+    // BullModule.registerQueue is unaffected by this gate.
+    ...(redisEnabled && process.env.SKIP_BULLMQ_WORKERS !== 'true'
+      ? [XapiProcessor]
+      : []),
     XapiFlushCron,
   ],
   exports: [XapiService, NelcModeService],

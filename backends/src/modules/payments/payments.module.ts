@@ -105,8 +105,16 @@ import { GatewayCredentialsService } from './gateways/gateway-credentials.servic
     BankTransferGateway,
     PaymentCleanupService,
     TamaraRetryService,
-    // Webhook processor only when Redis is available
-    ...(process.env.REDIS_HOST ? [WebhookProcessor] : []),
+    // Webhook processor only when Redis is available AND this container
+    // is running as a BullMQ worker. When SKIP_BULLMQ_WORKERS=true (set
+    // on the HTTP-serving api-web service after the worker split), the
+    // processor class is NOT registered — no BullMQ Worker is created
+    // for this queue, so this container won't consume jobs. Queue
+    // producers (WebhooksController's @InjectQueue) still work because
+    // BullModule.registerQueue is unaffected by this gate.
+    ...(process.env.REDIS_HOST && process.env.SKIP_BULLMQ_WORKERS !== 'true'
+      ? [WebhookProcessor]
+      : []),
   ],
   exports: [PaymentsService, InvoiceService, GatewayCredentialsService],
 })

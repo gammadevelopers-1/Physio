@@ -211,6 +211,23 @@ fi
 ENV_VARS="${ENV_VARS}||MOYASAR_MODE=${MOYASAR_MODE}"
 log_info "Moyasar mode: ${MOYASAR_MODE}"
 
+# Preserve Phase 1 + Phase 2 refactor env vars across deploys. gcloud uses
+# --set-env-vars (replaces), so without this block a routine deploy would
+# wipe SKIP_BULLMQ_WORKERS / EXTERNALIZED_CRONS and put the api-web
+# container back to running BullMQ workers + the in-container xapi.flush
+# @Cron (double execution vs api-worker + Cloud Run Jobs).
+#
+# Each var is optional at runtime — unset means "old behavior".
+for _PRESERVE in SKIP_BULLMQ_WORKERS SKIP_CRONS EXTERNALIZED_CRONS; do
+    _VAL=$(gcloud run services describe ${BACKEND_SERVICE_NAME} --region=${GCP_REGION} \
+        --format="yaml(spec.template.spec.containers[0].env)" 2>/dev/null \
+        | grep -A1 "name: ${_PRESERVE}\$" | grep 'value:' | head -1 | awk '{print $2}' | tr -d "'\"")
+    if [ -n "${_VAL}" ]; then
+        ENV_VARS="${ENV_VARS}||${_PRESERVE}=${_VAL}"
+        log_info "Preserving ${_PRESERVE}=${_VAL}"
+    fi
+done
+
 # Tamara BNPL — JWT API token + webhook notification token + public key.
 # Sandbox URL stays default; switch to https://api.tamara.co for live.
 for _TM in TAMARA_API_TOKEN TAMARA_NOTIFICATION_TOKEN TAMARA_PUBLIC_KEY; do

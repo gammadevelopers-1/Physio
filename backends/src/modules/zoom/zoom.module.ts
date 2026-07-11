@@ -4,6 +4,7 @@ import { ZoomService } from './zoom.service';
 import { ZoomMockService } from './zoom-mock.service';
 import { ZoomWebhookService } from './zoom-webhook.service';
 import { ZoomSyncService } from './zoom-sync.service';
+import { ZoomSyncJob } from './zoom.jobs';
 import { ZoomController } from './zoom.controller';
 import { ZOOM_SERVICE } from './zoom.interface';
 import { AuthModule } from '../auth/auth.module';
@@ -27,6 +28,7 @@ import zoomConfig from '../../config/zoom.config';
     },
     ZoomWebhookService,
     ZoomSyncService,
+    ZoomSyncJob,
   ],
   exports: [ZOOM_SERVICE, ZoomWebhookService, ZoomSyncService],
 })

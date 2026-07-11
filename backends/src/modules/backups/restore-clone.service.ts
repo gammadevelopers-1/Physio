@@ -6,6 +6,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { GoogleAuth } from 'google-auth-library';
 import { and, eq, desc, lt, count, inArray } from 'drizzle-orm';
 import { db } from '../../database';
@@ -385,6 +386,7 @@ export class RestoreCloneService {
 
   @Cron(CronExpression.EVERY_HOUR)
   async purgeExpired(): Promise<void> {
+    if (isCronExternalized('backups.purge-clones')) return;
     if (!this.enabled) return;
     try {
       const expired = await db

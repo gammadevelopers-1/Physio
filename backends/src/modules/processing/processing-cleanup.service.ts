@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { eq, and, lt } from 'drizzle-orm';
 import { db } from '../../database';
 import { courseMaterials, MATERIAL_STATUS } from '../../database/schema';
@@ -14,6 +15,7 @@ export class ProcessingCleanupService {
    */
   @Cron('*/15 * * * *')
   async cleanupStaleProcessing(): Promise<void> {
+    if (isCronExternalized('processing.cleanup')) return;
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     try {

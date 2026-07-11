@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { eq, and, or, isNull, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -38,6 +39,7 @@ export class ZoomSyncService {
    */
   @Cron('*/10 * * * *')
   async syncRecentlyEndedSessions(): Promise<void> {
+    if (isCronExternalized('zoom.sync')) return;
     // Item #10: concurrency guard
     if (this.isSyncing) {
       this.logger.debug('Zoom sync already in progress, skipping this run');

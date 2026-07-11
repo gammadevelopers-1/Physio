@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { CoursesController } from './courses.controller';
 import { CoursesService } from './courses.service';
 import { CourseCompletionCronService } from './course-completion.cron';
+import { CoursesCompletionJob } from './courses.jobs';
 import { AuthModule } from '../auth/auth.module';
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 import { CertificatesModule } from '../certificates/certificates.module';
@@ -22,7 +23,7 @@ import { SessionsModule } from '../sessions/sessions.module';
     forwardRef(() => SessionsModule),
   ],
   controllers: [CoursesController],
-  providers: [CoursesService, CourseCompletionCronService],
+  providers: [CoursesService, CourseCompletionCronService, CoursesCompletionJob],
   exports: [CoursesService],
 })
 export class CoursesModule {}

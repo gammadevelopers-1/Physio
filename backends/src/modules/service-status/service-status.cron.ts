@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -19,6 +20,7 @@ export class ServiceStatusCron {
   // limits; anything looser risks stale status during an incident.
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handleCron(): Promise<void> {
+    if (isCronExternalized('service-status.check')) return;
     await this.trackCronRun(CRON_NAME, async () => {
       const components = await db
         .select()

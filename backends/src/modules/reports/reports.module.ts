@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 import { ReportSchedulerService } from './report-scheduler.service';
+import { ReportsScheduleJob } from './reports.jobs';
 import { AuthModule } from '../auth/auth.module';
 import { NelcComplianceModule } from '../nelc-compliance/nelc-compliance.module';
 import { EmailModule } from '../email/email.module';
@@ -10,6 +11,6 @@ import { AdminSettingsModule } from '../admin-settings/admin-settings.module';
 @Module({
   imports: [AuthModule, NelcComplianceModule, EmailModule, AdminSettingsModule],
   controllers: [ReportsController],
-  providers: [ReportsService, ReportSchedulerService],
+  providers: [ReportsService, ReportSchedulerService, ReportsScheduleJob],
 })
 export class ReportsModule {}

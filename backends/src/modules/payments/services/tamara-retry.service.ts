@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isCronExternalized } from '../../../common/is-cron-externalized.helper';
 import { eq, and, lt, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
@@ -64,6 +65,7 @@ export class TamaraRetryService {
 
   @Cron('0 */10 * * * *')
   async retryStuckOrders(): Promise<void> {
+    if (isCronExternalized('payments.tamara-retry')) return;
     const minAge = new Date(Date.now() - this.MIN_AGE_MS);
 
     let stuck: { id: string; createdAt: Date; metadata: any; gatewayChargeId: string | null }[];

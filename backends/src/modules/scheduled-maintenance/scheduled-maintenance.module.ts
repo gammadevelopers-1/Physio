@@ -6,6 +6,7 @@ import {
 } from './scheduled-maintenance.controller';
 import { ScheduledMaintenanceService } from './scheduled-maintenance.service';
 import { ScheduledMaintenanceCron } from './scheduled-maintenance.cron';
+import { ScheduledMaintenanceTickJob } from './scheduled-maintenance.jobs';
 
 @Module({
   imports: [AdminSettingsModule],
@@ -13,7 +14,11 @@ import { ScheduledMaintenanceCron } from './scheduled-maintenance.cron';
     ScheduledMaintenanceController,
     MaintenanceBannerController,
   ],
-  providers: [ScheduledMaintenanceService, ScheduledMaintenanceCron],
+  providers: [
+    ScheduledMaintenanceService,
+    ScheduledMaintenanceCron,
+    ScheduledMaintenanceTickJob,
+  ],
   exports: [ScheduledMaintenanceService],
 })
 export class ScheduledMaintenanceModule {}

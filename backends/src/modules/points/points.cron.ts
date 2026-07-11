@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { and, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import { pointRedemptions, pointTransactions } from '../../database/schema';
@@ -33,6 +34,7 @@ export class PointsCronService {
    */
   @Cron(CronExpression.EVERY_5_MINUTES)
   async sweepStaleRedemptionHolds(): Promise<void> {
+    if (isCronExternalized('points.sweep-holds')) return;
     const now = new Date();
 
     const stale = await db
@@ -91,6 +93,7 @@ export class PointsCronService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async logExpiredEarnings(): Promise<void> {
+    if (isCronExternalized('points.log-expired')) return;
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const now = new Date();
 

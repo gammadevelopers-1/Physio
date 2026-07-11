@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isCronExternalized } from '../../../common/is-cron-externalized.helper';
 import { eq, and, lt, ne, or, isNull, sql } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
@@ -22,6 +23,7 @@ export class PaymentCleanupService {
    */
   @Cron('0 */30 * * * *')
   async cleanupStalePayments() {
+    if (isCronExternalized('payments.cleanup')) return;
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
     try {

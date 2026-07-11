@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { and, eq, gte, isNull, like, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -38,6 +39,7 @@ export class IncidentSuggestionCron {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async run(): Promise<void> {
+    if (isCronExternalized('service-status.incident-suggestion')) return;
     await this.tracked(CRON_NAME, async () => {
       const since = new Date(
         Date.now() - RECENT_TICKETS_WINDOW_MIN * 60_000,

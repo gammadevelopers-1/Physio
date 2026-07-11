@@ -43,6 +43,9 @@ import { BankTransferGateway } from './gateways/bank-transfer.gateway';
 // Processors
 import { WebhookProcessor } from './processors/webhook.processor';
 
+// Cloud Run Job wrappers
+import { TamaraRetryJob, PaymentCleanupJob } from './payments.jobs';
+
 // Constants
 import { PAYMENT_QUEUE_NAMES } from './constants';
 
@@ -105,6 +108,9 @@ import { GatewayCredentialsService } from './gateways/gateway-credentials.servic
     BankTransferGateway,
     PaymentCleanupService,
     TamaraRetryService,
+    // Cloud Run Job wrappers — self-register with JobRegistry
+    TamaraRetryJob,
+    PaymentCleanupJob,
     // Webhook processor only when Redis is available AND this container
     // is running as a BullMQ worker. When SKIP_BULLMQ_WORKERS=true (set
     // on the HTTP-serving api-web service after the worker split), the

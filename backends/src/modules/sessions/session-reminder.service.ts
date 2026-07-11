@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { eq, and, or, isNull, gte, lte, sql, isNotNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -38,6 +39,7 @@ export class SessionReminderService {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async checkUpcomingSessionsAndNotify() {
+    if (isCronExternalized('sessions.reminder-notify')) return;
     try {
       const now = new Date();
       const windowStart = new Date(now.getTime() + 4 * 60 * 1000); // 4 min from now
@@ -190,6 +192,7 @@ export class SessionReminderService {
    */
   @Cron(CronExpression.EVERY_5_MINUTES)
   async autoMarkMissedSessions() {
+    if (isCronExternalized('sessions.mark-missed')) return;
     const GRACE_MINUTES = 15;
     const cutoff = new Date(Date.now() - GRACE_MINUTES * 60 * 1000);
 
@@ -231,6 +234,7 @@ export class SessionReminderService {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async autoEndExpiredSessions() {
+    if (isCronExternalized('sessions.end-expired')) return;
     try {
       const now = new Date();
 

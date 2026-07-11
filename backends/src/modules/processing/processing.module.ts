@@ -10,6 +10,7 @@ import { FfmpegService } from './services/ffmpeg.service';
 import { WhisperService } from './services/whisper.service';
 import { WcagService } from './services/wcag.service';
 import { ProcessingCleanupService } from './processing-cleanup.service';
+import { ProcessingCleanupJob } from './processing.jobs';
 import { StorageModule } from '../storage/storage.module';
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 import { AuditLogModule } from '../audit-logs/audit-logs.module';
@@ -55,6 +56,7 @@ const redisEnabled = !!process.env.REDIS_HOST;
     WhisperService,
     WcagService,
     ProcessingCleanupService,
+    ProcessingCleanupJob,
   ],
   exports: [ProcessingService],
 })

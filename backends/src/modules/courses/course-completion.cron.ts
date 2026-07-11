@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { eq, and, lte, isNotNull } from 'drizzle-orm';
 import { db } from '../../database';
 import { courses, enrollments, users, NELC_EVENT_TYPE } from '../../database/schema';
@@ -28,6 +29,7 @@ export class CourseCompletionCronService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async autoCompletePastEndDate(): Promise<void> {
+    if (isCronExternalized('courses.completion')) return;
     this.logger.log('Running course auto-completion cron...');
 
     try {

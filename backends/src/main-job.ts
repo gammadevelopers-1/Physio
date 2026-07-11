@@ -38,6 +38,16 @@ async function bootstrap() {
   // instances that outlive the job's actual run(). Producers still
   // work because BullModule.registerQueue is unaffected by this.
   process.env.SKIP_BULLMQ_WORKERS = 'true';
+  // Cloud Run Jobs are built from an image + env inherited from the
+  // main api-web service, so EXTERNALIZED_CRONS will list this cron
+  // (that's the whole point — telling api-web to short-circuit its
+  // @Cron in favour of us). But that same env var, seen by isCron-
+  // Externalized() inside the JobHandler → service.method() call
+  // path, would short-circuit US too, and the Cloud Scheduler tick
+  // would run a no-op. Clear it here so the kill switch never fires
+  // inside the Job's own process — the switch is only meaningful on
+  // the always-warm api-web container.
+  process.env.EXTERNALIZED_CRONS = '';
 
   const startedAt = Date.now();
   logger.log(`Starting job: ${jobName}`);

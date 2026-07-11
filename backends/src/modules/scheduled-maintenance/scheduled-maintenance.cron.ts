@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { eq } from 'drizzle-orm';
 import { db } from '../../database';
 import { cronRuns } from '../../database/schema';
@@ -28,6 +29,7 @@ export class ScheduledMaintenanceCron {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async tick(): Promise<void> {
+    if (isCronExternalized('scheduled-maintenance.tick')) return;
     await this.tracked(CRON_NAME, async () => {
       const activated = await this.service.tickActivations();
       const completed = await this.service.tickCompletions();

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -115,6 +116,7 @@ export class SlaMonitorService {
    */
   @Cron('*/5 * * * *')
   async checkSlaBreaches() {
+    if (isCronExternalized('support.sla-breach')) return;
     await this.trackCronRun(CRON_NAMES.SLA_BREACH_CHECK, async () => {
     try {
       // Refresh business-hours cache if stale — protects against another
@@ -580,6 +582,7 @@ export class SlaMonitorService {
    */
   @Cron('0 * * * *')
   async checkPriorityEscalations() {
+    if (isCronExternalized('support.priority-escalation')) return;
     await this.trackCronRun(CRON_NAMES.PRIORITY_ESCALATION, async () => {
     try {
       // Same anti-stale guard as checkSlaBreaches — see that method.
@@ -768,6 +771,7 @@ export class SlaMonitorService {
    */
   @Cron('*/30 * * * *')
   async autoCloseResolvedTickets() {
+    if (isCronExternalized('support.auto-close-resolved')) return;
     await this.trackCronRun(CRON_NAMES.AUTO_CLOSE_RESOLVED, async () => {
     try {
       const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
@@ -822,6 +826,7 @@ export class SlaMonitorService {
    */
   @Cron('30 * * * *')
   async autoCloseWaitingForStudent() {
+    if (isCronExternalized('support.auto-close-waiting')) return;
     await this.trackCronRun(CRON_NAMES.AUTO_CLOSE_WAITING_STUDENT, async () => {
     try {
       const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
@@ -881,6 +886,7 @@ export class SlaMonitorService {
    */
   @Cron('*/5 * * * *')
   async sendCsatEmails() {
+    if (isCronExternalized('support.csat-emails')) return;
     await this.trackCronRun(CRON_NAMES.CSAT_EMAIL_SEND, async () => {
     try {
       // Find CSAT surveys that need email sending:
@@ -1010,6 +1016,7 @@ export class SlaMonitorService {
    */
   @Cron('*/1 * * * *')
   async sweepBusinessResumeAssignments() {
+    if (isCronExternalized('support.business-resume-sweep')) return;
     await this.trackCronRun(CRON_NAMES.BUSINESS_RESUME_SWEEP, async () => {
     try {
       await refreshBusinessHoursConfigIfStale(() =>

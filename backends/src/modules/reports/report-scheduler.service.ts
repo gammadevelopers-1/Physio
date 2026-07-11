@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { eq, and, lte } from 'drizzle-orm';
 import { db } from '../../database';
 import { scheduledReports, users, userRoles, roles } from '../../database/schema';
@@ -23,6 +24,7 @@ export class ReportSchedulerService {
    */
   @Cron('0 6 * * *')
   async handleScheduledReports(): Promise<void> {
+    if (isCronExternalized('reports.schedule')) return;
     this.logger.log('Running scheduled reports cron job...');
 
     const now = new Date();

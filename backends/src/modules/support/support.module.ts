@@ -8,6 +8,14 @@ import { RoleRequestsModule } from '../role-requests/role-requests.module';
 import { SupportController } from './support.controller';
 import { SupportService } from './support.service';
 import { SlaMonitorService } from './sla-monitor.service';
+import {
+  SlaBreachJob,
+  PriorityEscalationJob,
+  AutoCloseResolvedJob,
+  AutoCloseWaitingJob,
+  CsatEmailsJob,
+  BusinessResumeSweepJob,
+} from './support.jobs';
 
 @Module({
   imports: [
@@ -19,7 +27,16 @@ import { SlaMonitorService } from './sla-monitor.service';
     RoleRequestsModule,
   ],
   controllers: [SupportController],
-  providers: [SupportService, SlaMonitorService],
+  providers: [
+    SupportService,
+    SlaMonitorService,
+    SlaBreachJob,
+    PriorityEscalationJob,
+    AutoCloseResolvedJob,
+    AutoCloseWaitingJob,
+    CsatEmailsJob,
+    BusinessResumeSweepJob,
+  ],
   exports: [SupportService],
 })
 export class SupportModule {}

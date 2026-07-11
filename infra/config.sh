@@ -20,12 +20,18 @@ export FRONTEND_MIN_INSTANCES=0
 export FRONTEND_MAX_INSTANCES=3
 
 # Backend Configuration
+# Post Phase-1/Phase-2 sizing: main api-web is HTTP-only now (BullMQ workers
+# moved to physioguidance-api-worker, @Cron methods moved to Cloud Run Jobs).
+# Request-based billing (--cpu-throttling flag in deploy.sh) means we only
+# pay for CPU during active handling — 1 vCPU / 1 GiB / max=10 gives a
+# ~1,600 concurrent-user ceiling for ~$10-15/mo idle baseline. Bump these
+# values (or the flag) if launch traffic proves this too tight.
 export BACKEND_SERVICE_NAME="physioguidance-api"
 export BACKEND_PORT=8080
-export BACKEND_MEMORY="2Gi"
-export BACKEND_CPU="2"
-export BACKEND_MIN_INSTANCES=0
-export BACKEND_MAX_INSTANCES=3
+export BACKEND_MEMORY="1Gi"
+export BACKEND_CPU="1"
+export BACKEND_MIN_INSTANCES=1
+export BACKEND_MAX_INSTANCES=10
 
 # Strapi CMS Configuration
 export STRAPI_SERVICE_NAME="physioguidance-cms"

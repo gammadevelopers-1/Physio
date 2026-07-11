@@ -70,8 +70,14 @@ import nelcConfig from './config/nelc.config';
       ],
     }),
 
-    // Task scheduling (cron jobs)
-    ScheduleModule.forRoot(),
+    // Task scheduling (@Cron) — only enabled when SKIP_CRONS is unset
+    // or false. Set SKIP_CRONS=true on the api-worker service so its
+    // container doesn't fire the same @Cron methods the main api-web
+    // container already runs (would cause double execution of every
+    // scheduled job). Same shape as SKIP_BULLMQ_WORKERS, opposite
+    // ownership: workers on api-worker, crons on api-web (until
+    // Phase 2 moves each cron to its own Cloud Run Job).
+    ...(process.env.SKIP_CRONS === 'true' ? [] : [ScheduleModule.forRoot()]),
 
     // Rate limiting — ONE bucket only. Every named throttler in this
     // array ticks on every request, so a tight named bucket here

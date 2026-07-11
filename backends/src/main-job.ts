@@ -29,6 +29,16 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  // Cloud Run Jobs never want the in-process @Cron scheduler — the
+  // whole point is that Cloud Scheduler triggers this Job. Force
+  // SKIP_CRONS on so AppModule skips ScheduleModule.forRoot() even
+  // if the Cloud Run Job definition forgot to set it.
+  process.env.SKIP_CRONS = 'true';
+  // Same for BullMQ workers: a one-shot Job shouldn't spin up Worker
+  // instances that outlive the job's actual run(). Producers still
+  // work because BullModule.registerQueue is unaffected by this.
+  process.env.SKIP_BULLMQ_WORKERS = 'true';
+
   const startedAt = Date.now();
   logger.log(`Starting job: ${jobName}`);
 

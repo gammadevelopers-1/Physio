@@ -45,6 +45,7 @@ import { ServiceStatusModule } from './modules/service-status/service-status.mod
 import { ScheduledMaintenanceModule } from './modules/scheduled-maintenance/scheduled-maintenance.module';
 import { SidebarBadgesModule } from './modules/sidebar-badges/sidebar-badges.module';
 import { XapiModule } from './modules/xapi/xapi.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 import { MaintenanceMiddleware } from './common/maintenance.middleware';
 import { JwtAuthGuard } from './modules/auth/guards';
 import { ThrottlerGuard } from '@nestjs/throttler';
@@ -154,6 +155,10 @@ import nelcConfig from './config/nelc.config';
     ScheduledMaintenanceModule,
     SidebarBadgesModule,
     XapiModule,
+    // @Global() — provides JobRegistry for the Cloud Run Jobs entry
+    // point (dist/src/main-job) and lets any module register its
+    // extracted-cron JobHandlers without importing this module locally.
+    JobsModule,
   ],
   controllers: [AppController],
   providers: [

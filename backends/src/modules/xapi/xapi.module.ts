@@ -5,6 +5,7 @@ import { XapiService } from './xapi.service';
 import { LrsClient } from './lrs.client';
 import { XapiProcessor } from './xapi.processor';
 import { XapiFlushCron } from './xapi.flush.cron';
+import { XapiFlushJob } from './xapi-flush.job';
 import { XapiContextHelper } from './xapi-context.helper';
 import { XapiAdminController } from './xapi.admin.controller';
 import { NelcModeService } from './nelc-mode.service';
@@ -45,6 +46,11 @@ const redisEnabled = !!process.env.REDIS_HOST;
       ? [XapiProcessor]
       : []),
     XapiFlushCron,
+    // Cloud Run Job form of XapiFlushCron.flush. Both are wired in;
+    // isCronExternalized('xapi.flush') decides which runs (see the
+    // guard at the top of XapiFlushCron.flush). Only one path ever
+    // executes per invocation.
+    XapiFlushJob,
   ],
   exports: [XapiService, NelcModeService],
 })

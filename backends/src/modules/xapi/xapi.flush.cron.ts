@@ -11,6 +11,7 @@ import {
   XAPI_JOB_NAMES,
   type TransmitStatementJobData,
 } from './constants';
+import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 
 /**
  * Hourly safety-net flush. Picks up:
@@ -36,6 +37,13 @@ export class XapiFlushCron {
 
   @Cron(CronExpression.EVERY_HOUR)
   async flush(): Promise<void> {
+    // Kill switch: when EXTERNALIZED_CRONS contains 'xapi.flush' the
+    // paired Cloud Run Job (Cloud Scheduler → XapiFlushJob.run) owns
+    // this workload instead. Skipping here prevents double-execution
+    // during the extraction window. Rollback = remove the name from
+    // the env var and the in-container path resumes on its own.
+    if (isCronExternalized('xapi.flush')) return;
+
     const enabled = this.configService.get<boolean>('nelc.enabled');
     if (!enabled) return;
     if (!this.queue) {

@@ -90,6 +90,11 @@ import {
   type CourseCancelRefundKind,
 } from './templates/course-cancelled.template';
 import {
+  getCourseRescheduledHtml,
+  getCourseRescheduledText,
+  type CourseRescheduleVariant,
+} from './templates/course-rescheduled.template';
+import {
   getContentReviewHtml,
   getContentReviewText,
 } from './templates/content-review.template';
@@ -1173,6 +1178,66 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send course cancelled email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send course rescheduled notification email (Phase D).
+   *   - variant='shift'  → active course dates moved; enrollment stays
+   *   - variant='revive' → previously cancelled course is running again;
+   *                        student was refunded and must re-enroll
+   */
+  async sendCourseRescheduled(
+    to: string,
+    params: {
+      recipientName: string;
+      courseName: string;
+      oldStartDate: string | null;
+      newStartDate: string;
+      newEndDate: string | null;
+      reason: string;
+      variant: CourseRescheduleVariant;
+      reenrollUrl: string;
+    },
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      const subject =
+        params.variant === 'revive'
+          ? t(s.courseRescheduledReviveSubject, { course: params.courseName })
+          : t(s.courseRescheduledSubject, { course: params.courseName });
+      await this.send({
+        to,
+        subject,
+        html: getCourseRescheduledHtml(params, locale),
+        text: getCourseRescheduledText(params, locale),
+        template: {
+          eventKey:
+            params.variant === 'revive'
+              ? 'course_rescheduled_revive'
+              : 'course_rescheduled',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            courseName: params.courseName,
+            oldStartDate: params.oldStartDate ?? '',
+            newStartDate: params.newStartDate,
+            newEndDate: params.newEndDate ?? '',
+            reason: params.reason,
+            variant: params.variant,
+            reenrollUrl: params.reenrollUrl,
+          },
+        },
+      });
+      this.logger.log(
+        `Course rescheduled email (${params.variant}) sent to ${to} for "${params.courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send course rescheduled email to ${to}`,
         error,
       );
     }

@@ -136,6 +136,20 @@ const strings = {
   courseCancelledCta:     { en: 'We apologise for the inconvenience. Feel free to browse other courses from your dashboard.', ar: 'نعتذر عن أي إزعاج. يمكنك تصفح الدورات الأخرى من لوحة التحكم.' },
   refundStatusLabel:      { en: 'Refund status:',             ar: 'حالة الاسترداد:' },
 
+  /* ── Course rescheduled (Phase D) ─────────────────────── */
+  courseRescheduledSubject: { en: 'Course Rescheduled: {course}', ar: 'تم إعادة جدولة الدورة: {course}' },
+  courseRescheduledTitle:   { en: 'Course Rescheduled',           ar: 'تم إعادة جدولة الدورة' },
+  courseRescheduledBody:    { en: 'The dates for the following course have been updated. Your enrollment remains active — no action is required from you.', ar: 'تم تحديث تواريخ الدورة التالية. تسجيلك لا يزال ساريًا — لا يتطلب منك أي إجراء.' },
+  courseRescheduledCta:     { en: 'Check your dashboard for the updated session times.', ar: 'يرجى مراجعة لوحة التحكم لمشاهدة أوقات المحاضرات المحدثة.' },
+  courseRescheduledReviveSubject: { en: 'Course Reopened: {course}', ar: 'تمت إعادة تشغيل الدورة: {course}' },
+  courseRescheduledReviveTitle:   { en: 'Course Reopened',           ar: 'تمت إعادة تشغيل الدورة' },
+  courseRescheduledReviveBody:    { en: 'A course you were previously enrolled in has been rescheduled and is running again. Because your original enrollment was cancelled with a full refund, you will need to enroll and pay again if you wish to attend the new session.', ar: 'تمت إعادة جدولة دورة كنت مسجلًا فيها سابقًا وستُقام من جديد. بما أنه تم إلغاء تسجيلك الأصلي واسترداد أموالك بالكامل، ستحتاج إلى إعادة التسجيل والدفع مرة أخرى إذا رغبت في الحضور.' },
+  courseRescheduledReviveCta:     { en: 'You are not automatically re-enrolled. Use the button above to re-enroll if you are interested.', ar: 'لن يتم تسجيلك تلقائيًا. استخدم الزر أعلاه لإعادة التسجيل إذا كنت مهتمًا.' },
+  courseRescheduledReenrollCta:   { en: 'Re-enroll now',              ar: 'إعادة التسجيل الآن' },
+  courseRescheduledPreviousDateLabel: { en: 'Previous start:',        ar: 'التاريخ السابق:' },
+  courseRescheduledNewDateLabel:      { en: 'New start:',              ar: 'التاريخ الجديد:' },
+  courseRescheduledEndDateLabel:      { en: 'Ends:',                  ar: 'تنتهي:' },
+
   /* ── Certificates ────────────────────────────────────── */
   certApprovedSubject: { en: 'Certificate Approved - {course}', ar: 'تمت الموافقة على الشهادة - {course}' },
   certApprovedTitle:   { en: 'Certificate Approved!',           ar: 'تمت الموافقة على الشهادة!' },

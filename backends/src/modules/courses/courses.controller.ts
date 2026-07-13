@@ -21,6 +21,7 @@ import { UpdateModuleDto } from './dto/update-module.dto';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
 import { RateCourseDto } from './dto/rate-course.dto';
 import { CancelCourseDto } from './dto/cancel-course.dto';
+import { RescheduleCourseDto } from './dto/reschedule-course.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles, Public } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -301,6 +302,28 @@ export class CoursesController {
     @Req() req: Request,
   ) {
     return this.coursesService.cancelCourse(id, dto, user, req.ip);
+  }
+
+  /**
+   * POST /courses/:id/reschedule — Phase D reschedule workflow.
+   *
+   * Two variants gated by current status:
+   *   - shift  (from active)    → move dates, shift upcoming sessions
+   *   - revive (from cancelled) → run the course again; dropped
+   *     enrollments stay dropped (student must re-enroll & pay)
+   *
+   * Requires a mandatory reason. Bulk-notifies the affected student
+   * audience (active-enrolled for shift, previously-dropped for revive).
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/reschedule')
+  async rescheduleCourse(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: RescheduleCourseDto,
+    @Req() req: Request,
+  ) {
+    return this.coursesService.rescheduleCourse(id, dto, user, req.ip);
   }
 
   // ─── Module Endpoints ───────────────────────────────────────

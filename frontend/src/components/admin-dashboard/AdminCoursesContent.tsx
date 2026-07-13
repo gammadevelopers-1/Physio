@@ -34,6 +34,7 @@ import {
   PlayCircle,
   X,
   Calendar,
+  CalendarClock,
   Video,
   MapPin,
   Award,
@@ -52,7 +53,7 @@ import type { InstructorCourse, CourseEnrollment } from "@/types/instructor-dash
 
 const ITEMS_PER_PAGE = 12;
 
-type ConfirmKind = "archive" | "delete" | "cancel" | null;
+type ConfirmKind = "archive" | "delete" | "cancel" | "reschedule" | null;
 
 const AdminCoursesContent = () => {
   const t = useTranslations("adminDashboard");
@@ -92,6 +93,11 @@ const AdminCoursesContent = () => {
   // Cancel-course modal state. Reason is mandatory (backend enforces
   // min length 3); the button disables until it's non-empty.
   const [cancelReason, setCancelReason] = useState("");
+  // Phase D reschedule-course modal state. All three fields are the
+  // controlled inputs the admin fills before hitting Confirm.
+  const [rescheduleReason, setRescheduleReason] = useState("");
+  const [rescheduleNewStartDate, setRescheduleNewStartDate] = useState("");
+  const [rescheduleNewEndDate, setRescheduleNewEndDate] = useState("");
   const [requestChangesCourse, setRequestChangesCourse] = useState<InstructorCourse | null>(null);
   const [requestChangesNote, setRequestChangesNote] = useState("");
   const [requestChangesBusy, setRequestChangesBusy] = useState(false);
@@ -330,7 +336,10 @@ const AdminCoursesContent = () => {
 
   // --- Confirmation modal flow (Archive + Delete) ---
 
-  const openConfirm = (kind: "archive" | "delete" | "cancel", c: InstructorCourse) => {
+  const openConfirm = (
+    kind: "archive" | "delete" | "cancel" | "reschedule",
+    c: InstructorCourse,
+  ) => {
     setOpenDropdownId(null);
     setConfirmCourse(c);
     setConfirmKind(kind);
@@ -339,6 +348,13 @@ const AdminCoursesContent = () => {
     setDeleteTypedTitle("");
     setDeleteReason("");
     setCancelReason("");
+    setRescheduleReason("");
+    // Prefill the reschedule modal with the course's current start / end
+    // dates. Admin overrides — but the common case (shift the whole
+    // window by a few days) benefits from starting from the current
+    // values rather than an empty picker.
+    setRescheduleNewStartDate(c.startDate ?? "");
+    setRescheduleNewEndDate(c.endDate ?? "");
     // Both Delete and Cancel benefit from the impact preview (student
     // count, upcoming sessions, waitlist size, etc.) — load it either way.
     if (kind === "delete" || kind === "cancel") {
@@ -363,6 +379,9 @@ const AdminCoursesContent = () => {
     setDeleteTypedTitle("");
     setDeleteReason("");
     setCancelReason("");
+    setRescheduleReason("");
+    setRescheduleNewStartDate("");
+    setRescheduleNewEndDate("");
   };
   const handleConfirm = async () => {
     if (!confirmCourse || !confirmKind) return;
@@ -394,6 +413,28 @@ const AdminCoursesContent = () => {
             }),
           );
         }
+      } else if (confirmKind === "reschedule") {
+        const result = await adminApi.rescheduleCourse(confirmCourse.id, {
+          reason: rescheduleReason.trim(),
+          newStartDate: rescheduleNewStartDate,
+          newEndDate: rescheduleNewEndDate || undefined,
+        });
+        if (result.variant === "revive") {
+          toast.success(
+            t("coursesPage.confirmReschedule.successRevive", {
+              dropped: result.droppedEnrollmentsPreserved,
+              date: result.newStartDate,
+            }),
+          );
+        } else {
+          toast.success(
+            t("coursesPage.confirmReschedule.successShift", {
+              sessions: result.sessionsShifted,
+              students: result.studentsNotified,
+              date: result.newStartDate,
+            }),
+          );
+        }
       } else {
         await adminApi.deleteCourse(
           confirmCourse.id,
@@ -407,6 +448,9 @@ const AdminCoursesContent = () => {
       setDeleteTypedTitle("");
       setDeleteReason("");
       setCancelReason("");
+      setRescheduleReason("");
+      setRescheduleNewStartDate("");
+      setRescheduleNewEndDate("");
       refetch();
     } catch (err) {
       toast.error(
@@ -417,7 +461,9 @@ const AdminCoursesContent = () => {
                 ? "coursesPage.toasts.archiveFailed"
                 : confirmKind === "cancel"
                   ? "coursesPage.confirmCancel.failure"
-                  : "coursesPage.toasts.deleteFailed",
+                  : confirmKind === "reschedule"
+                    ? "coursesPage.confirmReschedule.failure"
+                    : "coursesPage.toasts.deleteFailed",
             ),
       );
     } finally {
@@ -461,6 +507,33 @@ const AdminCoursesContent = () => {
     confirmKind === "cancel" &&
     confirmCourse?.startDate != null &&
     new Date(confirmCourse.startDate).getTime() <= Date.now();
+
+  // Phase D reschedule gates. Reason ≥ 3 chars, new start must exist and
+  // be in the future, optional end date (if provided) must be on/after
+  // the start. Backend validates all of this too — this just disables
+  // the submit button until the payload is sane.
+  const rescheduleReasonOk = rescheduleReason.trim().length >= 3;
+  const rescheduleStartOk = (() => {
+    if (!rescheduleNewStartDate) return false;
+    const t = new Date(rescheduleNewStartDate).getTime();
+    if (Number.isNaN(t)) return false;
+    return t >= Date.now();
+  })();
+  const rescheduleEndOk = (() => {
+    if (!rescheduleNewEndDate) return true;
+    const startT = new Date(rescheduleNewStartDate).getTime();
+    const endT = new Date(rescheduleNewEndDate).getTime();
+    if (Number.isNaN(endT)) return false;
+    return endT >= startT;
+  })();
+  const rescheduleConfirmOk =
+    confirmKind === "reschedule" &&
+    confirmCourse !== null &&
+    rescheduleReasonOk &&
+    rescheduleStartOk &&
+    rescheduleEndOk;
+  const rescheduleIsRevive =
+    confirmKind === "reschedule" && confirmCourse?.status === "cancelled";
 
   // --- Enrolled students modal flow ---
 
@@ -645,6 +718,13 @@ const AdminCoursesContent = () => {
               <CheckCircle2 className="w-4 h-4" />
               {t("coursesPage.actions.complete")}
             </button>
+            <button
+              onClick={() => openConfirm("reschedule", course)}
+              className={itemCls}
+            >
+              <CalendarClock className="w-4 h-4" />
+              {t("coursesPage.actions.reschedule")}
+            </button>
             <button onClick={() => openConfirm("archive", course)} className={dangerCls}>
               <Archive className="w-4 h-4" />
               {t("coursesPage.actions.archive")}
@@ -661,10 +741,19 @@ const AdminCoursesContent = () => {
         )}
 
         {course.status === "cancelled" && (
-          <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
-            <Trash2 className="w-4 h-4" />
-            {t("coursesPage.actions.delete")}
-          </button>
+          <>
+            <button
+              onClick={() => openConfirm("reschedule", course)}
+              className={itemCls}
+            >
+              <CalendarClock className="w-4 h-4" />
+              {t("coursesPage.actions.rescheduleRevive")}
+            </button>
+            <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
+              <Trash2 className="w-4 h-4" />
+              {t("coursesPage.actions.delete")}
+            </button>
+          </>
         )}
 
         {course.status === "completed" && (
@@ -1282,7 +1371,13 @@ const AdminCoursesContent = () => {
                 ? t("coursesPage.confirmArchive.title")
                 : confirmKind === "cancel"
                   ? t("coursesPage.confirmCancel.title")
-                  : t("coursesPage.confirmDelete.title")}
+                  : confirmKind === "reschedule"
+                    ? t(
+                        rescheduleIsRevive
+                          ? "coursesPage.confirmReschedule.titleRevive"
+                          : "coursesPage.confirmReschedule.titleShift",
+                      )
+                    : t("coursesPage.confirmDelete.title")}
             </h3>
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">
               {confirmKind === "archive"
@@ -1304,12 +1399,24 @@ const AdminCoursesContent = () => {
                             : confirmCourse.title,
                       },
                     )
-                  : t("coursesPage.confirmDelete.body", {
-                      title:
-                        locale === "ar" && confirmCourse.titleAr
-                          ? confirmCourse.titleAr
-                          : confirmCourse.title,
-                    })}
+                  : confirmKind === "reschedule"
+                    ? t(
+                        rescheduleIsRevive
+                          ? "coursesPage.confirmReschedule.bodyRevive"
+                          : "coursesPage.confirmReschedule.bodyShift",
+                        {
+                          title:
+                            locale === "ar" && confirmCourse.titleAr
+                              ? confirmCourse.titleAr
+                              : confirmCourse.title,
+                        },
+                      )
+                    : t("coursesPage.confirmDelete.body", {
+                        title:
+                          locale === "ar" && confirmCourse.titleAr
+                            ? confirmCourse.titleAr
+                            : confirmCourse.title,
+                      })}
             </p>
 
             {confirmKind === "delete" && (
@@ -1508,6 +1615,102 @@ const AdminCoursesContent = () => {
               </>
             )}
 
+            {confirmKind === "reschedule" && (
+              <>
+                {/* Revive-path warning: previously-cancelled course going
+                    back to active. Refunds already went out; enrollments
+                    are dropped. Students must re-enroll and re-pay. */}
+                {rescheduleIsRevive && (
+                  <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-3 mb-4">
+                    <ul className="space-y-1 text-xs text-[#78350F] leading-relaxed">
+                      <li>· {t("coursesPage.confirmReschedule.reviveImpactEnrollments")}</li>
+                      <li>· {t("coursesPage.confirmReschedule.reviveImpactRefunds")}</li>
+                      <li>· {t("coursesPage.confirmReschedule.reviveImpactCerts")}</li>
+                      <li>· {t("coursesPage.confirmReschedule.reviveImpactNotify")}</li>
+                    </ul>
+                  </div>
+                )}
+
+                {/* Shift-path informational: what will happen to sessions
+                    + Zoom + enrolled students. */}
+                {!rescheduleIsRevive && (
+                  <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
+                    <ul className="space-y-1 text-xs text-[#1E3A8A] leading-relaxed">
+                      <li>· {t("coursesPage.confirmReschedule.shiftImpactSessions")}</li>
+                      <li>· {t("coursesPage.confirmReschedule.shiftImpactZoom")}</li>
+                      <li>· {t("coursesPage.confirmReschedule.shiftImpactNotify")}</li>
+                    </ul>
+                  </div>
+                )}
+
+                {/* Current dates reference */}
+                {confirmCourse.startDate && (
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+                    {t("coursesPage.confirmReschedule.currentDatesLabel")}{" "}
+                    <span className="font-mono text-[var(--color-text-primary)]">
+                      {confirmCourse.startDate}
+                      {confirmCourse.endDate ? ` → ${confirmCourse.endDate}` : ""}
+                    </span>
+                  </p>
+                )}
+
+                {/* New start date (required) */}
+                <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                  {t("coursesPage.confirmReschedule.newStartDateLabel")}
+                </label>
+                <input
+                  type="date"
+                  value={rescheduleNewStartDate}
+                  onChange={(e) => setRescheduleNewStartDate(e.target.value)}
+                  disabled={confirmBusy}
+                  className="w-full px-3 h-10 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-1 disabled:opacity-50"
+                />
+                {rescheduleNewStartDate && !rescheduleStartOk && (
+                  <p className="text-xs text-[#DC2626] mb-3">
+                    {t("coursesPage.confirmReschedule.startInPast")}
+                  </p>
+                )}
+                {rescheduleStartOk && <div className="mb-3" />}
+
+                {/* Optional end date */}
+                <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                  {t("coursesPage.confirmReschedule.newEndDateLabel")}
+                </label>
+                <input
+                  type="date"
+                  value={rescheduleNewEndDate}
+                  onChange={(e) => setRescheduleNewEndDate(e.target.value)}
+                  disabled={confirmBusy}
+                  className="w-full px-3 h-10 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-1 disabled:opacity-50"
+                />
+                {!rescheduleEndOk && (
+                  <p className="text-xs text-[#DC2626] mb-3">
+                    {t("coursesPage.confirmReschedule.endBeforeStart")}
+                  </p>
+                )}
+                {rescheduleEndOk && <div className="mb-3" />}
+
+                {/* Mandatory reason */}
+                <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                  {t("coursesPage.confirmReschedule.reasonLabel")}
+                </label>
+                <textarea
+                  value={rescheduleReason}
+                  onChange={(e) => setRescheduleReason(e.target.value)}
+                  placeholder={t("coursesPage.confirmReschedule.reasonPlaceholder")}
+                  disabled={confirmBusy}
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-4 disabled:opacity-50 resize-none"
+                />
+                {rescheduleReason.trim().length > 0 &&
+                  rescheduleReason.trim().length < 3 && (
+                    <p className="text-xs text-[#DC2626] mb-2">
+                      {t("coursesPage.confirmReschedule.reasonRequired")}
+                    </p>
+                  )}
+              </>
+            )}
+
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -1517,7 +1720,9 @@ const AdminCoursesContent = () => {
               >
                 {confirmKind === "cancel"
                   ? t("coursesPage.confirmCancel.cancel")
-                  : t("coursesPage.confirmArchive.cancel")}
+                  : confirmKind === "reschedule"
+                    ? t("coursesPage.confirmReschedule.cancel")
+                    : t("coursesPage.confirmArchive.cancel")}
               </button>
               <button
                 type="button"
@@ -1525,16 +1730,23 @@ const AdminCoursesContent = () => {
                 disabled={
                   confirmBusy ||
                   (confirmKind === "delete" && !deleteConfirmOk) ||
-                  (confirmKind === "cancel" && !cancelConfirmOk)
+                  (confirmKind === "cancel" && !cancelConfirmOk) ||
+                  (confirmKind === "reschedule" && !rescheduleConfirmOk)
                 }
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={
+                  confirmKind === "reschedule"
+                    ? "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#2563EB] rounded-lg hover:bg-[#1D4ED8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    : "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                }
               >
                 {confirmBusy && <Loader2 className="w-4 h-4 animate-spin" />}
                 {confirmKind === "archive"
                   ? t("coursesPage.confirmArchive.confirm")
                   : confirmKind === "cancel"
                     ? t("coursesPage.confirmCancel.confirm")
-                    : t("coursesPage.confirmDelete.confirm")}
+                    : confirmKind === "reschedule"
+                      ? t("coursesPage.confirmReschedule.confirm")
+                      : t("coursesPage.confirmDelete.confirm")}
               </button>
             </div>
           </div>

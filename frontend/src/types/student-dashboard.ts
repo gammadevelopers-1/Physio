@@ -47,6 +47,11 @@ export interface StudentEnrolledCourse {
   courseStatus?: string;
   cancelledAt?: string | null;
   cancelReason?: string | null;
+  // Phase D: reschedule/reopen surfacing. On a `dropped` enrollment whose
+  // course is now `active`, `rescheduledAt` being set means the course
+  // was cancelled then reopened — the student can re-enroll.
+  rescheduledAt?: string | null;
+  originalStartDate?: string | null;
   enrollmentId: string;
   enrollmentStatus: string;
   progress: number;
@@ -184,6 +189,13 @@ export interface StudentCourseDetail {
     status?: string | null;
     cancelledAt?: string | null;
     cancelReason?: string | null;
+    // Phase D: reschedule audit on the detail page. `rescheduledAt` set
+    // means the course has been moved at least once; `originalStartDate`
+    // preserves the pre-reschedule anchor for the UI to show "originally
+    // started {X}, now runs on {Y}".
+    rescheduledAt?: string | null;
+    rescheduleReason?: string | null;
+    originalStartDate?: string | null;
     language?: string | null;
     instructorName: string;
     isCmeAccredited: boolean;

@@ -880,6 +880,18 @@ export const adminApi = {
   ) =>
     api.post<CancelCourseResponse>(`/courses/${courseId}/cancel`, { reason }),
 
+  // Phase D reschedule-course workflow.
+  //   - shift  (from active)    → move dates, keep enrollments
+  //   - revive (from cancelled) → run again; dropped stay dropped
+  rescheduleCourse: (
+    courseId: string,
+    payload: { reason: string; newStartDate: string; newEndDate?: string },
+  ) =>
+    api.post<RescheduleCourseResponse>(
+      `/courses/${courseId}/reschedule`,
+      payload,
+    ),
+
   // ─── Logs page: Audit Trail tab ────────────────────────
   getAuditLogs: (params?: AdminAuditLogQuery) => {
     const sp = new URLSearchParams();
@@ -2440,6 +2452,22 @@ export interface CancelCourseResponse {
   certificatesRevoked: number;
   pointsReversed: number;
   studentsNotified: number;
+}
+
+// Reschedule-course backend response (Phase D). Powers the admin toast
+// after a successful reschedule.
+export interface RescheduleCourseResponse {
+  rescheduledAt: string;
+  variant: 'shift' | 'revive';
+  newStartDate: string;
+  newEndDate: string | null;
+  originalStartDate: string | null;
+  sessionsShifted: number;
+  sessionsFailed: number;
+  zoomUpdatesFailed: number;
+  studentsNotified: number;
+  revivedFromCancelled: boolean;
+  droppedEnrollmentsPreserved: number;
 }
 
 export interface DeletedCourseEntry {

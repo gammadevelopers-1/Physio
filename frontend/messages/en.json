@@ -1937,6 +1937,12 @@
         "titleWithDate": "Cancelled on {date}",
         "reasonLabel": "Reason:"
       },
+      "reopenedBanner": {
+        "title": "This course is running again",
+        "titleWithDate": "Running again — starts {date}",
+        "reenrollCta": "Re-enroll now",
+        "dismiss": "Dismiss"
+      },
       "recentCourses": "Recent Courses",
       "loadMore": "Load more",
       "loadingMore": "Loading more...",
@@ -6348,7 +6354,9 @@
         "feature": "Mark as featured",
         "unfeature": "Remove featured",
         "complete": "Mark as completed",
-        "unarchive": "Restore (unarchive)"
+        "unarchive": "Restore (unarchive)",
+        "reschedule": "Reschedule course",
+        "rescheduleRevive": "Reopen with new dates"
       },
       "sampleCourses": {
         "acls": "ACLS Certification",
@@ -6445,6 +6453,32 @@
         "refundManual": "Your refund is under review by our finance team — you will hear from us separately with the decision."
       },
       "cancelCourse": "Cancel course",
+      "confirmReschedule": {
+        "titleShift": "Reschedule this course?",
+        "titleRevive": "Reopen this cancelled course?",
+        "bodyShift": "Move \"{title}\" to a new date. Upcoming sessions will shift by the same delta, Zoom meetings will be updated in place, and every enrolled student will get an email.",
+        "bodyRevive": "Bring \"{title}\" back to active. The dropped students will get a re-enroll invitation — they must sign up and pay again from scratch. Refunded payments and revoked certificates from the earlier cancellation stay as-is.",
+        "shiftImpactSessions": "Upcoming sessions will shift by the same delta as the new start date",
+        "shiftImpactZoom": "Zoom meetings will be updated in place — registration links stay valid",
+        "shiftImpactNotify": "Every enrolled student will get an in-app notification + email with the new dates",
+        "reviveImpactEnrollments": "Enrollments stay dropped — the student must re-enroll and pay again if they want to attend",
+        "reviveImpactRefunds": "Refunds already issued for the earlier cancellation stay issued — no reversal happens",
+        "reviveImpactCerts": "Certificates previously revoked stay revoked — a re-enrolled student earns a fresh one upon completion",
+        "reviveImpactNotify": "Previously-enrolled students get an in-app notification + email offering re-enrollment",
+        "currentDatesLabel": "Current dates:",
+        "newStartDateLabel": "New start date (required)",
+        "newEndDateLabel": "New end date (optional — leave empty to preserve the original duration)",
+        "startInPast": "New start date must be in the future",
+        "endBeforeStart": "End date must be on or after the new start date",
+        "reasonLabel": "Reason (required, sent to students)",
+        "reasonPlaceholder": "e.g. instructor availability, venue change, holiday overlap…",
+        "reasonRequired": "A reason of at least 3 characters is required",
+        "confirm": "Reschedule course",
+        "cancel": "Keep dates",
+        "successShift": "Course rescheduled to {date}. {sessions} session(s) shifted, {students} student(s) notified.",
+        "successRevive": "Course reopened for {date}. {dropped} previously-dropped student(s) invited to re-enroll.",
+        "failure": "Failed to reschedule course"
+      },
       "requestChangesModal": {
         "title": "Request changes",
         "body": "Send \"{title}\" back to the instructor with a note explaining what needs to change.",

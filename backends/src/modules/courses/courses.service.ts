@@ -49,6 +49,10 @@ import { SessionsService } from '../sessions/sessions.service';
 import { RefundService } from '../payments/services/refund.service';
 import { XapiService } from '../xapi/xapi.service';
 import { CancelCourseDto, CancelCourseResult } from './dto/cancel-course.dto';
+import {
+  RescheduleCourseDto,
+  RescheduleCourseResult,
+} from './dto/reschedule-course.dto';
 import { toArabicIndic } from '../../common/platform-locale';
 import { sanitizeRichText } from '../../common/sanitize-html';
 import { getEffectivePrice } from './pricing.util';
@@ -2128,6 +2132,362 @@ export class CoursesService {
     }
 
     return { attendanceCancelled, certificatesRevoked, pointsReversed };
+  }
+
+  /**
+   * Reschedule a course — Phase D. Two variants gated by current status:
+   *
+   *   - `shift`  (from `active`): move the course window forward/backward.
+   *     Enrollment stays. Upcoming sessions shift in place with Zoom
+   *     resources updated via updateMeeting / updateWebinar (registration
+   *     links stay valid). Students get one fan-out email per student.
+   *
+   *   - `revive` (from `cancelled`): course is running again with a new
+   *     startDate. Enrollments were dropped by the earlier cancel and
+   *     stay dropped — the student was fully refunded, so re-enrollment
+   *     is an opt-in with a fresh payment. Students who were originally
+   *     dropped get a "Course reopened — re-enroll?" email + in-app
+   *     notification with a link back to the course detail page.
+   *     Certificates that were revoked during the cancel stay revoked;
+   *     the earlier CME point reversal stays reversed. Both are earned
+   *     fresh by a student who re-enrolls and completes the new run.
+   *
+   * Blocked from: `completed` (immutable per Amna), `archived`, `draft`,
+   * `pending_review`, `changes_requested` (not launched yet — edit dates
+   * normally instead).
+   *
+   * `originalStartDate` is snapshotted ONCE on the first reschedule and
+   * preserved across subsequent moves so the audit trail always shows
+   * the pre-reschedule date.
+   */
+  async rescheduleCourse(
+    courseId: string,
+    dto: RescheduleCourseDto,
+    user: AuthenticatedUser,
+    ipAddress?: string,
+  ): Promise<RescheduleCourseResult> {
+    if (!isManagerOrAbove(user)) {
+      throw new ForbiddenException(
+        'Only managers and admins can reschedule courses',
+      );
+    }
+
+    const [existing] = await db
+      .select()
+      .from(courses)
+      .where(and(eq(courses.id, courseId), isNull(courses.deletedAt)))
+      .limit(1);
+    if (!existing) {
+      throw new NotFoundException('Course not found');
+    }
+
+    if (isManager(user) && !isGlobalAdmin(user)) {
+      if (
+        existing.managerId !== null &&
+        existing.managerId !== user.id
+      ) {
+        throw new ForbiddenException('Course not in your scope');
+      }
+    }
+
+    // State gate.
+    if (existing.status === COURSE_STATUS.COMPLETED) {
+      throw new BadRequestException(
+        'A completed course cannot be rescheduled — students earned outcomes. Archive it instead.',
+      );
+    }
+    if (existing.status === COURSE_STATUS.ARCHIVED) {
+      throw new BadRequestException(
+        'An archived course cannot be rescheduled. Reactivate it first.',
+      );
+    }
+    if (
+      existing.status !== COURSE_STATUS.ACTIVE &&
+      existing.status !== COURSE_STATUS.CANCELLED
+    ) {
+      throw new BadRequestException(
+        'Only active or cancelled courses can be rescheduled. Edit start/end dates directly on other statuses.',
+      );
+    }
+
+    // Validate dates.
+    const now = new Date();
+    const newStart = new Date(dto.newStartDate);
+    if (Number.isNaN(newStart.getTime())) {
+      throw new BadRequestException('newStartDate is not a valid date');
+    }
+    if (newStart.getTime() < now.getTime()) {
+      throw new BadRequestException(
+        'New start date must be in the future',
+      );
+    }
+    let newEnd: Date | null = null;
+    if (dto.newEndDate) {
+      newEnd = new Date(dto.newEndDate);
+      if (Number.isNaN(newEnd.getTime())) {
+        throw new BadRequestException('newEndDate is not a valid date');
+      }
+      if (newEnd.getTime() < newStart.getTime()) {
+        throw new BadRequestException(
+          'End date must be on or after the new start date',
+        );
+      }
+    } else if (existing.startDate && existing.endDate) {
+      // Preserve the original duration when only newStartDate was given.
+      const oldStartMs = new Date(existing.startDate).getTime();
+      const oldEndMs = new Date(existing.endDate).getTime();
+      const durationMs = Math.max(0, oldEndMs - oldStartMs);
+      newEnd = new Date(newStart.getTime() + durationMs);
+    }
+
+    const variant: 'shift' | 'revive' =
+      existing.status === COURSE_STATUS.CANCELLED ? 'revive' : 'shift';
+    const revivedFromCancelled = variant === 'revive';
+
+    // Delta for session shifting. If the course had no startDate before
+    // (self-paced or unset), we can't shift sessions relative to anything
+    // — treat delta as 0 and let admins reschedule individual sessions
+    // afterwards if needed.
+    const deltaMs =
+      existing.startDate && variant === 'shift'
+        ? newStart.getTime() - new Date(existing.startDate).getTime()
+        : 0;
+
+    // The date column strips the time portion; store the ISO date substring.
+    const newStartDateStr = dto.newStartDate.slice(0, 10);
+    const newEndDateStr = newEnd
+      ? newEnd.toISOString().slice(0, 10)
+      : existing.endDate;
+
+    // Snapshot originalStartDate on first reschedule. Preserve on subsequent.
+    const originalStartDate =
+      existing.originalStartDate ??
+      (existing.startDate ? existing.startDate : null);
+
+    // 1. Flip course row.
+    await db
+      .update(courses)
+      .set({
+        status: COURSE_STATUS.ACTIVE,
+        startDate: newStartDateStr,
+        endDate: newEndDateStr,
+        rescheduledAt: now,
+        rescheduleReason: dto.reason,
+        originalStartDate,
+        // Clear cancel columns if we're reviving from cancelled.
+        cancelledAt: revivedFromCancelled ? null : existing.cancelledAt,
+        cancelledBy: revivedFromCancelled ? null : existing.cancelledBy,
+        cancelReason: revivedFromCancelled ? null : existing.cancelReason,
+        updatedAt: now,
+      })
+      .where(eq(courses.id, courseId));
+
+    // 2. Shift upcoming sessions (shift variant only). Revive never has
+    // upcoming sessions to shift — the cancel already cancelled them —
+    // so any new sessions get created fresh by the manager afterwards.
+    let sessionsShifted = 0;
+    let sessionsFailed = 0;
+    let zoomUpdatesFailed = 0;
+    if (variant === 'shift' && deltaMs !== 0) {
+      const shiftResult = await this.sessionsService
+        .shiftUpcomingForCourse(
+          courseId,
+          user.id,
+          deltaMs,
+          `Course rescheduled: ${dto.reason}`,
+          { notify: false },
+        )
+        .catch((err) => {
+          this.logger.error(
+            `rescheduleCourse: session shift failed for ${courseId}`,
+            err,
+          );
+          return { shifted: 0, failed: 0, zoomFailed: 0 };
+        });
+      sessionsShifted = shiftResult.shifted;
+      sessionsFailed = shiftResult.failed;
+      zoomUpdatesFailed = shiftResult.zoomFailed;
+    }
+
+    // 3. Resolve student audience.
+    //   - shift  → currently-enrolled (non-dropped) students
+    //   - revive → previously-dropped students (their cancel-drop event
+    //              set status='dropped'; they are the ones who need the
+    //              "re-enroll?" notice)
+    let audienceRows: Array<{ studentId: string }>;
+    if (variant === 'shift') {
+      audienceRows = await db
+        .select({ studentId: enrollments.studentId })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.courseId, courseId),
+            ne(enrollments.status, 'dropped'),
+          ),
+        );
+    } else {
+      audienceRows = await db
+        .select({ studentId: enrollments.studentId })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.courseId, courseId),
+            eq(enrollments.status, 'dropped'),
+          ),
+        );
+    }
+
+    const droppedEnrollmentsPreserved = variant === 'revive'
+      ? audienceRows.length
+      : 0;
+
+    // 4. Notify.
+    const studentIds = Array.from(
+      new Set(audienceRows.map((r) => r.studentId)),
+    );
+    let studentsNotified = 0;
+    if (studentIds.length > 0) {
+      const students = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          language: users.language,
+        })
+        .from(users)
+        .where(inArray(users.id, studentIds));
+
+      // In-app bulk fanout with i18n keys.
+      try {
+        if (variant === 'shift') {
+          await this.userNotificationsService.createBulk(students.map((s) => s.id), {
+            type: 'course_rescheduled',
+            title: 'Course Rescheduled',
+            message: `The course "${existing.title}" has new dates. Check your dashboard.`,
+            titleKey: 'notifications.types.course_rescheduled.title',
+            messageKey: 'notifications.types.course_rescheduled.message',
+            messageParams: {
+              courseName: existing.title,
+              newStartDate: newStartDateStr,
+            },
+            link: `/dashboard/student/my-courses/${courseId}`,
+            entityType: 'course',
+            entityId: courseId,
+          });
+        } else {
+          await this.userNotificationsService.createBulk(students.map((s) => s.id), {
+            type: 'course_reopened',
+            title: 'Course Reopened',
+            message: `"${existing.title}" is running again. Re-enroll if you'd like to attend.`,
+            titleKey: 'notifications.types.course_reopened.title',
+            messageKey: 'notifications.types.course_reopened.message',
+            messageParams: {
+              courseName: existing.title,
+              newStartDate: newStartDateStr,
+            },
+            link: `/courses/${courseId}`,
+            entityType: 'course',
+            entityId: courseId,
+          });
+        }
+      } catch (err) {
+        this.logger.warn(
+          `rescheduleCourse: in-app fanout failed for ${courseId}: ${
+            (err as Error).message
+          }`,
+        );
+      }
+
+      // Per-student email loop.
+      const oldStartDateStr = existing.startDate ?? null;
+      await Promise.all(
+        students.map(async (s) => {
+          const recipientName = s.firstName ?? s.email ?? 'Student';
+          const locale = s.language === 'ar' ? 'ar' : 'en';
+          try {
+            await this.emailService.sendCourseRescheduled(
+              s.email,
+              {
+                recipientName,
+                courseName: existing.title,
+                oldStartDate: oldStartDateStr,
+                newStartDate: newStartDateStr,
+                newEndDate: newEndDateStr ?? null,
+                reason: dto.reason,
+                variant,
+                reenrollUrl: `/courses/${courseId}`,
+              },
+              locale,
+            );
+            studentsNotified++;
+          } catch (err) {
+            this.logger.warn(
+              `rescheduleCourse: email failed for ${s.email} on course ${courseId}: ${
+                (err as Error).message
+              }`,
+            );
+          }
+        }),
+      );
+    }
+
+    // 5. Audit + NELC.
+    await this.auditLogService
+      .log({
+        entityType: 'course',
+        entityId: courseId,
+        action: 'course.rescheduled',
+        performedBy: user.id,
+        ipAddress,
+        metadata: {
+          title: existing.title,
+          reason: dto.reason,
+          variant,
+          fromStatus: existing.status,
+          oldStartDate: existing.startDate,
+          newStartDate: newStartDateStr,
+          newEndDate: newEndDateStr,
+          deltaMs,
+          sessionsShifted,
+          sessionsFailed,
+          zoomUpdatesFailed,
+          audienceCount: studentIds.length,
+        },
+      })
+      .catch(() => {});
+
+    await this.auditService
+      .log({
+        eventType: NELC_EVENT_TYPE.COURSE_RESCHEDULED,
+        entityType: 'course',
+        entityId: courseId,
+        userId: user.id,
+        metadata: {
+          title: existing.title,
+          reason: dto.reason,
+          variant,
+          oldStartDate: existing.startDate,
+          newStartDate: newStartDateStr,
+          newEndDate: newEndDateStr,
+          sessionsShifted,
+        },
+        ipAddress,
+      })
+      .catch(() => {});
+
+    return {
+      rescheduledAt: now,
+      variant,
+      newStartDate: newStartDateStr,
+      newEndDate: newEndDateStr ?? null,
+      originalStartDate: originalStartDate ?? null,
+      sessionsShifted,
+      sessionsFailed,
+      zoomUpdatesFailed,
+      studentsNotified,
+      revivedFromCancelled,
+      droppedEnrollmentsPreserved,
+    };
   }
 
   /**

@@ -372,7 +372,18 @@ export class StudentService {
     if (params.status && params.status !== 'all') {
       conditions.push(eq(enrollments.status, params.status));
     } else {
-      conditions.push(sql`${enrollments.status} <> 'dropped'`);
+      // Default view: hide `dropped` enrollments, EXCEPT for the
+      // reopened-course case (Phase D) — if the course was cancelled
+      // then later rescheduled back to `active`, surface the row so the
+      // student sees the "re-enroll?" banner on My Courses.
+      conditions.push(sql`(
+        ${enrollments.status} <> 'dropped'
+        OR (
+          ${enrollments.status} = 'dropped'
+          AND ${courses.status} = 'active'
+          AND ${courses.rescheduledAt} IS NOT NULL
+        )
+      )`);
     }
 
     // Filter by delivery type (zoom / onsite / blended / self-paced)
@@ -411,6 +422,11 @@ export class StudentService {
         courseStatus: courses.status,
         cancelledAt: courses.cancelledAt,
         cancelReason: courses.cancelReason,
+        // Phase D reschedule/reopen surfacing: when set on a dropped
+        // enrollment whose course is now active, the frontend renders
+        // a "This course is running again — re-enroll?" banner.
+        rescheduledAt: courses.rescheduledAt,
+        originalStartDate: courses.originalStartDate,
         // Surface the NELC evaluation link + the student's certificate
         // request status on the courses-list payload so the My Courses
         // cards can render an action-required pill without the student

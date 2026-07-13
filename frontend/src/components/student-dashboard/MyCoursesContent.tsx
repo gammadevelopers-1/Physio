@@ -107,6 +107,44 @@ const MyCoursesContent = () => {
   const userData = useStudentProfile();
   const platformLocale = usePlatformLocale();
 
+  // Phase D reopened-course dismissals — localStorage-backed so the
+  // banner stays gone across reloads without needing a backend field.
+  // Storage key format: `mycourses:reopenedDismissed:{courseId}` = "1".
+  // Just tracks IDs in state and hydrates once on mount.
+  const [reopenedDismissed, setReopenedDismissed] = useState<Set<string>>(
+    new Set(),
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const dismissed = new Set<string>();
+    try {
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i);
+        if (key && key.startsWith("mycourses:reopenedDismissed:")) {
+          dismissed.add(key.slice("mycourses:reopenedDismissed:".length));
+        }
+      }
+    } catch {
+      // localStorage disabled — banner just always shows, which is fine.
+    }
+    setReopenedDismissed(dismissed);
+  }, []);
+  const dismissReopened = (courseId: string) => {
+    setReopenedDismissed((prev) => {
+      const next = new Set(prev);
+      next.add(courseId);
+      return next;
+    });
+    try {
+      window.localStorage.setItem(
+        `mycourses:reopenedDismissed:${courseId}`,
+        "1",
+      );
+    } catch {
+      /* noop */
+    }
+  };
+
   // 300ms debounce on search input → backend
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 300);
@@ -518,6 +556,48 @@ const MyCoursesContent = () => {
                               </div>
                             )}
                           </div>
+
+                          {/* Reopened course banner (Phase D). Appears when
+                              the student was dropped by an earlier cancel
+                              but the admin has since rescheduled the course
+                              back to active. Includes a re-enroll CTA and
+                              an X to dismiss (localStorage-backed). */}
+                          {course.enrollmentStatus === "dropped" &&
+                            course.courseStatus === "active" &&
+                            course.rescheduledAt &&
+                            !reopenedDismissed.has(course.id) && (
+                              <div className="bg-[#ECFDF5] border-y border-[#A7F3D0] px-3 py-2 relative">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    dismissReopened(course.id);
+                                  }}
+                                  aria-label={t("myCourses.reopenedBanner.dismiss")}
+                                  className={`absolute top-1 ${isRTL ? "left-1" : "right-1"} p-1 text-[#065F46] hover:text-[#064E3B] rounded-full hover:bg-[#D1FAE5] transition-colors`}
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                </button>
+                                <p className="text-[11px] font-semibold text-[#065F46] leading-tight pe-6">
+                                  {course.startDate
+                                    ? t("myCourses.reopenedBanner.titleWithDate", {
+                                        date: new Date(course.startDate).toLocaleDateString(
+                                          locale === "ar" ? "ar-SA" : "en-US",
+                                          { year: "numeric", month: "short", day: "numeric" },
+                                        ),
+                                      })
+                                    : t("myCourses.reopenedBanner.title")}
+                                </p>
+                                <Link
+                                  href={`/${locale}/courses/${course.id}`}
+                                  className="inline-flex items-center gap-1 mt-1 text-[10px] font-medium text-[#065F46] hover:text-[#064E3B] underline underline-offset-2"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {t("myCourses.reopenedBanner.reenrollCta")}
+                                </Link>
+                              </div>
+                            )}
 
                           {/* Cancelled course banner (Phase C). Only
                               appears when the admin has cancelled the

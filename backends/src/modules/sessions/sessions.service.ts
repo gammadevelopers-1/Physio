@@ -1696,6 +1696,138 @@ export class SessionsService {
   }
 
   /**
+   * Bulk-shift every upcoming session for a course by a fixed delta.
+   *
+   * Used by CoursesService.rescheduleCourse (Phase D). Distinct from
+   * per-session reschedule():
+   *   - Updates scheduledAt IN PLACE (no new row, no `rescheduled` status).
+   *     A course-wide shift is a single admin decision — surfacing N old
+   *     rows in the session list as `rescheduled` would just be noise.
+   *   - For every session with a Zoom resource, calls updateMeeting /
+   *     updateWebinar with the new start time. Registration links stay
+   *     valid; existing registrants keep their access.
+   *   - Skips sessions that have already ended, been cancelled, gone live,
+   *     or been rescheduled. Only future work moves.
+   *   - Best-effort per session; a single failure logs and continues.
+   *
+   * Returns per-outcome counts so the calling service can surface them.
+   * `notify` defaults false because Course-level reschedule fires ONE
+   * fan-out email per student, not N per-session notifications.
+   */
+  async shiftUpcomingForCourse(
+    courseId: string,
+    performedById: string,
+    deltaMs: number,
+    reason: string,
+    options: { notify?: boolean } = {},
+  ): Promise<{
+    shifted: number;
+    failed: number;
+    zoomFailed: number;
+  }> {
+    if (deltaMs === 0) {
+      return { shifted: 0, failed: 0, zoomFailed: 0 };
+    }
+
+    const upcoming = await db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.courseId, courseId),
+          sql`${sessions.scheduledAt} > NOW()`,
+          sql`${sessions.status} NOT IN ('cancelled', 'missed', 'ended', 'completed', 'rescheduled', 'live')`,
+        ),
+      );
+
+    let shifted = 0;
+    let failed = 0;
+    let zoomFailed = 0;
+
+    for (const session of upcoming) {
+      try {
+        const newScheduledAt = new Date(
+          session.scheduledAt.getTime() + deltaMs,
+        );
+
+        // Sync Zoom resource first. If Zoom fails we still shift the DB
+        // row — an out-of-sync meeting is easier to fix than a stale row.
+        if (session.isWebinar && session.zoomWebinarId) {
+          try {
+            await this.zoomService.updateWebinar(session.zoomWebinarId, {
+              startTime: newScheduledAt,
+            });
+          } catch (err) {
+            zoomFailed++;
+            this.logger.warn(
+              `shiftUpcomingForCourse: webinar ${session.zoomWebinarId} update failed`,
+              err,
+            );
+          }
+        } else if (
+          session.meetingId &&
+          (session.type === SESSION_TYPE.ZOOM ||
+            session.type === SESSION_TYPE.HYBRID)
+        ) {
+          try {
+            await this.zoomService.updateMeeting(session.meetingId, {
+              startTime: newScheduledAt,
+            });
+          } catch (err) {
+            zoomFailed++;
+            this.logger.warn(
+              `shiftUpcomingForCourse: meeting ${session.meetingId} update failed`,
+              err,
+            );
+          }
+        }
+
+        const [updated] = await db
+          .update(sessions)
+          .set({
+            scheduledAt: newScheduledAt,
+            rescheduleReason: reason,
+            updatedAt: new Date(),
+          })
+          .where(eq(sessions.id, session.id))
+          .returning();
+
+        await this.auditLogService
+          .log({
+            entityType: 'session',
+            entityId: updated.id,
+            action: 'session.shifted',
+            performedBy: performedById,
+            metadata: {
+              courseId: updated.courseId,
+              from: session.scheduledAt.toISOString(),
+              to: newScheduledAt.toISOString(),
+              reason,
+              cascadeFromCourseReschedule: true,
+            },
+          })
+          .catch(() => {});
+
+        if (options.notify) {
+          this.sessionNotificationService
+            .notifySessionEvent(updated, 'session_rescheduled')
+            .catch(() => {});
+        }
+
+        shifted++;
+      } catch (err) {
+        failed++;
+        this.logger.error(
+          `shiftUpcomingForCourse: session ${session.id} failed`,
+          err,
+        );
+      }
+    }
+
+    return { shifted, failed, zoomFailed };
+  }
+
+  /**
    * Reschedule a session — marks current as 'rescheduled' and creates a new one.
    * Requires a reason. Works for scheduled, missed, or ended sessions.
    */

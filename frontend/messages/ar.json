@@ -12839,6 +12839,48 @@
     "minutesAgo": "منذ {m} دقيقة",
     "hoursAgo": "منذ {h} ساعة",
     "daysAgo": "منذ {d} يوم",
+    "weeksAgo": "منذ {w} أسبوع",
+    "monthsAgo": "منذ {mo} شهر",
+    "yearsAgo": "منذ {y} سنة",
+    "alertTypes": {
+      "critical": "حرج",
+      "warning": "تحذير",
+      "info": "معلومة"
+    },
+    "instructor": {
+      "profile_updated": {
+        "title": "تم تحديث ملف المدرب",
+        "description": "قام {userName} بتحديث الحقول التالية في ملفه: {fieldList}"
+      }
+    },
+    "role_requests": {
+      "new_application": {
+        "title": "طلب مدرب جديد",
+        "description": "قدّم {name} طلباً ليصبح مدرباً."
+      },
+      "application_updated": {
+        "title": "تم تحديث طلب المدرب",
+        "description": "قدّم {applicantName} معلومات محدّثة للمراجعة."
+      }
+    },
+    "service_status": {
+      "incident_suggested": {
+        "title": "اقتراح حادث: {category}",
+        "description": "تم فتح {count} تذكرة خلال آخر {windowMin} دقيقة كلها ضمن تصنيف \"{category}\". قد يكون هذا خللاً عاماً في المنصة يستحق تسجيله كحادث."
+      }
+    },
+    "support": {
+      "team_request": {
+        "title": "طلب انضمام جديد لفريق الدعم",
+        "description": "طلب {supervisorName} إضافة {candidateLabel} إلى فريقه."
+      }
+    },
+    "sentry": {
+      "production_error": {
+        "title": "خطأ في الإنتاج · {source}",
+        "message": "{detail}"
+      }
+    },
     "types": {
       "course_approved": {
         "title": "تمت الموافقة على الدورة",
@@ -12919,6 +12961,136 @@
       "intervention_makeup": {
         "title": "تمت جدولة محاضرة تعويضية",
         "message": "تمت جدولة محاضرة تعويضية."
+      }
+    }
+  },
+  "audit": {
+    "actions": {
+      "_fallback": "{action} {entityType}",
+      "session": {
+        "created": "أنشأ محاضرة",
+        "session.created": "أنشأ محاضرة",
+        "started": "بدأ محاضرة",
+        "session.started": "بدأ محاضرة",
+        "ended": "أنهى محاضرة",
+        "session.ended": "أنهى محاضرة",
+        "cancelled": "ألغى محاضرة",
+        "session.cancelled": "ألغى محاضرة",
+        "updated": "حدّث محاضرة",
+        "session.updated": "حدّث محاضرة",
+        "auto_ended": "أنهى محاضرة تلقائياً",
+        "session.auto_ended": "أنهى محاضرة تلقائياً",
+        "finalized": "أنهى محاضرة نهائياً",
+        "session.finalized": "أنهى محاضرة نهائياً",
+        "substitute_assigned": "عيّن مدرباً بديلاً",
+        "session.substitute_assigned": "عيّن مدرباً بديلاً"
+      },
+      "payment": {
+        "payment_initiated": "بدأ عملية دفع",
+        "payment_completed": "أتمّ عملية دفع",
+        "payment_failed": "سجّل دفعة فاشلة",
+        "payment_expired": "سجّل دفعة منتهية",
+        "payment_cancelled_by_admin": "ألغى عملية دفع",
+        "payment_chargeback": "سجّل استرداد نزاع",
+        "payment_abandoned_by_sweep": "أهمل دفعة قديمة",
+        "payment_abandoned_on_retry": "أهمل دفعة عند إعادة المحاولة",
+        "bnpl_status_poll_completed": "استعلم عن حالة دفعة مقسّطة"
+      },
+      "refund": {
+        "refund_requested": "طلب استرداد",
+        "refund_approved": "وافق على استرداد",
+        "refund_rejected": "رفض طلب استرداد",
+        "refund_completed": "أتمّ استرداداً",
+        "refund_marked_failed": "علّم استرداداً كفاشل"
+      },
+      "refund_policy": {
+        "refund_policy_updated": "حدّث سياسة الاسترداد"
+      },
+      "invoice": {
+        "invoice_generated": "أصدر فاتورة",
+        "invoice_cancelled": "ألغى فاتورة",
+        "invoice_pdf_regenerated": "أعاد إنشاء PDF للفاتورة",
+        "invoice_generation_failed": "فشل في إصدار فاتورة",
+        "invoice_overdue_flagged": "علّم فاتورة متأخرة"
+      },
+      "discount": {
+        "discount_created": "أنشأ خصماً",
+        "discount_updated": "حدّث خصماً",
+        "discount_deleted": "حذف خصماً",
+        "discount_bulk_created": "أنشأ رموز خصم بالجملة",
+        "discount_used": "استخدم خصماً",
+        "discount_usage_reversed": "ألغى استخدام خصم",
+        "discount_validation_failed": "فشل في التحقق من خصم"
+      },
+      "discount_code": {
+        "discount_created": "أنشأ رمز خصم",
+        "discount_updated": "حدّث رمز خصم",
+        "discount_deleted": "حذف رمز خصم"
+      },
+      "coupon_campaign": {
+        "campaign_created": "أنشأ حملة كوبونات",
+        "campaign_updated": "حدّث حملة كوبونات",
+        "campaign_deleted": "حذف حملة كوبونات"
+      },
+      "course": {
+        "course_sale_updated": "حدّث تسعير دورة",
+        "collaborator_added": "أضاف متعاوناً",
+        "collaborator_removed": "أزال متعاوناً"
+      },
+      "course_vat_treatment": {
+        "vat_treatment_updated": "حدّث معاملة ضريبة القيمة المضافة للدورة",
+        "vat_treatment_bulk_updated": "حدّث معاملة ضريبة القيمة المضافة للدورات بالجملة"
+      },
+      "tax_settings": {
+        "tax_settings_updated": "حدّث إعدادات الضرائب"
+      },
+      "material": {
+        "attachment_removed": "أزال مرفقاً"
+      },
+      "support_ticket": {
+        "ticket_transferred": "حوّل تذكرة دعم"
+      },
+      "ticket": {
+        "ticket_transferred": "حوّل تذكرة"
+      },
+      "webhook": {
+        "webhook_received": "استقبل webhook",
+        "webhook_processed": "عالج webhook",
+        "webhook_failed": "فشل في معالجة webhook"
+      },
+      "certificate_request": {
+        "hold_requested": "طلب تعليق شهادة"
+      },
+      "audit_log_export": {
+        "audit_log_exported": "صدّر سجل التدقيق"
+      },
+      "report": {
+        "report.generated": "أنشأ تقريراً",
+        "report_exported": "صدّر تقريراً"
+      },
+      "report_export": {
+        "report_exported": "صدّر تقريراً"
+      },
+      "reconciliation_scan": {
+        "reconciliation_cron_scan_completed": "أكمل فحص المطابقة"
+      },
+      "reconciliation_finding": {
+        "reconciliation_ignored": "تجاهل نتيجة مطابقة",
+        "reconciliation_resolved": "سوّى نتيجة مطابقة"
+      },
+      "reconciliation_escalation": {
+        "reconciliation_escalation_created": "فتح تصعيد مطابقة",
+        "reconciliation_escalation_claimed": "استلم تصعيد مطابقة",
+        "reconciliation_escalation_declined": "رفض تصعيد مطابقة",
+        "reconciliation_escalation_enrolled": "سوّى تصعيد مطابقة بالتسجيل",
+        "reconciliation_escalation_refunded": "سوّى تصعيد مطابقة بالاسترداد",
+        "reconciliation_escalation_sent_back": "أعاد تصعيد مطابقة",
+        "tamara_retry_gave_up": "توقف عن إعادة محاولة Tamara",
+        "tamara_retry_manual": "شغّل إعادة محاولة Tamara يدوياً",
+        "tamara_retry_resolved_captured": "سوّى إعادة محاولة Tamara (تم القبض)",
+        "tamara_retry_resolved_failed": "سوّى إعادة محاولة Tamara (فشل)",
+        "tamara_retry_resolved_paid": "سوّى إعادة محاولة Tamara (مدفوع)",
+        "tamara_stuck_alert_sent": "أرسل تنبيه Tamara عالقة"
       }
     }
   },

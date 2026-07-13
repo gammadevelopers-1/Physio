@@ -990,6 +990,10 @@ export interface AdminNotificationItem {
   type: AdminNotificationType;
   title: string;
   description: string;
+  titleKey: string | null;
+  titleParams: Record<string, string | number> | null;
+  descriptionKey: string | null;
+  descriptionParams: Record<string, string | number> | null;
   link: string | null;
   isRead: boolean;
   createdAt: string;
@@ -1462,6 +1466,10 @@ export interface AdminNotification {
   type: 'critical' | 'warning' | 'info';
   title: string;
   description: string;
+  titleKey: string | null;
+  titleParams: Record<string, string | number> | null;
+  descriptionKey: string | null;
+  descriptionParams: Record<string, string | number> | null;
   link: string | null;
   isRead: boolean;
   createdAt: string;
@@ -4725,8 +4733,13 @@ export interface UserNotification {
   id: string;
   recipientId: string;
   type: string;
+  // Pre-rendered fallback. Prefer titleKey / messageKey when present.
   title: string;
   message: string;
+  titleKey: string | null;
+  titleParams: Record<string, string | number> | null;
+  messageKey: string | null;
+  messageParams: Record<string, string | number> | null;
   link: string | null;
   isRead: boolean;
   entityType: string | null;

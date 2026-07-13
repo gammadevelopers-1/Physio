@@ -1323,6 +1323,9 @@ export class AuthService {
         type: 'info',
         title: 'Instructor profile updated',
         description: `${userName} updated their profile fields: ${fieldList}`,
+        titleKey: 'notifications.instructor.profile_updated.title',
+        descriptionKey: 'notifications.instructor.profile_updated.description',
+        descriptionParams: { userName, fieldList },
         link: `/dashboard/admin/users?userId=${user.id}`,
       });
     } catch (err) {

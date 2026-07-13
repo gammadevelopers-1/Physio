@@ -10,6 +10,7 @@ import AdminNavbar from "./AdminNavbar";
 import Select from "./Select";
 import { TableRowSkeleton } from "./AdminSkeletons";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
+import { tOrFallback } from "@/lib/notification-i18n";
 import {
   adminApi,
   nelcAuditApi,
@@ -674,6 +675,7 @@ function ViolationsTab() {
 
 function AlertsTab() {
   const t = useTranslations("adminDashboard.logsPage");
+  const tRoot = useTranslations();
   const locale = useLocale();
   const isRTL = locale === "ar";
 
@@ -838,6 +840,7 @@ function AlertsTab() {
               busy={busy === row.id}
               onMarkRead={() => handleMarkRead(row.id)}
               t={t}
+              tRoot={tRoot}
               locale={locale}
               isRTL={isRTL}
             />
@@ -861,6 +864,7 @@ function AlertCard({
   busy,
   onMarkRead,
   t,
+  tRoot,
   locale,
   isRTL,
 }: {
@@ -868,10 +872,18 @@ function AlertCard({
   busy: boolean;
   onMarkRead: () => void;
   t: ReturnType<typeof useTranslations>;
+  tRoot: ReturnType<typeof useTranslations>;
   locale: string;
   isRTL: boolean;
 }) {
   const tone = typeTone(row.type);
+  const title = tOrFallback(tRoot, row.titleKey, row.titleParams, row.title);
+  const description = tOrFallback(
+    tRoot,
+    row.descriptionKey,
+    row.descriptionParams,
+    row.description,
+  );
   return (
     <div
       className={`bg-[var(--color-surface-card)] rounded-xl border-l-4 border border-[var(--color-border)] p-4 flex items-start gap-3 ${row.isRead ? "opacity-60" : ""} ${tone.borderClass}`}
@@ -883,10 +895,10 @@ function AlertCard({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
-              {row.title}
+              {title}
             </h4>
             <p className="text-sm text-[var(--color-text-secondary)] mt-1 break-words">
-              {row.description}
+              {description}
             </p>
           </div>
           <span

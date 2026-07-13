@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Bell } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
+import { relativeTime, tOrFallback } from "@/lib/notification-i18n";
 
 const TYPE_COLORS: Record<string, string> = {
   session_scheduled: "bg-teal-500",
@@ -23,22 +24,6 @@ const TYPE_COLORS: Record<string, string> = {
   course_unassigned: "bg-red-400",
 };
 
-function getRelativeTime(
-  dateStr: string,
-  t: ReturnType<typeof useTranslations>,
-): string {
-  const now = Date.now();
-  const date = new Date(dateStr).getTime();
-  const diffMs = now - date;
-  const diffMin = Math.floor(diffMs / 60_000);
-  const diffHrs = Math.floor(diffMs / 3_600_000);
-  const diffDays = Math.floor(diffMs / 86_400_000);
-
-  if (diffMin < 1) return t("justNow");
-  if (diffMin < 60) return t("minutesAgo", { m: diffMin });
-  if (diffHrs < 24) return t("hoursAgo", { h: diffHrs });
-  return t("daysAgo", { d: diffDays });
-}
 
 interface NotificationBellProps {
   /**
@@ -64,6 +49,7 @@ export default function NotificationBell({
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("notifications");
+  const tRoot = useTranslations();
   const {
     notifications,
     unreadCount,
@@ -189,13 +175,27 @@ export default function NotificationBell({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
-                        {t.has(`types.${notif.type}.title`) ? t(`types.${notif.type}.title`) : notif.title}
+                        {tOrFallback(
+                          tRoot,
+                          notif.titleKey,
+                          notif.titleParams,
+                          t.has(`types.${notif.type}.title`)
+                            ? t(`types.${notif.type}.title`)
+                            : notif.title,
+                        )}
                       </p>
                       <p className="text-xs text-[var(--color-text-secondary)] line-clamp-2 mt-0.5">
-                        {notif.message}
+                        {tOrFallback(
+                          tRoot,
+                          notif.messageKey,
+                          notif.messageParams,
+                          t.has(`types.${notif.type}.message`)
+                            ? t(`types.${notif.type}.message`)
+                            : notif.message,
+                        )}
                       </p>
                       <p className="text-[10px] text-[var(--color-text-secondary)] mt-1">
-                        {getRelativeTime(notif.createdAt, t)}
+                        {relativeTime(t, notif.createdAt)}
                       </p>
                     </div>
                   </div>

@@ -80,7 +80,12 @@ interface ActivityRow {
   id: string;
   type: 'user' | 'admin' | 'payment' | 'course' | 'certificate';
   user: string;
+  // Pre-humanized fallback ("created session"). Legacy clients still
+  // render this; the localized client prefers actionKey + params below.
   action: string;
+  actionKey: string; // e.g. 'audit.actions.session.created'
+  entityType: string; // raw slug for client lookup
+  actionSlug: string; // raw slug for client lookup
   time: string; // ISO — frontend formats relative
 }
 
@@ -661,7 +666,11 @@ export class AdminDashboardService {
         id: r.id,
         type: mapActivityType(r.entityType),
         user: name,
+        // Fallback for older clients — the localized renderer uses actionKey.
         action: humanizeAction(r.entityType, r.action),
+        actionKey: `audit.actions.${r.entityType}.${r.action}`,
+        entityType: r.entityType,
+        actionSlug: r.action,
         time: r.createdAt.toISOString(),
       };
     });

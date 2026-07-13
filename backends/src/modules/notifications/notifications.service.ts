@@ -5,12 +5,20 @@ import { adminNotifications } from '../../database/schema';
 
 @Injectable()
 export class NotificationsService {
-  // Create a new admin notification
+  // Create a new admin notification.
+  //
+  // Prefer passing titleKey / descriptionKey (+ *Params) so the client can
+  // render in the viewer's UI locale. `title` / `description` are still
+  // required as a fallback for legacy consumers and untranslatable payloads.
   async create(data: {
     type: 'critical' | 'warning' | 'info';
     title: string;
     description: string;
     link?: string;
+    titleKey?: string;
+    titleParams?: Record<string, string | number>;
+    descriptionKey?: string;
+    descriptionParams?: Record<string, string | number>;
   }) {
     const [notification] = await db
       .insert(adminNotifications)

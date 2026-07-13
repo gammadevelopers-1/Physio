@@ -82,10 +82,18 @@ export class ErrorMonitoringNotificationsService {
     const adminIds = admins.map((a) => a.id);
 
     try {
+      // The Sentry-provided error text (issue title, culprit, exception
+      // message) is inherently English — it comes from the JS runtime.
+      // We localize only the FRAME so the notification chrome ("Production
+      // error", "affected X users") matches the viewer's locale.
       await this.userNotifications.createBulk(adminIds, {
         type: 'sentry_alert',
         title: `[Sentry] ${summary.title}`,
         message: summary.subtitle,
+        titleKey: 'notifications.sentry.production_error.title',
+        titleParams: { source: summary.title },
+        messageKey: 'notifications.sentry.production_error.message',
+        messageParams: { detail: summary.subtitle },
         link: '/dashboard/admin/settings?tab=system&panel=error-monitoring',
         entityType: 'sentry_issue',
         entityId: null,

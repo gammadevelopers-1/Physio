@@ -12839,6 +12839,48 @@
     "minutesAgo": "{m}m ago",
     "hoursAgo": "{h}h ago",
     "daysAgo": "{d}d ago",
+    "weeksAgo": "{w}w ago",
+    "monthsAgo": "{mo}mo ago",
+    "yearsAgo": "{y}y ago",
+    "alertTypes": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "instructor": {
+      "profile_updated": {
+        "title": "Instructor profile updated",
+        "description": "{userName} updated their profile fields: {fieldList}"
+      }
+    },
+    "role_requests": {
+      "new_application": {
+        "title": "New Trainer Application",
+        "description": "{name} has submitted an application to become an instructor."
+      },
+      "application_updated": {
+        "title": "Trainer application updated",
+        "description": "{applicantName} submitted updated information for review."
+      }
+    },
+    "service_status": {
+      "incident_suggested": {
+        "title": "Incident suggested: {category}",
+        "description": "{count} tickets opened in the last {windowMin} minutes are all categorised \"{category}\". This may be a platform-wide issue worth declaring as an incident."
+      }
+    },
+    "support": {
+      "team_request": {
+        "title": "New support team request",
+        "description": "{supervisorName} requested to add {candidateLabel} to their team."
+      }
+    },
+    "sentry": {
+      "production_error": {
+        "title": "Production error · {source}",
+        "message": "{detail}"
+      }
+    },
     "types": {
       "course_approved": {
         "title": "Course Approved",
@@ -12919,6 +12961,136 @@
       "intervention_makeup": {
         "title": "Make-up Session Scheduled",
         "message": "A make-up session has been scheduled."
+      }
+    }
+  },
+  "audit": {
+    "actions": {
+      "_fallback": "{action} {entityType}",
+      "session": {
+        "created": "created a lecture",
+        "session.created": "created a lecture",
+        "started": "started a lecture",
+        "session.started": "started a lecture",
+        "ended": "ended a lecture",
+        "session.ended": "ended a lecture",
+        "cancelled": "cancelled a lecture",
+        "session.cancelled": "cancelled a lecture",
+        "updated": "updated a lecture",
+        "session.updated": "updated a lecture",
+        "auto_ended": "auto-ended a lecture",
+        "session.auto_ended": "auto-ended a lecture",
+        "finalized": "finalized a lecture",
+        "session.finalized": "finalized a lecture",
+        "substitute_assigned": "assigned a substitute instructor",
+        "session.substitute_assigned": "assigned a substitute instructor"
+      },
+      "payment": {
+        "payment_initiated": "initiated a payment",
+        "payment_completed": "completed a payment",
+        "payment_failed": "recorded a failed payment",
+        "payment_expired": "recorded an expired payment",
+        "payment_cancelled_by_admin": "cancelled a payment",
+        "payment_chargeback": "recorded a chargeback",
+        "payment_abandoned_by_sweep": "abandoned a stale payment",
+        "payment_abandoned_on_retry": "abandoned a payment on retry",
+        "bnpl_status_poll_completed": "polled a BNPL payment status"
+      },
+      "refund": {
+        "refund_requested": "requested a refund",
+        "refund_approved": "approved a refund",
+        "refund_rejected": "rejected a refund",
+        "refund_completed": "completed a refund",
+        "refund_marked_failed": "marked a refund as failed"
+      },
+      "refund_policy": {
+        "refund_policy_updated": "updated the refund policy"
+      },
+      "invoice": {
+        "invoice_generated": "generated an invoice",
+        "invoice_cancelled": "cancelled an invoice",
+        "invoice_pdf_regenerated": "regenerated an invoice PDF",
+        "invoice_generation_failed": "failed to generate an invoice",
+        "invoice_overdue_flagged": "flagged an overdue invoice"
+      },
+      "discount": {
+        "discount_created": "created a discount",
+        "discount_updated": "updated a discount",
+        "discount_deleted": "deleted a discount",
+        "discount_bulk_created": "created discount codes in bulk",
+        "discount_used": "used a discount",
+        "discount_usage_reversed": "reversed a discount usage",
+        "discount_validation_failed": "failed to validate a discount"
+      },
+      "discount_code": {
+        "discount_created": "created a discount code",
+        "discount_updated": "updated a discount code",
+        "discount_deleted": "deleted a discount code"
+      },
+      "coupon_campaign": {
+        "campaign_created": "created a coupon campaign",
+        "campaign_updated": "updated a coupon campaign",
+        "campaign_deleted": "deleted a coupon campaign"
+      },
+      "course": {
+        "course_sale_updated": "updated course pricing",
+        "collaborator_added": "added a collaborator",
+        "collaborator_removed": "removed a collaborator"
+      },
+      "course_vat_treatment": {
+        "vat_treatment_updated": "updated course VAT treatment",
+        "vat_treatment_bulk_updated": "bulk-updated course VAT treatment"
+      },
+      "tax_settings": {
+        "tax_settings_updated": "updated tax settings"
+      },
+      "material": {
+        "attachment_removed": "removed an attachment"
+      },
+      "support_ticket": {
+        "ticket_transferred": "transferred a support ticket"
+      },
+      "ticket": {
+        "ticket_transferred": "transferred a ticket"
+      },
+      "webhook": {
+        "webhook_received": "received a webhook",
+        "webhook_processed": "processed a webhook",
+        "webhook_failed": "failed to process a webhook"
+      },
+      "certificate_request": {
+        "hold_requested": "requested a certificate hold"
+      },
+      "audit_log_export": {
+        "audit_log_exported": "exported the audit log"
+      },
+      "report": {
+        "report.generated": "generated a report",
+        "report_exported": "exported a report"
+      },
+      "report_export": {
+        "report_exported": "exported a report"
+      },
+      "reconciliation_scan": {
+        "reconciliation_cron_scan_completed": "completed a reconciliation scan"
+      },
+      "reconciliation_finding": {
+        "reconciliation_ignored": "ignored a reconciliation finding",
+        "reconciliation_resolved": "resolved a reconciliation finding"
+      },
+      "reconciliation_escalation": {
+        "reconciliation_escalation_created": "opened a reconciliation escalation",
+        "reconciliation_escalation_claimed": "claimed a reconciliation escalation",
+        "reconciliation_escalation_declined": "declined a reconciliation escalation",
+        "reconciliation_escalation_enrolled": "resolved a reconciliation escalation by enrolment",
+        "reconciliation_escalation_refunded": "resolved a reconciliation escalation by refund",
+        "reconciliation_escalation_sent_back": "sent back a reconciliation escalation",
+        "tamara_retry_gave_up": "gave up a Tamara retry",
+        "tamara_retry_manual": "triggered a manual Tamara retry",
+        "tamara_retry_resolved_captured": "resolved a Tamara retry (captured)",
+        "tamara_retry_resolved_failed": "resolved a Tamara retry (failed)",
+        "tamara_retry_resolved_paid": "resolved a Tamara retry (paid)",
+        "tamara_stuck_alert_sent": "sent a Tamara stuck alert"
       }
     }
   },

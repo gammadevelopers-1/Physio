@@ -8857,6 +8857,9 @@ export class SupportService implements OnModuleInit {
         type: 'info',
         title: 'New support team request',
         description: `${supervisorName} requested to add ${candidateLabel} to their team.`,
+        titleKey: 'notifications.support.team_request.title',
+        descriptionKey: 'notifications.support.team_request.description',
+        descriptionParams: { supervisorName, candidateLabel },
         link: `/dashboard/admin/support?tab=team-requests&request=${request.id}`,
       });
     } catch {

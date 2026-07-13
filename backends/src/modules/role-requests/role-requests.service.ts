@@ -269,6 +269,9 @@ export class RoleRequestsService {
         type: 'info',
         title: 'New Trainer Application',
         description: `${name} has submitted an application to become an instructor.`,
+        titleKey: 'notifications.role_requests.new_application.title',
+        descriptionKey: 'notifications.role_requests.new_application.description',
+        descriptionParams: { name },
         link: `/dashboard/admin/role-requests/${request.id}`,
       });
     } catch (error) {
@@ -945,6 +948,9 @@ export class RoleRequestsService {
         type: 'info',
         title: 'Trainer application updated',
         description: `${applicantName} submitted updated information for review.`,
+        titleKey: 'notifications.role_requests.application_updated.title',
+        descriptionKey: 'notifications.role_requests.application_updated.description',
+        descriptionParams: { applicantName },
         link: `/dashboard/admin/role-requests/${request.id}`,
       });
 

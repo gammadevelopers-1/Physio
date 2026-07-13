@@ -5,6 +5,7 @@ import {
   text,
   boolean,
   timestamp,
+  jsonb,
   index,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
@@ -25,9 +26,18 @@ export const userNotifications = pgTable(
     // Notification type
     type: varchar('type', { length: 30 }).notNull(),
 
-    // Content
+    // Pre-rendered fallback text. Writers should prefer titleKey / messageKey
+    // so the client can localize in the viewer's current UI locale; these
+    // remain for legacy rows and inherently untranslatable payloads.
     title: varchar('title', { length: 255 }).notNull(),
     message: text('message').notNull(),
+
+    // i18n key + interpolation params. When present, the client renders
+    // t(titleKey, titleParams) instead of the raw title.
+    titleKey: varchar('title_key', { length: 120 }),
+    titleParams: jsonb('title_params').$type<Record<string, string | number>>(),
+    messageKey: varchar('message_key', { length: 120 }),
+    messageParams: jsonb('message_params').$type<Record<string, string | number>>(),
 
     // Optional deep link path
     link: varchar('link', { length: 500 }),

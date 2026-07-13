@@ -102,6 +102,14 @@ export class IncidentSuggestionCron {
           type: 'warning',
           title,
           description,
+          titleKey: 'notifications.service_status.incident_suggested.title',
+          titleParams: { category: g.category },
+          descriptionKey: 'notifications.service_status.incident_suggested.description',
+          descriptionParams: {
+            count: g.count,
+            windowMin: RECENT_TICKETS_WINDOW_MIN,
+            category: g.category,
+          },
           link: '/dashboard/admin/settings?tab=service-status',
         });
         this.logger.log(

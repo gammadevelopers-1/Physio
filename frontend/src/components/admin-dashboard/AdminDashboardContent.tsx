@@ -23,15 +23,7 @@ import {
   AdminDashboardPayload,
 } from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
-
-type LiveAlert = {
-  id: string;
-  type: "critical" | "warning" | "info";
-  title: string;
-  description: string;
-  time: string;
-  link?: string;
-};
+import { relativeTime, tOrFallback } from "@/lib/notification-i18n";
 
 type LiveActivity = {
   id: string;
@@ -86,23 +78,14 @@ const EMPTY: AdminDashboardPayload = {
   recentPoints: [],
 };
 
-function formatRelative(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay}d ago`;
-}
-
 const AdminDashboardContent = () => {
   const t = useTranslations("adminDashboard");
+  const tNotifications = useTranslations("notifications");
+  const tRoot = useTranslations();
   const admin = useAdminProfile();
   const [data, setData] = useState<AdminDashboardPayload>(EMPTY);
   const [loading, setLoading] = useState(true);
-  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
+  const [liveAlerts, setLiveAlerts] = useState<AdminNotification[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,17 +112,11 @@ const AdminDashboardContent = () => {
       }
 
       if (notificationsResult.status === "fulfilled") {
-        const mapped: LiveAlert[] = notificationsResult.value.data.map(
-          (n: AdminNotification) => ({
-            id: n.id,
-            type: n.type,
-            title: n.title,
-            description: n.description,
-            time: formatRelative(n.createdAt),
-            link: n.link || undefined,
-          }),
-        );
-        setLiveAlerts(mapped);
+        // Keep the raw AdminNotification (key + params + ISO date). The
+        // sidebar rendering pass runs on every render so the alert list
+        // stays in sync with the current UI locale without needing to
+        // refetch when the user switches language.
+        setLiveAlerts(notificationsResult.value.data);
       }
 
       setLoading(false);
@@ -175,13 +152,50 @@ const AdminDashboardContent = () => {
     activeSessions: data.security.activeSessions,
   };
 
-  const activities: LiveActivity[] = data.recentActivity.map((a) => ({
-    id: a.id,
-    type: a.type,
-    user: a.user,
-    action: a.action,
-    time: formatRelative(a.time),
+  // Localize each alert's title + description in the current UI locale.
+  // Falls back to the raw pre-rendered strings for legacy rows (pre-0098).
+  const localizedAlerts = liveAlerts.map((n) => ({
+    id: n.id,
+    type: n.type,
+    title: tOrFallback(tRoot, n.titleKey, n.titleParams, n.title),
+    description: tOrFallback(
+      tRoot,
+      n.descriptionKey,
+      n.descriptionParams,
+      n.description,
+    ),
+    time: relativeTime(tNotifications, n.createdAt),
+    link: n.link || undefined,
   }));
+
+  // Activity rows: prefer the localized actionKey (e.g. `audit.actions.session.created`);
+  // fall back to the humanized `action` string that the backend still ships for
+  // backwards compat.
+  const activities: LiveActivity[] = data.recentActivity.map((a) => {
+    const anyA = a as typeof a & {
+      actionKey?: string;
+      entityType?: string;
+      actionSlug?: string;
+    };
+    const localized = anyA.actionKey
+      ? tOrFallback(
+          tRoot,
+          anyA.actionKey,
+          {
+            action: anyA.actionSlug ?? a.action,
+            entityType: anyA.entityType ?? "",
+          },
+          a.action,
+        )
+      : a.action;
+    return {
+      id: a.id,
+      type: a.type,
+      user: a.user,
+      action: localized,
+      time: relativeTime(tNotifications, a.time),
+    };
+  });
 
   return (
     <>
@@ -264,7 +278,7 @@ const AdminDashboardContent = () => {
                 the skeleton above already covers both columns. */}
             {!loading && (
               <AlertsActivitySidebar
-                alerts={liveAlerts}
+                alerts={localizedAlerts}
                 activities={activities}
                 extras={
                   <>

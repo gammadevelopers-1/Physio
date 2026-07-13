@@ -6396,8 +6396,8 @@
         "studentsLoadFailed": "Failed to load enrolled students"
       },
       "confirmArchive": {
-        "title": "Archive this course?",
-        "body": "Archiving \"{title}\" will hide it from public listings and stop new enrollments. You can restore it later.",
+        "title": "Archive this completed course?",
+        "body": "Archiving \"{title}\" will hide it from public listings while keeping every record (enrollments, certificates, attendance) intact. Only completed courses can be archived — this puts them out of the way while preserving all compliance history. You can restore it later.",
         "cancel": "Cancel",
         "confirm": "Archive"
       },
@@ -6414,6 +6414,11 @@
         "impactUpcomingSessions": "upcoming sessions (will be cancelled + students emailed)",
         "pendingCertsBlocker": "Cannot delete — {count} certificate request(s) are pending review for this course. Approve or reject them in the Certificates page first, then come back to delete the course. Otherwise the requesting students would be stranded waiting on a decision for a vanished course.",
         "activePaymentsBlocker": "Cannot delete — this course has active or paid enrolments. Use Cancel course first to auto-refund every buyer, then delete becomes available.",
+        "complianceBlockerTitle": "Cannot delete — this course has compliance records",
+        "complianceIssuedCerts": "{count} issued certificate(s) — students earned them; the request rows are the audit trail",
+        "complianceCompletions": "{count} completed enrollment(s) — the record of the student finishing this course",
+        "complianceAwardedPoints": "{count} awarded CME point ledger row(s) — append-only per NELC audit rules",
+        "complianceBlockerCta": "NELC audit rules require these records be preserved. Archive the course instead — it hides from public listings while keeping every record intact and searchable.",
         "upcomingSessionsWarning": "Heads up: {count} upcoming session(s) will be cancelled, their Zoom resources deleted, and every enrolled student emailed that the session is cancelled. Past sessions, attendance records, and issued certificates stay untouched.",
         "softDeleteNote": "Soft delete — the course and everything attached (modules, materials, enrollments, payments, certificates) stays in the database and can be restored in full from Settings → System → Backups → Recently deleted courses.",
         "reasonLabel": "Reason (optional, captured in audit log)",

@@ -485,10 +485,20 @@ const AdminCoursesContent = () => {
     confirmKind === "delete" &&
     deleteImpact !== null &&
     deleteImpact.pendingCertificates > 0;
+  // Phase E compliance block: once the course has produced NELC records
+  // (issued certs, completed enrollments, or awarded CME points), even
+  // a soft delete is refused — the admin must Archive instead.
+  const deleteBlockedByCompliance =
+    confirmKind === "delete" &&
+    deleteImpact !== null &&
+    (deleteImpact.approvedCertificates > 0 ||
+      deleteImpact.completedEnrollments > 0 ||
+      deleteImpact.awardedPoints > 0);
   const deleteConfirmOk =
     confirmKind === "delete" &&
     confirmCourse !== null &&
     !deleteBlockedByPendingCerts &&
+    !deleteBlockedByCompliance &&
     (!deleteNeedsTitleConfirm ||
       deleteTypedTitle.trim() === (confirmCourse.title || "").trim());
 
@@ -725,10 +735,8 @@ const AdminCoursesContent = () => {
               <CalendarClock className="w-4 h-4" />
               {t("coursesPage.actions.reschedule")}
             </button>
-            <button onClick={() => openConfirm("archive", course)} className={dangerCls}>
-              <Archive className="w-4 h-4" />
-              {t("coursesPage.actions.archive")}
-            </button>
+            {/* Phase E: Archive is completed-only. To archive an active
+                course, the admin must Complete or Cancel it first. */}
             <button onClick={() => openConfirm("cancel", course)} className={dangerCls}>
               <XCircle className="w-4 h-4" />
               {t("coursesPage.cancelCourse")}
@@ -1473,6 +1481,46 @@ const AdminCoursesContent = () => {
                       {t("coursesPage.confirmDelete.pendingCertsBlocker", {
                         count: deleteImpact.pendingCertificates,
                       })}
+                    </p>
+                  </div>
+                )}
+
+                {/* Phase E compliance blocker — course has NELC records
+                    that must be preserved. Lists whichever of the three
+                    trip the gate so the admin knows exactly why. */}
+                {deleteBlockedByCompliance && deleteImpact && (
+                  <div className="bg-[#FEE2E2] border border-[#FECACA] rounded-lg p-3 mb-4">
+                    <div className="flex items-start gap-2 mb-2">
+                      <XCircle className="w-4 h-4 text-[#DC2626] mt-0.5 flex-shrink-0" />
+                      <p className="text-xs font-semibold text-[#991B1B] leading-relaxed">
+                        {t("coursesPage.confirmDelete.complianceBlockerTitle")}
+                      </p>
+                    </div>
+                    <ul className="ms-6 space-y-0.5 text-xs text-[#991B1B] leading-relaxed">
+                      {deleteImpact.approvedCertificates > 0 && (
+                        <li>
+                          · {t("coursesPage.confirmDelete.complianceIssuedCerts", {
+                            count: deleteImpact.approvedCertificates,
+                          })}
+                        </li>
+                      )}
+                      {deleteImpact.completedEnrollments > 0 && (
+                        <li>
+                          · {t("coursesPage.confirmDelete.complianceCompletions", {
+                            count: deleteImpact.completedEnrollments,
+                          })}
+                        </li>
+                      )}
+                      {deleteImpact.awardedPoints > 0 && (
+                        <li>
+                          · {t("coursesPage.confirmDelete.complianceAwardedPoints", {
+                            count: deleteImpact.awardedPoints,
+                          })}
+                        </li>
+                      )}
+                    </ul>
+                    <p className="mt-2 text-xs text-[#991B1B] leading-relaxed">
+                      {t("coursesPage.confirmDelete.complianceBlockerCta")}
                     </p>
                   </div>
                 )}

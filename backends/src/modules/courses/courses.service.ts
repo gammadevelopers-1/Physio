@@ -1479,6 +1479,31 @@ export class CoursesService {
       );
     }
 
+    // Phase E compliance gate. Once the course has produced NELC records
+    // (issued certificates, completed enrollments, or awarded CME points),
+    // even a soft delete is unacceptable — the admin loses that course
+    // from every listing where compliance queries live. Archive keeps
+    // the row visible and searchable while marking it out-of-catalog.
+    if (
+      impact.approvedCertificates > 0 ||
+      impact.completedEnrollments > 0 ||
+      impact.awardedPoints > 0
+    ) {
+      const parts: string[] = [];
+      if (impact.approvedCertificates > 0) {
+        parts.push(`${impact.approvedCertificates} issued certificate(s)`);
+      }
+      if (impact.completedEnrollments > 0) {
+        parts.push(`${impact.completedEnrollments} completed enrollment(s)`);
+      }
+      if (impact.awardedPoints > 0) {
+        parts.push(`${impact.awardedPoints} awarded CME point ledger row(s)`);
+      }
+      throw new BadRequestException(
+        `Cannot delete: this course has compliance records (${parts.join(', ')}) that NELC audit rules require be preserved. Archive the course instead.`,
+      );
+    }
+
     await db
       .update(courses)
       .set({
@@ -2532,6 +2557,9 @@ export class CoursesService {
       upcomingSessionRow,
       assessmentRow,
       pendingCertificateRow,
+      approvedCertificateRow,
+      completedEnrollmentRow,
+      awardedPointsRow,
     ] = await Promise.all([
       db
         .select({ count: count() })
@@ -2582,6 +2610,44 @@ export class CoursesService {
             eq(certificateRequests.status, CERTIFICATE_STATUS.PENDING),
           ),
         ),
+      // Phase E compliance gates. Any of these > 0 means the course has
+      // NELC-relevant history and cannot be deleted — the admin must
+      // archive it (keeping records intact) instead.
+      //
+      // approvedCertificates: certs already issued (even if now revoked;
+      //   the request row IS the audit trail).
+      db
+        .select({ count: count() })
+        .from(certificateRequests)
+        .where(
+          and(
+            eq(certificateRequests.courseId, courseId),
+            eq(certificateRequests.status, CERTIFICATE_STATUS.APPROVED),
+          ),
+        ),
+      // completedEnrollments: students who finished the course. Same
+      // permanence rule as certificates.
+      db
+        .select({ count: count() })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.courseId, courseId),
+            eq(enrollments.status, 'completed'),
+          ),
+        ),
+      // awardedPoints: count of positive-delta CME point transactions
+      // sourced to any enrollment of this course. The point-transactions
+      // ledger is append-only; deleting the course orphans the audit.
+      db.execute(sql`
+        SELECT COUNT(*)::int AS count
+        FROM point_transactions
+        WHERE source_entity_type = 'enrollment'
+          AND source_entity_id IN (
+            SELECT id FROM enrollments WHERE course_id = ${courseId}
+          )
+          AND delta > 0
+      `),
     ]);
     return {
       modules: Number(moduleRow[0]?.count ?? 0),
@@ -2591,6 +2657,14 @@ export class CoursesService {
       upcomingSessions: Number(upcomingSessionRow[0]?.count ?? 0),
       assessments: Number(assessmentRow[0]?.count ?? 0),
       pendingCertificates: Number(pendingCertificateRow[0]?.count ?? 0),
+      // Phase E compliance counts. hasComplianceRecords is derived on
+      // the client too, but returning it precomputed keeps the gate
+      // consistent between the impact-preview API and remove().
+      approvedCertificates: Number(approvedCertificateRow[0]?.count ?? 0),
+      completedEnrollments: Number(completedEnrollmentRow[0]?.count ?? 0),
+      awardedPoints: Number(
+        (awardedPointsRow.rows[0] as { count?: number } | undefined)?.count ?? 0,
+      ),
     };
   }
 
@@ -3302,7 +3376,15 @@ export class CoursesService {
   }
 
   /**
-   * Deactivate (archive) an active course.
+   * Deactivate (archive) a completed course.
+   *
+   * Phase E tightening: archive is now completed-only. Active courses
+   * cannot be archived directly — the correct path is Complete first
+   * (or Cancel), then Archive. This matches the semantic of "archive
+   * a completed course out of the public catalog" and mirrors the
+   * cancel-error copy ("A completed course cannot be cancelled —
+   * archive it instead").
+   *
    * Only MANAGER and ADMIN can deactivate a course.
    */
   async deactivate(courseId: string, user: AuthenticatedUser) {
@@ -3316,9 +3398,9 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    if (course.status !== COURSE_STATUS.ACTIVE) {
+    if (course.status !== COURSE_STATUS.COMPLETED) {
       throw new BadRequestException(
-        'Only active courses can be deactivated',
+        'Only completed courses can be archived. Complete the course (or cancel it) first — active courses cannot be archived while learners are still working.',
       );
     }
 

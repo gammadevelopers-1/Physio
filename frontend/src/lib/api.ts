@@ -2424,6 +2424,12 @@ export interface CourseDeleteImpact {
   upcomingSessions: number;
   assessments: number;
   pendingCertificates: number;
+  // Phase E compliance gates. Any of these > 0 makes the course
+  // undeletable regardless of role (backend enforces; frontend
+  // surfaces a red blocker in the delete modal).
+  approvedCertificates: number;
+  completedEnrollments: number;
+  awardedPoints: number;
 }
 
 export interface CourseDeleteImpactResponse {

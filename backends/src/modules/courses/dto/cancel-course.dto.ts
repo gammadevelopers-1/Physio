@@ -20,9 +20,13 @@ export interface CancelCourseResult {
   refundsIssued: number;      // programmatic refunds that completed (Moyasar/Tamara/Tabby)
   refundsPendingBankTransfer: number; // bank-transfer refunds waiting on manual wire
   refundsFailed: number;      // gateway rejections; admin needs to follow up manually
+  refundsDeferred: number;    // Phase C post-start: paid rows deferred to finance-manual review
   paymentsCancelled: number;  // pending/awaiting_approval flipped to failed with reason
   enrollmentsDropped: number;
   sessionsCancelled: number;
   waitlistCleared: number;
+  attendanceCancelled: number;    // Phase C: past attendance rows marked cancelled
+  certificatesRevoked: number;    // Phase C: issued certs revoked
+  pointsReversed: number;         // Phase C: total point delta reversed (absolute value)
   studentsNotified: number;
 }

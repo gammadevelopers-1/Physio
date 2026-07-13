@@ -1609,19 +1609,20 @@ export class CoursesService {
       );
     }
 
-    // Pre-start vs post-start. Phase B ships pre-start only; Phase C will
-    // add the post-start branch (attendance clear, cert revoke, manual
-    // refund flow). startDate is a `date` column so NULL means "no start
-    // date set yet" (self-paced or unfixed) — we treat NULL as pre-start.
+    // Pre-start vs post-start branches (Amna's spec):
+    //   - Pre-start: auto-refund every paid buyer, restore coupons,
+    //     drop enrollments cleanly. Simple case.
+    //   - Post-start: attendance cancelled/preserved, certificates
+    //     revoked, CME points reversed. Refunds are NOT automatic —
+    //     admin/finance decides per-buyer from the Refunds queue.
+    // startDate is a `date` column so NULL means "no start date set
+    // yet" (self-paced or unfixed) — we treat NULL as pre-start.
     const now = new Date();
     const isPreStart =
       !existing.startDate || new Date(existing.startDate) > now;
-
-    if (!isPreStart) {
-      throw new BadRequestException(
-        'Post-start cancellation is not yet available. Please wait for the next release, or contact engineering if this is urgent.',
-      );
-    }
+    const variant: 'pre_start' | 'post_start' = isPreStart
+      ? 'pre_start'
+      : 'post_start';
 
     // 1. Flip status
     await db
@@ -1652,8 +1653,16 @@ export class CoursesService {
         return { cancelled: 0, failed: 0 };
       });
 
-    // 3. Auto-refund every PAID payment. Track outcomes for the summary
-    // toast and for the admin-facing bank-transfer notification.
+    // 3. Payment handling.
+    //
+    // Pre-start branch: auto-refund every PAID payment. Track outcomes
+    // for the summary toast and for the admin-facing bank-transfer alert.
+    //
+    // Post-start branch: paid payments are DEFERRED — Amna's spec says
+    // the admin/finance team decides refunds per-buyer via manual
+    // override, based on the cancellation reason and how much of the
+    // course each learner completed. We count them for the toast so the
+    // admin knows how many decisions await them in the Refunds queue.
     const paidRows = await db
       .select({
         id: payments.id,
@@ -1673,6 +1682,7 @@ export class CoursesService {
     let refundsIssued = 0;
     let refundsPendingBankTransfer = 0;
     let refundsFailed = 0;
+    let refundsDeferred = 0;
     const bankTransferPending: Array<{
       paymentId: string;
       userId: string;
@@ -1680,38 +1690,63 @@ export class CoursesService {
       currency: string;
     }> = [];
 
-    for (const p of paidRows) {
-      try {
-        await this.refundService.adminInitiateRefund(
-          user.id,
-          {
-            paymentId: p.id,
-            reason: 'cancelled',
-            reasonNote: `Course cancelled: ${dto.reason}`,
-            justification: `Auto-refund triggered by course cancellation (${courseId})`,
-            bypassPolicy: true,
-          } as any,
-          ipAddress,
-        );
-        if (p.gateway === 'bank_transfer') {
-          refundsPendingBankTransfer++;
-          bankTransferPending.push({
-            paymentId: p.id,
-            userId: p.userId,
-            amount: p.amount,
-            currency: p.currency,
-          });
-        } else {
-          refundsIssued++;
+    if (isPreStart) {
+      for (const p of paidRows) {
+        try {
+          await this.refundService.adminInitiateRefund(
+            user.id,
+            {
+              paymentId: p.id,
+              reason: 'cancelled',
+              reasonNote: `Course cancelled: ${dto.reason}`,
+              justification: `Auto-refund triggered by course cancellation (${courseId})`,
+              bypassPolicy: true,
+            } as any,
+            ipAddress,
+          );
+          if (p.gateway === 'bank_transfer') {
+            refundsPendingBankTransfer++;
+            bankTransferPending.push({
+              paymentId: p.id,
+              userId: p.userId,
+              amount: p.amount,
+              currency: p.currency,
+            });
+          } else {
+            refundsIssued++;
+          }
+        } catch (err) {
+          refundsFailed++;
+          this.logger.error(
+            `cancelCourse: refund failed for payment ${p.id} on course ${courseId}: ${
+              (err as Error).message
+            }`,
+          );
         }
-      } catch (err) {
-        refundsFailed++;
-        this.logger.error(
-          `cancelCourse: refund failed for payment ${p.id} on course ${courseId}: ${
-            (err as Error).message
-          }`,
-        );
       }
+    } else {
+      // Post-start: mark deferred, no refunds fire here.
+      refundsDeferred = paidRows.length;
+    }
+
+    // 3b. Post-start cascade: attendance / certificates / points.
+    // Only runs on post-start; pre-start has no attendance yet (course
+    // hasn't started), no certificates (never issued before completion),
+    // and no CME points (award triggers on completion cron).
+    let attendanceCancelled = 0;
+    let certificatesRevoked = 0;
+    let pointsReversed = 0;
+
+    if (!isPreStart) {
+      const cascade = await this.performPostStartCascade(
+        courseId,
+        existing.title,
+        dto.reason,
+        user,
+      );
+      attendanceCancelled = cascade.attendanceCancelled;
+      certificatesRevoked = cascade.certificatesRevoked;
+      pointsReversed = cascade.pointsReversed;
     }
 
     // 4. Fail every non-final pending payment. These represent aborted
@@ -1820,15 +1855,27 @@ export class CoursesService {
       }
 
       // 7b. Per-student email loop — locale-aware, refund-kind embedded.
+      // Pre-start: refundKind is inferred from the payment gateway
+      //   (bank_transfer → 'manual', any other gateway → 'immediate',
+      //   no payment → 'none').
+      // Post-start: refundKind is always 'manual_pending' for a student
+      //   who had a payment (finance decides later), 'none' otherwise.
+      //   certsRevoked=true adds an extra "your certificate has been
+      //   revoked" line since post-start cancels always revoke certs.
       await Promise.all(
         students.map(async (s) => {
           const gateway = paymentsByUser.get(s.id);
-          const refundKind: 'immediate' | 'manual' | 'none' =
-            gateway === 'bank_transfer'
-              ? 'manual'
-              : gateway
-              ? 'immediate'
-              : 'none';
+          let refundKind: 'immediate' | 'manual' | 'manual_pending' | 'none';
+          if (isPreStart) {
+            refundKind =
+              gateway === 'bank_transfer'
+                ? 'manual'
+                : gateway
+                ? 'immediate'
+                : 'none';
+          } else {
+            refundKind = gateway ? 'manual_pending' : 'none';
+          }
           const recipientName = s.firstName ?? s.email ?? 'Student';
           const locale = s.language === 'ar' ? 'ar' : 'en';
           try {
@@ -1839,6 +1886,7 @@ export class CoursesService {
                 courseName: existing.title,
                 cancelReason: dto.reason,
                 refundKind,
+                certsRevoked: !isPreStart && certificatesRevoked > 0,
               },
               locale,
             );
@@ -1892,6 +1940,9 @@ export class CoursesService {
     }
 
     // 9. Audit trail — both the platform audit log and the NELC log.
+    // Metadata now includes the variant so post-cancellation queries can
+    // distinguish pre-start (auto-refund) from post-start (deferred +
+    // certs revoked) cases without loading the full context.
     await this.auditLogService
       .log({
         entityType: 'course',
@@ -1902,14 +1953,18 @@ export class CoursesService {
         metadata: {
           title: existing.title,
           reason: dto.reason,
-          variant: 'pre_start',
+          variant,
           refundsIssued,
           refundsPendingBankTransfer,
           refundsFailed,
+          refundsDeferred,
           paymentsCancelled: paymentsCancelled.length,
           enrollmentsDropped: droppedRows.length,
           sessionsCancelled: sessionsResult.cancelled,
           waitlistCleared: waitlistedRows.length,
+          attendanceCancelled,
+          certificatesRevoked,
+          pointsReversed,
           bankTransferPending: bankTransferPending.map((b) => b.paymentId),
         },
       })
@@ -1924,8 +1979,11 @@ export class CoursesService {
         metadata: {
           title: existing.title,
           reason: dto.reason,
-          variant: 'pre_start',
+          variant,
           enrollmentsDropped: droppedRows.length,
+          attendanceCancelled,
+          certificatesRevoked,
+          pointsReversed,
         },
         ipAddress,
       })
@@ -1933,16 +1991,143 @@ export class CoursesService {
 
     return {
       cancelledAt: now,
-      variant: 'pre_start',
+      variant,
       refundsIssued,
       refundsPendingBankTransfer,
       refundsFailed,
+      refundsDeferred,
       paymentsCancelled: paymentsCancelled.length,
       enrollmentsDropped: droppedRows.length,
       sessionsCancelled: sessionsResult.cancelled,
       waitlistCleared: waitlistedRows.length,
+      attendanceCancelled,
+      certificatesRevoked,
+      pointsReversed,
       studentsNotified,
     };
+  }
+
+  /**
+   * Post-start cancel cascade — Phase C. Runs the destructive-to-history
+   * cleanup that only applies once a course has actually started:
+   *
+   *   1. Mark every attendance row for this course's sessions as
+   *      `cancelled`. Rows are preserved (Amna: "records must always
+   *      be preserved") — NELC still needs to see who was in the room
+   *      before the cancellation was decided.
+   *   2. Revoke every APPROVED certificate for the course. Reuses the
+   *      per-cert revoke() so the NELC event + student email fire
+   *      the same as an individual revoke. Duplicate email (with the
+   *      course-cancelled email) is intentional — students should hear
+   *      both facts.
+   *   3. Reverse CME points earned via the course_completed rule. The
+   *      ledger is append-only, so we insert compensating rows with a
+   *      unique idempotency key so a re-run of the cancel would no-op.
+   *
+   * All three steps are best-effort per row — a single failure logs and
+   * moves on rather than half-cancelling the course.
+   */
+  private async performPostStartCascade(
+    courseId: string,
+    courseTitle: string,
+    reason: string,
+    user: AuthenticatedUser,
+  ): Promise<{
+    attendanceCancelled: number;
+    certificatesRevoked: number;
+    pointsReversed: number;
+  }> {
+    // Attendance — update every row that belongs to a session of this
+    // course. attendance.session_id → sessions.id, sessions.course_id →
+    // courses.id. Using a subquery keeps it one round-trip.
+    const attendanceUpdated = await db.execute(sql`
+      UPDATE attendance
+      SET status = 'cancelled', note = COALESCE(note || ' | ', '') || ${'Course cancelled: ' + reason}
+      WHERE session_id IN (SELECT id FROM sessions WHERE course_id = ${courseId})
+        AND status <> 'cancelled'
+      RETURNING id
+    `);
+    const attendanceCancelled = attendanceUpdated.rows.length;
+
+    // Certificates — enumerate approved requests, revoke each. revoke()
+    // handles NELC audit + email inline.
+    const approvedCerts = await db
+      .select({ id: certificateRequests.id })
+      .from(certificateRequests)
+      .where(
+        and(
+          eq(certificateRequests.courseId, courseId),
+          eq(certificateRequests.status, CERTIFICATE_STATUS.APPROVED),
+        ),
+      );
+
+    let certificatesRevoked = 0;
+    for (const cert of approvedCerts) {
+      try {
+        await this.certificatesService.revoke(cert.id, user, {
+          reason: `Course cancelled: ${reason}`,
+        });
+        certificatesRevoked++;
+      } catch (err) {
+        this.logger.error(
+          `performPostStartCascade: cert revoke failed for ${cert.id} on course ${courseId}: ${
+            (err as Error).message
+          }`,
+        );
+      }
+    }
+
+    // Points — reverse every earn:course_completed transaction sourced
+    // to enrollments of this course. Compensating rows: same delta with
+    // negated sign, reason=`reverse:course_cancelled`, idempotency key
+    // derived from the original transaction so a re-run no-ops.
+    // pointsReversed reports the ABSOLUTE value of the total reversed.
+    const courseEnrollments = await db
+      .select({ id: enrollments.id, studentId: enrollments.studentId })
+      .from(enrollments)
+      .where(eq(enrollments.courseId, courseId));
+    const enrollmentIds = courseEnrollments.map((e) => e.id);
+
+    let pointsReversed = 0;
+    if (enrollmentIds.length > 0) {
+      const earnRows = await db.execute(sql`
+        SELECT id, user_id, delta
+        FROM point_transactions
+        WHERE source_entity_type = 'enrollment'
+          AND source_entity_id IN (${sql.join(enrollmentIds.map((id) => sql`${id}`), sql`, `)})
+          AND reason LIKE 'earn:%'
+      `);
+      for (const row of earnRows.rows as Array<{
+        id: string;
+        user_id: string;
+        delta: number;
+      }>) {
+        try {
+          await this.pointsService.insertLedger({
+            userId: row.user_id,
+            delta: -row.delta,
+            reason: 'reverse:course_cancelled',
+            idempotencyKey: `reverse:course_cancelled:${row.id}`,
+            sourceEntityType: 'course',
+            sourceEntityId: courseId,
+            metadata: {
+              originalTransactionId: row.id,
+              courseTitle,
+              cancelReason: reason,
+            } as never,
+          });
+          pointsReversed += Math.abs(row.delta);
+        } catch (err) {
+          this.logger.warn(
+            `performPostStartCascade: point reversal failed for tx ${row.id}: ${
+              (err as Error).message
+            }`,
+          );
+        }
+      }
+    }
+
+    return { attendanceCancelled, certificatesRevoked, pointsReversed };
   }
 
   /**

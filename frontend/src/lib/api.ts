@@ -2429,10 +2429,16 @@ export interface CancelCourseResponse {
   refundsIssued: number;
   refundsPendingBankTransfer: number;
   refundsFailed: number;
+  // Phase C: paid rows deferred to finance-manual review (post-start only).
+  refundsDeferred: number;
   paymentsCancelled: number;
   enrollmentsDropped: number;
   sessionsCancelled: number;
   waitlistCleared: number;
+  // Phase C: post-start cascade counts.
+  attendanceCancelled: number;
+  certificatesRevoked: number;
+  pointsReversed: number;
   studentsNotified: number;
 }
 

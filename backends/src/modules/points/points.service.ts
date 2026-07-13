@@ -172,6 +172,42 @@ export class PointsService {
   }
 
   /**
+   * Insert a raw ledger row — public wrapper around the ledger service
+   * for callers that need to post compensating rows for their own
+   * bookkeeping (e.g. course cancel reversals). The idempotency key
+   * MUST be unique per logical event so a re-run of the cancellation
+   * no-ops instead of double-crediting.
+   *
+   * For normal earn-hook writes use `award()` — this bypasses the rule
+   * lookup, caps, and cooldown, so it's only safe for admin-initiated
+   * / system-initiated reversals.
+   */
+  async insertLedger(row: {
+    userId: string;
+    delta: number;
+    reason: string;
+    idempotencyKey: string;
+    sourceEntityType?: string;
+    sourceEntityId?: string;
+    metadata?: unknown;
+    createdBy?: string;
+  }): Promise<{ inserted: boolean; rowId?: string }> {
+    return this.ledger.insert({
+      userId: row.userId,
+      delta: row.delta,
+      reason: row.reason,
+      idempotencyKey: row.idempotencyKey,
+      sourceEntityType: row.sourceEntityType,
+      sourceEntityId: row.sourceEntityId,
+      metadata: row.metadata as never,
+      createdBy: row.createdBy,
+      // Reversals inherit the same non-expiring nature as the underlying
+      // debit/credit; expiry only makes sense for earn rules.
+      expiresAt: null,
+    });
+  }
+
+  /**
    * Redeem points to unlock a course for free (Phase 2).
    *
    * Saga (no global transaction; each step is reversible):

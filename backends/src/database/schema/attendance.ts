@@ -40,7 +40,7 @@ export const attendance = pgTable(
     index('attendance_student_id_idx').on(table.studentId),
     check(
       'attendance_status_check',
-      sql`${table.status} IN ('present', 'absent', 'late', 'excused')`,
+      sql`${table.status} IN ('present', 'absent', 'late', 'excused', 'cancelled')`,
     ),
   ],
 );
@@ -68,6 +68,7 @@ export const ATTENDANCE_STATUS = {
   ABSENT: 'absent',
   LATE: 'late',
   EXCUSED: 'excused',
+  CANCELLED: 'cancelled',
 } as const;
 
 export type AttendanceStatus =

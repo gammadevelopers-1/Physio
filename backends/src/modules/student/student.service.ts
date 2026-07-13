@@ -715,7 +715,12 @@ export class StudentService {
   // ─── Course Detail (for Learning Page) ──────────────────
 
   async getEnrolledCourseDetail(studentId: string, courseId: string) {
-    // Verify student is enrolled
+    // Verify student is (or was) enrolled. `dropped` is included so a
+    // student whose enrolment was cleared by a course cancellation
+    // (Phase B/C) can still open the detail page and see the cancelled
+    // banner + refund status. The page itself gates every CTA on
+    // enrollment.status === 'active', so a dropped student sees the
+    // course info + banner but cannot access lectures/assessments.
     const [enrollment] = await db
       .select()
       .from(enrollments)
@@ -723,10 +728,7 @@ export class StudentService {
         and(
           eq(enrollments.studentId, studentId),
           eq(enrollments.courseId, courseId),
-          or(
-            eq(enrollments.status, 'active'),
-            eq(enrollments.status, 'completed'),
-          ),
+          inArray(enrollments.status, ['active', 'completed', 'dropped']),
         ),
       )
       .limit(1);
@@ -747,6 +749,11 @@ export class StudentService {
         thumbnail: courses.thumbnail,
         startDate: courses.startDate,
         endDate: courses.endDate,
+        // Phase C: expose course lifecycle state to the student detail
+        // page so the cancelled banner can render with reason + date.
+        status: courses.status,
+        cancelledAt: courses.cancelledAt,
+        cancelReason: courses.cancelReason,
         isCmeAccredited: courses.isCmeAccredited,
         cmeHours: courses.cmeHours,
         accreditationNumber: courses.accreditationNumber,

@@ -41,6 +41,12 @@ export interface StudentEnrolledCourse {
   thumbnail: string | null;
   startDate: string | null;
   endDate: string | null;
+  // Phase C: course-level lifecycle state surfaced to the student card /
+  // detail so a cancelled course renders a red banner explaining what
+  // happened + refund status.
+  courseStatus?: string;
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
   enrollmentId: string;
   enrollmentStatus: string;
   progress: number;
@@ -173,6 +179,11 @@ export interface StudentCourseDetail {
     thumbnail: string | null;
     startDate: string | null;
     endDate: string | null;
+    // Phase C: course lifecycle state surfaced to the detail page so the
+    // cancelled banner can render with reason + date.
+    status?: string | null;
+    cancelledAt?: string | null;
+    cancelReason?: string | null;
     language?: string | null;
     instructorName: string;
     isCmeAccredited: boolean;

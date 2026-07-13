@@ -9,21 +9,40 @@
  */
 import { EmailLocale, getEmailStrings, htmlAttrs, textAlign } from '../email-i18n';
 
-export type CourseCancelRefundKind = 'immediate' | 'manual' | 'none';
+export type CourseCancelRefundKind = 'immediate' | 'manual' | 'manual_pending' | 'none';
 
 export function getCourseCancelledHtml(params: {
   recipientName: string;
   courseName: string;
   cancelReason: string | null;
   refundKind: CourseCancelRefundKind;
+  /** Phase C post-start cancels revoke certs + reverse CME points. When true,
+   * the template appends a note explaining that to the student. */
+  certsRevoked?: boolean;
 }, locale: EmailLocale = 'en'): string {
   const s = getEmailStrings(locale);
-  const { recipientName, courseName, cancelReason, refundKind } = params;
+  const { recipientName, courseName, cancelReason, refundKind, certsRevoked } = params;
 
   const refundLine =
     refundKind === 'immediate' ? s.courseCancelledRefundImmediate
     : refundKind === 'manual'  ? s.courseCancelledRefundManual
+    : refundKind === 'manual_pending' ? s.courseCancelledRefundManualPending
     : s.courseCancelledRefundNone;
+
+  const certsBlock = certsRevoked
+    ? `
+          <tr>
+            <td style="padding:0 32px 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0;font-size:13px;color:#7f1d1d;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">${s.courseCancelledCertsRevoked}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`
+    : '';
 
   const reasonBlock = cancelReason
     ? `
@@ -123,7 +142,7 @@ ${reasonBlock}
               </table>
             </td>
           </tr>
-
+${certsBlock}
           <!-- Apology -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
@@ -165,13 +184,15 @@ export function getCourseCancelledText(params: {
   courseName: string;
   cancelReason: string | null;
   refundKind: CourseCancelRefundKind;
+  certsRevoked?: boolean;
 }, locale: EmailLocale = 'en'): string {
   const s = getEmailStrings(locale);
-  const { recipientName, courseName, cancelReason, refundKind } = params;
+  const { recipientName, courseName, cancelReason, refundKind, certsRevoked } = params;
 
   const refundLine =
     refundKind === 'immediate' ? s.courseCancelledRefundImmediate
     : refundKind === 'manual'  ? s.courseCancelledRefundManual
+    : refundKind === 'manual_pending' ? s.courseCancelledRefundManualPending
     : s.courseCancelledRefundNone;
 
   let text = `PhysioGuidance - ${s.courseCancelledTitle}
@@ -188,7 +209,13 @@ ${s.courseLabel} ${courseName}`;
 
   text += `
 
-${s.refundStatusLabel} ${refundLine}
+${s.refundStatusLabel} ${refundLine}`;
+
+  if (certsRevoked) {
+    text += `\n\n${s.courseCancelledCertsRevoked}`;
+  }
+
+  text += `
 
 ${s.courseCancelledCta}
 

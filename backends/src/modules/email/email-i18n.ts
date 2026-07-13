@@ -130,7 +130,9 @@ const strings = {
   courseCancelledBody:    { en: 'We are sorry to inform you that the following course has been cancelled:', ar: 'يؤسفنا إبلاغك بأنه تم إلغاء الدورة التالية:' },
   courseCancelledRefundImmediate: { en: 'A full refund has been issued to your original payment method. It should arrive within 5–10 business days depending on your bank.', ar: 'تم إصدار استرداد كامل إلى طريقة الدفع الأصلية. من المتوقع وصولها خلال 5–10 أيام عمل حسب البنك.' },
   courseCancelledRefundManual:    { en: 'Because you paid by bank transfer, your refund will be processed manually by our finance team and wired to your bank account. This typically takes 3–7 business days.', ar: 'نظرًا لأنك دفعت عبر التحويل البنكي، سيتم معالجة الاسترداد يدويًا من قِبل فريق المالية وتحويله إلى حسابك المصرفي. عادةً ما تستغرق هذه العملية 3–7 أيام عمل.' },
+  courseCancelledRefundManualPending: { en: 'Your refund is under review by our finance team. A decision will be communicated to you separately based on the reason for cancellation and the portion of the course you have completed.', ar: 'استرداد أموالك قيد المراجعة من قِبل فريق المالية. سيتم إبلاغك بالقرار بشكل منفصل بناءً على سبب الإلغاء والجزء الذي أكملته من الدورة.' },
   courseCancelledRefundNone:      { en: 'Since no payment was collected for your enrolment, no refund is required.', ar: 'نظرًا لعدم تحصيل أي دفعة مقابل تسجيلك، فلا حاجة لأي استرداد.' },
+  courseCancelledCertsRevoked: { en: 'Any certificate you may have received for this course has been revoked, and CME credits have been reversed.', ar: 'تم إبطال أي شهادة تلقيتها لهذه الدورة، وتمت استعادة رصيد التعليم الطبي المستمر (CME).' },
   courseCancelledCta:     { en: 'We apologise for the inconvenience. Feel free to browse other courses from your dashboard.', ar: 'نعتذر عن أي إزعاج. يمكنك تصفح الدورات الأخرى من لوحة التحكم.' },
   refundStatusLabel:      { en: 'Refund status:',             ar: 'حالة الاسترداد:' },
 

@@ -519,6 +519,35 @@ const MyCoursesContent = () => {
                             )}
                           </div>
 
+                          {/* Cancelled course banner (Phase C). Only
+                              appears when the admin has cancelled the
+                              parent course. Sits between the thumbnail
+                              and the course body so it's impossible to
+                              miss but doesn't reflow the rest of the
+                              card. */}
+                          {course.courseStatus === "cancelled" && (
+                            <div className="bg-[#FEE2E2] border-y border-[#FECACA] px-3 py-2">
+                              <p className="text-[11px] font-semibold text-[#991B1B] leading-tight">
+                                {course.cancelledAt
+                                  ? t("myCourses.studentCancelledBanner.titleWithDate", {
+                                      date: new Date(course.cancelledAt).toLocaleDateString(
+                                        locale === "ar" ? "ar-SA" : "en-US",
+                                        { year: "numeric", month: "short", day: "numeric" },
+                                      ),
+                                    })
+                                  : t("myCourses.studentCancelledBanner.title")}
+                              </p>
+                              {course.cancelReason && (
+                                <p className="text-[10px] text-[#7F1D1D] mt-0.5 line-clamp-2">
+                                  <span className="font-medium">
+                                    {t("myCourses.studentCancelledBanner.reasonLabel")}
+                                  </span>{" "}
+                                  {course.cancelReason}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
                           {/* Course Info */}
                           <div className="p-3 sm:p-4 flex flex-col flex-1">
                             {/* Title */}

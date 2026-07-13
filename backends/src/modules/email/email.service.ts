@@ -1142,6 +1142,9 @@ export class EmailService {
       courseName: string;
       cancelReason: string | null;
       refundKind: CourseCancelRefundKind;
+      /** Phase C post-start cancels revoke certs + reverse points; the
+       * template appends an extra explanatory block when true. */
+      certsRevoked?: boolean;
     },
     locale: EmailLocale = 'en',
   ): Promise<void> {
@@ -1160,6 +1163,7 @@ export class EmailService {
             courseName: params.courseName,
             reason: params.cancelReason ?? '',
             refundKind: params.refundKind,
+            certsRevoked: params.certsRevoked ? 'true' : 'false',
           },
         },
       });

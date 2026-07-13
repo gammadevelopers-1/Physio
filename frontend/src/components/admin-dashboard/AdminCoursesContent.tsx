@@ -376,14 +376,24 @@ const AdminCoursesContent = () => {
           confirmCourse.id,
           cancelReason.trim(),
         );
-        // Success message reports refund breakdown so the admin sees
-        // whether bank-transfer follow-up is needed at a glance.
-        toast.success(
-          t("coursesPage.confirmCancel.success", {
-            refunded: result.refundsIssued,
-            manual: result.refundsPendingBankTransfer,
-          }),
-        );
+        // Success message differs by variant. Pre-start reports refund
+        // breakdown; post-start reports how many refund decisions are
+        // now queued for finance + how many certificates were revoked.
+        if (result.variant === "post_start") {
+          toast.success(
+            t("coursesPage.confirmCancel.successPostStart", {
+              deferred: result.refundsDeferred,
+              certs: result.certificatesRevoked,
+            }),
+          );
+        } else {
+          toast.success(
+            t("coursesPage.confirmCancel.success", {
+              refunded: result.refundsIssued,
+              manual: result.refundsPendingBankTransfer,
+            }),
+          );
+        }
       } else {
         await adminApi.deleteCourse(
           confirmCourse.id,
@@ -442,6 +452,15 @@ const AdminCoursesContent = () => {
     confirmKind === "cancel" &&
     confirmCourse !== null &&
     cancelReason.trim().length >= 3;
+
+  // Pre-start vs post-start detection. Backend does its own check (this
+  // is UI only — the server is the source of truth). Matches
+  // startDate <= now() semantics from CoursesService.cancelCourse.
+  // A course with null startDate is treated as pre-start.
+  const cancelIsPostStart =
+    confirmKind === "cancel" &&
+    confirmCourse?.startDate != null &&
+    new Date(confirmCourse.startDate).getTime() <= Date.now();
 
   // --- Enrolled students modal flow ---
 
@@ -1274,12 +1293,17 @@ const AdminCoursesContent = () => {
                         : confirmCourse.title,
                   })
                 : confirmKind === "cancel"
-                  ? t("coursesPage.confirmCancel.bodyPreStart", {
-                      title:
-                        locale === "ar" && confirmCourse.titleAr
-                          ? confirmCourse.titleAr
-                          : confirmCourse.title,
-                    })
+                  ? t(
+                      cancelIsPostStart
+                        ? "coursesPage.confirmCancel.bodyPostStart"
+                        : "coursesPage.confirmCancel.bodyPreStart",
+                      {
+                        title:
+                          locale === "ar" && confirmCourse.titleAr
+                            ? confirmCourse.titleAr
+                            : confirmCourse.title,
+                      },
+                    )
                   : t("coursesPage.confirmDelete.body", {
                       title:
                         locale === "ar" && confirmCourse.titleAr
@@ -1437,17 +1461,32 @@ const AdminCoursesContent = () => {
                   )}
                 </div>
 
-                {/* Refund + coupon summary — one card, three lines, one is
-                    highlighted (blue) because Amna wants the admin to
-                    understand refunds happen automatically. */}
-                <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
-                  <ul className="space-y-1 text-xs text-[#1E3A8A] leading-relaxed">
-                    <li>· {t("coursesPage.confirmCancel.impactPaid")}</li>
-                    <li>· {t("coursesPage.confirmCancel.impactBankTransfer")}</li>
-                    <li>· {t("coursesPage.confirmCancel.impactWaitlist")}</li>
-                    <li>· {t("coursesPage.confirmCancel.impactCoupons")}</li>
-                  </ul>
-                </div>
+                {/* Refund + cascade summary card. Pre-start highlights
+                    automatic refund behaviour; post-start highlights
+                    what gets revoked/reversed and that refunds are
+                    manual per-buyer decisions from finance. Color coded:
+                    blue = informational (pre-start), amber = attention
+                    required (post-start). */}
+                {!cancelIsPostStart ? (
+                  <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
+                    <ul className="space-y-1 text-xs text-[#1E3A8A] leading-relaxed">
+                      <li>· {t("coursesPage.confirmCancel.impactPaid")}</li>
+                      <li>· {t("coursesPage.confirmCancel.impactBankTransfer")}</li>
+                      <li>· {t("coursesPage.confirmCancel.impactWaitlist")}</li>
+                      <li>· {t("coursesPage.confirmCancel.impactCoupons")}</li>
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-3 mb-4">
+                    <ul className="space-y-1 text-xs text-[#78350F] leading-relaxed">
+                      <li>· {t("coursesPage.confirmCancel.impactAttendance")}</li>
+                      <li>· {t("coursesPage.confirmCancel.impactCerts")}</li>
+                      <li>· {t("coursesPage.confirmCancel.impactPoints")}</li>
+                      <li>· {t("coursesPage.confirmCancel.impactRefundsDeferred")}</li>
+                      <li>· {t("coursesPage.confirmCancel.impactWaitlist")}</li>
+                    </ul>
+                  </div>
+                )}
 
                 {/* Mandatory reason */}
                 <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">

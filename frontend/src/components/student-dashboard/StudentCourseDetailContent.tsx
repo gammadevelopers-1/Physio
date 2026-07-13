@@ -278,6 +278,41 @@ const StudentCourseDetailContent = () => {
                 </div>
               ) : (
                 <>
+                  {/* Cancelled course banner (Phase C). Shown at the top
+                      of the detail page when the parent course has been
+                      cancelled by admin. Enrollment may be `dropped`
+                      (Phase C drops all enrollments on cancel) or, in
+                      the edge case of a manual retention, still `active`. */}
+                  {data.course.status === "cancelled" && (
+                    <div className="bg-[#FEE2E2] border border-[#FECACA] rounded-xl p-4 sm:p-5 mb-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#FECACA] flex items-center justify-center flex-shrink-0">
+                          <span className="text-[#7F1D1D] text-lg font-bold">!</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-sm sm:text-base font-semibold text-[#991B1B]">
+                            {data.course.cancelledAt
+                              ? t("myCourses.studentCancelledBanner.titleWithDate", {
+                                  date: new Date(data.course.cancelledAt).toLocaleDateString(
+                                    locale === "ar" ? "ar-SA" : "en-US",
+                                    { year: "numeric", month: "long", day: "numeric" },
+                                  ),
+                                })
+                              : t("myCourses.studentCancelledBanner.title")}
+                          </h2>
+                          {data.course.cancelReason && (
+                            <p className="text-xs sm:text-sm text-[#7F1D1D] mt-1 leading-relaxed">
+                              <span className="font-medium">
+                                {t("myCourses.studentCancelledBanner.reasonLabel")}
+                              </span>{" "}
+                              {data.course.cancelReason}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Course Header */}
                   <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                     <div className="flex flex-col sm:flex-row gap-4">

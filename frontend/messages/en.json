@@ -1932,6 +1932,11 @@
     "myCourses": {
       "title": "My Courses",
       "subtitle": "Search, filter and manage your enrolled courses",
+      "studentCancelledBanner": {
+        "title": "This course was cancelled",
+        "titleWithDate": "Cancelled on {date}",
+        "reasonLabel": "Reason:"
+      },
       "recentCourses": "Recent Courses",
       "loadMore": "Load more",
       "loadingMore": "Loading more...",
@@ -6411,6 +6416,7 @@
       "confirmCancel": {
         "title": "Cancel this course?",
         "bodyPreStart": "Cancel \"{title}\" before it starts? Every enrolled student will get a full automatic refund and a cancellation email. This action is reversible only by re-creating the course.",
+        "bodyPostStart": "Cancel \"{title}\" mid-course? Attendance records will be marked cancelled, every issued certificate will be revoked, and CME points earned will be reversed. Refunds are NOT automatic — you decide per-buyer from Finance → Refunds after cancellation.",
         "impactTitle": "What will happen:",
         "impactEnrollments": "enrolled students will be dropped",
         "impactPaid": "paid payment(s) will be refunded automatically",
@@ -6418,13 +6424,25 @@
         "impactSessions": "upcoming session(s) will be cancelled (Zoom torn down, students emailed)",
         "impactWaitlist": "waitlisted student(s) will be notified + removed",
         "impactCoupons": "coupon usage will be restored where applicable",
+        "impactAttendance": "past attendance records will be marked cancelled (rows preserved for NELC audit)",
+        "impactCerts": "issued certificate(s) will be revoked; students emailed separately",
+        "impactPoints": "CME points earned via this course will be reversed with a compensating ledger entry",
+        "impactRefundsDeferred": "paid buyer(s) queued in Finance → Refunds for a manual per-buyer decision",
         "reasonLabel": "Cancellation reason (required, sent to students)",
         "reasonPlaceholder": "e.g. instructor unavailable, insufficient enrolments, accreditation not granted…",
         "reasonRequired": "A reason is required",
         "confirm": "Cancel course",
         "cancel": "Keep course",
         "success": "Course cancelled. {refunded} refund(s) issued, {manual} bank-transfer wire(s) queued for finance.",
+        "successPostStart": "Course cancelled. {deferred} paid buyer(s) awaiting your refund decision in Finance → Refunds. {certs} certificate(s) revoked.",
         "failure": "Failed to cancel course"
+      },
+      "studentCancelledBanner": {
+        "title": "This course was cancelled",
+        "titleWithDate": "This course was cancelled on {date}",
+        "reasonLabel": "Reason:",
+        "refundImmediate": "A full refund has been issued to your original payment method.",
+        "refundManual": "Your refund is under review by our finance team — you will hear from us separately with the decision."
       },
       "cancelCourse": "Cancel course",
       "requestChangesModal": {

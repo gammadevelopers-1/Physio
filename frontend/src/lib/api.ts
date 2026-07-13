@@ -871,6 +871,15 @@ export const adminApi = {
       reason ? { reason } : undefined,
     ),
 
+  // Phase B cancel-course workflow. Reason is mandatory (sent to students
+  // in the cancellation email + captured in audit + NELC logs). Response
+  // includes per-outcome counts for the confirmation toast.
+  cancelCourse: (
+    courseId: string,
+    reason: string,
+  ) =>
+    api.post<CancelCourseResponse>(`/courses/${courseId}/cancel`, { reason }),
+
   // ─── Logs page: Audit Trail tab ────────────────────────
   getAuditLogs: (params?: AdminAuditLogQuery) => {
     const sp = new URLSearchParams();
@@ -2410,6 +2419,21 @@ export interface CourseDeleteImpactResponse {
   title: string;
   status: string;
   impact: CourseDeleteImpact;
+}
+
+// Cancel-course backend response — surfaced in the admin toast after
+// a successful cancellation so the admin sees exactly what happened.
+export interface CancelCourseResponse {
+  cancelledAt: string;
+  variant: 'pre_start' | 'post_start';
+  refundsIssued: number;
+  refundsPendingBankTransfer: number;
+  refundsFailed: number;
+  paymentsCancelled: number;
+  enrollmentsDropped: number;
+  sessionsCancelled: number;
+  waitlistCleared: number;
+  studentsNotified: number;
 }
 
 export interface DeletedCourseEntry {

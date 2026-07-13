@@ -212,6 +212,7 @@ const CoursesContent = () => {
       changes_requested: "bg-[#FEF3C7] text-[#D97706]",
       completed: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
       archived: "bg-[#FEF3C7] text-[#D4A520]",
+      cancelled: "bg-[#FEE2E2] text-[#B91C1C]",
     };
     return styles[status] || styles.draft;
   };

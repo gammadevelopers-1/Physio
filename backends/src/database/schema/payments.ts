@@ -25,9 +25,13 @@ export const payments = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    // RESTRICT (not cascade) — a hard course delete must never silently wipe
+    // payment history. The Cancel → Delete workflow refunds/settles every
+    // payment before allowing the soft-delete, so RESTRICT will never fire
+    // in normal operation; it's a DB-level safety net.
     courseId: uuid('course_id')
       .notNull()
-      .references(() => courses.id, { onDelete: 'cascade' }),
+      .references(() => courses.id, { onDelete: 'restrict' }),
     gateway: varchar('gateway', { length: 20 }).notNull(),
     gatewayChargeId: varchar('gateway_charge_id', { length: 255 }),
     paymentMethod: varchar('payment_method', { length: 20 }),
@@ -56,7 +60,7 @@ export const payments = pgTable(
     ),
     check(
       'payments_status_check',
-      sql`${table.status} IN ('pending', 'processing', 'awaiting_approval', 'paid', 'failed', 'refunded', 'partially_refunded', 'chargeback')`,
+      sql`${table.status} IN ('pending', 'processing', 'awaiting_approval', 'paid', 'failed', 'rejected', 'refunded', 'partially_refunded', 'chargeback', 'abandoned')`,
     ),
     check(
       'payments_method_check',

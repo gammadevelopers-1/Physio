@@ -20,6 +20,7 @@ import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
 import { RateCourseDto } from './dto/rate-course.dto';
+import { CancelCourseDto } from './dto/cancel-course.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles, Public } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -278,6 +279,28 @@ export class CoursesController {
     @Body() body?: { reason?: string },
   ) {
     return this.coursesService.remove(id, user, body?.reason, req.ip);
+  }
+
+  /**
+   * POST /courses/:id/cancel — Amna's Phase B pre-start cancel workflow.
+   *
+   * Requires a mandatory reason (sent to students in the cancellation
+   * email + captured in audit + NELC logs). Cascades: refund every paid
+   * buyer via the existing refund pipeline (bank transfers land as
+   * `pending` for finance), drop enrollments, clear the waitlist, cancel
+   * upcoming sessions with Zoom teardown, notify every enrolled student.
+   *
+   * Returns a summary with per-outcome counts for the admin toast.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/cancel')
+  async cancelCourse(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CancelCourseDto,
+    @Req() req: Request,
+  ) {
+    return this.coursesService.cancelCourse(id, dto, user, req.ip);
   }
 
   // ─── Module Endpoints ───────────────────────────────────────

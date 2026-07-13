@@ -52,7 +52,7 @@ import type { InstructorCourse, CourseEnrollment } from "@/types/instructor-dash
 
 const ITEMS_PER_PAGE = 12;
 
-type ConfirmKind = "archive" | "delete" | null;
+type ConfirmKind = "archive" | "delete" | "cancel" | null;
 
 const AdminCoursesContent = () => {
   const t = useTranslations("adminDashboard");
@@ -89,6 +89,9 @@ const AdminCoursesContent = () => {
   const [deleteImpactError, setDeleteImpactError] = useState<string | null>(null);
   const [deleteTypedTitle, setDeleteTypedTitle] = useState("");
   const [deleteReason, setDeleteReason] = useState("");
+  // Cancel-course modal state. Reason is mandatory (backend enforces
+  // min length 3); the button disables until it's non-empty.
+  const [cancelReason, setCancelReason] = useState("");
   const [requestChangesCourse, setRequestChangesCourse] = useState<InstructorCourse | null>(null);
   const [requestChangesNote, setRequestChangesNote] = useState("");
   const [requestChangesBusy, setRequestChangesBusy] = useState(false);
@@ -191,6 +194,8 @@ const AdminCoursesContent = () => {
         return "bg-[#FEF3C7] text-[#D97706]";
       case "changes_requested":
         return "bg-[#FEE2E2] text-[#DC2626]";
+      case "cancelled":
+        return "bg-[#FEE2E2] text-[#B91C1C]";
       default:
         return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
@@ -325,7 +330,7 @@ const AdminCoursesContent = () => {
 
   // --- Confirmation modal flow (Archive + Delete) ---
 
-  const openConfirm = (kind: "archive" | "delete", c: InstructorCourse) => {
+  const openConfirm = (kind: "archive" | "delete" | "cancel", c: InstructorCourse) => {
     setOpenDropdownId(null);
     setConfirmCourse(c);
     setConfirmKind(kind);
@@ -333,14 +338,17 @@ const AdminCoursesContent = () => {
     setDeleteImpactError(null);
     setDeleteTypedTitle("");
     setDeleteReason("");
-    if (kind === "delete") {
+    setCancelReason("");
+    // Both Delete and Cancel benefit from the impact preview (student
+    // count, upcoming sessions, waitlist size, etc.) — load it either way.
+    if (kind === "delete" || kind === "cancel") {
       setDeleteImpactLoading(true);
       adminApi
         .getCourseDeleteImpact(c.id)
         .then((res) => setDeleteImpact(res.impact))
         .catch((err) =>
           setDeleteImpactError(
-            err instanceof Error ? err.message : "Failed to load delete impact",
+            err instanceof Error ? err.message : "Failed to load impact preview",
           ),
         )
         .finally(() => setDeleteImpactLoading(false));
@@ -354,6 +362,7 @@ const AdminCoursesContent = () => {
     setDeleteImpactError(null);
     setDeleteTypedTitle("");
     setDeleteReason("");
+    setCancelReason("");
   };
   const handleConfirm = async () => {
     if (!confirmCourse || !confirmKind) return;
@@ -362,6 +371,19 @@ const AdminCoursesContent = () => {
       if (confirmKind === "archive") {
         await adminApi.deactivateCourse(confirmCourse.id);
         toast.success(t("coursesPage.toasts.archived"));
+      } else if (confirmKind === "cancel") {
+        const result = await adminApi.cancelCourse(
+          confirmCourse.id,
+          cancelReason.trim(),
+        );
+        // Success message reports refund breakdown so the admin sees
+        // whether bank-transfer follow-up is needed at a glance.
+        toast.success(
+          t("coursesPage.confirmCancel.success", {
+            refunded: result.refundsIssued,
+            manual: result.refundsPendingBankTransfer,
+          }),
+        );
       } else {
         await adminApi.deleteCourse(
           confirmCourse.id,
@@ -374,6 +396,7 @@ const AdminCoursesContent = () => {
       setDeleteImpact(null);
       setDeleteTypedTitle("");
       setDeleteReason("");
+      setCancelReason("");
       refetch();
     } catch (err) {
       toast.error(
@@ -382,7 +405,9 @@ const AdminCoursesContent = () => {
           : t(
               confirmKind === "archive"
                 ? "coursesPage.toasts.archiveFailed"
-                : "coursesPage.toasts.deleteFailed",
+                : confirmKind === "cancel"
+                  ? "coursesPage.confirmCancel.failure"
+                  : "coursesPage.toasts.deleteFailed",
             ),
       );
     } finally {
@@ -410,6 +435,13 @@ const AdminCoursesContent = () => {
     !deleteBlockedByPendingCerts &&
     (!deleteNeedsTitleConfirm ||
       deleteTypedTitle.trim() === (confirmCourse.title || "").trim());
+
+  // Cancel confirmation gate: mandatory reason of at least 3 characters
+  // (matches backend DTO validation) — button stays disabled until then.
+  const cancelConfirmOk =
+    confirmKind === "cancel" &&
+    confirmCourse !== null &&
+    cancelReason.trim().length >= 3;
 
   // --- Enrolled students modal flow ---
 
@@ -536,6 +568,10 @@ const AdminCoursesContent = () => {
               <XCircle className="w-4 h-4" />
               {t("coursesPage.actions.requestChanges")}
             </button>
+            <button onClick={() => openConfirm("cancel", course)} className={dangerCls}>
+              <XCircle className="w-4 h-4" />
+              {t("coursesPage.cancelCourse")}
+            </button>
             <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
               <Trash2 className="w-4 h-4" />
               {t("coursesPage.actions.delete")}
@@ -544,10 +580,16 @@ const AdminCoursesContent = () => {
         )}
 
         {course.status === "changes_requested" && (
-          <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
-            <Trash2 className="w-4 h-4" />
-            {t("coursesPage.actions.delete")}
-          </button>
+          <>
+            <button onClick={() => openConfirm("cancel", course)} className={dangerCls}>
+              <XCircle className="w-4 h-4" />
+              {t("coursesPage.cancelCourse")}
+            </button>
+            <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
+              <Trash2 className="w-4 h-4" />
+              {t("coursesPage.actions.delete")}
+            </button>
+          </>
         )}
 
         {course.status === "active" && (
@@ -588,11 +630,22 @@ const AdminCoursesContent = () => {
               <Archive className="w-4 h-4" />
               {t("coursesPage.actions.archive")}
             </button>
+            <button onClick={() => openConfirm("cancel", course)} className={dangerCls}>
+              <XCircle className="w-4 h-4" />
+              {t("coursesPage.cancelCourse")}
+            </button>
             <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
               <Trash2 className="w-4 h-4" />
               {t("coursesPage.actions.delete")}
             </button>
           </>
+        )}
+
+        {course.status === "cancelled" && (
+          <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
+            <Trash2 className="w-4 h-4" />
+            {t("coursesPage.actions.delete")}
+          </button>
         )}
 
         {course.status === "completed" && (
@@ -1208,7 +1261,9 @@ const AdminCoursesContent = () => {
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
               {confirmKind === "archive"
                 ? t("coursesPage.confirmArchive.title")
-                : t("coursesPage.confirmDelete.title")}
+                : confirmKind === "cancel"
+                  ? t("coursesPage.confirmCancel.title")
+                  : t("coursesPage.confirmDelete.title")}
             </h3>
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">
               {confirmKind === "archive"
@@ -1218,12 +1273,19 @@ const AdminCoursesContent = () => {
                         ? confirmCourse.titleAr
                         : confirmCourse.title,
                   })
-                : t("coursesPage.confirmDelete.body", {
-                    title:
-                      locale === "ar" && confirmCourse.titleAr
-                        ? confirmCourse.titleAr
-                        : confirmCourse.title,
-                  })}
+                : confirmKind === "cancel"
+                  ? t("coursesPage.confirmCancel.bodyPreStart", {
+                      title:
+                        locale === "ar" && confirmCourse.titleAr
+                          ? confirmCourse.titleAr
+                          : confirmCourse.title,
+                    })
+                  : t("coursesPage.confirmDelete.body", {
+                      title:
+                        locale === "ar" && confirmCourse.titleAr
+                          ? confirmCourse.titleAr
+                          : confirmCourse.title,
+                    })}
             </p>
 
             {confirmKind === "delete" && (
@@ -1341,6 +1403,72 @@ const AdminCoursesContent = () => {
               </>
             )}
 
+            {confirmKind === "cancel" && (
+              <>
+                {/* Impact preview — what happens on cancel */}
+                <div className="bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg p-3 mb-4">
+                  <p className="text-xs font-medium text-[var(--color-text-primary)] mb-2">
+                    {t("coursesPage.confirmCancel.impactTitle")}
+                  </p>
+                  {deleteImpactLoading && (
+                    <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      {t("coursesPage.confirmDelete.impactLoading")}
+                    </div>
+                  )}
+                  {deleteImpactError && (
+                    <p className="text-xs text-[#DC2626]">{deleteImpactError}</p>
+                  )}
+                  {deleteImpact && (
+                    <ul className="space-y-1 text-xs text-[var(--color-text-secondary)]">
+                      <li className="flex items-start gap-2">
+                        <span className="font-mono text-[var(--color-text-primary)] shrink-0">
+                          {deleteImpact.enrollments}
+                        </span>
+                        <span>{t("coursesPage.confirmCancel.impactEnrollments")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-mono text-[var(--color-text-primary)] shrink-0">
+                          {deleteImpact.upcomingSessions}
+                        </span>
+                        <span>{t("coursesPage.confirmCancel.impactSessions")}</span>
+                      </li>
+                    </ul>
+                  )}
+                </div>
+
+                {/* Refund + coupon summary — one card, three lines, one is
+                    highlighted (blue) because Amna wants the admin to
+                    understand refunds happen automatically. */}
+                <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
+                  <ul className="space-y-1 text-xs text-[#1E3A8A] leading-relaxed">
+                    <li>· {t("coursesPage.confirmCancel.impactPaid")}</li>
+                    <li>· {t("coursesPage.confirmCancel.impactBankTransfer")}</li>
+                    <li>· {t("coursesPage.confirmCancel.impactWaitlist")}</li>
+                    <li>· {t("coursesPage.confirmCancel.impactCoupons")}</li>
+                  </ul>
+                </div>
+
+                {/* Mandatory reason */}
+                <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                  {t("coursesPage.confirmCancel.reasonLabel")}
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder={t("coursesPage.confirmCancel.reasonPlaceholder")}
+                  disabled={confirmBusy}
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-4 disabled:opacity-50 resize-none"
+                />
+                {cancelReason.trim().length > 0 && cancelReason.trim().length < 3 && (
+                  <p className="text-xs text-[#DC2626] mb-2">
+                    {t("coursesPage.confirmCancel.reasonRequired")}
+                  </p>
+                )}
+              </>
+            )}
+
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -1348,21 +1476,26 @@ const AdminCoursesContent = () => {
                 disabled={confirmBusy}
                 className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
               >
-                {t("coursesPage.confirmArchive.cancel")}
+                {confirmKind === "cancel"
+                  ? t("coursesPage.confirmCancel.cancel")
+                  : t("coursesPage.confirmArchive.cancel")}
               </button>
               <button
                 type="button"
                 onClick={handleConfirm}
                 disabled={
                   confirmBusy ||
-                  (confirmKind === "delete" && !deleteConfirmOk)
+                  (confirmKind === "delete" && !deleteConfirmOk) ||
+                  (confirmKind === "cancel" && !cancelConfirmOk)
                 }
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {confirmBusy && <Loader2 className="w-4 h-4 animate-spin" />}
                 {confirmKind === "archive"
                   ? t("coursesPage.confirmArchive.confirm")
-                  : t("coursesPage.confirmDelete.confirm")}
+                  : confirmKind === "cancel"
+                    ? t("coursesPage.confirmCancel.confirm")
+                    : t("coursesPage.confirmDelete.confirm")}
               </button>
             </div>
           </div>

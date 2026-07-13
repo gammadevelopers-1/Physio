@@ -37,6 +37,10 @@ import {
   classifyCourse,
   getNelcMaxEnrollment,
 } from '../courses/nelc-config';
+import {
+  canEnroll,
+  describeEnrollBlock,
+} from '../courses/course-lifecycle.helper';
 import { XapiService } from '../xapi/xapi.service';
 
 @Injectable()
@@ -90,6 +94,15 @@ export class EnrollmentsService {
 
     if (!course) {
       throw new NotFoundException('Course not found');
+    }
+
+    // 1a. Lifecycle gate — previously this path only checked deletedAt, so
+    // admin/instructor manual enrol would happily add a student to a
+    // cancelled, archived, or draft course. Canonical predicate in
+    // course-lifecycle.helper.ts.
+    const gate = canEnroll(course);
+    if (!gate.ok) {
+      throw new BadRequestException(describeEnrollBlock(gate.reason));
     }
 
     // 2. Determine effective max enrollment

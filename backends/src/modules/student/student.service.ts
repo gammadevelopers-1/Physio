@@ -404,6 +404,13 @@ export class StudentService {
         thumbnail: courses.thumbnail,
         startDate: courses.startDate,
         endDate: courses.endDate,
+        // Phase B cancel-course workflow: surface course-level cancellation
+        // to the student's My Courses card + detail page so they see a
+        // banner explaining why they can no longer access the course and
+        // what happens to their refund.
+        courseStatus: courses.status,
+        cancelledAt: courses.cancelledAt,
+        cancelReason: courses.cancelReason,
         // Surface the NELC evaluation link + the student's certificate
         // request status on the courses-list payload so the My Courses
         // cards can render an action-required pill without the student

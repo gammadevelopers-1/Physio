@@ -8,7 +8,7 @@ import {
   Logger,
   forwardRef,
 } from '@nestjs/common';
-import { eq, and, ilike, or, desc, asc, count, sql, inArray, isNull } from 'drizzle-orm';
+import { eq, and, ilike, or, desc, asc, count, sql, inArray, isNull, ne } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courses,
@@ -23,9 +23,11 @@ import {
   assessments,
   certificateRequests,
   users,
+  waitlists,
   COURSE_STATUS,
   CERTIFICATE_STATUS,
   NELC_EVENT_TYPE,
+  PAYMENT_STATUS,
 } from '../../database/schema';
 import { getTableColumns } from 'drizzle-orm';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -44,7 +46,9 @@ import { PointsService } from '../points/points.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 import { SessionsService } from '../sessions/sessions.service';
+import { RefundService } from '../payments/services/refund.service';
 import { XapiService } from '../xapi/xapi.service';
+import { CancelCourseDto, CancelCourseResult } from './dto/cancel-course.dto';
 import { toArabicIndic } from '../../common/platform-locale';
 import { sanitizeRichText } from '../../common/sanitize-html';
 import { getEffectivePrice } from './pricing.util';
@@ -63,6 +67,8 @@ export class CoursesService {
     private readonly adminSettings: AdminSettingsService,
     @Inject(forwardRef(() => SessionsService))
     private readonly sessionsService: SessionsService,
+    @Inject(forwardRef(() => RefundService))
+    private readonly refundService: RefundService,
     private readonly xapiService: XapiService,
   ) {}
 
@@ -285,15 +291,19 @@ export class CoursesService {
     const whereClause =
       conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Status lifecycle priority: draft first, archived last
+    // Status lifecycle priority: draft first, cancelled/archived last.
+    // Cancelled sits between completed and archived so a cancelled active
+    // course sinks below normal completions in listings but stays above
+    // fully archived (historical-only) courses.
     const statusPriority = sql`CASE ${courses.status}
       WHEN 'draft' THEN 1
       WHEN 'pending_review' THEN 2
       WHEN 'changes_requested' THEN 3
       WHEN 'active' THEN 4
       WHEN 'completed' THEN 5
-      WHEN 'archived' THEN 6
-      ELSE 7
+      WHEN 'cancelled' THEN 6
+      WHEN 'archived' THEN 7
+      ELSE 8
     END`;
 
     // Determine secondary sort order
@@ -1416,16 +1426,27 @@ export class CoursesService {
     }
 
     // Managers (non-admin) are still locked to draft-only deletes — this
-    // matches the prior hard-delete behavior. Admins can delete any status.
+    // matches the prior hard-delete behavior. Admins can delete draft or
+    // cancelled courses (Amna's Phase B spec: cancel-then-delete is the
+    // only path for a course with enrolments; a fully-cancelled course
+    // has already been refunded and can safely be removed).
+    const adminDeletable: string[] = [COURSE_STATUS.DRAFT, COURSE_STATUS.CANCELLED];
     if (!isGlobalAdmin(user) && existing.status !== COURSE_STATUS.DRAFT) {
       throw new BadRequestException(
         'Only draft courses can be deleted',
       );
     }
+    if (isGlobalAdmin(user) && !adminDeletable.includes(existing.status)) {
+      throw new BadRequestException(
+        'Only draft or cancelled courses can be deleted. Cancel the course first — this refunds every buyer, notifies students, and cleans up sessions — then delete becomes available.',
+      );
+    }
 
     // Block delete when there are pending or paid payments — the finance
     // team needs the row for chargeback/refund reconciliation. Hard-delete
-    // would orphan invoices and break the audit trail.
+    // would orphan invoices and break the audit trail. After a Phase B
+    // cancel every payment is either refunded or in-flight for refund, so
+    // this guard should never trigger on a properly-cancelled course.
     const [activePayments] = await db
       .select({ count: count() })
       .from(payments)
@@ -1438,7 +1459,7 @@ export class CoursesService {
 
     if (Number(activePayments?.count || 0) > 0) {
       throw new BadRequestException(
-        'Cannot delete course with active or pending payments',
+        'Cannot delete course with active or pending payments. Cancel the course first — this triggers auto-refunds and clears the finance state.',
       );
     }
 
@@ -1511,6 +1532,416 @@ export class CoursesService {
       impact,
       sessionsCancelled: cascade.cancelled,
       sessionsCancelFailed: cascade.failed,
+    };
+  }
+
+  /**
+   * POST /admin/courses/:id/cancel — Amna's Phase B: pre-start cancel.
+   *
+   * Cascade (all best-effort per step; DB writes commit even if downstream
+   * side-effects fail so the course state doesn't hang half-cancelled):
+   *
+   *   1. Flip status → CANCELLED, stamp cancelledAt/By/Reason
+   *   2. Cascade-cancel upcoming sessions (Zoom teardown + per-session
+   *      notifications happen inside sessionsService.cancelUpcomingForCourse)
+   *   3. For every PAID payment: adminInitiateRefund with reason='cancelled',
+   *      bypassPolicy=true. Bank-transfer refunds land as `pending` for
+   *      finance to wire manually. Discount usage reversal happens inside
+   *      the refund completion path (already wired).
+   *   4. Fail every PENDING / AWAITING_APPROVAL payment (student never got
+   *      charged; nothing to refund, just close the flow)
+   *   5. Drop every enrollment to `dropped` with a course_cancelled note
+   *   6. Clear the waitlist (status → cancelled) + notify waitlisted users
+   *   7. Fire course-level email + in-app notification to every enrolled
+   *      student, embedding the refund status per student
+   *   8. If any bank-transfer refunds are pending: dedicated admin
+   *      notification listing them so finance knows to wire the money
+   *   9. Audit-log `course.cancelled` + emit NELC `COURSE_CANCELLED` event
+   *
+   * Post-start cancel (Phase C) will introduce a different cascade with
+   * manual refund override + attendance clearing + certificate revocation.
+   * This method throws BadRequest for post-start until that phase ships.
+   */
+  async cancelCourse(
+    courseId: string,
+    dto: CancelCourseDto,
+    user: AuthenticatedUser,
+    ipAddress?: string,
+  ): Promise<CancelCourseResult> {
+    if (!isManagerOrAbove(user)) {
+      throw new ForbiddenException('Only managers and admins can cancel courses');
+    }
+
+    const [existing] = await db
+      .select()
+      .from(courses)
+      .where(and(eq(courses.id, courseId), isNull(courses.deletedAt)))
+      .limit(1);
+    if (!existing) {
+      throw new NotFoundException('Course not found');
+    }
+
+    // Manager scope check (non-admin managers can only touch their own
+    // courses or unassigned ones — same rule as remove()).
+    if (isManager(user) && !isGlobalAdmin(user)) {
+      if (
+        existing.managerId !== null &&
+        existing.managerId !== user.id
+      ) {
+        throw new ForbiddenException('Course not in your scope');
+      }
+    }
+
+    // State gate. Cancellation is only meaningful from a state where the
+    // course could still have activity — draft courses can just be deleted;
+    // completed/archived/already-cancelled are terminal.
+    if (existing.status === COURSE_STATUS.CANCELLED) {
+      throw new BadRequestException('Course is already cancelled');
+    }
+    if (existing.status === COURSE_STATUS.COMPLETED) {
+      throw new BadRequestException(
+        'A completed course cannot be cancelled — students earned outcomes. Archive it instead.',
+      );
+    }
+    if (existing.status === COURSE_STATUS.ARCHIVED) {
+      throw new BadRequestException(
+        'An archived course cannot be cancelled. Reactivate it first if you truly need to cancel.',
+      );
+    }
+
+    // Pre-start vs post-start. Phase B ships pre-start only; Phase C will
+    // add the post-start branch (attendance clear, cert revoke, manual
+    // refund flow). startDate is a `date` column so NULL means "no start
+    // date set yet" (self-paced or unfixed) — we treat NULL as pre-start.
+    const now = new Date();
+    const isPreStart =
+      !existing.startDate || new Date(existing.startDate) > now;
+
+    if (!isPreStart) {
+      throw new BadRequestException(
+        'Post-start cancellation is not yet available. Please wait for the next release, or contact engineering if this is urgent.',
+      );
+    }
+
+    // 1. Flip status
+    await db
+      .update(courses)
+      .set({
+        status: COURSE_STATUS.CANCELLED,
+        cancelledAt: now,
+        cancelledBy: user.id,
+        cancelReason: dto.reason,
+        updatedAt: now,
+      })
+      .where(eq(courses.id, courseId));
+
+    // 2. Cascade-cancel upcoming sessions — reuses the same primitive as
+    // remove(). Per-session Zoom teardown + student notification already
+    // handled inside.
+    const sessionsResult = await this.sessionsService
+      .cancelUpcomingForCourse(
+        courseId,
+        user.id,
+        `Course cancelled: ${dto.reason}`,
+      )
+      .catch((err) => {
+        this.logger.error(
+          `cancelCourse: session cascade failed for ${courseId}`,
+          err,
+        );
+        return { cancelled: 0, failed: 0 };
+      });
+
+    // 3. Auto-refund every PAID payment. Track outcomes for the summary
+    // toast and for the admin-facing bank-transfer notification.
+    const paidRows = await db
+      .select({
+        id: payments.id,
+        userId: payments.userId,
+        gateway: payments.gateway,
+        amount: payments.amount,
+        currency: payments.currency,
+      })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.courseId, courseId),
+          eq(payments.status, PAYMENT_STATUS.PAID),
+        ),
+      );
+
+    let refundsIssued = 0;
+    let refundsPendingBankTransfer = 0;
+    let refundsFailed = 0;
+    const bankTransferPending: Array<{
+      paymentId: string;
+      userId: string;
+      amount: string;
+      currency: string;
+    }> = [];
+
+    for (const p of paidRows) {
+      try {
+        await this.refundService.adminInitiateRefund(
+          user.id,
+          {
+            paymentId: p.id,
+            reason: 'cancelled',
+            reasonNote: `Course cancelled: ${dto.reason}`,
+            justification: `Auto-refund triggered by course cancellation (${courseId})`,
+            bypassPolicy: true,
+          } as any,
+          ipAddress,
+        );
+        if (p.gateway === 'bank_transfer') {
+          refundsPendingBankTransfer++;
+          bankTransferPending.push({
+            paymentId: p.id,
+            userId: p.userId,
+            amount: p.amount,
+            currency: p.currency,
+          });
+        } else {
+          refundsIssued++;
+        }
+      } catch (err) {
+        refundsFailed++;
+        this.logger.error(
+          `cancelCourse: refund failed for payment ${p.id} on course ${courseId}: ${
+            (err as Error).message
+          }`,
+        );
+      }
+    }
+
+    // 4. Fail every non-final pending payment. These represent aborted
+    // checkouts / bank transfers under review — no charge yet, so nothing
+    // to refund. Just close the flow so nothing lingers.
+    const paymentsCancelled = await db
+      .update(payments)
+      .set({
+        status: PAYMENT_STATUS.FAILED,
+        failedAt: now,
+        failureReason: `Course cancelled: ${dto.reason}`,
+        errorCode: 'course_cancelled',
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(payments.courseId, courseId),
+          inArray(payments.status, [
+            PAYMENT_STATUS.PENDING,
+            PAYMENT_STATUS.PROCESSING,
+            PAYMENT_STATUS.AWAITING_APPROVAL,
+          ]),
+        ),
+      )
+      .returning({ id: payments.id });
+
+    // 5. Drop enrollments — Amna: "Their enrollments should be removed."
+    // We use the `dropped` status so the audit trail survives (NELC still
+    // needs to see who was enrolled at time of cancellation).
+    const droppedRows = await db
+      .update(enrollments)
+      .set({ status: 'dropped' })
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          ne(enrollments.status, 'dropped'),
+        ),
+      )
+      .returning({ id: enrollments.id, studentId: enrollments.studentId });
+
+    // 6. Clear the waitlist + notify. Anyone still waiting for a seat
+    // should hear the course was cancelled so they can look elsewhere.
+    const waitlistedRows = await db
+      .update(waitlists)
+      .set({ status: 'cancelled' })
+      .where(
+        and(
+          eq(waitlists.courseId, courseId),
+          eq(waitlists.status, 'waiting'),
+        ),
+      )
+      .returning({
+        id: waitlists.id,
+        studentId: waitlists.studentId,
+      });
+
+    // Resolve student contacts + language for email + in-app fanout.
+    const studentIds = Array.from(
+      new Set([
+        ...droppedRows.map((r) => r.studentId),
+        ...waitlistedRows.map((r) => r.studentId),
+      ]),
+    );
+    let studentsNotified = 0;
+    if (studentIds.length > 0) {
+      const students = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          language: users.language,
+        })
+        .from(users)
+        .where(inArray(users.id, studentIds));
+
+      // Map paymentId → gateway so we can pick the right refund-status
+      // copy per student. A student may or may not have a payment at all
+      // (free enrolment); if not, the email says "no refund required".
+      const paymentsByUser = new Map<string, string>(); // userId → gateway
+      for (const p of paidRows) {
+        paymentsByUser.set(p.userId, p.gateway);
+      }
+
+      // 7a. In-app notification — bulk fanout via the existing helper
+      // (respects each student's push preference).
+      try {
+        await this.userNotificationsService.createBulk(
+          students.map((s) => s.id),
+          {
+            type: 'course_cancelled',
+            title: 'Course Cancelled',
+            message: `The course "${existing.title}" has been cancelled.`,
+            titleKey: 'notifications.types.course_cancelled.title',
+            messageKey: 'notifications.types.course_cancelled.message',
+            link: `/dashboard/student/my-courses`,
+            entityType: 'course',
+            entityId: courseId,
+          },
+        );
+      } catch (err) {
+        this.logger.warn(
+          `cancelCourse: in-app fanout failed for ${courseId}: ${
+            (err as Error).message
+          }`,
+        );
+      }
+
+      // 7b. Per-student email loop — locale-aware, refund-kind embedded.
+      await Promise.all(
+        students.map(async (s) => {
+          const gateway = paymentsByUser.get(s.id);
+          const refundKind: 'immediate' | 'manual' | 'none' =
+            gateway === 'bank_transfer'
+              ? 'manual'
+              : gateway
+              ? 'immediate'
+              : 'none';
+          const recipientName = s.firstName ?? s.email ?? 'Student';
+          const locale = s.language === 'ar' ? 'ar' : 'en';
+          try {
+            await this.emailService.sendCourseCancelled(
+              s.email,
+              {
+                recipientName,
+                courseName: existing.title,
+                cancelReason: dto.reason,
+                refundKind,
+              },
+              locale,
+            );
+            studentsNotified++;
+          } catch (err) {
+            this.logger.warn(
+              `cancelCourse: email failed for ${s.email} on course ${courseId}: ${
+                (err as Error).message
+              }`,
+            );
+          }
+        }),
+      );
+    }
+
+    // 8. Bank-transfer refund alert to admins/managers. Finance needs to
+    // wire these manually and mark them complete; without this alert they
+    // could silently sit as `pending` refunds forever.
+    if (bankTransferPending.length > 0) {
+      try {
+        const adminIds = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(inArray(users.activeRole, ['ADMIN', 'SUPER_ADMIN', 'FINANCE']));
+        if (adminIds.length > 0) {
+          await this.userNotificationsService.createBulk(
+            adminIds.map((a) => a.id),
+            {
+              type: 'course_bank_refunds_pending',
+              title: `Bank transfer refunds need manual completion`,
+              message: `${bankTransferPending.length} bank-transfer refund(s) for the cancelled course "${existing.title}" require finance to wire the money manually.`,
+              titleKey: 'notifications.types.course_bank_refunds_pending.title',
+              messageKey: 'notifications.types.course_bank_refunds_pending.message',
+              messageParams: {
+                count: bankTransferPending.length,
+                courseName: existing.title,
+              },
+              link: `/dashboard/admin/finance?tab=refunds&filter=pending`,
+              entityType: 'course',
+              entityId: courseId,
+            },
+          );
+        }
+      } catch (err) {
+        this.logger.warn(
+          `cancelCourse: bank-transfer alert failed for ${courseId}: ${
+            (err as Error).message
+          }`,
+        );
+      }
+    }
+
+    // 9. Audit trail — both the platform audit log and the NELC log.
+    await this.auditLogService
+      .log({
+        entityType: 'course',
+        entityId: courseId,
+        action: 'course.cancelled',
+        performedBy: user.id,
+        ipAddress,
+        metadata: {
+          title: existing.title,
+          reason: dto.reason,
+          variant: 'pre_start',
+          refundsIssued,
+          refundsPendingBankTransfer,
+          refundsFailed,
+          paymentsCancelled: paymentsCancelled.length,
+          enrollmentsDropped: droppedRows.length,
+          sessionsCancelled: sessionsResult.cancelled,
+          waitlistCleared: waitlistedRows.length,
+          bankTransferPending: bankTransferPending.map((b) => b.paymentId),
+        },
+      })
+      .catch(() => {});
+
+    await this.auditService
+      .log({
+        eventType: NELC_EVENT_TYPE.COURSE_CANCELLED,
+        entityType: 'course',
+        entityId: courseId,
+        userId: user.id,
+        metadata: {
+          title: existing.title,
+          reason: dto.reason,
+          variant: 'pre_start',
+          enrollmentsDropped: droppedRows.length,
+        },
+        ipAddress,
+      })
+      .catch(() => {});
+
+    return {
+      cancelledAt: now,
+      variant: 'pre_start',
+      refundsIssued,
+      refundsPendingBankTransfer,
+      refundsFailed,
+      paymentsCancelled: paymentsCancelled.length,
+      enrollmentsDropped: droppedRows.length,
+      sessionsCancelled: sessionsResult.cancelled,
+      waitlistCleared: waitlistedRows.length,
+      studentsNotified,
     };
   }
 

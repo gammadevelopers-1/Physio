@@ -3061,6 +3061,7 @@
         "changesRequested": "Changes Requested",
         "completed": "Completed",
         "archived": "Archived",
+        "cancelled": "Cancelled",
         "allDelivery": "All Delivery",
         "zoom": "Zoom",
         "onsite": "On-site",
@@ -3080,7 +3081,8 @@
         "pending_review": "Pending Review",
         "changes_requested": "Changes Requested",
         "completed": "Completed",
-        "archived": "Archived"
+        "archived": "Archived",
+        "cancelled": "Cancelled"
       },
       "delivery": {
         "zoom": "Zoom",
@@ -4817,7 +4819,8 @@
         "pending_review": "Pending Review",
         "changes_requested": "Changes Requested",
         "completed": "Completed",
-        "archived": "Archived"
+        "archived": "Archived",
+        "cancelled": "Cancelled"
       },
       "delivery": {
         "zoom": "Zoom",
@@ -5102,7 +5105,8 @@
         "pending_review": "Pending Review",
         "changes_requested": "Changes Requested",
         "completed": "Completed",
-        "archived": "Archived"
+        "archived": "Archived",
+        "cancelled": "Cancelled"
       },
       "materials": "Materials",
       "noMaterials": "No content uploaded for this module yet.",
@@ -6396,6 +6400,7 @@
         "impactAssessments": "assessments",
         "impactUpcomingSessions": "upcoming sessions (will be cancelled + students emailed)",
         "pendingCertsBlocker": "Cannot delete — {count} certificate request(s) are pending review for this course. Approve or reject them in the Certificates page first, then come back to delete the course. Otherwise the requesting students would be stranded waiting on a decision for a vanished course.",
+        "activePaymentsBlocker": "Cannot delete — this course has active or paid enrolments. Use Cancel course first to auto-refund every buyer, then delete becomes available.",
         "upcomingSessionsWarning": "Heads up: {count} upcoming session(s) will be cancelled, their Zoom resources deleted, and every enrolled student emailed that the session is cancelled. Past sessions, attendance records, and issued certificates stay untouched.",
         "softDeleteNote": "Soft delete — the course and everything attached (modules, materials, enrollments, payments, certificates) stays in the database and can be restored in full from Settings → System → Backups → Recently deleted courses.",
         "reasonLabel": "Reason (optional, captured in audit log)",
@@ -6403,6 +6408,25 @@
         "typeToConfirmLabel": "Type the course title to confirm: {title}",
         "confirm": "Delete course"
       },
+      "confirmCancel": {
+        "title": "Cancel this course?",
+        "bodyPreStart": "Cancel \"{title}\" before it starts? Every enrolled student will get a full automatic refund and a cancellation email. This action is reversible only by re-creating the course.",
+        "impactTitle": "What will happen:",
+        "impactEnrollments": "enrolled students will be dropped",
+        "impactPaid": "paid payment(s) will be refunded automatically",
+        "impactBankTransfer": "bank-transfer payment(s) — finance will complete the wire manually",
+        "impactSessions": "upcoming session(s) will be cancelled (Zoom torn down, students emailed)",
+        "impactWaitlist": "waitlisted student(s) will be notified + removed",
+        "impactCoupons": "coupon usage will be restored where applicable",
+        "reasonLabel": "Cancellation reason (required, sent to students)",
+        "reasonPlaceholder": "e.g. instructor unavailable, insufficient enrolments, accreditation not granted…",
+        "reasonRequired": "A reason is required",
+        "confirm": "Cancel course",
+        "cancel": "Keep course",
+        "success": "Course cancelled. {refunded} refund(s) issued, {manual} bank-transfer wire(s) queued for finance.",
+        "failure": "Failed to cancel course"
+      },
+      "cancelCourse": "Cancel course",
       "requestChangesModal": {
         "title": "Request changes",
         "body": "Send \"{title}\" back to the instructor with a note explaining what needs to change.",
@@ -12894,6 +12918,14 @@
         "title": "Course Completed",
         "message": "Your course has been marked as completed."
       },
+      "course_cancelled": {
+        "title": "Course Cancelled",
+        "message": "A course you were enrolled in has been cancelled."
+      },
+      "course_bank_refunds_pending": {
+        "title": "Bank transfer refunds need manual completion",
+        "message": "{count} bank-transfer refund(s) for the cancelled course \"{courseName}\" require finance to wire the money manually."
+      },
       "course_assigned": {
         "title": "Course Assigned",
         "message": "You have been assigned as instructor for a course."
@@ -13035,7 +13067,15 @@
       "course": {
         "course_sale_updated": "updated course pricing",
         "collaborator_added": "added a collaborator",
-        "collaborator_removed": "removed a collaborator"
+        "collaborator_removed": "removed a collaborator",
+        "course.activate": "activated a course",
+        "course.archive": "archived a course",
+        "course.complete": "completed a course",
+        "course.request_changes": "requested changes on a course",
+        "course.soft_deleted": "deleted a course",
+        "course.restored": "restored a deleted course",
+        "course.cancelled": "cancelled a course",
+        "course.rescheduled": "rescheduled a course"
       },
       "course_vat_treatment": {
         "vat_treatment_updated": "updated course VAT treatment",

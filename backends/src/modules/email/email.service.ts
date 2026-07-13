@@ -85,6 +85,11 @@ import {
   getSessionCancelledText,
 } from './templates/session-cancelled.template';
 import {
+  getCourseCancelledHtml,
+  getCourseCancelledText,
+  type CourseCancelRefundKind,
+} from './templates/course-cancelled.template';
+import {
   getContentReviewHtml,
   getContentReviewText,
 } from './templates/content-review.template';
@@ -1119,6 +1124,51 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send session cancelled email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send course cancelled notification email to an enrolled student.
+   * Refund status is embedded so the student knows what to expect
+   * (immediate = gateway refund; manual = bank transfer wire by finance;
+   * none = free enrolment).
+   */
+  async sendCourseCancelled(
+    to: string,
+    params: {
+      recipientName: string;
+      courseName: string;
+      cancelReason: string | null;
+      refundKind: CourseCancelRefundKind;
+    },
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      await this.send({
+        to,
+        subject: t(s.courseCancelledSubject, { course: params.courseName }),
+        html: getCourseCancelledHtml(params, locale),
+        text: getCourseCancelledText(params, locale),
+        template: {
+          eventKey: 'course_cancelled',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            courseName: params.courseName,
+            reason: params.cancelReason ?? '',
+            refundKind: params.refundKind,
+          },
+        },
+      });
+      this.logger.log(
+        `Course cancelled email sent to ${to} for "${params.courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send course cancelled email to ${to}`,
         error,
       );
     }

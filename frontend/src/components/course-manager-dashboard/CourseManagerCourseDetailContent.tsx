@@ -393,6 +393,12 @@ const CourseManagerCourseDetailContent = ({
             {t("courseDetail.status.archived")}
           </span>
         );
+      case "cancelled":
+        return (
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#FEE2E2] text-[#B91C1C]">
+            {t("courseDetail.status.cancelled")}
+          </span>
+        );
       default:
         return null;
     }

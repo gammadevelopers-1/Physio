@@ -124,6 +124,16 @@ const strings = {
   reasonLabel:             { en: 'Reason:',                    ar: 'السبب:' },
   sessionCancelledCta:     { en: 'Please check your dashboard for any schedule updates.', ar: 'يرجى التحقق من لوحة التحكم لأي تحديثات في الجدول.' },
 
+  /* ── Course cancelled (Phase B) ───────────────────────── */
+  courseCancelledSubject: { en: 'Course Cancelled: {course}', ar: 'تم إلغاء الدورة: {course}' },
+  courseCancelledTitle:   { en: 'Course Cancelled',           ar: 'تم إلغاء الدورة' },
+  courseCancelledBody:    { en: 'We are sorry to inform you that the following course has been cancelled:', ar: 'يؤسفنا إبلاغك بأنه تم إلغاء الدورة التالية:' },
+  courseCancelledRefundImmediate: { en: 'A full refund has been issued to your original payment method. It should arrive within 5–10 business days depending on your bank.', ar: 'تم إصدار استرداد كامل إلى طريقة الدفع الأصلية. من المتوقع وصولها خلال 5–10 أيام عمل حسب البنك.' },
+  courseCancelledRefundManual:    { en: 'Because you paid by bank transfer, your refund will be processed manually by our finance team and wired to your bank account. This typically takes 3–7 business days.', ar: 'نظرًا لأنك دفعت عبر التحويل البنكي، سيتم معالجة الاسترداد يدويًا من قِبل فريق المالية وتحويله إلى حسابك المصرفي. عادةً ما تستغرق هذه العملية 3–7 أيام عمل.' },
+  courseCancelledRefundNone:      { en: 'Since no payment was collected for your enrolment, no refund is required.', ar: 'نظرًا لعدم تحصيل أي دفعة مقابل تسجيلك، فلا حاجة لأي استرداد.' },
+  courseCancelledCta:     { en: 'We apologise for the inconvenience. Feel free to browse other courses from your dashboard.', ar: 'نعتذر عن أي إزعاج. يمكنك تصفح الدورات الأخرى من لوحة التحكم.' },
+  refundStatusLabel:      { en: 'Refund status:',             ar: 'حالة الاسترداد:' },
+
   /* ── Certificates ────────────────────────────────────── */
   certApprovedSubject: { en: 'Certificate Approved - {course}', ar: 'تمت الموافقة على الشهادة - {course}' },
   certApprovedTitle:   { en: 'Certificate Approved!',           ar: 'تمت الموافقة على الشهادة!' },

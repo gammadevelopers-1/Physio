@@ -589,6 +589,13 @@
       "when": 1783756800000,
       "tag": "0098_notification_i18n_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1783843200000,
+      "tag": "0099_course_lifecycle_phase_a",
+      "breakpoints": true
     }
   ]
 }

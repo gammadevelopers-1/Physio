@@ -36,7 +36,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-const COURSE_STATUSES = ["active", "draft", "pending_review", "changes_requested", "completed", "archived"] as const;
+const COURSE_STATUSES = ["active", "draft", "pending_review", "changes_requested", "completed", "archived", "cancelled"] as const;
 
 const CourseCardSkeleton = () => (
   <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
@@ -146,6 +146,7 @@ const MyCoursesContent = () => {
       changes_requested: "bg-[#FEF3C7] text-[#D97706]",
       completed: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
       archived: "bg-[var(--color-text-secondary)] text-[#F9FAFB]",
+      cancelled: "bg-[#FEE2E2] text-[#B91C1C]",
     };
     return styles[status] || styles.draft;
   };

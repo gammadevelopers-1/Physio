@@ -128,6 +128,17 @@ export const courses = pgTable(
     reviewedBy: uuid('reviewed_by').references(() => users.id),
     submittedAt: timestamp('submitted_at'),
     reviewedAt: timestamp('reviewed_at'),
+    // Cancellation audit (Phase A). Populated by the Cancel service; the
+    // reason is mandatory at the service layer even though the column is
+    // nullable (legacy rows have NULL).
+    cancelledAt: timestamp('cancelled_at'),
+    cancelledBy: uuid('cancelled_by').references(() => users.id),
+    cancelReason: text('cancel_reason'),
+    // Reschedule audit. `originalStartDate` snapshots the first known start
+    // so the UI can show the pre-reschedule date after any number of moves.
+    rescheduledAt: timestamp('rescheduled_at'),
+    rescheduleReason: text('reschedule_reason'),
+    originalStartDate: date('original_start_date'),
     deletedAt: timestamp('deleted_at'),
     deletedBy: uuid('deleted_by').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -138,13 +149,14 @@ export const courses = pgTable(
     index('courses_manager_id_idx').on(table.managerId),
     index('courses_status_idx').on(table.status),
     index('courses_deleted_at_idx').on(table.deletedAt),
+    index('courses_cancelled_at_idx').on(table.cancelledAt),
     check(
       'courses_delivery_type_check',
       sql`${table.deliveryType} IN ('zoom', 'onsite', 'blended', 'self-paced', 'webinar')`,
     ),
     check(
       'courses_status_check',
-      sql`${table.status} IN ('draft', 'pending_review', 'changes_requested', 'active', 'completed', 'archived')`,
+      sql`${table.status} IN ('draft', 'pending_review', 'changes_requested', 'active', 'completed', 'archived', 'cancelled')`,
     ),
     check(
       'courses_vat_treatment_check',
@@ -176,6 +188,7 @@ export const COURSE_STATUS = {
   ACTIVE: 'active',
   COMPLETED: 'completed',
   ARCHIVED: 'archived',
+  CANCELLED: 'cancelled',
 } as const;
 
 export type CourseStatus =

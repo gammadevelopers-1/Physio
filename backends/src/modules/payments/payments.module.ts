@@ -122,6 +122,13 @@ import { GatewayCredentialsService } from './gateways/gateway-credentials.servic
       ? [WebhookProcessor]
       : []),
   ],
-  exports: [PaymentsService, InvoiceService, GatewayCredentialsService],
+  exports: [
+    PaymentsService,
+    InvoiceService,
+    GatewayCredentialsService,
+    // Exported so CoursesService.cancelCourse can issue refunds through the
+    // same state machine + gateway integrations as the admin refund UI.
+    RefundService,
+  ],
 })
 export class PaymentsModule {}

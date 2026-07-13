@@ -54,6 +54,8 @@ export const NELC_EVENT_TYPE = {
   COURSE_CHANGES_REQUESTED: 'course_changes_requested',
   COURSE_ACTIVATED: 'course_activated',
   COURSE_DEACTIVATED: 'course_deactivated',
+  COURSE_CANCELLED: 'course_cancelled',
+  COURSE_RESCHEDULED: 'course_rescheduled',
   SESSION_FINALIZED: 'session_finalized',
   ATTENDANCE_UNVERIFIED_CONFIRMED: 'attendance_unverified_confirmed',
 } as const;

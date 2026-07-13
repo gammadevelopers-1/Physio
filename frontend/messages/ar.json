@@ -5116,7 +5116,8 @@
         "pending_review": "قيد المراجعة",
         "changes_requested": "تغييرات مطلوبة",
         "completed": "مكتملة",
-        "archived": "مؤرشفة"
+        "archived": "مؤرشفة",
+        "cancelled": "ملغاة"
       },
       "materials": "المحتوى",
       "noMaterials": "لم يتم رفع محتوى لهذه الوحدة بعد.",

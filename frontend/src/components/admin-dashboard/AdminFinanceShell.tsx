@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  DollarSign,
   CreditCard,
   FileText,
   RotateCcw,
@@ -23,6 +22,7 @@ import {
   ExternalLink,
   TrendingUp,
 } from "lucide-react";
+import SaudiRiyalIcon from "@/components/finance-dashboard/shared/SaudiRiyalIcon";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
@@ -177,7 +177,7 @@ export default function AdminFinanceShell() {
               {/* Header */}
               <div className="flex items-start gap-3 mb-6">
                 <div className="w-11 h-11 rounded-xl bg-[var(--color-border-subtle)] flex items-center justify-center shrink-0">
-                  <DollarSign className="w-5 h-5 text-[var(--color-primary)]" />
+                  <SaudiRiyalIcon size={20} className="text-[var(--color-primary)]" />
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
@@ -305,7 +305,7 @@ function OverviewTab({
       <div className="bg-gradient-to-r from-[var(--color-primary)]/10 to-transparent border border-[var(--color-border)] rounded-xl p-5">
         <div className="flex items-start gap-4">
           <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)]/15 flex items-center justify-center shrink-0">
-            <DollarSign className="w-5 h-5 text-[var(--color-primary)]" />
+            <SaudiRiyalIcon size={20} className="text-[var(--color-primary)]" />
           </div>
           <div>
             <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">

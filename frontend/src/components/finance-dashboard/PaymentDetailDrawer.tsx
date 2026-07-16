@@ -112,8 +112,30 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
     { key: "audit", label: t("paymentDetail.tabs.audit") },
   ];
 
+  // Small localisation helpers — brand names stay Latin in both locales,
+  // descriptive labels translate. Prevents raw snake_case slugs from
+  // leaking into the AR drawer.
+  const KNOWN_GATEWAYS = new Set(["moyasar", "tabby", "tamara", "bank_transfer"]);
+  const gwLabel = (g: string | null | undefined) =>
+    !g ? "—" : KNOWN_GATEWAYS.has(g) ? t(`reportsPage.gatewayLabels.${g}`) : g.replace(/_/g, " ");
+  const REFUND_STATUSES = new Set(["pending", "approved", "processing", "completed", "rejected", "failed"]);
+  const REFUND_REASONS = new Set(["policy", "cancelled", "course_cancelled", "duplicate", "technical", "other"]);
+  const refundStatusLabel = (s: string | null | undefined) =>
+    !s ? "—" : REFUND_STATUSES.has(s) ? t(`refundsPage.statusLabels.${s}`) : s.replace(/_/g, " ");
+  const refundReasonLabel = (r: string | null | undefined) =>
+    !r ? "" : REFUND_REASONS.has(r) ? t(`refundsPage.reasonLabels.${r}`) : r.replace(/_/g, " ");
+  const INVOICE_STATUSES = new Set(["draft", "issued", "paid", "overdue", "refunded", "partially_refunded", "cancelled"]);
+  const invoiceStatusLabel = (s: string | null | undefined) => {
+    if (!s) return "—";
+    if (!INVOICE_STATUSES.has(s)) return s.replace(/_/g, " ");
+    const key = `invoiceDetail.statusLabels.${s}` as const;
+    const localised = t(key);
+    if (localised === key || localised.includes("invoiceDetail.statusLabels.")) return s.replace(/_/g, " ");
+    return localised;
+  };
+
   const headerSubtitle = data
-    ? `${data.payment.id.slice(0, 13).toUpperCase()} · ${data.payment.gateway?.replace(/_/g, " ")}`
+    ? `${data.payment.id.slice(0, 13).toUpperCase()} · ${gwLabel(data.payment.gateway)}`
     : "";
 
   const statusKey =
@@ -278,10 +300,10 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: gatewayColor(data.payment.gateway) }}
                       />
-                      <span className="capitalize">{data.payment.gateway?.replace(/_/g, " ")}</span>
+                      <span>{gwLabel(data.payment.gateway)}</span>
                     </span>
                   </Row>
-                  <Row label={t("paymentDetail.method")} value={prettyMethod(data.payment.paymentMethod) || "—"} isRTL={isRTL} />
+                  <Row label={t("paymentDetail.method")} value={prettyMethod(data.payment.paymentMethod, t) || "—"} isRTL={isRTL} />
                   <Row label={t("paymentDetail.chargeId")} value={data.payment.gatewayChargeId || "—"} mono isRTL={isRTL} />
                   <Row
                     label={t("paymentDetail.created")}
@@ -309,8 +331,8 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                         <span className="font-medium text-[var(--color-text-primary)]">
                           {data.payment.invoiceNumber}
                         </span>
-                        <span className="text-[11px] text-[var(--color-text-secondary)] capitalize">
-                          · {data.payment.invoiceStatus}
+                        <span className="text-[11px] text-[var(--color-text-secondary)]">
+                          · {invoiceStatusLabel(data.payment.invoiceStatus)}
                         </span>
                       </div>
                       <ExternalLink className="w-3.5 h-3.5 text-[var(--color-text-secondary)] group-hover:text-[var(--color-primary)]" />
@@ -399,18 +421,18 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                             <span className="text-sm font-semibold text-[var(--color-text-primary)]">
                               <Money amount={Number(r.amount)} decimals={2} iconSize={11} />
                             </span>
-                            <span className={`text-[11px] font-medium capitalize ${
+                            <span className={`text-[11px] font-medium ${
                               r.status === "approved" || r.status === "completed"
                                 ? "text-[#16A34A]"
                                 : r.status === "rejected"
                                   ? "text-[#DC2626]"
                                   : "text-[#D97706]"
                             }`}>
-                              {r.status}
+                              {refundStatusLabel(r.status)}
                             </span>
                           </div>
                           <p className="text-[11px] text-[var(--color-text-secondary)]">
-                            {r.reason}
+                            {refundReasonLabel(r.reason)}
                             {r.reasonNote && ` — ${r.reasonNote}`}
                           </p>
                         </li>
@@ -553,21 +575,29 @@ function Row({
   );
 }
 
-function prettyMethod(method: string | null | undefined): string | null {
+/**
+ * Localised label for a raw payment-method slug. Uses the finance
+ * `methodLabels` dictionary (which keeps brand names Latin and only
+ * translates the descriptive labels like `card`, `bnpl`, `bank_transfer`),
+ * plus an English fallback for the two Saudi wallet slugs that don't have
+ * their own translations yet (samsung_pay, stc_pay).
+ */
+function prettyMethod(
+  method: string | null | undefined,
+  t: ReturnType<typeof useTranslations>,
+): string | null {
   if (!method) return null;
-  const map: Record<string, string> = {
-    card: "Card",
-    mada: "Mada",
+  const slug = method.toLowerCase();
+  const KNOWN = new Set(["card", "mada", "apple_pay", "bnpl", "bank_transfer"]);
+  if (KNOWN.has(slug)) return t(`reportsPage.methodLabels.${slug}`);
+  const walletMap: Record<string, string> = {
     applepay: "Apple Pay",
-    apple_pay: "Apple Pay",
     samsungpay: "Samsung Pay",
     samsung_pay: "Samsung Pay",
     stcpay: "STC Pay",
     stc_pay: "STC Pay",
-    bnpl: "BNPL",
-    bank_transfer: "Bank Transfer",
   };
-  return map[method.toLowerCase()] || method.replace(/_/g, " ");
+  return walletMap[slug] || slug.replace(/_/g, " ");
 }
 
 function ScanPill({ status }: { status: string }) {

@@ -201,6 +201,33 @@ const InvoiceDetailDrawer = ({
 
   const canCancel = data && status !== "cancelled" && status !== "refunded";
 
+  // Small localisation helpers so the drawer never renders raw snake_case
+  // slugs in the UI. Brand names (Moyasar / Tabby / Tamara) stay Latin —
+  // only descriptive labels (bank_transfer, card, bnpl, refund reasons,
+  // status pills) get translated.
+  const KNOWN_GATEWAYS = new Set(["moyasar", "tabby", "tamara", "bank_transfer"]);
+  const KNOWN_METHODS = new Set(["card", "mada", "apple_pay", "bnpl", "bank_transfer"]);
+  const gwLabel = (g: string | null | undefined) =>
+    !g ? "—" : KNOWN_GATEWAYS.has(g) ? t(`reportsPage.gatewayLabels.${g}`) : g.replace(/_/g, " ");
+  const methodLabel = (m: string | null | undefined) =>
+    !m ? "—" : KNOWN_METHODS.has(m) ? t(`reportsPage.methodLabels.${m}`) : m.replace(/_/g, " ");
+  const REFUND_STATUSES = new Set(["pending", "approved", "processing", "completed", "rejected", "failed"]);
+  const REFUND_REASONS = new Set(["policy", "cancelled", "course_cancelled", "duplicate", "technical", "other"]);
+  const refundStatusLabel = (s: string | null | undefined) =>
+    !s ? "—" : REFUND_STATUSES.has(s) ? t(`refundsPage.statusLabels.${s}`) : s.replace(/_/g, " ");
+  const refundReasonLabel = (r: string | null | undefined) =>
+    !r ? "" : REFUND_REASONS.has(r) ? t(`refundsPage.reasonLabels.${r}`) : r.replace(/_/g, " ");
+  const INVOICE_STATUSES = new Set(["draft", "issued", "paid", "overdue", "refunded", "partially_refunded", "cancelled"]);
+  const invoiceStatusLabel = (s: string | null | undefined) => {
+    if (!s) return "—";
+    if (!INVOICE_STATUSES.has(s)) return s.replace(/_/g, " ");
+    const key = `invoiceDetail.statusLabels.${s}` as const;
+    // Falls back to the raw slug if the key is not defined in the messages.
+    const localised = t(key);
+    if (localised === key || localised.includes("invoiceDetail.statusLabels.")) return s.replace(/_/g, " ");
+    return localised;
+  };
+
   const adminActions: AdminOverrideAction[] = invoiceId
     ? [
         {
@@ -237,8 +264,8 @@ const InvoiceDetailDrawer = ({
       width={680}
       headerExtra={
         data ? (
-          <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${statusStyle.bg} ${statusStyle.text}`}>
-            {status}
+          <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+            {invoiceStatusLabel(status)}
           </span>
         ) : null
       }
@@ -443,8 +470,8 @@ const InvoiceDetailDrawer = ({
                 </Card>
 
                 <Card title={t("invoiceDetail.payment")} icon={<CreditCard className="w-4 h-4" />} isRTL={isRTL}>
-                  <Row label={t("invoiceDetail.gateway")} value={data.payment.gateway?.replace(/_/g, " ") || "—"} isRTL={isRTL} />
-                  <Row label={t("invoiceDetail.method")} value={data.payment.paymentMethod?.replace(/_/g, " ") || "—"} isRTL={isRTL} />
+                  <Row label={t("invoiceDetail.gateway")} value={gwLabel(data.payment.gateway)} isRTL={isRTL} />
+                  <Row label={t("invoiceDetail.method")} value={methodLabel(data.payment.paymentMethod)} isRTL={isRTL} />
                   <Row label={t("invoiceDetail.chargeId")} value={data.payment.gatewayChargeId || "—"} mono isRTL={isRTL} />
                   <Link
                     href={financePath(actorRole, locale, "payments", { paymentId: data.payment.id })}
@@ -471,18 +498,18 @@ const InvoiceDetailDrawer = ({
                             <span className="text-sm font-semibold text-[var(--color-text-primary)]">
                               <Money amount={Number(r.amount)} decimals={2} iconSize={11} />
                             </span>
-                            <span className={`text-[11px] font-medium capitalize ${
+                            <span className={`text-[11px] font-medium ${
                               r.status === "approved" || r.status === "completed"
                                 ? "text-[#16A34A]"
                                 : r.status === "rejected"
                                   ? "text-[#DC2626]"
                                   : "text-[#D97706]"
                             }`}>
-                              {r.status}
+                              {refundStatusLabel(r.status)}
                             </span>
                           </div>
                           <p className="text-[11px] text-[var(--color-text-secondary)]">
-                            {r.reason}{r.reasonNote && ` — ${r.reasonNote}`}
+                            {refundReasonLabel(r.reason)}{r.reasonNote && ` — ${r.reasonNote}`}
                           </p>
                         </li>
                       ))}

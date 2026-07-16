@@ -997,35 +997,45 @@ const RuleRow = ({
   note?: string;
   enabled: boolean;
   onToggle: (v: boolean) => void;
-}) => (
-  <div className="flex items-start justify-between gap-4 p-4 bg-[var(--color-surface-page)] border border-[var(--color-border-subtle)] rounded-xl">
-    <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium text-[var(--color-text-primary)]">{label}</p>
-      <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{description}</p>
-      {note && (
-        <p className="inline-flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)] mt-1.5">
-          <Info className="w-3 h-3" />
-          {note}
-        </p>
-      )}
-    </div>
-    <button
-      type="button"
-      role="switch"
-      aria-checked={enabled}
-      onClick={() => onToggle(!enabled)}
-      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-        enabled ? "bg-[var(--color-primary)]" : "bg-[#D1D5DB]"
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
-          enabled ? "translate-x-6" : "translate-x-1"
+}) => {
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+  // `translate-x-*` is a physical (LTR) transform — in RTL we have to flip
+  // the sign so the thumb ends up on the leading (right) edge when the
+  // toggle is OFF and the trailing (left) edge when it is ON. Without this
+  // the thumb sits on the wrong side of the track and looks "destroyed".
+  const offTx = isRTL ? "-translate-x-1" : "translate-x-1";
+  const onTx = isRTL ? "-translate-x-6" : "translate-x-6";
+  return (
+    <div className="flex items-start justify-between gap-4 p-4 bg-[var(--color-surface-page)] border border-[var(--color-border-subtle)] rounded-xl">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-[var(--color-text-primary)]">{label}</p>
+        <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{description}</p>
+        {note && (
+          <p className="inline-flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)] mt-1.5">
+            <Info className="w-3 h-3" />
+            {note}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        onClick={() => onToggle(!enabled)}
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+          enabled ? "bg-[var(--color-primary)]" : "bg-[#D1D5DB]"
         }`}
-      />
-    </button>
-  </div>
-);
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
+            enabled ? onTx : offTx
+          }`}
+        />
+      </button>
+    </div>
+  );
+};
 
 // ─── Tax / VAT settings — global config + link to per-product page ─────
 // Edits the `system_settings.tax` row. The rate captured here is what
@@ -1154,7 +1164,7 @@ export const TaxView = () => {
                 draft.vatEnabled ? "bg-[var(--color-primary)]" : "bg-[#D1D5DB]"
               }`}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${draft.vatEnabled ? "translate-x-6" : "translate-x-1"}`} />
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${draft.vatEnabled ? (isRTL ? "-translate-x-6" : "translate-x-6") : (isRTL ? "-translate-x-1" : "translate-x-1")}`} />
             </button>
           </div>
 

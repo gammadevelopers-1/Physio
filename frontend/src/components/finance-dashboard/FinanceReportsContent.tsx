@@ -6,6 +6,7 @@ import Select from "@/components/admin-dashboard/Select";
 import DatePicker from "@/components/ui/DatePicker";
 import ExportDropdown from "./shared/ExportDropdown";
 import FinancePageShell from "./shared/FinancePageShell";
+import Money from "./shared/Money";
 import {
   BarChart3,
   TrendingUp,
@@ -24,7 +25,6 @@ import { financeApi } from "@/lib/api";
 import { toast } from "sonner";
 import {
   formatInt as fmtInt,
-  formatSar as fmtSar,
   formatDateTime as fmtDateTime,
   formatDate as fmtDate,
 } from "./shared/financeFormat";
@@ -130,10 +130,39 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
   // Locale-aware wrappers around the shared finance formatters — keep the
   // existing (value) signatures the JSX callsites use by closing over
   // `locale`. Latin digits everywhere, Arabic month names in AR mode.
-  const formatSAR = (amount: number) => `SAR ${fmtSar(amount || 0)}`;
+  //
+  // Money amounts render via the <Money> component (SAR glyph + Latin digits)
+  // so we no longer render "SAR 123.45" as raw text.
+  const money = (amount: number) => <Money amount={amount || 0} decimals={2} />;
+  const moneyNeg = (amount: number) => (
+    <span className="inline-flex items-center gap-1" dir="ltr">
+      <span>-</span>
+      <Money amount={amount || 0} decimals={2} />
+    </span>
+  );
   const formatInt = (n: number) => fmtInt(n || 0, locale);
   const formatDateTime = (iso: string | null | undefined) => fmtDateTime(iso, locale);
   const formatDate = (iso: string | null | undefined) => fmtDate(iso, locale);
+
+  // Localise payment-method / gateway slugs. Brand names (Moyasar, Tabby,
+  // Tamara) stay Latin in both locales; only the descriptive ones
+  // (bank_transfer, card, bnpl…) translate. Unknown slugs fall back to the
+  // slug itself (with underscores → spaces) so no operator ever sees an
+  // MISSING_MESSAGE toast.
+  const KNOWN_GATEWAYS = new Set(["moyasar", "tabby", "tamara", "bank_transfer", "unknown"]);
+  const KNOWN_METHODS = new Set(["card", "mada", "apple_pay", "bnpl", "bank_transfer", "unknown"]);
+  const gatewayLabel = (slug: string | null | undefined): string => {
+    if (!slug) return "—";
+    return KNOWN_GATEWAYS.has(slug)
+      ? t(`reportsPage.gatewayLabels.${slug}`)
+      : slug.replace(/_/g, " ");
+  };
+  const methodLabel = (slug: string | null | undefined): string => {
+    if (!slug) return "—";
+    return KNOWN_METHODS.has(slug)
+      ? t(`reportsPage.methodLabels.${slug}`)
+      : slug.replace(/_/g, " ");
+  };
 
   const [selectedReport, setSelectedReport] = useState<ReportKey>("revenue");
   const [period, setPeriod] = useState<PeriodKey>("thisMonth");
@@ -481,10 +510,10 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
     if (selectedReport === "revenue" && revenueData) {
       return (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-          <StatCard label={t("reportsPage.summary.gross")} value={formatSAR(revenueData.totals.gross)} accent="#16A34A" />
-          <StatCard label={t("reportsPage.summary.refunds")} value={formatSAR(revenueData.totals.refunds)} accent="#DC2626" />
-          <StatCard label={t("reportsPage.summary.net")} value={formatSAR(revenueData.totals.net)} accent="var(--color-text-primary)" />
-          <StatCard label={t("reportsPage.summary.vat")} value={formatSAR(revenueData.totals.vat)} accent="#9333EA" />
+          <StatCard label={t("reportsPage.summary.gross")} value={money(revenueData.totals.gross)} accent="#16A34A" />
+          <StatCard label={t("reportsPage.summary.refunds")} value={money(revenueData.totals.refunds)} accent="#DC2626" />
+          <StatCard label={t("reportsPage.summary.net")} value={money(revenueData.totals.net)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.vat")} value={money(revenueData.totals.vat)} accent="#9333EA" />
           <StatCard label={t("reportsPage.summary.payments")} value={formatInt(revenueData.totals.count)} accent="#2563EB" />
         </div>
       );
@@ -493,9 +522,9 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
       return (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <StatCard label={t("reportsPage.summary.invoices")} value={formatInt(vatData.totals.invoiceCount)} accent="#2563EB" />
-          <StatCard label={t("reportsPage.summary.taxableBase")} value={formatSAR(vatData.totals.taxableBase)} accent="var(--color-text-primary)" />
-          <StatCard label={t("reportsPage.summary.vat")} value={formatSAR(vatData.totals.vatAmount)} accent="#9333EA" />
-          <StatCard label={t("reportsPage.summary.totalInvoiced")} value={formatSAR(vatData.totals.total)} accent="#16A34A" />
+          <StatCard label={t("reportsPage.summary.taxableBase")} value={money(vatData.totals.taxableBase)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.vat")} value={money(vatData.totals.vatAmount)} accent="#9333EA" />
+          <StatCard label={t("reportsPage.summary.totalInvoiced")} value={money(vatData.totals.total)} accent="#16A34A" />
         </div>
       );
     }
@@ -508,7 +537,7 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
           <StatCard label={t("reportsPage.summary.refundsCount")} value={formatInt(refundsData.length)} accent="#DC2626" />
           <StatCard label={t("reportsPage.summary.completed")} value={formatInt(completed)} accent="#16A34A" />
           <StatCard label={t("reportsPage.summary.inProgress")} value={formatInt(pending)} accent="#EA580C" />
-          <StatCard label={t("reportsPage.summary.totalAmount")} value={formatSAR(total)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.totalAmount")} value={money(total)} accent="var(--color-text-primary)" />
         </div>
       );
     }
@@ -519,7 +548,7 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <StatCard label={t("reportsPage.summary.transactions")} value={formatInt(paymentsData.length)} accent="#2563EB" />
           <StatCard label={t("reportsPage.summary.paid")} value={formatInt(paid)} accent="#16A34A" />
-          <StatCard label={t("reportsPage.summary.paidAmount")} value={formatSAR(total)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.paidAmount")} value={money(total)} accent="var(--color-text-primary)" />
           <StatCard label={t("reportsPage.summary.failed")} value={formatInt(paymentsData.filter((r) => r.status === "failed").length)} accent="#DC2626" />
         </div>
       );
@@ -532,8 +561,8 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <StatCard label={t("reportsPage.summary.courses")} value={formatInt(courseSalesData.length)} accent="#2563EB" />
           <StatCard label={t("reportsPage.summary.unitsSold")} value={formatInt(units)} accent="#D97706" />
-          <StatCard label={t("reportsPage.summary.grossRevenue")} value={formatSAR(gross)} accent="#16A34A" />
-          <StatCard label={t("reportsPage.summary.netRevenue")} value={formatSAR(net)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.grossRevenue")} value={money(gross)} accent="#16A34A" />
+          <StatCard label={t("reportsPage.summary.netRevenue")} value={money(net)} accent="var(--color-text-primary)" />
         </div>
       );
     }
@@ -546,7 +575,7 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
           <StatCard label={t("reportsPage.summary.sessions")} value={formatInt(webinarSalesData.length)} accent="#7C3AED" />
           <StatCard label={t("reportsPage.summary.registrations")} value={formatInt(total)} accent="#2563EB" />
           <StatCard label={t("reportsPage.summary.paidSeats")} value={formatInt(paid)} accent="#16A34A" />
-          <StatCard label={t("reportsPage.summary.revenue")} value={formatSAR(rev)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.revenue")} value={money(rev)} accent="var(--color-text-primary)" />
         </div>
       );
     }
@@ -555,8 +584,8 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
       return (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
           <StatCard label={t("reportsPage.summary.students")} value={formatInt(studentPurchasesData.length)} accent="#0891B2" />
-          <StatCard label={t("reportsPage.summary.netSpend")} value={formatSAR(total)} accent="var(--color-text-primary)" />
-          <StatCard label={t("reportsPage.summary.avgPerStudent")} value={formatSAR(studentPurchasesData.length ? total / studentPurchasesData.length : 0)} accent="#16A34A" />
+          <StatCard label={t("reportsPage.summary.netSpend")} value={money(total)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.avgPerStudent")} value={money(studentPurchasesData.length ? total / studentPurchasesData.length : 0)} accent="#16A34A" />
         </div>
       );
     }
@@ -584,12 +613,12 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
             <BreakdownTable
               title={t("reportsPage.tables.byGateway")}
               labelHeader={t("reportsPage.columns.gateway")}
-              rows={revenueData.byGateway.map((r) => ({ label: r.gateway, count: r.count, amount: r.gross }))}
+              rows={revenueData.byGateway.map((r) => ({ label: gatewayLabel(r.gateway), count: r.count, amount: r.gross }))}
             />
             <BreakdownTable
               title={t("reportsPage.tables.byMethod")}
               labelHeader={t("reportsPage.columns.method")}
-              rows={revenueData.byMethod.map((r) => ({ label: r.method, count: r.count, amount: r.gross }))}
+              rows={revenueData.byMethod.map((r) => ({ label: methodLabel(r.method), count: r.count, amount: r.gross }))}
             />
           </div>
         );
@@ -619,9 +648,9 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
                     <div className="text-xs text-[var(--color-text-secondary)]">{r.requesterEmail || ""}</div>
                   </Td>
                   <Td>{r.courseTitle || "—"}</Td>
-                  <Td className="capitalize">{r.gateway || "—"}</Td>
+                  <Td>{gatewayLabel(r.gateway)}</Td>
                   <Td className="capitalize">{(r.reason || "").replace(/_/g, " ")}</Td>
-                  <Td align="right" className="font-medium">{formatSAR(r.refundAmount)}</Td>
+                  <Td align="right" className="font-medium">{money(r.refundAmount)}</Td>
                   <Td><StatusBadge status={r.status} /></Td>
                   <Td>{r.processedByName || "—"}</Td>
                   <Td className="whitespace-nowrap text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</Td>
@@ -655,9 +684,9 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
                     <div className="text-xs text-[var(--color-text-secondary)]">{r.userEmail || ""}</div>
                   </Td>
                   <Td>{r.courseTitle || "—"}</Td>
-                  <Td className="capitalize">{r.gateway}</Td>
-                  <Td className="capitalize">{r.paymentMethod}</Td>
-                  <Td align="right" className="font-medium">{formatSAR(r.amount)}</Td>
+                  <Td>{gatewayLabel(r.gateway)}</Td>
+                  <Td>{methodLabel(r.paymentMethod)}</Td>
+                  <Td align="right" className="font-medium">{money(r.amount)}</Td>
                   <Td><StatusBadge status={r.status} /></Td>
                   <Td className="whitespace-nowrap text-[var(--color-text-secondary)]">{formatDate(r.paidAt)}</Td>
                 </tr>
@@ -687,9 +716,9 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
                   <Td className="font-medium">{isRTL && r.courseTitleAr ? r.courseTitleAr : r.courseTitle}</Td>
                   <Td className="capitalize">{r.deliveryType}</Td>
                   <Td align="right">{formatInt(r.units)}</Td>
-                  <Td align="right">{formatSAR(r.gross)}</Td>
-                  <Td align="right" className="text-[#DC2626]">{r.refunds > 0 ? `-${formatSAR(r.refunds)}` : formatSAR(0)}</Td>
-                  <Td align="right" className="font-medium">{formatSAR(r.net)}</Td>
+                  <Td align="right">{money(r.gross)}</Td>
+                  <Td align="right" className="text-[#DC2626]">{r.refunds > 0 ? moneyNeg(r.refunds) : money(0)}</Td>
+                  <Td align="right" className="font-medium">{money(r.net)}</Td>
                 </tr>
               ))}
             </tbody>
@@ -719,7 +748,7 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
                   <Td className="whitespace-nowrap text-[var(--color-text-secondary)]">{formatDateTime(r.scheduledAt)}</Td>
                   <Td align="right">{formatInt(r.totalRegistrations)}</Td>
                   <Td align="right" className="text-[#16A34A]">{formatInt(r.paidRegistrations)}</Td>
-                  <Td align="right" className="font-medium">{formatSAR(r.revenue)}</Td>
+                  <Td align="right" className="font-medium">{money(r.revenue)}</Td>
                 </tr>
               ))}
             </tbody>
@@ -751,9 +780,9 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
                   </Td>
                   <Td align="right">{formatInt(r.paymentCount)}</Td>
                   <Td align="right">{formatInt(r.courseCount)}</Td>
-                  <Td align="right">{formatSAR(r.totalPaid)}</Td>
-                  <Td align="right" className="text-[#DC2626]">{r.totalRefunded > 0 ? `-${formatSAR(r.totalRefunded)}` : formatSAR(0)}</Td>
-                  <Td align="right" className="font-medium">{formatSAR(r.netSpend)}</Td>
+                  <Td align="right">{money(r.totalPaid)}</Td>
+                  <Td align="right" className="text-[#DC2626]">{r.totalRefunded > 0 ? moneyNeg(r.totalRefunded) : money(0)}</Td>
+                  <Td align="right" className="font-medium">{money(r.netSpend)}</Td>
                   <Td className="whitespace-nowrap text-[var(--color-text-secondary)]">{formatDate(r.lastPurchaseAt)}</Td>
                 </tr>
               ))}
@@ -814,9 +843,9 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
                 <tr key={m.month} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)]">
                   <Td className="font-mono font-medium">{m.month}</Td>
                   <Td align="right">{formatInt(m.invoiceCount)}</Td>
-                  <Td align="right">{formatSAR(m.taxableBase)}</Td>
-                  <Td align="right" className="text-[#9333EA] font-medium">{formatSAR(m.vatAmount)}</Td>
-                  <Td align="right" className="font-medium">{formatSAR(m.total)}</Td>
+                  <Td align="right">{money(m.taxableBase)}</Td>
+                  <Td align="right" className="text-[#9333EA] font-medium">{money(m.vatAmount)}</Td>
+                  <Td align="right" className="font-medium">{money(m.total)}</Td>
                 </tr>
               ))}
             </tbody>
@@ -904,7 +933,7 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
 
 // ─── Sub-components ──────────────────────────────────────────────
 
-const StatCard = ({ label, value, accent }: { label: string; value: string; accent: string }) => (
+const StatCard = ({ label, value, accent }: { label: string; value: React.ReactNode; accent: string }) => (
   <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
     <p className="text-xs text-[var(--color-text-secondary)]">{label}</p>
     <p className="text-lg font-bold mt-1" style={{ color: accent }}>{value}</p>
@@ -964,7 +993,6 @@ const BreakdownTable = ({
 }: { title: string; labelHeader: string; rows: { label: string; count: number; amount: number }[] }) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
-  const formatSAR = (amount: number) => `SAR ${fmtSar(amount || 0)}`;
   const formatInt = (n: number) => fmtInt(n || 0, locale);
   const totalAmount = rows.reduce((s, r) => s + r.amount, 0);
   if (rows.length === 0) {
@@ -986,11 +1014,11 @@ const BreakdownTable = ({
           return (
             <div key={r.label}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-[var(--color-text-primary)] capitalize">
-                  {(r.label || "—").replace(/_/g, " ")}
+                <span className="text-xs font-medium text-[var(--color-text-primary)]">
+                  {r.label || "—"}
                 </span>
-                <span className="text-xs text-[var(--color-text-secondary)]">
-                  {formatSAR(r.amount)} · {formatInt(r.count)} {t("reportsPage.columns.payments").toLowerCase()}
+                <span className="text-xs text-[var(--color-text-secondary)] inline-flex items-center gap-1">
+                  <Money amount={r.amount || 0} decimals={2} /> · {formatInt(r.count)} {t("reportsPage.columns.payments").toLowerCase()}
                 </span>
               </div>
               <div className="w-full bg-[var(--color-border)] rounded-full h-1.5">
@@ -1004,7 +1032,7 @@ const BreakdownTable = ({
         })}
         <div className="pt-3 mt-3 border-t border-[var(--color-border-subtle)] flex items-center justify-between text-sm">
           <span className="font-semibold text-[var(--color-text-primary)]">{labelHeader}</span>
-          <span className="font-semibold text-[var(--color-text-primary)]">{formatSAR(totalAmount)}</span>
+          <span className="font-semibold text-[var(--color-text-primary)]"><Money amount={totalAmount || 0} decimals={2} /></span>
         </div>
       </div>
     </div>

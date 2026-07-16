@@ -187,12 +187,14 @@ export default function DatePicker({
         <input type="hidden" id={id} name={id} value={value} />
       </div>
 
-      {/* Dropdown calendar */}
+      {/* Dropdown calendar — anchored to the start edge of the trigger via
+          logical properties so RTL never flips the popover past the
+          viewport's trailing edge. `max-w-[calc(100vw-1rem)]` guarantees
+          the 300px shell can never trigger horizontal page scroll on
+          narrow containers or right-aligned filter panels. */}
       {open && (
         <div
-          className={`absolute z-50 mt-1 bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[300px] ${
-            isRTL ? "right-0" : "left-0"
-          }`}
+          className="absolute z-50 mt-1 bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[300px] max-w-[calc(100vw-1rem)] start-0"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)]">

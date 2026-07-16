@@ -10400,6 +10400,21 @@
         "discount": "خصم",
         "campaign": "حملة",
         "reconciliation": "تسوية"
+      },
+      "gatewayLabels": {
+        "moyasar": "Moyasar",
+        "tabby": "Tabby",
+        "tamara": "Tamara",
+        "bank_transfer": "تحويل بنكي",
+        "unknown": "غير معروف"
+      },
+      "methodLabels": {
+        "card": "بطاقة",
+        "mada": "مدى",
+        "apple_pay": "Apple Pay",
+        "bnpl": "الشراء الآجل",
+        "bank_transfer": "تحويل بنكي",
+        "unknown": "غير معروف"
       }
     },
     "navbar": {
@@ -10948,15 +10963,29 @@
         "payment_expired": "انتهاء صلاحية الدفع",
         "payment_abandoned_on_retry": "هجر الدفع عند إعادة المحاولة",
         "payment_abandoned_by_sweep": "هجر الدفع عبر التنظيف الدوري",
+        "payment_cancelled_by_admin": "إلغاء الدفع بواسطة المسؤول",
+        "payment_status_admin_override": "تجاوز حالة الدفع من المسؤول",
+        "payment_gateway_admin_sync": "مزامنة بوابة الدفع من المسؤول",
+        "payment_webhook_admin_replay": "إعادة تشغيل Webhook الدفع من المسؤول",
+        "payment_disputed": "دفعة متنازع عليها",
+        "gateway_admin_cache_refresh": "تحديث ذاكرة البوابة من المسؤول",
+        "bnpl_status_poll_completed": "اكتمال استعلام حالة الشراء الآجل",
         "refund_requested": "طلب استرداد",
         "refund_approved": "اعتماد الاسترداد",
         "refund_rejected": "رفض الاسترداد",
         "refund_completed": "اكتمال الاسترداد",
         "refund_admin_initiated": "استرداد بمبادرة المسؤول",
+        "refund_approve_admin_override": "اعتماد الاسترداد من المسؤول (تجاوز)",
+        "refund_amount_adjusted_at_approval": "تعديل مبلغ الاسترداد عند الاعتماد",
+        "refund_policy_updated": "تحديث سياسة الاسترداد",
         "refund_marked_failed": "تعليم الاسترداد كفاشل",
         "invoice_generated": "إنشاء فاتورة",
+        "invoice_generation_failed": "فشل إنشاء الفاتورة",
         "invoice_pdf_regenerated": "إعادة إنشاء PDF الفاتورة",
+        "invoice_pdf_admin_regenerate": "إعادة إنشاء PDF الفاتورة من المسؤول",
         "invoice_cancelled": "إلغاء فاتورة",
+        "invoice_cancel_admin_override": "إلغاء الفاتورة من المسؤول (تجاوز)",
+        "invoice_email_admin_resend": "إعادة إرسال بريد الفاتورة من المسؤول",
         "invoice_overdue_flagged": "تعليم الفاتورة كمتأخرة",
         "discount_created": "إنشاء كوبون",
         "discount_updated": "تحديث كوبون",
@@ -10968,7 +10997,11 @@
         "campaign_created": "إنشاء حملة",
         "campaign_updated": "تحديث حملة",
         "campaign_deleted": "حذف حملة",
+        "campaign_activated": "تفعيل حملة",
+        "campaign_deactivated": "إيقاف حملة",
         "bank_transfer_draft_submitted": "تقديم إيصال تحويل بنكي",
+        "bank_transfer_receipt_uploaded": "رفع إيصال تحويل بنكي",
+        "bank_transfer_receipt_replaced": "استبدال إيصال تحويل بنكي",
         "bank_transfer_approved": "اعتماد تحويل بنكي",
         "bank_transfer_rejected": "رفض تحويل بنكي",
         "reconciliation_resolved": "حلّ نتيجة تسوية",
@@ -10990,7 +11023,11 @@
         "webhook_processed": "معالجة Webhook",
         "webhook_failed": "فشل Webhook",
         "report_exported": "تصدير تقرير",
-        "audit_log_exported": "تصدير سجل المراجعة"
+        "audit_log_exported": "تصدير سجل المراجعة",
+        "tax_settings_updated": "تحديث إعدادات الضريبة",
+        "vat_treatment_updated": "تحديث معاملة ضريبة القيمة المضافة",
+        "vat_treatment_bulk_updated": "تحديث معاملات ضريبة القيمة المضافة بالجملة",
+        "course_sale_updated": "تحديث بيع الدورة"
       }
     },
     "recentTransactions": {
@@ -11212,6 +11249,15 @@
       },
       "errors": {
         "pdfDownload": "لا يمكن إنشاء رابط PDF. حاول إعادة إنشائه."
+      },
+      "statusLabels": {
+        "draft": "مسودة",
+        "issued": "صادرة",
+        "paid": "مدفوعة",
+        "overdue": "متأخرة",
+        "refunded": "مستردة",
+        "partially_refunded": "مستردة جزئياً",
+        "cancelled": "ملغاة"
       }
     },
     "confirmDialog": {

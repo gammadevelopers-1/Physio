@@ -395,20 +395,21 @@ const AdminCoursesContent = () => {
           confirmCourse.id,
           cancelReason.trim(),
         );
-        // Success message differs by variant. Pre-start reports refund
-        // breakdown; post-start reports how many refund decisions are
-        // now queued for finance + how many certificates were revoked.
+        // Phase F.1: both variants now queue pending refund rows for
+        // finance review. Post-start additionally reports certs
+        // revoked so admin knows students got the certificate email too.
         if (result.variant === "post_start") {
           toast.success(
             t("coursesPage.confirmCancel.successPostStart", {
-              deferred: result.refundsDeferred,
+              queued: result.refundsIssued,
+              manual: result.refundsPendingBankTransfer,
               certs: result.certificatesRevoked,
             }),
           );
         } else {
           toast.success(
             t("coursesPage.confirmCancel.success", {
-              refunded: result.refundsIssued,
+              queued: result.refundsIssued,
               manual: result.refundsPendingBankTransfer,
             }),
           );
@@ -1617,25 +1618,20 @@ const AdminCoursesContent = () => {
                   )}
                 </div>
 
-                {/* Refund + cascade summary card. Pre-start highlights
-                    automatic refund behaviour; post-start highlights
-                    what gets revoked/reversed and that refunds are
-                    manual per-buyer decisions from finance. Color coded:
-                    blue = informational (pre-start), amber = attention
-                    required (post-start).
-                    Phase F fix: pull actual counts from the impact
-                    preview so "paid payment(s) will be refunded" only
-                    appears when paidPayments > 0, and the bank-transfer
-                    line pulls the real bankTransferPaidPayments count. */}
+                {/* Refund + cascade summary card. Phase F.1 fix: pre-start
+                    and post-start now share the same refund behavior —
+                    both queue PENDING refund rows for finance review.
+                    Post-start additionally shows the cascade impact
+                    (attendance, certs, points). Color coded: blue = pre-
+                    start (informational), amber = post-start (requires
+                    finance follow-through on revocations too). */}
                 {!cancelIsPostStart ? (
                   <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
                     <ul className="space-y-1 text-xs text-[#1E3A8A] leading-relaxed">
                       {deleteImpact && deleteImpact.paidPayments > 0 && (
                         <li>
-                          · {t("coursesPage.confirmCancel.impactPaidCount", {
-                            count:
-                              deleteImpact.paidPayments -
-                              deleteImpact.bankTransferPaidPayments,
+                          · {t("coursesPage.confirmCancel.impactRefundsQueued", {
+                            count: deleteImpact.paidPayments,
                           })}
                         </li>
                       )}
@@ -1651,7 +1647,7 @@ const AdminCoursesContent = () => {
                       <li>· {t("coursesPage.confirmCancel.impactPoints")}</li>
                       {deleteImpact && deleteImpact.paidPayments > 0 && (
                         <li>
-                          · {t("coursesPage.confirmCancel.impactRefundsDeferredCount", {
+                          · {t("coursesPage.confirmCancel.impactRefundsQueued", {
                             count: deleteImpact.paidPayments,
                           })}
                         </li>

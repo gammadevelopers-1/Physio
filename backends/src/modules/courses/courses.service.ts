@@ -1639,16 +1639,24 @@ export class CoursesService {
     }
 
     // Pre-start vs post-start branches (Amna's spec):
-    //   - Pre-start: auto-refund every paid buyer, restore coupons,
-    //     drop enrollments cleanly. Simple case.
-    //   - Post-start: attendance cancelled/preserved, certificates
-    //     revoked, CME points reversed. Refunds are NOT automatic —
-    //     admin/finance decides per-buyer from the Refunds queue.
-    // startDate is a `date` column so NULL means "no start date set
-    // yet" (self-paced or unfixed) — we treat NULL as pre-start.
+    //   - Both create PENDING refund rows for every paid buyer (Phase F.1
+    //     fix — post-start previously deferred silently with no queue
+    //     visibility). Finance approves each row in Finance → Refunds,
+    //     deciding per-buyer whether to issue full, partial, or reject.
+    //   - Post-start additionally runs the attendance / certificate /
+    //     CME point cascade because those artifacts only exist once the
+    //     course has started producing outcomes.
+    //
+    // startDate is a `date` column (day, no time). We treat it as
+    // end-of-day in Asia/Riyadh (UTC+3) — a course scheduled for today
+    // is considered pre-start until 00:00 the next day Riyadh time.
+    // Amna asked for a Riyadh-time-based grace period (Phase F.1 fix).
+    // NULL startDate means self-paced / unfixed → pre-start.
     const now = new Date();
     const isPreStart =
-      !existing.startDate || new Date(existing.startDate) > now;
+      !existing.startDate ||
+      new Date(`${existing.startDate}T23:59:59+03:00`).getTime() >
+        now.getTime();
     const variant: 'pre_start' | 'post_start' = isPreStart
       ? 'pre_start'
       : 'post_start';
@@ -1719,48 +1727,55 @@ export class CoursesService {
       currency: string;
     }> = [];
 
-    if (isPreStart) {
-      for (const p of paidRows) {
-        try {
-          await this.refundService.adminInitiateRefund(
-            user.id,
-            {
-              paymentId: p.id,
-              // Phase F fix: distinguish admin-initiated course cancels
-              // from buyer-initiated "changed mind" refunds. Finance UI
-              // labels this "Course Cancelled by Admin" instead of
-              // misattributing it to the buyer.
-              reason: 'course_cancelled',
-              reasonNote: `Course cancelled: ${dto.reason}`,
-              justification: `Auto-refund triggered by course cancellation (${courseId})`,
-              bypassPolicy: true,
-            } as any,
-            ipAddress,
-          );
-          if (p.gateway === 'bank_transfer') {
-            refundsPendingBankTransfer++;
-            bankTransferPending.push({
-              paymentId: p.id,
-              userId: p.userId,
-              amount: p.amount,
-              currency: p.currency,
-            });
-          } else {
-            refundsIssued++;
-          }
-        } catch (err) {
-          refundsFailed++;
-          this.logger.error(
-            `cancelCourse: refund failed for payment ${p.id} on course ${courseId}: ${
-              (err as Error).message
-            }`,
-          );
+    // Phase F.1 fix: unified refund flow. Both pre-start and post-start
+    // create PENDING refund rows in the Refunds queue. Finance approves
+    // each in Finance → Refunds, choosing the amount (full / partial /
+    // reject). Nothing is auto-processed to the gateway here — the row
+    // just becomes visible work for finance.
+    //
+    // Previously post-start silently deferred with no queue artifact,
+    // which left admin thinking cancel didn't refund anything and left
+    // finance with no visible work — exactly Amna's regression report.
+    //
+    // adminInitiateRefund with bypassPolicy=true creates a PENDING refund
+    // row skipping the "no refunds after course starts" policy check.
+    for (const p of paidRows) {
+      try {
+        await this.refundService.adminInitiateRefund(
+          user.id,
+          {
+            paymentId: p.id,
+            reason: 'course_cancelled',
+            reasonNote: `Course cancelled: ${dto.reason}`,
+            justification: isPreStart
+              ? `Pre-start course cancellation (${courseId}) — refund queued for finance approval`
+              : `Post-start course cancellation (${courseId}) — finance to decide per-buyer amount based on course progress`,
+            bypassPolicy: true,
+          } as any,
+          ipAddress,
+        );
+        refundsIssued++;
+        if (p.gateway === 'bank_transfer') {
+          refundsPendingBankTransfer++;
+          bankTransferPending.push({
+            paymentId: p.id,
+            userId: p.userId,
+            amount: p.amount,
+            currency: p.currency,
+          });
         }
+      } catch (err) {
+        refundsFailed++;
+        this.logger.error(
+          `cancelCourse: refund queue failed for payment ${p.id} on course ${courseId}: ${
+            (err as Error).message
+          }`,
+        );
       }
-    } else {
-      // Post-start: mark deferred, no refunds fire here.
-      refundsDeferred = paidRows.length;
     }
+    // Deprecated after unification — kept in the response shape so the
+    // frontend type doesn't break, but always zero now.
+    refundsDeferred = 0;
 
     // 3b. Post-start cascade: attendance / certificates / points.
     // Only runs on post-start; pre-start has no attendance yet (course
@@ -1888,26 +1903,26 @@ export class CoursesService {
       }
 
       // 7b. Per-student email loop — locale-aware, refund-kind embedded.
-      // Pre-start: refundKind is inferred from the payment gateway
-      //   (bank_transfer → 'manual', any other gateway → 'immediate',
-      //   no payment → 'none').
-      // Post-start: refundKind is always 'manual_pending' for a student
-      //   who had a payment (finance decides later), 'none' otherwise.
-      //   certsRevoked=true adds an extra "your certificate has been
-      //   revoked" line since post-start cancels always revoke certs.
+      // Phase F.1 fix: unified messaging. Every paid buyer's refund is
+      // queued for finance review — no more "immediate" promise (which
+      // was misleading anyway since refunds only actually process when
+      // finance approves the pending row).
+      //   - bank_transfer buyer → 'manual' ("finance will wire it")
+      //   - other gateway buyer → 'manual_pending' ("under review, we'll
+      //                            confirm the outcome separately")
+      //   - no payment (free enrol) → 'none'
+      // certsRevoked=true adds an extra "your certificate has been
+      // revoked" line since post-start cancels always revoke certs.
       await Promise.all(
         students.map(async (s) => {
           const gateway = paymentsByUser.get(s.id);
           let refundKind: 'immediate' | 'manual' | 'manual_pending' | 'none';
-          if (isPreStart) {
-            refundKind =
-              gateway === 'bank_transfer'
-                ? 'manual'
-                : gateway
-                ? 'immediate'
-                : 'none';
+          if (gateway === 'bank_transfer') {
+            refundKind = 'manual';
+          } else if (gateway) {
+            refundKind = 'manual_pending';
           } else {
-            refundKind = gateway ? 'manual_pending' : 'none';
+            refundKind = 'none';
           }
           const recipientName = s.firstName ?? s.email ?? 'Student';
           const locale = s.language === 'ar' ? 'ar' : 'en';

@@ -6430,8 +6430,8 @@
       },
       "confirmCancel": {
         "title": "Cancel this course?",
-        "bodyPreStart": "Cancel \"{title}\" before it starts? Every enrolled student will get a full automatic refund and a cancellation email. This action is reversible only by re-creating the course.",
-        "bodyPostStart": "Cancel \"{title}\" mid-course? Attendance records will be marked cancelled, every issued certificate will be revoked, and CME points earned will be reversed. Refunds are NOT automatic — you decide per-buyer from Finance → Refunds after cancellation.",
+        "bodyPreStart": "Cancel \"{title}\" before it starts? Every enrolled student will get a cancellation email. A pending refund row will be queued in Finance → Refunds for each paid buyer — finance approves each to actually issue the money. This action is reversible only by re-creating the course.",
+        "bodyPostStart": "Cancel \"{title}\" mid-course? Attendance records will be marked cancelled, every issued certificate will be revoked, and CME points earned will be reversed. A pending refund row will be queued in Finance → Refunds for each paid buyer — finance decides per-buyer (full, partial, or reject) based on how much of the course they attended.",
         "impactTitle": "What will happen:",
         "impactEnrollments": "enrolled students will be dropped",
         "impactPaid": "paid payment(s) will be refunded automatically",
@@ -6447,13 +6447,14 @@
         "impactPoints": "CME points earned via this course will be reversed with a compensating ledger entry",
         "impactRefundsDeferred": "paid buyer(s) queued in Finance → Refunds for a manual per-buyer decision",
         "impactRefundsDeferredCount": "{count} paid buyer(s) queued in Finance → Refunds for a manual per-buyer decision",
+        "impactRefundsQueued": "{count} pending refund row(s) will be created in Finance → Refunds. Finance approves each — nothing auto-processes until then.",
         "reasonLabel": "Cancellation reason (required, sent to students)",
         "reasonPlaceholder": "e.g. instructor unavailable, insufficient enrolments, accreditation not granted…",
         "reasonRequired": "A reason is required",
         "confirm": "Cancel course",
         "cancel": "Keep course",
-        "success": "Course cancelled. {refunded} refund(s) issued, {manual} bank-transfer wire(s) queued for finance.",
-        "successPostStart": "Course cancelled. {deferred} paid buyer(s) awaiting your refund decision in Finance → Refunds. {certs} certificate(s) revoked.",
+        "success": "Course cancelled. {queued} refund row(s) queued for finance approval ({manual} bank-transfer, wire manually).",
+        "successPostStart": "Course cancelled. {queued} refund row(s) queued for finance approval ({manual} bank-transfer, wire manually). {certs} certificate(s) revoked.",
         "failure": "Failed to cancel course"
       },
       "studentCancelledBanner": {

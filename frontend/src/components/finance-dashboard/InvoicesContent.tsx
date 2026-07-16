@@ -198,9 +198,9 @@ const InvoicesContent = ({ embedded = false }: InvoicesContentProps) => {
 
   const gatewayOptions = [
     { value: "all", label: t("paymentsTable.filter.allGateways") },
-    { value: "moyasar", label: "Moyasar" },
-    { value: "tamara", label: "Tamara" },
-    { value: "tabby", label: "Tabby" },
+    { value: "moyasar", label: t("reportsPage.gatewayLabels.moyasar") },
+    { value: "tamara", label: t("reportsPage.gatewayLabels.tamara") },
+    { value: "tabby", label: t("reportsPage.gatewayLabels.tabby") },
     { value: "bank_transfer", label: t("paymentsTable.filter.bankTransfer") },
   ];
 

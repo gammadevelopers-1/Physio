@@ -8645,9 +8645,9 @@
           "system_inferred": "مستنتَج من النظام"
         },
         "gateway": {
-          "moyasar": "Moyasar",
-          "tamara": "Tamara",
-          "tabby": "Tabby",
+          "moyasar": "ميسر",
+          "tamara": "تمارا",
+          "tabby": "تابي",
           "bank_transfer": "تحويل بنكي"
         },
         "driftType": {
@@ -10402,9 +10402,9 @@
         "reconciliation": "تسوية"
       },
       "gatewayLabels": {
-        "moyasar": "Moyasar",
-        "tabby": "Tabby",
-        "tamara": "Tamara",
+        "moyasar": "ميسر",
+        "tabby": "تابي",
+        "tamara": "تمارا",
         "bank_transfer": "تحويل بنكي",
         "unknown": "غير معروف"
       },
@@ -10969,12 +10969,14 @@
         "payment_webhook_admin_replay": "إعادة تشغيل Webhook الدفع من المسؤول",
         "payment_disputed": "دفعة متنازع عليها",
         "gateway_admin_cache_refresh": "تحديث ذاكرة البوابة من المسؤول",
+        "gateway_admin_test": "اختبار الاتصال بالبوابة من المسؤول",
         "bnpl_status_poll_completed": "اكتمال استعلام حالة الشراء الآجل",
         "refund_requested": "طلب استرداد",
         "refund_approved": "اعتماد الاسترداد",
         "refund_rejected": "رفض الاسترداد",
         "refund_completed": "اكتمال الاسترداد",
         "refund_admin_initiated": "استرداد بمبادرة المسؤول",
+        "refund_admin_initiated_policy_bypass": "استرداد بمبادرة الإدارة (تجاوز السياسة)",
         "refund_approve_admin_override": "اعتماد الاسترداد من المسؤول (تجاوز)",
         "refund_amount_adjusted_at_approval": "تعديل مبلغ الاسترداد عند الاعتماد",
         "refund_policy_updated": "تحديث سياسة الاسترداد",

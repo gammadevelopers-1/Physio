@@ -57,7 +57,13 @@ const Drawer = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex ${isRTL ? "justify-start" : "justify-end"}`}
+      // `justify-end` unconditional: with `<html dir="rtl">` cascading to
+      // this fixed portal, `justify-end` places the drawer at the physical
+      // LEFT edge in RTL (main-axis end = left in RTL) and at the physical
+      // RIGHT edge in LTR — mirroring correctly. Wave-2 used `justify-start`
+      // in RTL which resolved to the RIGHT edge and left the drawer glued
+      // to the wrong side of the viewport.
+      className="fixed inset-0 z-50 flex justify-end"
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -69,11 +75,18 @@ const Drawer = ({
         aria-label={t("closeOverlay")}
       />
       <div
+        // Explicit `dir` so text alignment cascades correctly even if the
+        // fixed portal is ever detached from the document flow. The visible
+        // edge in RTL is the RIGHT edge (drawer sits on the LEFT), so
+        // `border-r` in RTL / `border-l` in LTR is correct.
+        dir={isRTL ? "rtl" : "ltr"}
         className={`relative w-full h-full bg-[var(--color-surface-page)] shadow-2xl flex flex-col ${isRTL ? "border-r" : "border-l"} border-[var(--color-border)]`}
         style={{ maxWidth: width }}
       >
-        {/* Header */}
-        <div className={`flex items-start justify-between gap-3 px-5 py-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-card)] ${isRTL ? "flex-row-reverse" : ""}`}>
+        {/* Header — no manual flex-row-reverse; the `dir` above makes the
+            natural flex order lay title on the start edge (RIGHT in RTL,
+            LEFT in LTR) and the close-button cluster on the end edge. */}
+        <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-card)]">
           <div className="min-w-0 flex-1">
             <h2 className="text-base font-semibold text-[var(--color-text-primary)] truncate">
               {title}
@@ -84,7 +97,7 @@ const Drawer = ({
               </p>
             )}
           </div>
-          <div className={`flex items-center gap-2 flex-shrink-0 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <div className="flex items-center gap-2 flex-shrink-0">
             {headerExtra}
             <button
               type="button"
@@ -102,7 +115,7 @@ const Drawer = ({
 
         {/* Footer */}
         {footer && (
-          <div className={`px-5 py-3 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-card)] ${isRTL ? "flex-row-reverse" : ""}`}>
+          <div className="px-5 py-3 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-card)]">
             {footer}
           </div>
         )}

@@ -112,9 +112,10 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
     { key: "audit", label: t("paymentDetail.tabs.audit") },
   ];
 
-  // Small localisation helpers — brand names stay Latin in both locales,
-  // descriptive labels translate. Prevents raw snake_case slugs from
-  // leaking into the AR drawer.
+  // Small localisation helpers — gateway brand names transliterate to
+  // Arabic in AR mode via `reportsPage.gatewayLabels.*` (ميسر / تمارا /
+  // تابي / تحويل بنكي) matching the rest of the finance surface. Prevents
+  // raw snake_case slugs from leaking into the AR drawer.
   const KNOWN_GATEWAYS = new Set(["moyasar", "tabby", "tamara", "bank_transfer"]);
   const gwLabel = (g: string | null | undefined) =>
     !g ? "—" : KNOWN_GATEWAYS.has(g) ? t(`reportsPage.gatewayLabels.${g}`) : g.replace(/_/g, " ");
@@ -226,12 +227,10 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
         </div>
       ) : (
         <>
-          {/* Amount summary strip */}
-          <div
-            className={`px-5 py-4 bg-[var(--color-surface-card)] border-b border-[var(--color-border-subtle)] flex items-baseline gap-6 ${
-              isRTL ? "flex-row-reverse text-right" : ""
-            }`}
-          >
+          {/* Amount summary strip — natural flex order lays amount first
+              (LEFT in LTR, RIGHT in RTL via `dir="rtl"` cascade). Wave-2's
+              `flex-row-reverse` defeated the cascade and flipped the order. */}
+          <div className="px-5 py-4 bg-[var(--color-surface-card)] border-b border-[var(--color-border-subtle)] flex items-baseline gap-6">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)]">
                 {t("paymentDetail.amount")}
@@ -526,20 +525,19 @@ function Card({
   title,
   icon,
   children,
-  isRTL,
+  isRTL: _isRTL,
 }: {
   title: string;
   icon: React.ReactNode;
   children: React.ReactNode;
   isRTL: boolean;
 }) {
+  // No manual flex-row-reverse: with `dir="rtl"` cascading, the icon lands
+  // on the start edge (RIGHT in RTL, LEFT in LTR) and the title next to it,
+  // reading naturally. Argument kept for call-site compatibility.
   return (
     <section className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
-      <header
-        className={`px-4 py-2.5 border-b border-[var(--color-border-subtle)] flex items-center gap-2 text-[var(--color-text-primary)] ${
-          isRTL ? "flex-row-reverse" : ""
-        }`}
-      >
+      <header className="px-4 py-2.5 border-b border-[var(--color-border-subtle)] flex items-center gap-2 text-[var(--color-text-primary)]">
         <span className="text-[var(--color-primary)]">{icon}</span>
         <h3 className="text-[12px] font-semibold uppercase tracking-wider">{title}</h3>
       </header>
@@ -561,8 +559,13 @@ function Row({
   isRTL: boolean;
   children?: React.ReactNode;
 }) {
+  // No manual `flex-row-reverse` in RTL: with `<html dir="rtl">` cascading,
+  // native flex order already lays out dt on the start edge (RIGHT in RTL,
+  // LEFT in LTR) and dd on the end edge — which is what we want. The
+  // wave-2 version added flex-row-reverse in RTL, defeating the cascade
+  // and rendering labels on the LEFT column with values on the RIGHT.
   return (
-    <div className={`flex items-start justify-between gap-3 text-sm ${isRTL ? "flex-row-reverse" : ""}`}>
+    <div className="flex items-start justify-between gap-3 text-sm">
       <dt className="text-[var(--color-text-secondary)] font-medium shrink-0">{label}</dt>
       <dd
         className={`text-[var(--color-text-primary)] break-all ${mono ? "font-mono text-xs" : ""} ${

@@ -314,9 +314,9 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
 
   const gatewayOptions = [
     { value: "all", label: t("reportsPage.gateway.all") },
-    { value: "moyasar", label: "Moyasar" },
-    { value: "tabby", label: "Tabby" },
-    { value: "tamara", label: "Tamara" },
+    { value: "moyasar", label: t("reportsPage.gatewayLabels.moyasar") },
+    { value: "tabby", label: t("reportsPage.gatewayLabels.tabby") },
+    { value: "tamara", label: t("reportsPage.gatewayLabels.tamara") },
     { value: "bank_transfer", label: t("reportsPage.gateway.bankTransfer") },
   ];
 

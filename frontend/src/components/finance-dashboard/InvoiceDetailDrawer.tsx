@@ -202,9 +202,11 @@ const InvoiceDetailDrawer = ({
   const canCancel = data && status !== "cancelled" && status !== "refunded";
 
   // Small localisation helpers so the drawer never renders raw snake_case
-  // slugs in the UI. Brand names (Moyasar / Tabby / Tamara) stay Latin —
-  // only descriptive labels (bank_transfer, card, bnpl, refund reasons,
-  // status pills) get translated.
+  // slugs in the UI. Gateway brand names transliterate to Arabic in AR
+  // mode (ميسر / تمارا / تابي) via `reportsPage.gatewayLabels.*` —
+  // matching the rest of the finance surface — while descriptive labels
+  // (bank_transfer, card, bnpl, refund reasons, status pills) translate
+  // to Arabic phrases.
   const KNOWN_GATEWAYS = new Set(["moyasar", "tabby", "tamara", "bank_transfer"]);
   const KNOWN_METHODS = new Set(["card", "mada", "apple_pay", "bnpl", "bank_transfer"]);
   const gwLabel = (g: string | null | undefined) =>
@@ -276,12 +278,9 @@ const InvoiceDetailDrawer = ({
         </div>
       ) : (
         <>
-          {/* Amount strip */}
-          <div
-            className={`px-5 py-4 bg-[var(--color-surface-card)] border-b border-[var(--color-border-subtle)] flex items-baseline gap-6 ${
-              isRTL ? "flex-row-reverse text-right" : ""
-            }`}
-          >
+          {/* Amount strip — natural flex order lays the first cell on the
+              start edge (LEFT in LTR, RIGHT in RTL via cascade). */}
+          <div className="px-5 py-4 bg-[var(--color-surface-card)] border-b border-[var(--color-border-subtle)] flex items-baseline gap-6">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)]">
                 {t("invoiceDetail.total")}
@@ -640,20 +639,19 @@ function Card({
   title,
   icon,
   children,
-  isRTL,
+  isRTL: _isRTL,
 }: {
   title: string;
   icon: React.ReactNode;
   children: React.ReactNode;
   isRTL: boolean;
 }) {
+  // No manual flex-row-reverse: with `<html dir="rtl">` cascading the icon
+  // lands on the start edge (RIGHT in RTL, LEFT in LTR) and the title next
+  // to it, reading naturally. Argument kept for call-site compatibility.
   return (
     <section className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
-      <header
-        className={`px-4 py-2.5 border-b border-[var(--color-border-subtle)] flex items-center gap-2 text-[var(--color-text-primary)] ${
-          isRTL ? "flex-row-reverse" : ""
-        }`}
-      >
+      <header className="px-4 py-2.5 border-b border-[var(--color-border-subtle)] flex items-center gap-2 text-[var(--color-text-primary)]">
         <span className="text-[var(--color-primary)]">{icon}</span>
         <h3 className="text-[12px] font-semibold uppercase tracking-wider">{title}</h3>
       </header>
@@ -673,8 +671,12 @@ function Row({
   mono?: boolean;
   isRTL: boolean;
 }) {
+  // No manual flex-row-reverse: with `dir="rtl"` cascading, dt lands on
+  // the start edge (RIGHT in RTL) and dd on the end edge (LEFT). Wave-2's
+  // flex-row-reverse defeated the cascade and rendered labels on the LEFT
+  // column with values on the RIGHT, contradicting the RTL reading order.
   return (
-    <div className={`flex items-start justify-between gap-3 text-sm ${isRTL ? "flex-row-reverse" : ""}`}>
+    <div className="flex items-start justify-between gap-3 text-sm">
       <dt className="text-[var(--color-text-secondary)] font-medium shrink-0">{label}</dt>
       <dd className={`text-[var(--color-text-primary)] break-all ${mono ? "font-mono text-xs" : ""} ${isRTL ? "text-left" : "text-right"}`}>
         {value}
@@ -686,7 +688,7 @@ function Row({
 function AmountRow({
   label,
   amount,
-  isRTL,
+  isRTL: _isRTL,
   bold,
 }: {
   label: string;
@@ -694,8 +696,10 @@ function AmountRow({
   isRTL: boolean;
   bold?: boolean;
 }) {
+  // No manual flex-row-reverse: with `dir="rtl"` cascading, label lands on
+  // start edge (RIGHT in RTL) and amount on end edge (LEFT).
   return (
-    <div className={`flex items-baseline justify-between gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+    <div className="flex items-baseline justify-between gap-3">
       <span className={`${bold ? "text-sm font-semibold" : "text-xs"} text-[var(--color-text-${bold ? "primary" : "secondary"})]`}>
         {label}
       </span>

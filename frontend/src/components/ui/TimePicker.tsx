@@ -96,8 +96,13 @@ export default function TimePicker({
 
       {open && (
         <div
-          className={`absolute z-50 mt-1 bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[220px] ${
-            isRTL ? "right-0" : "left-0"
+          // Anchor so the popover always extends toward the viewport CENTER
+          // rather than the trailing edge. `end-0` in RTL / `start-0` in
+          // LTR both resolve to `left:0` physically (RTL inline-end = left
+          // edge), which mirrors the DatePicker fix and prevents horizontal
+          // page scroll when the trigger sits near the leading edge in RTL.
+          className={`absolute z-50 mt-1 bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[220px] max-w-[calc(100vw-1rem)] ${
+            isRTL ? "end-0" : "start-0"
           }`}
         >
           <div className="flex divide-x divide-[var(--color-border)]" dir="ltr">

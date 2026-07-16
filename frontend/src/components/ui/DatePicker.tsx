@@ -187,14 +187,24 @@ export default function DatePicker({
         <input type="hidden" id={id} name={id} value={value} />
       </div>
 
-      {/* Dropdown calendar — anchored to the start edge of the trigger via
-          logical properties so RTL never flips the popover past the
-          viewport's trailing edge. `max-w-[calc(100vw-1rem)]` guarantees
-          the 300px shell can never trigger horizontal page scroll on
-          narrow containers or right-aligned filter panels. */}
+      {/* Dropdown calendar — anchored so the popover always extends toward
+          the viewport CENTER, never past the trailing edge:
+            • LTR: `start-0` (= left:0) anchors the LEFT edge of the popover
+              to the trigger's LEFT edge → extends rightward.
+            • RTL: `end-0` (= left:0 physically, because in RTL the inline
+              END is the LEFT edge) anchors the LEFT edge of the popover
+              to the trigger's LEFT edge → extends rightward.
+          Wave-2 used `start-0` in both directions, which in RTL resolved to
+          `right:0` and pushed the 300px popover LEFT of the trigger. On
+          the reconciliation "to date" filter the trigger sits near the
+          LEFT edge of the viewport in RTL, so the popover clipped past x=0
+          and caused horizontal page scroll. `max-w-[calc(100vw-1rem)]` is
+          kept as a belt-and-braces cap for very narrow viewports. */}
       {open && (
         <div
-          className="absolute z-50 mt-1 bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[300px] max-w-[calc(100vw-1rem)] start-0"
+          className={`absolute z-50 mt-1 bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[300px] max-w-[calc(100vw-1rem)] ${
+            isRTL ? "end-0" : "start-0"
+          }`}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)]">

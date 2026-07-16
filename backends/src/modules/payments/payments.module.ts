@@ -27,6 +27,7 @@ import { DiscountService } from './services/discount.service';
 import { FinanceService } from './services/finance.service';
 import { PaymentCleanupService } from './services/payment-cleanup.service';
 import { TamaraRetryService } from './services/tamara-retry.service';
+import { PaymentAdminNotifierService } from './services/payment-admin-notifier.service';
 import { BankTransferService } from './bank-transfer/bank-transfer.service';
 import { ReconciliationService } from './reconciliation/reconciliation.service';
 import { EscalationsService } from './reconciliation/escalations.service';
@@ -56,6 +57,7 @@ import { SiteSettingsModule } from '../site-settings/site-settings.module';
 import { EnrollmentsModule } from '../enrollments/enrollments.module';
 import { ZoomModule } from '../zoom/zoom.module';
 import { AdminSettingsModule } from '../admin-settings/admin-settings.module';
+import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 import { GatewayCredentialsService } from './gateways/gateway-credentials.service';
 
 @Module({
@@ -66,6 +68,7 @@ import { GatewayCredentialsService } from './gateways/gateway-credentials.servic
     EnrollmentsModule,
     ZoomModule,
     AdminSettingsModule,
+    UserNotificationsModule,
     // BullMQ queue for webhook processing (conditional on Redis)
     ...(process.env.REDIS_HOST
       ? [BullModule.registerQueue({ name: PAYMENT_QUEUE_NAMES.WEBHOOK_PROCESSING })]
@@ -108,6 +111,7 @@ import { GatewayCredentialsService } from './gateways/gateway-credentials.servic
     BankTransferGateway,
     PaymentCleanupService,
     TamaraRetryService,
+    PaymentAdminNotifierService,
     // Cloud Run Job wrappers — self-register with JobRegistry
     TamaraRetryJob,
     PaymentCleanupJob,

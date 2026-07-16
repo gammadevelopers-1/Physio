@@ -150,6 +150,20 @@ const strings = {
   courseRescheduledNewDateLabel:      { en: 'New start:',              ar: 'التاريخ الجديد:' },
   courseRescheduledEndDateLabel:      { en: 'Ends:',                  ar: 'تنتهي:' },
 
+  /* ── Admin/finance payment alerts (Phase G) ──────────── */
+  adminPaymentReceivedSubject: { en: 'Payment received — {course}', ar: 'تم استلام دفعة — {course}' },
+  adminPaymentReceivedTitle:   { en: 'Payment received',              ar: 'تم استلام دفعة' },
+  adminPaymentReceivedIntro:   { en: 'A new payment has been received for the following course:', ar: 'تم استلام دفعة جديدة للدورة التالية:' },
+  adminPaymentReceivedCta:     { en: 'View in Finance → Payments',   ar: 'عرض في المالية ← المدفوعات' },
+  adminBankTransferPendingSubject: { en: 'Bank transfer pending review — {course}', ar: 'تحويل بنكي قيد المراجعة — {course}' },
+  adminBankTransferPendingTitle:   { en: 'Bank transfer pending review', ar: 'تحويل بنكي قيد المراجعة' },
+  adminBankTransferPendingIntro:   { en: 'A bank transfer receipt has been submitted for review:', ar: 'تم تقديم إيصال تحويل بنكي للمراجعة:' },
+  adminBankTransferPendingCta:     { en: 'Review in Finance → Bank Transfers', ar: 'مراجعة في المالية ← التحويلات البنكية' },
+  buyerLabel:                  { en: 'Buyer:',                       ar: 'المشتري:' },
+  amountLabel:                 { en: 'Amount:',                      ar: 'المبلغ:' },
+  gatewayLabel:                { en: 'Gateway:',                     ar: 'البوابة:' },
+  submittedAtLabel:            { en: 'Submitted:',                   ar: 'تاريخ التقديم:' },
+
   /* ── Certificates ────────────────────────────────────── */
   certApprovedSubject: { en: 'Certificate Approved - {course}', ar: 'تمت الموافقة على الشهادة - {course}' },
   certApprovedTitle:   { en: 'Certificate Approved!',           ar: 'تمت الموافقة على الشهادة!' },

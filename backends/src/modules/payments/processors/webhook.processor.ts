@@ -123,6 +123,8 @@ export class WebhookProcessor extends WorkerHost {
           );
         }
 
+        // Phase G admin/finance fanout is fired inside processPaymentSuccess above.
+
         await this.auditLogService.log({
           entityType: 'webhook',
           entityId: chargeId,

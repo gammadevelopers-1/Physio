@@ -241,6 +241,7 @@ export class WebhooksController {
         } catch (err) {
           this.logger.error(`Payment email failed: ${err.message}`);
         }
+        // Phase G admin/finance fanout is fired inside processPaymentSuccess above.
       } else if (status === 'failed' && payment.status !== 'failed') {
         await this.paymentsService.processPaymentFailure(payment.id, 'Payment failed via webhook', errorCode);
         try {

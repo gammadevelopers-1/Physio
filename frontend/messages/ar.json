@@ -12991,6 +12991,14 @@
         "title": "استرداد التحويلات البنكية بحاجة إلى إكمال يدوي",
         "message": "{count} من عمليات الاسترداد للتحويلات البنكية للدورة الملغاة \"{courseName}\" بحاجة إلى تحويل يدوي من فريق المالية."
       },
+      "payment_received_admin": {
+        "title": "تم استلام دفعة — {courseName}",
+        "message": "دفع {buyerName} مبلغ {amount} {currency} مقابل \"{courseName}\" عبر {gateway}."
+      },
+      "bank_transfer_pending_review": {
+        "title": "تحويل بنكي بانتظار المراجعة — {courseName}",
+        "message": "قدّم {buyerName} تحويلاً بنكياً بقيمة {amount} {currency} مقابل \"{courseName}\". راجع الإيصال المرفوع في المالية ← التحويلات البنكية."
+      },
       "course_assigned": {
         "title": "تم تعيين دورة",
         "message": "تم تعيينك كمدرب لدورة."

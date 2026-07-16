@@ -12991,6 +12991,14 @@
         "title": "Bank transfer refunds need manual completion",
         "message": "{count} bank-transfer refund(s) for the cancelled course \"{courseName}\" require finance to wire the money manually."
       },
+      "payment_received_admin": {
+        "title": "Payment received — {courseName}",
+        "message": "{buyerName} paid {amount} {currency} for \"{courseName}\" via {gateway}."
+      },
+      "bank_transfer_pending_review": {
+        "title": "Bank transfer pending review — {courseName}",
+        "message": "{buyerName} submitted a bank transfer of {amount} {currency} for \"{courseName}\". Review the uploaded receipt in Finance → Bank Transfers."
+      },
       "course_assigned": {
         "title": "Course Assigned",
         "message": "You have been assigned as instructor for a course."

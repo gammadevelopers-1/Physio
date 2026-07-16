@@ -32,6 +32,7 @@ import { TabbyGateway } from './gateways/tabby.gateway';
 import { DiscountService } from './services/discount.service';
 import { InvoiceService } from './services/invoice.service';
 import { TaxComputationService } from './services/tax-computation.service';
+import { PaymentAdminNotifierService } from './services/payment-admin-notifier.service';
 import { EmailService } from '../email/email.service';
 import { StorageService } from '../storage/storage.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
@@ -103,6 +104,7 @@ export class PaymentsService {
     private readonly taxComputationService: TaxComputationService,
     private readonly xapiService: XapiService,
     private readonly enrollmentsService: EnrollmentsService,
+    private readonly paymentAdminNotifier: PaymentAdminNotifierService,
   ) {}
 
   /**
@@ -1152,6 +1154,7 @@ export class PaymentsService {
         } catch (err) {
           this.logger.error(`Confirmation email failed for mock payment ${payment.id}: ${err.message}`);
         }
+        // Phase G admin/finance fanout is fired inside processPaymentSuccess above.
 
         return { redirect: 'success', paymentId: payment_id };
       }
@@ -1317,6 +1320,11 @@ export class PaymentsService {
         itemCount: cartCourseIds?.length || 1,
       },
     });
+
+    // Phase G — fan out admin/finance "payment received" alert. Guarded by
+    // the `won` check above so duplicate webhooks don't fanout twice; the
+    // notifier itself skips gateway=bank_transfer (finance just approved it).
+    void this.paymentAdminNotifier.notifyPaymentReceived(paymentId);
   }
 
   async processPaymentFailure(paymentId: string, reason?: string, errorCode?: string) {
@@ -1656,6 +1664,7 @@ export class PaymentsService {
             } catch (err) {
               this.logger.error(`Payment confirmation email failed for ${paymentId}: ${err.message}`);
             }
+            // Phase G admin/finance fanout is fired inside processPaymentSuccess above.
 
             return { status: PAYMENT_STATUS.PAID, paymentId };
           }

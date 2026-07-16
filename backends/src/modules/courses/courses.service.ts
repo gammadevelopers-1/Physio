@@ -1446,25 +1446,35 @@ export class CoursesService {
       );
     }
 
-    // Block delete when there are pending or paid payments — the finance
-    // team needs the row for chargeback/refund reconciliation. Hard-delete
-    // would orphan invoices and break the audit trail. After a Phase B
-    // cancel every payment is either refunded or in-flight for refund, so
-    // this guard should never trigger on a properly-cancelled course.
-    const [activePayments] = await db
-      .select({ count: count() })
-      .from(payments)
-      .where(
-        and(
-          eq(payments.courseId, courseId),
-          inArray(payments.status, ['pending', 'paid']),
-        ),
-      );
+    // For DRAFT courses, block delete if any live payment rows exist —
+    // finance needs the row for chargeback/refund reconciliation and
+    // the admin shouldn't be able to hard-orphan a live checkout.
+    //
+    // For CANCELLED courses, skip this check entirely: Phase B / F.1's
+    // cancel cascade has already queued a pending refund row for every
+    // PAID payment (bank-transfer refunds sit as `pending` for finance
+    // to wire; gateway refunds sit as `pending` until finance clicks
+    // Approve). A payment still showing `paid` here just means finance
+    // hasn't yet processed the pending refund — it's a workflow state,
+    // not a data-integrity issue. Refund rows live in a separate table
+    // and are unaffected by the soft-delete, so finance can complete
+    // the refund at any point after the course is hidden.
+    if (existing.status === COURSE_STATUS.DRAFT) {
+      const [activePayments] = await db
+        .select({ count: count() })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.courseId, courseId),
+            inArray(payments.status, ['pending', 'paid']),
+          ),
+        );
 
-    if (Number(activePayments?.count || 0) > 0) {
-      throw new BadRequestException(
-        'Cannot delete course with active or pending payments. Cancel the course first — this triggers auto-refunds and clears the finance state.',
-      );
+      if (Number(activePayments?.count || 0) > 0) {
+        throw new BadRequestException(
+          'Cannot delete course with active or pending payments. Cancel the course first — this triggers auto-refunds and clears the finance state.',
+        );
+      }
     }
 
     const impact = await this.computeCourseImpact(courseId);

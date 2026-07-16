@@ -34,6 +34,7 @@ import { SubmitDraftDto } from './dto/submit-draft.dto';
 import { PaymentsService } from '../payments.service';
 import { XapiService } from '../../xapi/xapi.service';
 import { EnrollmentsService } from '../../enrollments/enrollments.service';
+import { PaymentAdminNotifierService } from '../services/payment-admin-notifier.service';
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -80,6 +81,7 @@ export class BankTransferService {
     private readonly paymentsService: PaymentsService,
     private readonly xapiService: XapiService,
     private readonly enrollmentsService: EnrollmentsService,
+    private readonly paymentAdminNotifier: PaymentAdminNotifierService,
   ) {}
 
   /**
@@ -298,6 +300,12 @@ export class BankTransferService {
           `Failed to send bank transfer receipt email: ${err.message}`,
         ),
       );
+
+    // Phase G: alert admin/finance that a bank-transfer receipt is
+    // waiting on their review.
+    void this.paymentAdminNotifier
+      .notifyBankTransferPending(paymentId)
+      .catch(() => {});
 
     void this.pollScanStatus(newReceipt.id, objectPath);
 
@@ -612,6 +620,12 @@ export class BankTransferService {
           `Failed to send bank transfer receipt email: ${err.message}`,
         ),
       );
+
+    // Phase G: alert admin/finance that a bank-transfer receipt is
+    // waiting on their review.
+    void this.paymentAdminNotifier
+      .notifyBankTransferPending(paymentId)
+      .catch(() => {});
 
     void this.pollScanStatus(receiptId, objectPath);
 

@@ -208,6 +208,14 @@ import {
   getBankTransferReceivedText,
 } from './templates/bank-transfer-received.template';
 import {
+  getAdminPaymentReceivedHtml,
+  getAdminPaymentReceivedText,
+} from './templates/admin-payment-received.template';
+import {
+  getAdminBankTransferPendingHtml,
+  getAdminBankTransferPendingText,
+} from './templates/admin-bank-transfer-pending.template';
+import {
   getBankTransferRejectedHtml,
   getBankTransferRejectedText,
 } from './templates/bank-transfer-rejected.template';
@@ -2227,6 +2235,73 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
       this.logger.log(`Payment failed email sent to ${user.email}`);
     } catch (error) {
       this.logger.error(`Failed to send payment failed email`, error);
+    }
+  }
+
+  /**
+   * Phase G: send admin/finance an alert that a payment was received.
+   * Called once per recipient so the email lands in the recipient's
+   * preferred language. Signature is generic — pass any (locale,
+   * recipientName) pair; the caller loops.
+   */
+  async sendAdminPaymentReceived(
+    to: string,
+    params: {
+      recipientName: string;
+      buyerName: string;
+      courseName: string;
+      amount: string;
+      currency: string;
+      gateway: string;
+      paymentId: string;
+      financeUrl: string;
+    },
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      await this.send({
+        to,
+        subject: t(s.adminPaymentReceivedSubject, { course: params.courseName }),
+        html: getAdminPaymentReceivedHtml(params, locale),
+        text: getAdminPaymentReceivedText(params, locale),
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send admin payment-received email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  async sendAdminBankTransferPending(
+    to: string,
+    params: {
+      recipientName: string;
+      buyerName: string;
+      courseName: string;
+      amount: string;
+      currency: string;
+      submittedAt: string;
+      reviewUrl: string;
+    },
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      await this.send({
+        to,
+        subject: t(s.adminBankTransferPendingSubject, {
+          course: params.courseName,
+        }),
+        html: getAdminBankTransferPendingHtml(params, locale),
+        text: getAdminBankTransferPendingText(params, locale),
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send admin bank-transfer-pending email to ${to}`,
+        error,
+      );
     }
   }
 

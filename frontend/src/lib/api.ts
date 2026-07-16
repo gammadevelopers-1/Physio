@@ -2430,6 +2430,10 @@ export interface CourseDeleteImpact {
   approvedCertificates: number;
   completedEnrollments: number;
   awardedPoints: number;
+  // Phase F bug 3: paid-payment split. Cancel modal shows the total
+  // + a specific warning when bankTransferPaidPayments > 0.
+  paidPayments: number;
+  bankTransferPaidPayments: number;
 }
 
 export interface CourseDeleteImpactResponse {

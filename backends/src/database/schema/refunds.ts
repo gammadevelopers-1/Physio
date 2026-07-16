@@ -59,7 +59,7 @@ export const refunds = pgTable(
     index('refunds_requested_by_idx').on(table.requestedBy),
     check(
       'refunds_reason_check',
-      sql`${table.reason} IN ('policy', 'cancelled', 'technical', 'duplicate', 'other')`,
+      sql`${table.reason} IN ('policy', 'cancelled', 'technical', 'duplicate', 'other', 'course_cancelled')`,
     ),
     check(
       'refunds_status_check',
@@ -105,10 +105,15 @@ export type RefundStatus = (typeof REFUND_STATUS)[keyof typeof REFUND_STATUS];
 
 export const REFUND_REASON = {
   POLICY: 'policy',
+  /** Buyer-initiated cancellation ("changed my mind"). */
   CANCELLED: 'cancelled',
   TECHNICAL: 'technical',
   DUPLICATE: 'duplicate',
   OTHER: 'other',
+  /** Admin cancelled the entire course. Phase F fix: distinct from
+   *  `cancelled` so the finance UI labels the reason honestly instead
+   *  of showing "Buyer Changed Mind" for admin-initiated refunds. */
+  COURSE_CANCELLED: 'course_cancelled',
 } as const;
 
 export type RefundReason = (typeof REFUND_REASON)[keyof typeof REFUND_REASON];

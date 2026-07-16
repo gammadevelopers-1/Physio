@@ -327,6 +327,9 @@ const CoursesContent = () => {
                       <option value="completed">
                         {t("coursesPage.filters.completed")}
                       </option>
+                      <option value="cancelled">
+                        {t("coursesPage.filters.cancelled")}
+                      </option>
                       <option value="archived">
                         {t("coursesPage.filters.archived")}
                       </option>

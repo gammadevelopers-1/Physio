@@ -244,6 +244,9 @@ const RefundsContent = ({ embedded = false }: RefundsContentProps) => {
     { value: "all", label: t("refundsPage.filters.allReasons") },
     { value: "policy", label: t("refundsPage.reasonLabels.policy") },
     { value: "cancelled", label: t("refundsPage.reasonLabels.cancelled") },
+    // Phase F fix: admin-initiated course cancellation gets its own
+    // audit-honest label instead of falsely reading as buyer-initiated.
+    { value: "course_cancelled", label: t("refundsPage.reasonLabels.course_cancelled") },
     { value: "duplicate", label: t("refundsPage.reasonLabels.duplicate") },
     { value: "technical", label: t("refundsPage.reasonLabels.technical") },
     { value: "other", label: t("refundsPage.reasonLabels.other") },

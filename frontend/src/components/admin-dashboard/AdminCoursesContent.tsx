@@ -736,14 +736,14 @@ const AdminCoursesContent = () => {
               {t("coursesPage.actions.reschedule")}
             </button>
             {/* Phase E: Archive is completed-only. To archive an active
-                course, the admin must Complete or Cancel it first. */}
+                course, the admin must Complete or Cancel it first.
+                Phase F: Delete is removed from the active kebab too —
+                backend rejects delete on active courses (must cancel
+                first). Showing a button that always errors is confusing.
+                The cancel-then-delete flow is now visually enforced. */}
             <button onClick={() => openConfirm("cancel", course)} className={dangerCls}>
               <XCircle className="w-4 h-4" />
               {t("coursesPage.cancelCourse")}
-            </button>
-            <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
-              <Trash2 className="w-4 h-4" />
-              {t("coursesPage.actions.delete")}
             </button>
           </>
         )}
@@ -907,6 +907,7 @@ const AdminCoursesContent = () => {
                       { value: "changes_requested", label: t("coursesPage.filters.changesRequested") },
                       { value: "active", label: t("coursesPage.filters.active") },
                       { value: "completed", label: t("coursesPage.filters.completed") },
+                      { value: "cancelled", label: t("coursesPage.filters.cancelled") },
                       { value: "archived", label: t("coursesPage.filters.archived") },
                     ]}
                   />
@@ -1621,12 +1622,23 @@ const AdminCoursesContent = () => {
                     what gets revoked/reversed and that refunds are
                     manual per-buyer decisions from finance. Color coded:
                     blue = informational (pre-start), amber = attention
-                    required (post-start). */}
+                    required (post-start).
+                    Phase F fix: pull actual counts from the impact
+                    preview so "paid payment(s) will be refunded" only
+                    appears when paidPayments > 0, and the bank-transfer
+                    line pulls the real bankTransferPaidPayments count. */}
                 {!cancelIsPostStart ? (
                   <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
                     <ul className="space-y-1 text-xs text-[#1E3A8A] leading-relaxed">
-                      <li>· {t("coursesPage.confirmCancel.impactPaid")}</li>
-                      <li>· {t("coursesPage.confirmCancel.impactBankTransfer")}</li>
+                      {deleteImpact && deleteImpact.paidPayments > 0 && (
+                        <li>
+                          · {t("coursesPage.confirmCancel.impactPaidCount", {
+                            count:
+                              deleteImpact.paidPayments -
+                              deleteImpact.bankTransferPaidPayments,
+                          })}
+                        </li>
+                      )}
                       <li>· {t("coursesPage.confirmCancel.impactWaitlist")}</li>
                       <li>· {t("coursesPage.confirmCancel.impactCoupons")}</li>
                     </ul>
@@ -1637,9 +1649,34 @@ const AdminCoursesContent = () => {
                       <li>· {t("coursesPage.confirmCancel.impactAttendance")}</li>
                       <li>· {t("coursesPage.confirmCancel.impactCerts")}</li>
                       <li>· {t("coursesPage.confirmCancel.impactPoints")}</li>
-                      <li>· {t("coursesPage.confirmCancel.impactRefundsDeferred")}</li>
+                      {deleteImpact && deleteImpact.paidPayments > 0 && (
+                        <li>
+                          · {t("coursesPage.confirmCancel.impactRefundsDeferredCount", {
+                            count: deleteImpact.paidPayments,
+                          })}
+                        </li>
+                      )}
                       <li>· {t("coursesPage.confirmCancel.impactWaitlist")}</li>
                     </ul>
+                  </div>
+                )}
+
+                {/* Phase F bug 3: bank-transfer manual-wire warning.
+                    Appears whenever bankTransferPaidPayments > 0 for
+                    either pre-start or post-start cancels. Distinct
+                    amber-red styling so it doesn't blend into the
+                    normal cascade card — this is real finance work
+                    queued, not just an informational bullet. */}
+                {deleteImpact && deleteImpact.bankTransferPaidPayments > 0 && (
+                  <div className="bg-[#FEF2F2] border-2 border-[#FCA5A5] rounded-lg p-3 mb-4">
+                    <p className="text-xs font-bold text-[#991B1B] leading-relaxed mb-1">
+                      {t("coursesPage.confirmCancel.bankTransferWarningTitle", {
+                        count: deleteImpact.bankTransferPaidPayments,
+                      })}
+                    </p>
+                    <p className="text-xs text-[#7F1D1D] leading-relaxed">
+                      {t("coursesPage.confirmCancel.bankTransferWarningBody")}
+                    </p>
                   </div>
                 )}
 

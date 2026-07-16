@@ -1726,7 +1726,11 @@ export class CoursesService {
             user.id,
             {
               paymentId: p.id,
-              reason: 'cancelled',
+              // Phase F fix: distinguish admin-initiated course cancels
+              // from buyer-initiated "changed mind" refunds. Finance UI
+              // labels this "Course Cancelled by Admin" instead of
+              // misattributing it to the buyer.
+              reason: 'course_cancelled',
               reasonNote: `Course cancelled: ${dto.reason}`,
               justification: `Auto-refund triggered by course cancellation (${courseId})`,
               bypassPolicy: true,
@@ -2560,6 +2564,8 @@ export class CoursesService {
       approvedCertificateRow,
       completedEnrollmentRow,
       awardedPointsRow,
+      paidPaymentsRow,
+      bankTransferPaidRow,
     ] = await Promise.all([
       db
         .select({ count: count() })
@@ -2648,6 +2654,30 @@ export class CoursesService {
           )
           AND delta > 0
       `),
+      // Phase F bug 3: total paid payments — the admin needs to know how
+      // many refunds the cancel workflow will fire.
+      db
+        .select({ count: count() })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.courseId, courseId),
+            eq(payments.status, PAYMENT_STATUS.PAID),
+          ),
+        ),
+      // Bank-transfer subset — these DO NOT auto-refund. Finance has to
+      // wire the money manually. Modal shows this in an amber warning so
+      // the admin walks in knowing finance work is queued.
+      db
+        .select({ count: count() })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.courseId, courseId),
+            eq(payments.status, PAYMENT_STATUS.PAID),
+            eq(payments.gateway, 'bank_transfer'),
+          ),
+        ),
     ]);
     return {
       modules: Number(moduleRow[0]?.count ?? 0),
@@ -2665,6 +2695,11 @@ export class CoursesService {
       awardedPoints: Number(
         (awardedPointsRow.rows[0] as { count?: number } | undefined)?.count ?? 0,
       ),
+      // Phase F bug 3: paid-payment counts. The cancel modal needs the
+      // total (for the refund count line) and the bank-transfer subset
+      // (for the amber "manual wire required" warning).
+      paidPayments: Number(paidPaymentsRow[0]?.count ?? 0),
+      bankTransferPaidPayments: Number(bankTransferPaidRow[0]?.count ?? 0),
     };
   }
 

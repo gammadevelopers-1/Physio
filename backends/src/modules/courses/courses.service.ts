@@ -2454,6 +2454,9 @@ export class CoursesService {
 
       // Per-student email loop.
       const oldStartDateStr = existing.startDate ?? null;
+      const frontendBase = (
+        process.env.FRONTEND_URL || 'https://physioguidance.org'
+      ).replace(/\/$/, '');
       await Promise.all(
         students.map(async (s) => {
           const recipientName = s.firstName ?? s.email ?? 'Student';
@@ -2469,7 +2472,7 @@ export class CoursesService {
                 newEndDate: newEndDateStr ?? null,
                 reason: dto.reason,
                 variant,
-                reenrollUrl: `/courses/${courseId}`,
+                reenrollUrl: `${frontendBase}/${locale}/courses/${courseId}`,
               },
               locale,
             );

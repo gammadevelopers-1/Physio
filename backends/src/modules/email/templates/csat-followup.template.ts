@@ -6,6 +6,7 @@ export function getCsatFollowupHtml(
   ticketId: string,
   score: number,
 ): string {
+  const supportUrl = `${(process.env.FRONTEND_URL || 'https://physioguidance.org').replace(/\/$/, '')}/en/support`;
   return `<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -69,7 +70,7 @@ export function getCsatFollowupHtml(
           <!-- CTA Button -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <a href="/en/support" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;font-family:'DM Sans',Arial,sans-serif;">
+              <a href="${supportUrl}" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;font-family:'DM Sans',Arial,sans-serif;">
                 Contact Support
               </a>
             </td>
@@ -107,6 +108,7 @@ export function getCsatFollowupText(
   ticketId: string,
   score: number,
 ): string {
+  const supportUrl = `${(process.env.FRONTEND_URL || 'https://physioguidance.org').replace(/\/$/, '')}/en/support`;
   return `PhysioGuidance - We'd like to help
 
 Hi ${learnerName},
@@ -115,7 +117,7 @@ We noticed you rated your recent support experience as ${score}/5. We're sorry i
 
 We'd like to understand what went wrong. You can reopen your ticket or contact us.
 
-Contact Support: /en/support
+Contact Support: ${supportUrl}
 
 \u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
 NELC Accredited \u00b7 Saudi Arabia`;

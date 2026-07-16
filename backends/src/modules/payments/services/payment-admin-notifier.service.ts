@@ -62,6 +62,12 @@ export class PaymentAdminNotifierService {
       const staff = await this.loadStaffAudience();
       if (staff.length === 0) return;
 
+      // In-app link stays as a bare path — the frontend resolves it
+      // against its own origin. Email needs an absolute URL because
+      // Gmail/browsers can't infer host from `/dashboard/...`.
+      const inAppLink = `/dashboard/admin/finance?tab=payments&paymentId=${ctx.payment.id}`;
+      const financeUrl = `${this.frontendBase()}${inAppLink}`;
+
       await this.userNotificationsService
         .createBulk(
           staff.map((s) => s.id),
@@ -79,7 +85,7 @@ export class PaymentAdminNotifierService {
               courseName: ctx.courseName,
               gateway: ctx.gatewayLabel,
             },
-            link: `/dashboard/admin/finance?tab=payments&paymentId=${ctx.payment.id}`,
+            link: inAppLink,
             entityType: 'payment',
             entityId: ctx.payment.id,
           },
@@ -91,8 +97,6 @@ export class PaymentAdminNotifierService {
             }`,
           ),
         );
-
-      const financeUrl = `/dashboard/admin/finance?tab=payments&paymentId=${ctx.payment.id}`;
       await Promise.all(
         staff.map((s) =>
           this.emailService.sendAdminPaymentReceived(
@@ -138,6 +142,9 @@ export class PaymentAdminNotifierService {
         .replace('T', ' ')
         .slice(0, 16);
 
+      const inAppLink = `/dashboard/admin/finance?tab=bank-transfers&status=pending`;
+      const reviewUrl = `${this.frontendBase()}${inAppLink}`;
+
       await this.userNotificationsService
         .createBulk(
           staff.map((s) => s.id),
@@ -155,7 +162,7 @@ export class PaymentAdminNotifierService {
               currency: ctx.payment.currency,
               courseName: ctx.courseName,
             },
-            link: `/dashboard/admin/finance?tab=bank-transfers&status=pending`,
+            link: inAppLink,
             entityType: 'payment',
             entityId: ctx.payment.id,
           },
@@ -167,8 +174,6 @@ export class PaymentAdminNotifierService {
             }`,
           ),
         );
-
-      const reviewUrl = `/dashboard/admin/finance?tab=bank-transfers&status=pending`;
       await Promise.all(
         staff.map((s) =>
           this.emailService.sendAdminBankTransferPending(
@@ -246,6 +251,13 @@ export class PaymentAdminNotifierService {
       })
       .from(users)
       .where(inArray(users.activeRole, ['ADMIN', 'SUPER_ADMIN', 'FINANCE']));
+  }
+
+  private frontendBase(): string {
+    // Strip a trailing slash so we can concat with '/dashboard/...' safely.
+    const raw =
+      process.env.FRONTEND_URL || 'https://physioguidance.org';
+    return raw.replace(/\/$/, '');
   }
 
   private humaniseGateway(gateway: string): string {

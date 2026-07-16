@@ -188,7 +188,7 @@ const PaymentsTable = ({
               onClick={() => onPageChange(Math.max(1, page - 1))}
               disabled={page <= 1}
               className="w-8 h-8 inline-flex items-center justify-center rounded-md border border-[var(--color-border)] disabled:opacity-40 hover:bg-[var(--color-surface-page)]"
-              aria-label="Previous page"
+              aria-label={t("a11y.previousPage")}
             >
               {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
@@ -197,7 +197,7 @@ const PaymentsTable = ({
               onClick={() => onPageChange(Math.min(totalPages, page + 1))}
               disabled={page >= totalPages}
               className="w-8 h-8 inline-flex items-center justify-center rounded-md border border-[var(--color-border)] disabled:opacity-40 hover:bg-[var(--color-surface-page)]"
-              aria-label="Next page"
+              aria-label={t("a11y.nextPage")}
             >
               {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>

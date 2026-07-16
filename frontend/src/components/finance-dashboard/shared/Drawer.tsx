@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, ReactNode } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
 interface DrawerProps {
@@ -36,6 +36,7 @@ const Drawer = ({
 }: DrawerProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const t = useTranslations("financeDashboard.a11y");
 
   // Lock body scroll while open + close on Escape
   useEffect(() => {
@@ -65,7 +66,7 @@ const Drawer = ({
         type="button"
         className="absolute inset-0 bg-black/40"
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t("closeOverlay")}
       />
       <div
         className={`relative w-full h-full bg-[var(--color-surface-page)] shadow-2xl flex flex-col ${isRTL ? "border-r" : "border-l"} border-[var(--color-border)]`}
@@ -89,7 +90,7 @@ const Drawer = ({
               type="button"
               onClick={onClose}
               className="w-8 h-8 rounded-md hover:bg-[var(--color-surface-page)] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-              aria-label="Close drawer"
+              aria-label={t("closeDrawer")}
             >
               <X className="w-4 h-4" />
             </button>

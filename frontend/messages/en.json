@@ -8418,11 +8418,276 @@
           "messageLabel": "Message to the applicant"
         }
       }
+    },
+    "financeShell": {
+      "title": "Finance",
+      "subtitle": "Admin super-view across the finance dashboard",
+      "tabs": {
+        "overview": "Overview",
+        "payments": "Payments",
+        "invoices": "Invoices",
+        "refunds": "Refunds",
+        "bankTransfers": "Bank Transfers",
+        "discounts": "Discounts",
+        "reconciliation": "Reconciliation",
+        "escalations": "Escalations",
+        "reports": "Reports",
+        "auditLog": "Audit Log",
+        "settings": "Settings"
+      },
+      "banner": {
+        "title": "Admin finance hub",
+        "descriptionPrefix": "Every tab above mirrors the finance dashboard — same data, same actions, plus admin-only overrides surfaced in row drawers and detail panels. Edit gateways under ",
+        "descriptionLink": "Admin Settings → Payments",
+        "descriptionSuffix": "."
+      },
+      "kpi": {
+        "totalRevenue": "Total revenue",
+        "pendingReview": "Pending review",
+        "failed": "Failed",
+        "refundRate": "Refund rate",
+        "paymentsCount": "{count, plural, =1 {1 payment} other {# payments}}",
+        "needsAttention": "Needs attention",
+        "byAmount": "By amount"
+      },
+      "quickActions": {
+        "title": "Quick actions",
+        "reviewEscalations": "Review escalations",
+        "runReconciliationScan": "Run reconciliation scan",
+        "processRefunds": "Process refunds",
+        "reviewBankTransfers": "Review bank transfers"
+      },
+      "overrides": {
+        "title": "Recent admin overrides",
+        "viewAll": "View all in audit log →",
+        "loading": "Loading…",
+        "empty": "No admin overrides recorded yet. When admins use force-status, replay-webhook, force-cancel, or any override action, they'll appear here.",
+        "systemFallback": "System"
+      },
+      "settings": {
+        "refundPolicy": "Refund Policy",
+        "tax": "Tax & VAT",
+        "vatTreatments": "VAT Treatments",
+        "gateways": "Gateways"
+      },
+      "gateways": {
+        "calloutTitle": "Edit gateway credentials in Admin Settings",
+        "calloutBodyPrefix": "Secrets and webhook tokens are managed under ",
+        "calloutBodyBold": "Admin Settings → Payments",
+        "calloutBodySuffix": ". Changes there flow through the live payment runtime within seconds.",
+        "openEditor": "Open gateway editor"
+      }
+    },
+    "escalations": {
+      "list": {
+        "title": "Reconciliation Escalations",
+        "subtitle": "Finance-raised reconciliation drifts that need admin action",
+        "refresh": "Refresh",
+        "kpi": {
+          "pending": "Pending",
+          "inProgress": "In progress",
+          "highUrgencyOpen": "High urgency (open)",
+          "avgResolutionTime": "Avg resolution time"
+        },
+        "filtersLabel": "Filters:",
+        "urgencyFilter": {
+          "all": "All urgency"
+        },
+        "gatewayFilter": {
+          "all": "All gateways"
+        },
+        "empty": {
+          "title": "No escalations",
+          "pending": "Nothing waiting — finance hasn't escalated anything new.",
+          "otherStatus": "No {status} escalations."
+        },
+        "table": {
+          "urgency": "Urgency",
+          "status": "Status",
+          "drift": "Drift",
+          "gateway": "Gateway",
+          "customer": "Customer",
+          "proposedAction": "Proposed action",
+          "escalatedBy": "Escalated by",
+          "when": "When"
+        },
+        "systemFallback": "System",
+        "open": "Open",
+        "pagination": "{total} escalations · page {page} of {totalPages}",
+        "toastLoadFailed": "Failed to load escalations"
+      },
+      "detail": {
+        "backToList": "Back to escalations",
+        "notFound": "Escalation not found.",
+        "urgencySuffix": "urgency",
+        "proposedActionLabel": "Proposed action:",
+        "cards": {
+          "customerCourse": "Customer & course",
+          "customerLabel": "Customer",
+          "emailLabel": "Email",
+          "courseLabel": "Course",
+          "payment": "Payment",
+          "paymentIdLabel": "Payment ID",
+          "amountLabel": "Amount",
+          "statusLabel": "Status",
+          "gatewayLabel": "Gateway",
+          "methodLabel": "Method",
+          "gatewayChargeIdLabel": "Gateway charge ID",
+          "createdLabel": "Created",
+          "driftEvidence": "Drift evidence",
+          "ourValue": "Our value",
+          "gatewayValue": "Gateway value",
+          "financeEscalation": "Finance's escalation",
+          "escalatedByLabel": "Escalated by",
+          "escalatedByFallback": "System (cron)",
+          "atLabel": "At",
+          "noteLabel": "Note",
+          "lifecycle": "Lifecycle",
+          "claimedByLabel": "Claimed by",
+          "claimedAtLabel": "Claimed at",
+          "resolvedByLabel": "Resolved by",
+          "actionTakenLabel": "Action taken",
+          "resolutionNoteLabel": "Resolution note",
+          "actions": "Actions"
+        },
+        "actions": {
+          "claim": "Claim this escalation",
+          "enroll": "Enroll student",
+          "refund": "Issue refund",
+          "refundTitle": "Issue a refund through the gateway",
+          "refundNoPaymentTitle": "No payment linked — use Enroll instead, or close as no-action.",
+          "sendBack": "Send back to finance",
+          "close": "Close without action"
+        },
+        "openAdminFinance": "Open admin finance dashboard →",
+        "modals": {
+          "sendBack": {
+            "title": "Send back to finance",
+            "subtitle": "Tell finance what more info you need. The underlying finding will unlock so they can act again.",
+            "confirm": "Send back",
+            "placeholder": "Required (≥10 chars) — what's missing?"
+          },
+          "close": {
+            "title": "Close without action",
+            "subtitle": "Use when this escalation truly needs no action — finance confirmed it's a duplicate, test data, or out of scope.",
+            "confirm": "Close",
+            "placeholder": "Required (≥10 chars) — why this needs no action."
+          },
+          "enroll": {
+            "title": "Enroll student",
+            "subtitle": "Atomically creates the payment row (if missing), enrolls the student, sends them a confirmation email, and closes this escalation.",
+            "studentLabel": "Student",
+            "studentChange": "Change",
+            "studentSearchPlaceholder": "Search by name or email…",
+            "searching": "Searching…",
+            "unknownName": "—",
+            "courseIdLabel": "Course ID",
+            "courseIdPlaceholder": "Paste course UUID",
+            "courseIdTip": "Tip: for missing_local findings, the courseId is usually in the gateway metadata — check the drift evidence panel.",
+            "noteLabel": "Internal note",
+            "notePlaceholder": "Required (≥10 chars) — captured in the audit log.",
+            "cancel": "Cancel",
+            "submit": "Enroll"
+          },
+          "refund": {
+            "title": "Issue refund",
+            "subtitle": "Calls the gateway immediately. If the gateway succeeds, the escalation closes and the finding resolves. If the gateway fails, the refund row stays in APPROVED for retry from the Refunds page.",
+            "amountLabel": "Amount ({currency})",
+            "amountPlaceholder": "Default: full payment ({amount})",
+            "amountHelp": "Leave blank for a full refund of {amount} {currency}.",
+            "reasonLabel": "Reason",
+            "reasonPlaceholder": "e.g. duplicate charge, customer dispute",
+            "noteLabel": "Internal note",
+            "notePlaceholder": "Required (≥10 chars) — captured in the audit log.",
+            "cancel": "Cancel",
+            "submit": "Issue refund"
+          },
+          "cancel": "Cancel",
+          "notesCounter": "{count}/10 minimum"
+        },
+        "toasts": {
+          "claimed": "Claimed — you own this escalation now",
+          "claimFailed": "Failed to claim",
+          "noteTooShort": "Note must be at least 10 characters",
+          "sentBack": "Sent back to finance",
+          "sendBackFailed": "Failed to send back",
+          "closed": "Escalation closed (no action)",
+          "closeFailed": "Failed to close",
+          "loadFailed": "Failed to load escalation",
+          "enrollValidationBoth": "Both student and course are required",
+          "enrollFailed": "Failed to enroll",
+          "refundReasonRequired": "Refund reason is required",
+          "refundAmountInvalid": "Refund amount must be a positive number",
+          "refundFailed": "Failed to refund",
+          "enrolled": "Enrolled",
+          "paymentCreated": "payment created",
+          "paymentFlipped": "payment marked paid",
+          "receiptApproved": "receipt approved",
+          "studentNotified": "student notified",
+          "refundIssued": "Refund issued",
+          "refundIssuedWithId": "Refund issued — gateway refund {id}"
+        }
+      },
+      "labels": {
+        "status": {
+          "pending": "Pending",
+          "in_progress": "In progress",
+          "resolved": "Resolved",
+          "declined": "Declined",
+          "sent_back": "Sent back",
+          "all": "All"
+        },
+        "proposedAction": {
+          "enroll": "Manual enrollment",
+          "refund": "Issue refund",
+          "investigate": "Investigate",
+          "other": "Other",
+          "system_inferred": "System-inferred"
+        },
+        "gateway": {
+          "moyasar": "Moyasar",
+          "tamara": "Tamara",
+          "tabby": "Tabby",
+          "bank_transfer": "Bank Transfer"
+        },
+        "driftType": {
+          "missing_local": "Missing locally",
+          "missing_gateway": "Missing on gateway",
+          "amount_mismatch": "Amount mismatch",
+          "status_mismatch": "Status mismatch",
+          "stuck_pending": "Stuck pending",
+          "stuck_approval": "Stuck approval",
+          "orphan_receipt": "Orphan receipt",
+          "paid_no_receipt": "Paid, no receipt"
+        },
+        "urgency": {
+          "low": "Low",
+          "normal": "Normal",
+          "high": "High"
+        }
+      }
     }
   },
   "financeDashboard": {
     "title": "Finance Dashboard",
     "subtitle": "Welcome back, {name}! Here's your financial overview.",
+    "a11y": {
+      "closeOverlay": "Close",
+      "closeDrawer": "Close drawer",
+      "scrollTabsLeft": "Scroll tabs left",
+      "scrollTabsRight": "Scroll tabs right",
+      "financeNav": "Finance navigation",
+      "navigationMenu": "Navigation menu",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "rowActions": "Actions",
+      "exportOptions": "Export options",
+      "paymentsInvoicesTable": "Payments and invoices",
+      "refreshAudit": "Refresh audit",
+      "refreshAuditTrail": "Refresh audit trail",
+      "receiptImage": "receipt",
+      "receiptPdf": "receipt-pdf"
+    },
     "adminOverride": {
       "title": "Admin overrides",
       "subtitle": "Reserved for admin role. Every action is audit-logged with the reason you provide.",
@@ -8618,6 +8883,8 @@
         },
         "overview": {
           "receiptFile": "Receipt file",
+          "receiptImageAlt": "receipt",
+          "receiptPdfTitle": "receipt-pdf",
           "openInNewTab": "Open in new tab",
           "download": "Download",
           "previewUnavailable": "Preview not available for this file type — open in a new tab.",
@@ -9215,6 +9482,7 @@
         "overview": {
           "refundId": "Refund ID",
           "gatewayRefundId": "Gateway Refund ID",
+          "gatewayChargeId": "Gateway Charge ID",
           "requester": "Requester",
           "course": "Course",
           "invoice": "Invoice",
@@ -9445,7 +9713,16 @@
         "deactivateConfirm": "Deactivate this campaign? Child codes will be rejected at checkout.",
         "activeFilter": "Active",
         "expiredFilter": "Expired",
-        "allFilter": "All"
+        "allFilter": "All",
+        "bannerOn": "on",
+        "bannerOff": "off",
+        "editAction": "Edit",
+        "toasts": {
+          "saved": "Saved",
+          "saveError": "Failed to save campaign",
+          "deactivated": "Deactivated",
+          "deactivateError": "Failed to deactivate campaign"
+        }
       },
       "drawer": {
         "title": "Discount Detail",
@@ -9653,7 +9930,13 @@
           "specificCoursesHint": "Only the courses you pick below",
           "searchPlaceholder": "Search courses…",
           "selectedCount": "{n} selected",
-          "noCourses": "No courses match"
+          "noCourses": "No courses match",
+          "salePercentBadge": "{percent}% Sale",
+          "saleBadge": "On Sale",
+          "saleStackingTooltip": "This course is on sale. Coupons stack on top of the sale.",
+          "saleNoStackingTooltip": "This course is on sale. Coupons will be REJECTED at checkout unless the sale allows stacking.",
+          "noStackBadge": "No-stack",
+          "noStackTooltip": "The sale on this course does not allow coupon stacking. A coupon attached here will be rejected at checkout."
         },
         "step3": {
           "heading": "Usage limits",
@@ -9689,7 +9972,8 @@
           "unlimited": "Unlimited",
           "noExpiry": "No expiry",
           "nCourses": "{n} courses"
-        }
+        },
+        "untitledCourse": "Untitled"
       },
       "bulkWizard": {
         "title": "Bulk generate coupons",
@@ -9755,9 +10039,13 @@
           "scope": "Scope",
           "expires": "Expires",
           "flags": "Flags",
+          "flagAuto": "Auto",
+          "flagEarlyBird": "Early bird",
+          "flagCampaign": "Campaign",
           "nCourses": "{n} courses",
           "downloadNote": "CSV downloads automatically after generation"
-        }
+        },
+        "untitledCourse": "Untitled"
       },
       "campaignsV2": {
         "searchPlaceholder": "Search campaigns…",
@@ -9787,6 +10075,7 @@
           "createTitle": "New campaign",
           "editTitle": "Edit campaign",
           "name": "Name",
+          "namePlaceholder": "Ramadan 2026",
           "description": "Description",
           "startsAt": "Starts at",
           "endsAt": "Ends at",
@@ -9795,6 +10084,7 @@
           "showBanner": "Show banner on public site",
           "showBannerHint": "A gradient strip appears above the courses pages while the campaign is live.",
           "bannerCta": "Banner CTA (optional)",
+          "bannerCtaPlaceholder": "Shop now",
           "cancel": "Cancel",
           "save": "Save campaign",
           "createdToast": "Campaign created",
@@ -10809,6 +11099,7 @@
     },
     "paymentDetail": {
       "title": "Payment Details",
+      "refreshAuditTrail": "Refresh audit trail",
       "amount": "Amount",
       "paidAt": "Paid at",
       "tabs": {
@@ -10857,6 +11148,7 @@
     },
     "invoiceDetail": {
       "title": "Invoice Details",
+      "refreshAudit": "Refresh audit",
       "total": "Total",
       "issued": "Issued",
       "paid": "Paid",

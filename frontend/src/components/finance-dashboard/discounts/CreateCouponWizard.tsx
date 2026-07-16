@@ -195,7 +195,7 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                 };
                 return {
                   id: cc.id,
-                  title: cc.title || cc.titleEn || cc.titleAr || "Untitled",
+                  title: cc.title || cc.titleEn || cc.titleAr || t("untitledCourse"),
                   titleAr: cc.titleAr,
                   thumbnail: cc.thumbnail || null,
                   price: Number(cc.price ?? 0),
@@ -607,19 +607,21 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                                       className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FEE2E2] text-[#B91C1C] uppercase tracking-wide flex-shrink-0"
                                       title={
                                         c.saleAllowsCoupon
-                                          ? "This course is on sale. Coupons stack on top of the sale."
-                                          : "This course is on sale. Coupons will be REJECTED at checkout unless the sale allows stacking."
+                                          ? t("step2.saleStackingTooltip")
+                                          : t("step2.saleNoStackingTooltip")
                                       }
                                     >
-                                      {c.salePercent ? `${c.salePercent}% Sale` : "On Sale"}
+                                      {c.salePercent
+                                        ? t("step2.salePercentBadge", { percent: c.salePercent })
+                                        : t("step2.saleBadge")}
                                     </span>
                                   )}
                                   {c.onSale && !c.saleAllowsCoupon && (
                                     <span
                                       className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FEF3C7] text-[#92400E] uppercase tracking-wide flex-shrink-0"
-                                      title="The sale on this course does not allow coupon stacking. A coupon attached here will be rejected at checkout."
+                                      title={t("step2.noStackTooltip")}
                                     >
-                                      No-stack
+                                      {t("step2.noStackBadge")}
                                     </span>
                                   )}
                                 </div>

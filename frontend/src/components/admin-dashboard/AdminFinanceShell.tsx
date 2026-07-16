@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   DollarSign,
   CreditCard,
@@ -93,6 +93,7 @@ const VALID_SETTINGS_SUBTABS: SettingsSubTab[] = [
 export default function AdminFinanceShell() {
   const admin = useAdminProfile();
   const locale = useLocale();
+  const t = useTranslations("adminDashboard.financeShell");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -147,17 +148,17 @@ export default function AdminFinanceShell() {
   );
 
   const TABS: { key: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { key: "overview",       label: "Overview",       icon: LayoutDashboard },
-    { key: "payments",       label: "Payments",       icon: CreditCard },
-    { key: "invoices",       label: "Invoices",       icon: FileText },
-    { key: "refunds",        label: "Refunds",        icon: RotateCcw },
-    { key: "bank-transfers", label: "Bank Transfers", icon: Building2 },
-    { key: "discounts",      label: "Discounts",      icon: Tag },
-    { key: "reconciliation", label: "Reconciliation", icon: Scale },
-    { key: "escalations",    label: "Escalations",    icon: ShieldAlert },
-    { key: "reports",        label: "Reports",        icon: BarChart3 },
-    { key: "audit-log",      label: "Audit Log",      icon: ListChecks },
-    { key: "settings",       label: "Settings",       icon: Settings },
+    { key: "overview",       label: t("tabs.overview"),       icon: LayoutDashboard },
+    { key: "payments",       label: t("tabs.payments"),       icon: CreditCard },
+    { key: "invoices",       label: t("tabs.invoices"),       icon: FileText },
+    { key: "refunds",        label: t("tabs.refunds"),        icon: RotateCcw },
+    { key: "bank-transfers", label: t("tabs.bankTransfers"),  icon: Building2 },
+    { key: "discounts",      label: t("tabs.discounts"),      icon: Tag },
+    { key: "reconciliation", label: t("tabs.reconciliation"), icon: Scale },
+    { key: "escalations",    label: t("tabs.escalations"),    icon: ShieldAlert },
+    { key: "reports",        label: t("tabs.reports"),        icon: BarChart3 },
+    { key: "audit-log",      label: t("tabs.auditLog"),       icon: ListChecks },
+    { key: "settings",       label: t("tabs.settings"),       icon: Settings },
   ];
 
   return (
@@ -180,10 +181,10 @@ export default function AdminFinanceShell() {
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
-                    Finance
+                    {t("title")}
                   </h1>
                   <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
-                    Admin super-view across the finance dashboard
+                    {t("subtitle")}
                   </p>
                 </div>
               </div>
@@ -252,6 +253,7 @@ function OverviewTab({
   locale: string;
   onJumpTab: (tab: Tab) => void;
 }) {
+  const t = useTranslations("adminDashboard.financeShell");
   const [summary, setSummary] = useState<{
     totalRevenue: number;
     totalPayments: number;
@@ -307,12 +309,10 @@ function OverviewTab({
           </div>
           <div>
             <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
-              Admin finance hub
+              {t("banner.title")}
             </h2>
             <p className="text-sm text-[var(--color-text-secondary)]">
-              Every tab above mirrors the finance dashboard — same data, same
-              actions, plus admin-only overrides surfaced in row drawers and
-              detail panels. Edit gateways under <Link href={`/${locale}/dashboard/admin/settings`} className="text-[var(--color-primary)] hover:underline">Admin Settings → Payments</Link>.
+              {t("banner.descriptionPrefix")}<Link href={`/${locale}/dashboard/admin/settings`} className="text-[var(--color-primary)] hover:underline">{t("banner.descriptionLink")}</Link>{t("banner.descriptionSuffix")}
             </p>
           </div>
         </div>
@@ -330,16 +330,16 @@ function OverviewTab({
         ) : (
           <>
             <OverviewKPI
-              label="Total revenue"
+              label={t("kpi.totalRevenue")}
               icon={TrendingUp}
               iconBg={FINANCE_COLORS.success.bg}
               iconColor={FINANCE_COLORS.success.text}
               value={<Money amount={summary?.totalRevenue || 0} decimals={0} iconSize={20} />}
-              sub={`${(summary?.totalPayments || 0).toLocaleString("en-US")} payments`}
+              sub={t("kpi.paymentsCount", { count: summary?.totalPayments || 0 })}
               onClick={() => onJumpTab("payments")}
             />
             <OverviewKPI
-              label="Pending review"
+              label={t("kpi.pendingReview")}
               icon={Receipt}
               iconBg={FINANCE_COLORS.warning.bg}
               iconColor={FINANCE_COLORS.warning.text}
@@ -348,21 +348,21 @@ function OverviewTab({
               onClick={() => onJumpTab("payments")}
             />
             <OverviewKPI
-              label="Failed"
+              label={t("kpi.failed")}
               icon={ShieldAlert}
               iconBg={FINANCE_COLORS.error.bg}
               iconColor={FINANCE_COLORS.error.text}
               value={(summary?.failedPayments || 0).toLocaleString("en-US")}
-              sub="Needs attention"
+              sub={t("kpi.needsAttention")}
               onClick={() => onJumpTab("payments")}
             />
             <OverviewKPI
-              label="Refund rate"
+              label={t("kpi.refundRate")}
               icon={RotateCcw}
               iconBg={FINANCE_COLORS.violet.bg}
               iconColor={FINANCE_COLORS.violet.text}
               value={`${(refundRate || 0).toFixed(1)}%`}
-              sub="By amount"
+              sub={t("kpi.byAmount")}
               onClick={() => onJumpTab("refunds")}
             />
           </>
@@ -372,30 +372,30 @@ function OverviewTab({
       {/* Quick actions */}
       <div>
         <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
-          Quick actions
+          {t("quickActions.title")}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <QuickActionCard
             icon={ShieldAlert}
-            label="Review escalations"
+            label={t("quickActions.reviewEscalations")}
             color="text-violet-700 bg-violet-50"
             onClick={() => onJumpTab("escalations")}
           />
           <QuickActionCard
             icon={Scale}
-            label="Run reconciliation scan"
+            label={t("quickActions.runReconciliationScan")}
             color="text-blue-700 bg-blue-50"
             onClick={() => onJumpTab("reconciliation")}
           />
           <QuickActionCard
             icon={RotateCcw}
-            label="Process refunds"
+            label={t("quickActions.processRefunds")}
             color="text-amber-700 bg-amber-50"
             onClick={() => onJumpTab("refunds")}
           />
           <QuickActionCard
             icon={Building2}
-            label="Review bank transfers"
+            label={t("quickActions.reviewBankTransfers")}
             color="text-emerald-700 bg-emerald-50"
             onClick={() => onJumpTab("bank-transfers")}
           />
@@ -428,6 +428,8 @@ function RecentAdminActivity({
   locale: string;
   onJumpTab: (tab: Tab) => void;
 }) {
+  const t = useTranslations("adminDashboard.financeShell");
+  const isRTL = locale === "ar";
   const router = useRouter();
   const pathname = usePathname();
   const [rows, setRows] = useState<AdminActivityRow[] | null>(null);
@@ -484,27 +486,25 @@ function RecentAdminActivity({
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
           <ShieldAlert className="w-4 h-4 text-[#B91C1C]" />
-          Recent admin overrides
+          {t("overrides.title")}
         </h3>
         <button
           type="button"
           onClick={() => onJumpTab("audit-log")}
           className="text-xs text-[var(--color-primary)] hover:underline"
         >
-          View all in audit log →
+          {t("overrides.viewAll")}
         </button>
       </div>
       <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl divide-y divide-[var(--color-border-subtle)] overflow-hidden">
         {loading && (
           <div className="p-6 text-center text-sm text-[var(--color-text-secondary)]">
-            Loading…
+            {t("overrides.loading")}
           </div>
         )}
         {!loading && rows && rows.length === 0 && (
           <div className="p-6 text-center text-sm text-[var(--color-text-secondary)]">
-            No admin overrides recorded yet. When admins use force-status,
-            replay-webhook, force-cancel, or any override action, they&apos;ll
-            appear here.
+            {t("overrides.empty")}
           </div>
         )}
         {!loading &&
@@ -514,7 +514,7 @@ function RecentAdminActivity({
             const performerName =
               [row.performerFirstName, row.performerLastName].filter(Boolean).join(" ") ||
               row.performerEmail ||
-              "System";
+              t("overrides.systemFallback");
             const when = new Date(row.createdAt).toLocaleString(
               locale === "ar" ? "ar-SA-u-nu-latn" : "en-US",
               {
@@ -530,7 +530,7 @@ function RecentAdminActivity({
                 key={row.id}
                 type="button"
                 onClick={() => openEntity(row)}
-                className="w-full text-left px-4 py-3 hover:bg-[var(--color-surface-page)] flex items-center gap-3 transition-colors"
+                className={`w-full ${isRTL ? "text-right" : "text-left"} px-4 py-3 hover:bg-[var(--color-surface-page)] flex items-center gap-3 transition-colors`}
               >
                 <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FEE2E2] text-[#991B1B] flex-shrink-0">
                   {row.entityType}
@@ -573,7 +573,7 @@ function OverviewKPI({
     <button
       type="button"
       onClick={onClick}
-      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3 text-left hover:border-[var(--color-primary)] transition-colors"
+      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3 text-start hover:border-[var(--color-primary)] transition-colors"
     >
       <div className={`w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
         <Icon className={`w-5 h-5 ${iconColor}`} />
@@ -602,7 +602,7 @@ function QuickActionCard({
     <button
       type="button"
       onClick={onClick}
-      className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-4 hover:border-[var(--color-primary)] transition-colors flex items-center gap-3 text-left"
+      className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-4 hover:border-[var(--color-primary)] transition-colors flex items-center gap-3 text-start"
     >
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${color}`}>
         <Icon className="w-4 h-4" />
@@ -623,15 +623,16 @@ function SettingsTab({
   onChangeSubTab: (sub: SettingsSubTab) => void;
   locale: string;
 }) {
+  const t = useTranslations("adminDashboard.financeShell");
   const SUB_TABS: {
     key: SettingsSubTab;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
   }[] = [
-    { key: "refund-policy",   label: "Refund Policy",  icon: Shield },
-    { key: "tax",             label: "Tax & VAT",      icon: Percent },
-    { key: "vat-treatments",  label: "VAT Treatments", icon: FileText },
-    { key: "gateways",        label: "Gateways",       icon: CreditCard },
+    { key: "refund-policy",   label: t("settings.refundPolicy"),  icon: Shield },
+    { key: "tax",             label: t("settings.tax"),           icon: Percent },
+    { key: "vat-treatments",  label: t("settings.vatTreatments"), icon: FileText },
+    { key: "gateways",        label: t("settings.gateways"),      icon: CreditCard },
   ];
 
   return (
@@ -678,6 +679,7 @@ function SettingsTab({
 // This sub-tab shows the same read-only projection finance sees, plus a
 // prominent call-out to the editor where admins actually change keys.
 function GatewaysAdminCallout({ locale }: { locale: string }) {
+  const t = useTranslations("adminDashboard.financeShell");
   return (
     <div className="space-y-5">
       <div className="bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/20 rounded-lg p-4 flex items-start gap-3">
@@ -686,17 +688,17 @@ function GatewaysAdminCallout({ locale }: { locale: string }) {
         </div>
         <div className="flex-1">
           <p className="text-sm font-medium text-[var(--color-text-primary)]">
-            Edit gateway credentials in Admin Settings
+            {t("gateways.calloutTitle")}
           </p>
           <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 mb-3">
-            Secrets and webhook tokens are managed under <strong>Admin Settings → Payments</strong>. Changes there flow through the live payment runtime within seconds.
+            {t("gateways.calloutBodyPrefix")}<strong>{t("gateways.calloutBodyBold")}</strong>{t("gateways.calloutBodySuffix")}
           </p>
           <Link
             href={`/${locale}/dashboard/admin/settings?tab=payments`}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[var(--color-primary)] text-white rounded-md hover:opacity-90"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            Open gateway editor
+            {t("gateways.openEditor")}
           </Link>
         </div>
       </div>

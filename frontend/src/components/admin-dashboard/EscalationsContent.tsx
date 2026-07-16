@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   ShieldAlert,
@@ -15,6 +15,7 @@ import {
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
+import Select from "./Select";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import {
   escalationsApi,
@@ -24,6 +25,7 @@ import {
   type EscalationUrgency,
   type EscalationStats,
 } from "@/lib/api";
+import { formatDateTime } from "@/components/finance-dashboard/shared/financeFormat";
 
 const STATUS_TABS: (EscalationStatus | "all")[] = [
   "pending",
@@ -33,15 +35,6 @@ const STATUS_TABS: (EscalationStatus | "all")[] = [
   "sent_back",
   "all",
 ];
-
-const STATUS_LABEL: Record<EscalationStatus | "all", string> = {
-  pending: "Pending",
-  in_progress: "In progress",
-  resolved: "Resolved",
-  declined: "Declined",
-  sent_back: "Sent back",
-  all: "All",
-};
 
 const STATUS_PILL: Record<EscalationStatus, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -57,31 +50,32 @@ const URGENCY_PILL: Record<EscalationUrgency, string> = {
   high: "bg-red-100 text-red-700",
 };
 
-const PROPOSED_ACTION_LABEL: Record<string, string> = {
-  enroll: "Manual enrollment",
-  refund: "Issue refund",
-  investigate: "Investigate",
-  other: "Other",
-  system_inferred: "System-inferred",
-};
+// Label lookup helpers — resolve dynamic keys under
+// `adminDashboard.escalations.labels.*` at render time.
+type LabelT = ReturnType<typeof useTranslations>;
 
-const GATEWAY_LABEL: Record<string, string> = {
-  moyasar: "Moyasar",
-  tamara: "Tamara",
-  tabby: "Tabby",
-  bank_transfer: "Bank Transfer",
-};
+function getStatusLabel(status: EscalationStatus | "all", t: LabelT): string {
+  return t(`labels.status.${status}`);
+}
 
-const DRIFT_TYPE_LABEL: Record<string, string> = {
-  missing_local: "Missing locally",
-  missing_gateway: "Missing on gateway",
-  amount_mismatch: "Amount mismatch",
-  status_mismatch: "Status mismatch",
-  stuck_pending: "Stuck pending",
-  stuck_approval: "Stuck approval",
-  orphan_receipt: "Orphan receipt",
-  paid_no_receipt: "Paid, no receipt",
-};
+function getProposedActionLabel(action: string, t: LabelT): string {
+  const has = t.has ? t.has(`labels.proposedAction.${action}`) : true;
+  return has ? t(`labels.proposedAction.${action}`) : action;
+}
+
+function getGatewayLabel(gateway: string, t: LabelT): string {
+  const has = t.has ? t.has(`labels.gateway.${gateway}`) : true;
+  return has ? t(`labels.gateway.${gateway}`) : gateway;
+}
+
+function getDriftTypeLabel(driftType: string, t: LabelT): string {
+  const has = t.has ? t.has(`labels.driftType.${driftType}`) : true;
+  return has ? t(`labels.driftType.${driftType}`) : driftType;
+}
+
+function getUrgencyLabel(urgency: EscalationUrgency, t: LabelT): string {
+  return t(`labels.urgency.${urgency}`);
+}
 
 export interface EscalationsContentProps {
   /** When true, render only the inner page (no AdminNavbar/Sidebar). Used by
@@ -96,6 +90,7 @@ export default function EscalationsContent({
   const admin = useAdminProfile();
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const t = useTranslations("adminDashboard.escalations");
 
   const [statusTab, setStatusTab] = useState<EscalationStatus | "all">("pending");
   const [urgencyFilter, setUrgencyFilter] = useState<EscalationUrgency | "">("");
@@ -125,18 +120,18 @@ export default function EscalationsContent({
       setTotal(list.pagination.total);
       setStats(s);
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to load escalations");
+      toast.error(err instanceof ApiError ? err.message : t("list.toastLoadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [statusTab, urgencyFilter, gatewayFilter, page]);
+  }, [statusTab, urgencyFilter, gatewayFilter, page, t]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const inner = (
-    <>
+    <div dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
                 <div className="flex items-start gap-3">
@@ -145,10 +140,10 @@ export default function EscalationsContent({
                   </div>
                   <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
-                      Reconciliation Escalations
+                      {t("list.title")}
                     </h1>
                     <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
-                      Finance-raised reconciliation drifts that need admin action
+                      {t("list.subtitle")}
                     </p>
                   </div>
                 </div>
@@ -158,28 +153,28 @@ export default function EscalationsContent({
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-60"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  Refresh
+                  {t("list.refresh")}
                 </button>
               </div>
 
               {/* KPI cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
                 <KpiCard
-                  label="Pending"
+                  label={t("list.kpi.pending")}
                   value={stats?.pending ?? "—"}
                   emphasis={(stats?.pending ?? 0) > 0 ? "warning" : "normal"}
                 />
                 <KpiCard
-                  label="In progress"
+                  label={t("list.kpi.inProgress")}
                   value={stats?.inProgress ?? "—"}
                 />
                 <KpiCard
-                  label="High urgency (open)"
+                  label={t("list.kpi.highUrgencyOpen")}
                   value={stats?.highUrgencyOpen ?? "—"}
                   emphasis={(stats?.highUrgencyOpen ?? 0) > 0 ? "danger" : "normal"}
                 />
                 <KpiCard
-                  label="Avg resolution time"
+                  label={t("list.kpi.avgResolutionTime")}
                   value={
                     stats?.avgResolutionMinutes
                       ? formatDuration(stats.avgResolutionMinutes)
@@ -193,35 +188,39 @@ export default function EscalationsContent({
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)]">
                     <Filter className="w-3.5 h-3.5" />
-                    Filters:
+                    {t("list.filtersLabel")}
                   </div>
-                  <select
+                  <Select
                     value={urgencyFilter}
-                    onChange={(e) => {
-                      setUrgencyFilter(e.target.value as EscalationUrgency | "");
+                    onChange={(v) => {
+                      setUrgencyFilter(v as EscalationUrgency | "");
                       setPage(1);
                     }}
-                    className="px-3 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)]"
-                  >
-                    <option value="">All urgency</option>
-                    <option value="high">High</option>
-                    <option value="normal">Normal</option>
-                    <option value="low">Low</option>
-                  </select>
-                  <select
+                    size="sm"
+                    className="w-[160px]"
+                    options={[
+                      { value: "", label: t("list.urgencyFilter.all") },
+                      { value: "high", label: getUrgencyLabel("high", t) },
+                      { value: "normal", label: getUrgencyLabel("normal", t) },
+                      { value: "low", label: getUrgencyLabel("low", t) },
+                    ]}
+                  />
+                  <Select
                     value={gatewayFilter}
-                    onChange={(e) => {
-                      setGatewayFilter(e.target.value);
+                    onChange={(v) => {
+                      setGatewayFilter(v);
                       setPage(1);
                     }}
-                    className="px-3 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)]"
-                  >
-                    <option value="">All gateways</option>
-                    <option value="moyasar">Moyasar</option>
-                    <option value="tamara">Tamara</option>
-                    <option value="tabby">Tabby</option>
-                    <option value="bank_transfer">Bank Transfer</option>
-                  </select>
+                    size="sm"
+                    className="w-[180px]"
+                    options={[
+                      { value: "", label: t("list.gatewayFilter.all") },
+                      { value: "moyasar", label: getGatewayLabel("moyasar", t) },
+                      { value: "tamara", label: getGatewayLabel("tamara", t) },
+                      { value: "tabby", label: getGatewayLabel("tabby", t) },
+                      { value: "bank_transfer", label: getGatewayLabel("bank_transfer", t) },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -244,7 +243,7 @@ export default function EscalationsContent({
                           : "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                       }`}
                     >
-                      {STATUS_LABEL[key]}
+                      {getStatusLabel(key, t)}
                     </button>
                   );
                 })}
@@ -260,12 +259,14 @@ export default function EscalationsContent({
                   <div className="flex flex-col items-center justify-center py-16 text-center px-4">
                     <ShieldAlert className="w-12 h-12 text-[var(--color-text-secondary)] opacity-40 mb-3" />
                     <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                      No escalations
+                      {t("list.empty.title")}
                     </p>
                     <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                       {statusTab === "pending"
-                        ? "Nothing waiting — finance hasn't escalated anything new."
-                        : `No ${STATUS_LABEL[statusTab].toLowerCase()} escalations.`}
+                        ? t("list.empty.pending")
+                        : t("list.empty.otherStatus", {
+                            status: getStatusLabel(statusTab, t).toLowerCase(),
+                          })}
                     </p>
                   </div>
                 ) : (
@@ -273,15 +274,15 @@ export default function EscalationsContent({
                     <table className="w-full text-sm">
                       <thead className="bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]">
                         <tr>
-                          <th className="text-left p-3 font-medium">Urgency</th>
-                          <th className="text-left p-3 font-medium">Status</th>
-                          <th className="text-left p-3 font-medium">Drift</th>
-                          <th className="text-left p-3 font-medium">Gateway</th>
-                          <th className="text-left p-3 font-medium">Customer</th>
-                          <th className="text-left p-3 font-medium">Proposed action</th>
-                          <th className="text-left p-3 font-medium">Escalated by</th>
-                          <th className="text-left p-3 font-medium">When</th>
-                          <th className="text-right p-3 font-medium"></th>
+                          <th className="text-start p-3 font-medium">{t("list.table.urgency")}</th>
+                          <th className="text-start p-3 font-medium">{t("list.table.status")}</th>
+                          <th className="text-start p-3 font-medium">{t("list.table.drift")}</th>
+                          <th className="text-start p-3 font-medium">{t("list.table.gateway")}</th>
+                          <th className="text-start p-3 font-medium">{t("list.table.customer")}</th>
+                          <th className="text-start p-3 font-medium">{t("list.table.proposedAction")}</th>
+                          <th className="text-start p-3 font-medium">{t("list.table.escalatedBy")}</th>
+                          <th className="text-start p-3 font-medium">{t("list.table.when")}</th>
+                          <th className="text-end p-3 font-medium"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -292,23 +293,23 @@ export default function EscalationsContent({
                           >
                             <td className="p-3">
                               <span
-                                className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${URGENCY_PILL[e.urgency]}`}
+                                className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${URGENCY_PILL[e.urgency]}`}
                               >
-                                {e.urgency}
+                                {getUrgencyLabel(e.urgency, t)}
                               </span>
                             </td>
                             <td className="p-3">
                               <span
                                 className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${STATUS_PILL[e.status]}`}
                               >
-                                {STATUS_LABEL[e.status]}
+                                {getStatusLabel(e.status, t)}
                               </span>
                             </td>
                             <td className="p-3 text-xs">
-                              {DRIFT_TYPE_LABEL[e.driftType] || e.driftType}
+                              {getDriftTypeLabel(e.driftType, t)}
                             </td>
                             <td className="p-3 text-xs">
-                              {GATEWAY_LABEL[e.gateway] || e.gateway}
+                              {getGatewayLabel(e.gateway, t)}
                             </td>
                             <td className="p-3">
                               <div className="text-xs">{e.customerName || e.customerEmail || "—"}</div>
@@ -319,20 +320,18 @@ export default function EscalationsContent({
                               )}
                             </td>
                             <td className="p-3 text-xs">
-                              {PROPOSED_ACTION_LABEL[e.proposedAction] || e.proposedAction}
+                              {getProposedActionLabel(e.proposedAction, t)}
                             </td>
-                            <td className="p-3 text-xs">{e.escalatedByName || "System"}</td>
+                            <td className="p-3 text-xs">{e.escalatedByName || t("list.systemFallback")}</td>
                             <td className="p-3 text-xs text-[var(--color-text-secondary)]">
-                              {new Date(e.escalatedAt).toLocaleString(
-                                locale === "ar" ? "ar-SA" : "en-US",
-                              )}
+                              {formatDateTime(e.escalatedAt, locale)}
                             </td>
-                            <td className="p-3 text-right">
+                            <td className="p-3 text-end">
                               <Link
                                 href={`/${locale}/dashboard/admin/finance/escalations/${e.id}`}
                                 className="px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-colors inline-block"
                               >
-                                Open
+                                {t("list.open")}
                               </Link>
                             </td>
                           </tr>
@@ -345,7 +344,7 @@ export default function EscalationsContent({
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between p-3 border-t border-[var(--color-border)]">
                     <div className="text-xs text-[var(--color-text-secondary)]">
-                      {total} escalations · page {page} of {totalPages}
+                      {t("list.pagination", { total, page, totalPages })}
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -366,7 +365,7 @@ export default function EscalationsContent({
                   </div>
                 )}
               </div>
-    </>
+    </div>
   );
 
   if (embedded) {

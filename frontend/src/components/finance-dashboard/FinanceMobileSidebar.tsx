@@ -178,7 +178,7 @@ const FinanceMobileSidebar = ({
       {/* Sidebar Drawer */}
       <div
         role="dialog"
-        aria-label="Navigation menu"
+        aria-label={t("a11y.navigationMenu")}
         className={`lg:hidden fixed top-0 ${isRTL ? "right-0" : "left-0"} h-full w-[300px] bg-[var(--color-surface-page)] z-50 transform transition-transform duration-300 overflow-y-auto ${
           isOpen
             ? "translate-x-0"
@@ -322,7 +322,7 @@ const FinanceMobileSidebar = ({
 
           {/* Navigation Card */}
           <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4">
-            <nav className="space-y-1" aria-label="Finance navigation">
+            <nav className="space-y-1" aria-label={t("a11y.financeNav")}>
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);

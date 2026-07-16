@@ -115,11 +115,15 @@ function computeStatus(c: CouponRow): "active" | "scheduled" | "expired" | "disa
   return "active";
 }
 
-const STATUS_PILL: Record<string, { bg: string; text: string; label: string }> = {
-  active: { bg: "bg-[#DCFCE7]", text: "text-[#15803D]", label: "Active" },
-  scheduled: { bg: "bg-[#DBEAFE]", text: "text-[#1D4ED8]", label: "Scheduled" },
-  expired: { bg: "bg-[#F1F5F9]", text: "text-[#475569]", label: "Expired" },
-  disabled: { bg: "bg-[#FEE2E2]", text: "text-[#B91C1C]", label: "Disabled" },
+// Visual pill classes for each status. The label is rendered via
+// t(`statusPill.${st}`) — see the row map below — so we deliberately
+// don't carry a label field here to prevent it from silently drifting
+// out of i18n.
+const STATUS_PILL: Record<string, { bg: string; text: string }> = {
+  active: { bg: "bg-[#DCFCE7]", text: "text-[#15803D]" },
+  scheduled: { bg: "bg-[#DBEAFE]", text: "text-[#1D4ED8]" },
+  expired: { bg: "bg-[#F1F5F9]", text: "text-[#475569]" },
+  disabled: { bg: "bg-[#FEE2E2]", text: "text-[#B91C1C]" },
 };
 
 interface Props {

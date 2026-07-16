@@ -113,7 +113,7 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
                 const cc = c as unknown as { id: string; title?: string; titleEn?: string; titleAr?: string; thumbnail?: string | null };
                 return {
                   id: cc.id,
-                  title: cc.title || cc.titleEn || cc.titleAr || "Untitled",
+                  title: cc.title || cc.titleEn || cc.titleAr || t("untitledCourse"),
                   thumbnail: cc.thumbnail || null,
                 };
               }),
@@ -629,7 +629,11 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
                       <>
                         <dt className="text-[var(--color-text-secondary)]">{t("step5.flags")}</dt>
                         <dd className="text-[var(--color-text-primary)] text-end font-medium">
-                          {[autoApply && "Auto", earlyBird && "Early bird", campaignId && "Campaign"]
+                          {[
+                            autoApply && t("step5.flagAuto"),
+                            earlyBird && t("step5.flagEarlyBird"),
+                            campaignId && t("step5.flagCampaign"),
+                          ]
                             .filter(Boolean)
                             .join(" · ")}
                         </dd>

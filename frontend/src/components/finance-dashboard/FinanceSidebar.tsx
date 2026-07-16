@@ -294,7 +294,7 @@ const FinanceSidebar = ({
 
       {/* Navigation Card */}
       <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4">
-        <nav className="space-y-1" aria-label="Finance navigation">
+        <nav className="space-y-1" aria-label={t("a11y.financeNav")}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);

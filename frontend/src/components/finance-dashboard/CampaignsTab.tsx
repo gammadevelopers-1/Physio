@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import Money from "./shared/Money";
 import Select from "@/components/admin-dashboard/Select";
+import DateTimePicker from "@/components/ui/DateTimePicker";
 import { discountApi } from "@/lib/api";
 
 /**
@@ -112,11 +113,11 @@ const CampaignsTab = () => {
       } else {
         await discountApi.createCampaign(dto);
       }
-      toast.success("Saved");
+      toast.success(t("discountsPage.campaigns.toasts.saved"));
       setShowForm(false);
       await fetchRows();
     } catch (e: any) {
-      toast.error(e?.message || "Failed");
+      toast.error(e?.message || t("discountsPage.campaigns.toasts.saveError"));
     } finally {
       setSubmitting(false);
     }
@@ -126,10 +127,10 @@ const CampaignsTab = () => {
     if (!confirm(t("discountsPage.campaigns.deactivateConfirm"))) return;
     try {
       await discountApi.deleteCampaign(c.id);
-      toast.success("Deactivated");
+      toast.success(t("discountsPage.campaigns.toasts.deactivated"));
       await fetchRows();
     } catch (e: any) {
-      toast.error(e?.message || "Failed");
+      toast.error(e?.message || t("discountsPage.campaigns.toasts.deactivateError"));
     }
   };
 
@@ -242,11 +243,11 @@ const CampaignsTab = () => {
                     <td className="py-3 px-4">
                       {c.showOnSite ? (
                         <span className="inline-flex items-center gap-1 text-[11px] text-indigo-700">
-                          <Sparkles className="w-3 h-3" /> on
+                          <Sparkles className="w-3 h-3" /> {t("discountsPage.campaigns.bannerOn")}
                         </span>
                       ) : (
                         <span className="text-[11px] text-[var(--color-text-secondary)]">
-                          off
+                          {t("discountsPage.campaigns.bannerOff")}
                         </span>
                       )}
                     </td>
@@ -269,7 +270,7 @@ const CampaignsTab = () => {
                           type="button"
                           onClick={() => openEdit(c)}
                           className="p-1 rounded-md hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
-                          title="Edit"
+                          title={t("discountsPage.campaigns.editAction")}
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
@@ -338,19 +339,15 @@ const CampaignsTab = () => {
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={t("discountsPage.campaigns.fields.startsAt")}>
-                  <input
-                    type="datetime-local"
+                  <DateTimePicker
                     value={formStartsAt}
-                    onChange={(e) => setFormStartsAt(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
+                    onChange={setFormStartsAt}
                   />
                 </Field>
                 <Field label={t("discountsPage.campaigns.fields.endsAt")}>
-                  <input
-                    type="datetime-local"
+                  <DateTimePicker
                     value={formEndsAt}
-                    onChange={(e) => setFormEndsAt(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
+                    onChange={setFormEndsAt}
                   />
                 </Field>
               </div>
@@ -391,7 +388,7 @@ const CampaignsTab = () => {
                 onClick={() => setShowForm(false)}
                 className="px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-card)]"
               >
-                Cancel
+                {t("discountsPage.form.cancel")}
               </button>
               <button
                 type="button"

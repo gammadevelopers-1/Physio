@@ -8418,11 +8418,276 @@
           "messageLabel": "الرسالة إلى المتقدم"
         }
       }
+    },
+    "financeShell": {
+      "title": "المالية",
+      "subtitle": "نظرة إدارية شاملة على لوحة المالية",
+      "tabs": {
+        "overview": "نظرة عامة",
+        "payments": "المدفوعات",
+        "invoices": "الفواتير",
+        "refunds": "المبالغ المستردة",
+        "bankTransfers": "التحويلات البنكية",
+        "discounts": "الخصومات",
+        "reconciliation": "التسوية",
+        "escalations": "التصعيدات",
+        "reports": "التقارير",
+        "auditLog": "سجل التدقيق",
+        "settings": "الإعدادات"
+      },
+      "banner": {
+        "title": "مركز الإدارة المالية",
+        "descriptionPrefix": "يعكس كل تبويب أعلاه لوحة المالية — البيانات نفسها والإجراءات نفسها، مع تجاوزات إدارية حصرية تظهر ضمن اللوحات الجانبية والصفحات التفصيلية. عدّل البوابات من ",
+        "descriptionLink": "إعدادات الإدارة ← المدفوعات",
+        "descriptionSuffix": "."
+      },
+      "kpi": {
+        "totalRevenue": "إجمالي الإيرادات",
+        "pendingReview": "بانتظار المراجعة",
+        "failed": "فشلت",
+        "refundRate": "نسبة الاسترداد",
+        "paymentsCount": "{count, plural, =1 {دفعة واحدة} =2 {دفعتان} other {# دفعة}}",
+        "needsAttention": "بحاجة إلى انتباه",
+        "byAmount": "حسب المبلغ"
+      },
+      "quickActions": {
+        "title": "إجراءات سريعة",
+        "reviewEscalations": "مراجعة التصعيدات",
+        "runReconciliationScan": "تشغيل فحص التسوية",
+        "processRefunds": "معالجة المبالغ المستردة",
+        "reviewBankTransfers": "مراجعة التحويلات البنكية"
+      },
+      "overrides": {
+        "title": "أحدث التجاوزات الإدارية",
+        "viewAll": "عرض الكل في سجل التدقيق ←",
+        "loading": "جارٍ التحميل…",
+        "empty": "لم تُسجَّل أي تجاوزات إدارية بعد. عند استخدام المديرين لأي إجراء تجاوز مثل فرض الحالة أو إعادة تشغيل webhook أو الإلغاء القسري ستظهر هنا.",
+        "systemFallback": "النظام"
+      },
+      "settings": {
+        "refundPolicy": "سياسة الاسترداد",
+        "tax": "الضريبة وضريبة القيمة المضافة",
+        "vatTreatments": "معالجات ضريبة القيمة المضافة",
+        "gateways": "البوابات"
+      },
+      "gateways": {
+        "calloutTitle": "عدّل بيانات اعتماد البوابة من إعدادات الإدارة",
+        "calloutBodyPrefix": "تُدار الأسرار ورموز webhook من قسم ",
+        "calloutBodyBold": "إعدادات الإدارة ← المدفوعات",
+        "calloutBodySuffix": ". تنطبق التغييرات على وقت التشغيل المباشر للمدفوعات خلال ثوانٍ.",
+        "openEditor": "فتح محرر البوابة"
+      }
+    },
+    "escalations": {
+      "list": {
+        "title": "تصعيدات التسوية",
+        "subtitle": "انحرافات تسوية صعّدها فريق المالية وتحتاج إلى إجراء إداري",
+        "refresh": "تحديث",
+        "kpi": {
+          "pending": "قيد الانتظار",
+          "inProgress": "قيد المعالجة",
+          "highUrgencyOpen": "عاجل (مفتوح)",
+          "avgResolutionTime": "متوسط زمن الحل"
+        },
+        "filtersLabel": "التصفية:",
+        "urgencyFilter": {
+          "all": "كل مستويات الأولوية"
+        },
+        "gatewayFilter": {
+          "all": "كل البوابات"
+        },
+        "empty": {
+          "title": "لا توجد تصعيدات",
+          "pending": "لا يوجد شيء بانتظارك — لم يُصعّد فريق المالية أي حالة جديدة.",
+          "otherStatus": "لا توجد تصعيدات بحالة {status}."
+        },
+        "table": {
+          "urgency": "الأولوية",
+          "status": "الحالة",
+          "drift": "الانحراف",
+          "gateway": "البوابة",
+          "customer": "العميل",
+          "proposedAction": "الإجراء المقترح",
+          "escalatedBy": "صعّده",
+          "when": "التاريخ"
+        },
+        "systemFallback": "النظام",
+        "open": "فتح",
+        "pagination": "{total} تصعيد · صفحة {page} من {totalPages}",
+        "toastLoadFailed": "تعذّر تحميل التصعيدات"
+      },
+      "detail": {
+        "backToList": "العودة إلى التصعيدات",
+        "notFound": "التصعيد غير موجود.",
+        "urgencySuffix": "أولوية",
+        "proposedActionLabel": "الإجراء المقترح:",
+        "cards": {
+          "customerCourse": "العميل والدورة",
+          "customerLabel": "العميل",
+          "emailLabel": "البريد الإلكتروني",
+          "courseLabel": "الدورة",
+          "payment": "الدفعة",
+          "paymentIdLabel": "معرّف الدفعة",
+          "amountLabel": "المبلغ",
+          "statusLabel": "الحالة",
+          "gatewayLabel": "البوابة",
+          "methodLabel": "طريقة الدفع",
+          "gatewayChargeIdLabel": "معرّف الشحن في البوابة",
+          "createdLabel": "تاريخ الإنشاء",
+          "driftEvidence": "أدلة الانحراف",
+          "ourValue": "قيمتنا",
+          "gatewayValue": "قيمة البوابة",
+          "financeEscalation": "تصعيد المالية",
+          "escalatedByLabel": "صعّده",
+          "escalatedByFallback": "النظام (مُجدوِل)",
+          "atLabel": "في",
+          "noteLabel": "ملاحظة",
+          "lifecycle": "دورة الحياة",
+          "claimedByLabel": "تولّاه",
+          "claimedAtLabel": "تاريخ التولّي",
+          "resolvedByLabel": "حلّه",
+          "actionTakenLabel": "الإجراء المتّخذ",
+          "resolutionNoteLabel": "ملاحظة الحل",
+          "actions": "الإجراءات"
+        },
+        "actions": {
+          "claim": "تولّي هذا التصعيد",
+          "enroll": "تسجيل الطالب",
+          "refund": "إصدار استرداد",
+          "refundTitle": "إصدار استرداد عبر البوابة",
+          "refundNoPaymentTitle": "لا توجد دفعة مرتبطة — استخدم تسجيل الطالب بدلاً من ذلك، أو أغلق دون إجراء.",
+          "sendBack": "إعادة إلى المالية",
+          "close": "إغلاق دون إجراء"
+        },
+        "openAdminFinance": "فتح لوحة المالية الإدارية ←",
+        "modals": {
+          "sendBack": {
+            "title": "إعادة إلى المالية",
+            "subtitle": "أخبر المالية بالمعلومات الإضافية التي تحتاجها. سيُفتح الاكتشاف الأساسي مجدداً كي يتمكّنوا من التصرف.",
+            "confirm": "إعادة",
+            "placeholder": "مطلوب (10 أحرف على الأقل) — ما المفقود؟"
+          },
+          "close": {
+            "title": "إغلاق دون إجراء",
+            "subtitle": "استخدم هذا الخيار عندما لا يحتاج التصعيد فعلاً إلى أي إجراء — أكّدت المالية أنّه تكرار أو بيانات اختبار أو خارج النطاق.",
+            "confirm": "إغلاق",
+            "placeholder": "مطلوب (10 أحرف على الأقل) — لماذا لا يحتاج إجراء."
+          },
+          "enroll": {
+            "title": "تسجيل الطالب",
+            "subtitle": "يُنشئ سجل الدفعة تلقائياً عند غيابه، ويسجّل الطالب، ويُرسل له بريد تأكيد، ويُغلق هذا التصعيد.",
+            "studentLabel": "الطالب",
+            "studentChange": "تغيير",
+            "studentSearchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني…",
+            "searching": "جارٍ البحث…",
+            "unknownName": "—",
+            "courseIdLabel": "معرّف الدورة",
+            "courseIdPlaceholder": "الصق معرّف UUID للدورة",
+            "courseIdTip": "تلميح: بالنسبة لاكتشافات missing_local، عادةً ما يوجد معرّف الدورة ضمن بيانات البوابة الوصفية — راجع لوحة أدلة الانحراف.",
+            "noteLabel": "ملاحظة داخلية",
+            "notePlaceholder": "مطلوب (10 أحرف على الأقل) — تُسجَّل في سجل التدقيق.",
+            "cancel": "إلغاء",
+            "submit": "تسجيل"
+          },
+          "refund": {
+            "title": "إصدار استرداد",
+            "subtitle": "يستدعي البوابة فوراً. عند نجاح البوابة يُغلق التصعيد ويُحلّ الاكتشاف. عند فشل البوابة يبقى سجل الاسترداد بحالة APPROVED لإعادة المحاولة من صفحة المبالغ المستردة.",
+            "amountLabel": "المبلغ ({currency})",
+            "amountPlaceholder": "الافتراضي: كامل الدفعة ({amount})",
+            "amountHelp": "اتركه فارغاً لاسترداد كامل بمبلغ {amount} {currency}.",
+            "reasonLabel": "السبب",
+            "reasonPlaceholder": "مثال: شحن مكرّر، نزاع عميل",
+            "noteLabel": "ملاحظة داخلية",
+            "notePlaceholder": "مطلوب (10 أحرف على الأقل) — تُسجَّل في سجل التدقيق.",
+            "cancel": "إلغاء",
+            "submit": "إصدار الاسترداد"
+          },
+          "cancel": "إلغاء",
+          "notesCounter": "{count}/10 كحد أدنى"
+        },
+        "toasts": {
+          "claimed": "تم التولّي — هذا التصعيد على مسؤوليتك الآن",
+          "claimFailed": "تعذّر التولّي",
+          "noteTooShort": "يجب أن تتضمّن الملاحظة 10 أحرف على الأقل",
+          "sentBack": "تمت الإعادة إلى المالية",
+          "sendBackFailed": "تعذّرت الإعادة",
+          "closed": "تم إغلاق التصعيد (دون إجراء)",
+          "closeFailed": "تعذّر الإغلاق",
+          "loadFailed": "تعذّر تحميل التصعيد",
+          "enrollValidationBoth": "الطالب والدورة كلاهما مطلوبان",
+          "enrollFailed": "تعذّر التسجيل",
+          "refundReasonRequired": "سبب الاسترداد مطلوب",
+          "refundAmountInvalid": "يجب أن يكون مبلغ الاسترداد رقماً موجباً",
+          "refundFailed": "تعذّر الاسترداد",
+          "enrolled": "تم التسجيل",
+          "paymentCreated": "تم إنشاء الدفعة",
+          "paymentFlipped": "تم تعليم الدفعة كمدفوعة",
+          "receiptApproved": "تمت الموافقة على الإيصال",
+          "studentNotified": "تم إشعار الطالب",
+          "refundIssued": "تم إصدار الاسترداد",
+          "refundIssuedWithId": "تم إصدار الاسترداد — استرداد البوابة {id}"
+        }
+      },
+      "labels": {
+        "status": {
+          "pending": "قيد الانتظار",
+          "in_progress": "قيد المعالجة",
+          "resolved": "تم الحل",
+          "declined": "مرفوض",
+          "sent_back": "أُعيد",
+          "all": "الكل"
+        },
+        "proposedAction": {
+          "enroll": "تسجيل يدوي",
+          "refund": "إصدار استرداد",
+          "investigate": "تحقيق",
+          "other": "أخرى",
+          "system_inferred": "مستنتَج من النظام"
+        },
+        "gateway": {
+          "moyasar": "Moyasar",
+          "tamara": "Tamara",
+          "tabby": "Tabby",
+          "bank_transfer": "تحويل بنكي"
+        },
+        "driftType": {
+          "missing_local": "مفقود محلياً",
+          "missing_gateway": "مفقود في البوابة",
+          "amount_mismatch": "عدم تطابق المبلغ",
+          "status_mismatch": "عدم تطابق الحالة",
+          "stuck_pending": "عالق قيد الانتظار",
+          "stuck_approval": "عالق قيد الاعتماد",
+          "orphan_receipt": "إيصال يتيم",
+          "paid_no_receipt": "مدفوع دون إيصال"
+        },
+        "urgency": {
+          "low": "منخفض",
+          "normal": "عادي",
+          "high": "عاجل"
+        }
+      }
     }
   },
   "financeDashboard": {
     "title": "لوحة المالية",
     "subtitle": "مرحبا بعودتك، {name}! إليك نظرتك المالية العامة.",
+    "a11y": {
+      "closeOverlay": "إغلاق",
+      "closeDrawer": "إغلاق اللوحة",
+      "scrollTabsLeft": "تمرير التبويبات لليسار",
+      "scrollTabsRight": "تمرير التبويبات لليمين",
+      "financeNav": "قائمة تنقّل المالية",
+      "navigationMenu": "قائمة التنقّل",
+      "previousPage": "الصفحة السابقة",
+      "nextPage": "الصفحة التالية",
+      "rowActions": "الإجراءات",
+      "exportOptions": "خيارات التصدير",
+      "paymentsInvoicesTable": "المدفوعات والفواتير",
+      "refreshAudit": "تحديث سجلّ التدقيق",
+      "refreshAuditTrail": "تحديث سجلّ التدقيق",
+      "receiptImage": "إيصال",
+      "receiptPdf": "ملف الإيصال"
+    },
     "adminOverride": {
       "title": "تجاوزات الإدارة",
       "subtitle": "محصورة لدور الإدارة. كل إجراء يُسجَّل في سجل التدقيق مع السبب الذي تقدّمه.",
@@ -8618,6 +8883,8 @@
         },
         "overview": {
           "receiptFile": "ملف الإيصال",
+          "receiptImageAlt": "الإيصال",
+          "receiptPdfTitle": "ملف الإيصال PDF",
           "openInNewTab": "فتح في علامة تبويب جديدة",
           "download": "تنزيل",
           "previewUnavailable": "المعاينة غير متاحة لهذا النوع من الملفات — افتح في علامة تبويب جديدة.",
@@ -9215,6 +9482,7 @@
         "overview": {
           "refundId": "معرّف الاسترداد",
           "gatewayRefundId": "معرّف البوابة",
+          "gatewayChargeId": "معرّف الشحن بالبوابة",
           "requester": "مقدّم الطلب",
           "course": "الدورة",
           "invoice": "الفاتورة",
@@ -9445,7 +9713,16 @@
         "deactivateConfirm": "إيقاف هذه الحملة؟ ستُرفض الأكواد التابعة لها عند الدفع.",
         "activeFilter": "فعّالة",
         "expiredFilter": "منتهية",
-        "allFilter": "الكل"
+        "allFilter": "الكل",
+        "bannerOn": "مُفعّل",
+        "bannerOff": "متوقّف",
+        "editAction": "تعديل",
+        "toasts": {
+          "saved": "تم الحفظ",
+          "saveError": "فشل حفظ الحملة",
+          "deactivated": "تم الإيقاف",
+          "deactivateError": "فشل إيقاف الحملة"
+        }
       },
       "drawer": {
         "title": "تفاصيل الخصم",
@@ -9653,7 +9930,13 @@
           "specificCoursesHint": "فقط الدورات المختارة أدناه",
           "searchPlaceholder": "بحث عن دورة…",
           "selectedCount": "{n} محدد",
-          "noCourses": "لا توجد دورات مطابقة"
+          "noCourses": "لا توجد دورات مطابقة",
+          "salePercentBadge": "خصم {percent}٪",
+          "saleBadge": "عليها تخفيض",
+          "saleStackingTooltip": "هذه الدورة عليها تخفيض. تُضاف القسائم فوق التخفيض.",
+          "saleNoStackingTooltip": "هذه الدورة عليها تخفيض. سيتم رفض القسائم عند الدفع ما لم يسمح التخفيض بالجمع.",
+          "noStackBadge": "لا جمع",
+          "noStackTooltip": "التخفيض على هذه الدورة لا يسمح بجمع القسائم. سيتم رفض أي قسيمة مرفقة بها عند الدفع."
         },
         "step3": {
           "heading": "حدود الاستخدام",
@@ -9689,7 +9972,8 @@
           "unlimited": "بلا حد",
           "noExpiry": "لا تنتهي",
           "nCourses": "{n} دورات"
-        }
+        },
+        "untitledCourse": "بدون عنوان"
       },
       "bulkWizard": {
         "title": "توليد قسائم جماعي",
@@ -9755,9 +10039,13 @@
           "scope": "النطاق",
           "expires": "الانتهاء",
           "flags": "العلامات",
+          "flagAuto": "تلقائي",
+          "flagEarlyBird": "حجز مبكر",
+          "flagCampaign": "حملة",
           "nCourses": "{n} دورات",
           "downloadNote": "سيتم تحميل ملف CSV تلقائياً بعد التوليد"
-        }
+        },
+        "untitledCourse": "بدون عنوان"
       },
       "campaignsV2": {
         "searchPlaceholder": "بحث عن حملة…",
@@ -9787,6 +10075,7 @@
           "createTitle": "حملة جديدة",
           "editTitle": "تعديل الحملة",
           "name": "الاسم",
+          "namePlaceholder": "رمضان 2026",
           "description": "الوصف",
           "startsAt": "تبدأ في",
           "endsAt": "تنتهي في",
@@ -9795,6 +10084,7 @@
           "showBanner": "عرض البانر على الموقع العام",
           "showBannerHint": "يظهر شريط ملون أعلى صفحات الدورات أثناء الحملة.",
           "bannerCta": "نص زر البانر (اختياري)",
+          "bannerCtaPlaceholder": "تسوّق الآن",
           "cancel": "إلغاء",
           "save": "حفظ الحملة",
           "createdToast": "تم إنشاء الحملة",
@@ -10809,6 +11099,7 @@
     },
     "paymentDetail": {
       "title": "تفاصيل الدفعة",
+      "refreshAuditTrail": "تحديث سجل التدقيق",
       "amount": "المبلغ",
       "paidAt": "تاريخ الدفع",
       "tabs": {
@@ -10857,6 +11148,7 @@
     },
     "invoiceDetail": {
       "title": "تفاصيل الفاتورة",
+      "refreshAudit": "تحديث سجل التدقيق",
       "total": "الإجمالي",
       "issued": "صادرة",
       "paid": "مدفوعة",

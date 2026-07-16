@@ -46,6 +46,7 @@ import {
   ExternalLink,
   Percent,
 } from "lucide-react";
+import { formatDateTime } from "./shared/financeFormat";
 
 const FinanceSettingsContent = () => {
   const t = useTranslations("financeDashboard");
@@ -590,14 +591,7 @@ export const GatewaysReadOnlyView = () => {
         <p className="text-[11px] text-[var(--color-text-secondary)] text-center pt-2 border-t border-[var(--color-border-subtle)]">
           {t("lastUpdatedBy", {
             who: data.updatedBy?.name || t("unknown"),
-            when: new Date(data.updatedAt).toLocaleString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            }),
+            when: formatDateTime(data.updatedAt, locale),
           })}
         </p>
       )}
@@ -616,6 +610,7 @@ interface DetailRowProps {
 }
 
 const DetailRow = ({ label, value, mono, dir, copyKey, onCopy, copied }: DetailRowProps) => {
+  const t = useTranslations("financeDashboard.settingsPage.gateways");
   if (!value) return null;
   const showCopy = !!copyKey && !!onCopy;
   return (
@@ -636,7 +631,7 @@ const DetailRow = ({ label, value, mono, dir, copyKey, onCopy, copied }: DetailR
             type="button"
             onClick={() => onCopy!(value, copyKey!)}
             className="p-1 rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-card)] hover:text-[var(--color-primary)] transition-colors"
-            aria-label="Copy"
+            aria-label={t("copy")}
           >
             {copied === copyKey ? (
               <Check className="w-3.5 h-3.5 text-[#16A34A]" />
@@ -972,14 +967,7 @@ export const RefundPolicyView = () => {
           {meta.updatedAt
             ? t("lastUpdatedBy", {
                 who: meta.updatedBy?.name || t("unknown"),
-                when: new Date(meta.updatedAt).toLocaleString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                }),
+                when: formatDateTime(meta.updatedAt, locale),
               })
             : t("neverSaved")}
         </div>
@@ -1303,14 +1291,7 @@ export const TaxView = () => {
           {meta.updatedAt
             ? t("lastUpdatedBy", {
                 who: meta.updatedBy?.name || t("unknown"),
-                when: new Date(meta.updatedAt).toLocaleString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                }),
+                when: formatDateTime(meta.updatedAt, locale),
               })
             : t("neverSaved")}
         </div>

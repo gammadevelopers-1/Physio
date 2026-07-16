@@ -38,6 +38,10 @@ import {
   type EscalationProposedAction,
   type EscalationUrgency,
 } from "@/lib/api";
+import {
+  formatInt as fmtInt,
+  formatDateTime as fmtDateTime,
+} from "./shared/financeFormat";
 
 // ─── Types + constants ──────────────────────────────────────────────
 
@@ -101,24 +105,6 @@ function suggestUrgencyForDriftType(driftType: ReconciliationDriftType): Escalat
   return "normal";
 }
 
-// Latin digits always — never let the browser Arabic-Indic locale rewrite
-// numbers (per the standing project rule on AR digits).
-function formatInt(n: number | undefined | null) {
-  return (n ?? 0).toLocaleString("en-US");
-}
-
-function formatDateTime(iso: string | null | undefined) {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString("en-US", {
-      year: "numeric", month: "short", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", hour12: false,
-    });
-  } catch {
-    return "—";
-  }
-}
-
 // ─── Component ──────────────────────────────────────────────────────
 
 export interface ReconciliationContentProps {
@@ -133,6 +119,12 @@ export default function ReconciliationContent({ embedded = false }: Reconciliati
   const isRTL = locale === "ar";
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Locale-aware wrappers around the shared finance formatters — keep the
+  // same (value) signatures the existing callsites use by closing over
+  // `locale`. Latin digits everywhere, Arabic month names in AR mode.
+  const formatInt = (n: number | undefined | null) => fmtInt(n ?? 0, locale);
+  const formatDateTime = (iso: string | null | undefined) => fmtDateTime(iso, locale);
 
   const gatewayLabel = (g: string) => {
     try {
@@ -352,7 +344,7 @@ export default function ReconciliationContent({ embedded = false }: Reconciliati
       setEscalationUrgency("normal");
       fetchData();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to escalate");
+      toast.error(err instanceof ApiError ? err.message : t("toasts.escalateFailed"));
     } finally {
       setActingId(null);
     }
@@ -1404,7 +1396,7 @@ function Modal({
   onClose: () => void;
   onConfirm: () => void;
   confirmLabel: string;
-  cancelLabel?: string;
+  cancelLabel: string;
   confirmClass: string;
   icon: React.ReactNode;
   note: string;
@@ -1441,7 +1433,7 @@ function Modal({
             disabled={loading}
             className="px-4 py-2 text-sm font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-60"
           >
-            {cancelLabel || "Cancel"}
+            {cancelLabel}
           </button>
           <button
             onClick={onConfirm}

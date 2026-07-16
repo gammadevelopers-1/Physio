@@ -364,6 +364,8 @@ const BankTransferDetailDrawer = ({ receiptId, onClose, onChanged }: Props) => {
                   unavailableLabel={t(
                     "bankTransferQueue.drawer.overview.previewUnavailable",
                   )}
+                  imageAlt={t("bankTransferQueue.drawer.overview.receiptImageAlt")}
+                  pdfTitle={t("bankTransferQueue.drawer.overview.receiptPdfTitle")}
                 />
               </div>
 
@@ -731,17 +733,21 @@ function ReceiptPreview({
   url,
   mimeType,
   unavailableLabel,
+  imageAlt,
+  pdfTitle,
 }: {
   url: string;
   mimeType: string;
   unavailableLabel: string;
+  imageAlt: string;
+  pdfTitle: string;
 }) {
   if (mimeType.startsWith("image/")) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={url}
-        alt="receipt"
+        alt={imageAlt}
         className="w-full max-h-[420px] object-contain bg-[var(--color-surface-page)]"
       />
     );
@@ -750,7 +756,7 @@ function ReceiptPreview({
     return (
       <iframe
         src={url}
-        title="receipt-pdf"
+        title={pdfTitle}
         className="w-full h-[420px] bg-[var(--color-surface-page)]"
       />
     );

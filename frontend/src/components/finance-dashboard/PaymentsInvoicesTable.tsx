@@ -20,6 +20,8 @@ import {
   FileDown,
 } from "lucide-react";
 import { invoiceApi, refundApi, financeApi } from "@/lib/api";
+import { formatDateTime } from "@/components/finance-dashboard/shared/financeFormat";
+import Select from "@/components/admin-dashboard/Select";
 
 interface Transaction {
   id: string;
@@ -233,7 +235,7 @@ const PaymentsInvoicesTable = ({
             <div className="relative" ref={exportMenuRef}>
               <button
                 onClick={() => setShowExportMenu((v) => !v)}
-                aria-label="Export options"
+                aria-label={t("a11y.exportOptions")}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium btn-gold text-white rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" />
@@ -269,28 +271,32 @@ const PaymentsInvoicesTable = ({
         {/* Filters */}
         <div className="px-5 py-3 border-b border-[var(--color-border-subtle)]">
           <div className="flex flex-col sm:flex-row gap-3">
-            <select
+            <Select
               value={effectiveStatus}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
-            >
-              <option value="all">{t("paymentsTable.filters.allStatus")}</option>
-              <option value="paid">{t("paymentsTable.filters.paid")}</option>
-              <option value="pending">{t("paymentsTable.filters.pending")}</option>
-              <option value="failed">{t("paymentsTable.filters.failed")}</option>
-              <option value="refunded">{t("paymentsTable.filters.refunded")}</option>
-            </select>
-            <select
+              onChange={handleStatusChange}
+              size="sm"
+              className="sm:w-[180px]"
+              options={[
+                { value: "all", label: t("paymentsTable.filters.allStatus") },
+                { value: "paid", label: t("paymentsTable.filters.paid") },
+                { value: "pending", label: t("paymentsTable.filters.pending") },
+                { value: "failed", label: t("paymentsTable.filters.failed") },
+                { value: "refunded", label: t("paymentsTable.filters.refunded") },
+              ]}
+            />
+            <Select
               value={gatewayFilter}
-              onChange={(e) => setGatewayFilter(e.target.value)}
-              className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
-            >
-              <option value="all">{t("paymentsTable.filters.allGateways")}</option>
-              <option value="Moyasar">{t("gateways.moyasar")}</option>
-              <option value="Tamara">{t("gateways.tamara")}</option>
-              <option value="Tabby">{t("gateways.tabby")}</option>
-              <option value="BankTransfer">{t("gateways.bankTransfer")}</option>
-            </select>
+              onChange={setGatewayFilter}
+              size="sm"
+              className="sm:w-[180px]"
+              options={[
+                { value: "all", label: t("paymentsTable.filters.allGateways") },
+                { value: "Moyasar", label: t("gateways.moyasar") },
+                { value: "Tamara", label: t("gateways.tamara") },
+                { value: "Tabby", label: t("gateways.tabby") },
+                { value: "BankTransfer", label: t("gateways.bankTransfer") },
+              ]}
+            />
             <div className="flex-1 relative">
               <Search
                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
@@ -308,7 +314,7 @@ const PaymentsInvoicesTable = ({
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full" aria-label="Payments and invoices">
+          <table className="w-full" aria-label={t("a11y.paymentsInvoicesTable")}>
             <thead>
               <tr className="border-b border-[var(--color-border)]">
                 <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
@@ -382,7 +388,7 @@ const PaymentsInvoicesTable = ({
                         onClick={() =>
                           setOpenActionId(openActionId === tx.id ? null : tx.id)
                         }
-                        aria-label="Actions"
+                        aria-label={t("a11y.rowActions")}
                         className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
@@ -478,7 +484,7 @@ const PaymentsInvoicesTable = ({
               <button
                 onClick={() => onPageChange?.(Math.max(1, (currentPage ?? 1) - 1))}
                 disabled={!onPageChange || !currentPage || currentPage <= 1}
-                aria-label="Previous page"
+                aria-label={t("a11y.previousPage")}
                 className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40 disabled:cursor-default"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -487,7 +493,7 @@ const PaymentsInvoicesTable = ({
               <button
                 onClick={() => onPageChange?.((currentPage ?? 1) + 1)}
                 disabled={!onPageChange || !currentPage || currentPage >= (totalPages ?? 1)}
-                aria-label="Next page"
+                aria-label={t("a11y.nextPage")}
                 className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40 disabled:cursor-default"
               >
                 {t("paymentsTable.pagination.next")}
@@ -540,9 +546,7 @@ const PaymentsInvoicesTable = ({
                   ? [
                       {
                         label: t("paymentsTable.transactionDetail.receiptReceivedAt"),
-                        value: new Date(selectedTx.receiptUploadedAt).toLocaleString(
-                          locale === "ar" ? "ar-SA" : "en-US",
-                        ),
+                        value: formatDateTime(selectedTx.receiptUploadedAt, locale),
                       },
                     ]
                   : []),
@@ -605,17 +609,17 @@ const PaymentsInvoicesTable = ({
                 <label className="block text-[12px] font-medium text-[var(--color-text-primary)] mb-1">
                   {t("paymentsTable.refundModal.reason")}
                 </label>
-                <select
+                <Select
                   value={refundReason}
-                  onChange={(e) => setRefundReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
-                >
-                  <option value="policy">{t("paymentsTable.refundModal.reasons.policy")}</option>
-                  <option value="cancelled">{t("paymentsTable.refundModal.reasons.cancelled")}</option>
-                  <option value="duplicate">{t("paymentsTable.refundModal.reasons.duplicate")}</option>
-                  <option value="technical">{t("paymentsTable.refundModal.reasons.technical")}</option>
-                  <option value="other">{t("paymentsTable.refundModal.reasons.other")}</option>
-                </select>
+                  onChange={setRefundReason}
+                  options={[
+                    { value: "policy", label: t("paymentsTable.refundModal.reasons.policy") },
+                    { value: "cancelled", label: t("paymentsTable.refundModal.reasons.cancelled") },
+                    { value: "duplicate", label: t("paymentsTable.refundModal.reasons.duplicate") },
+                    { value: "technical", label: t("paymentsTable.refundModal.reasons.technical") },
+                    { value: "other", label: t("paymentsTable.refundModal.reasons.other") },
+                  ]}
+                />
               </div>
               <div>
                 <label className="block text-[12px] font-medium text-[var(--color-text-primary)] mb-1">

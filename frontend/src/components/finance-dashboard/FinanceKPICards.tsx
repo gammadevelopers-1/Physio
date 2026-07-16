@@ -14,6 +14,7 @@ import Money from "./shared/Money";
 import SaudiRiyalIcon from "./shared/SaudiRiyalIcon";
 import { FINANCE_COLORS } from "./shared/financeColors";
 import { KPIStripSkeleton } from "./shared/Skeleton";
+import { formatInt } from "./shared/financeFormat";
 
 export interface FinanceKPIData {
   grossRevenue: number;
@@ -84,7 +85,7 @@ const FinanceKPICards = ({ data, loading }: FinanceKPICardsProps) => {
       label: t("kpi.pendingApproval"),
       valueNode: (
         <span className="inline-flex items-baseline gap-2" dir="ltr">
-          <span>{data.pendingCount.toLocaleString(isRTL ? "ar-SA" : "en-US")}</span>
+          <span>{formatInt(data.pendingCount, isRTL ? "ar" : "en")}</span>
           <Money
             amount={data.pendingAmount}
             decimals={0}

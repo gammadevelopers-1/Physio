@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   ShieldAlert,
@@ -34,14 +34,6 @@ import {
   type AdminUserSearchResult,
 } from "@/lib/api";
 
-const STATUS_LABEL: Record<EscalationStatus, string> = {
-  pending: "Pending",
-  in_progress: "In progress",
-  resolved: "Resolved",
-  declined: "Declined",
-  sent_back: "Sent back",
-};
-
 const STATUS_PILL: Record<EscalationStatus, string> = {
   pending: "bg-amber-100 text-amber-800",
   in_progress: "bg-blue-100 text-blue-800",
@@ -56,29 +48,35 @@ const URGENCY_PILL: Record<EscalationUrgency, string> = {
   high: "bg-red-100 text-red-700",
 };
 
-const PROPOSED_ACTION_LABEL: Record<string, string> = {
-  enroll: "Manual enrollment",
-  refund: "Issue refund",
-  investigate: "Investigate",
-  other: "Other",
-  system_inferred: "System-inferred",
-};
+// Label lookup helpers — resolve dynamic keys under
+// `adminDashboard.escalations.labels.*` at render time. Reused across
+// EscalationsContent and EscalationDetailContent (same key namespace).
+type LabelT = ReturnType<typeof useTranslations>;
 
-const DRIFT_TYPE_LABEL: Record<string, string> = {
-  missing_local: "Missing locally",
-  missing_gateway: "Missing on gateway",
-  amount_mismatch: "Amount mismatch",
-  status_mismatch: "Status mismatch",
-  stuck_pending: "Stuck pending",
-  stuck_approval: "Stuck approval",
-  orphan_receipt: "Orphan receipt",
-  paid_no_receipt: "Paid, no receipt",
-};
+function getStatusLabel(status: EscalationStatus, t: LabelT): string {
+  return t(`labels.status.${status}`);
+}
+
+function getProposedActionLabel(action: string, t: LabelT): string {
+  const has = t.has ? t.has(`labels.proposedAction.${action}`) : true;
+  return has ? t(`labels.proposedAction.${action}`) : action;
+}
+
+function getDriftTypeLabel(driftType: string, t: LabelT): string {
+  const has = t.has ? t.has(`labels.driftType.${driftType}`) : true;
+  return has ? t(`labels.driftType.${driftType}`) : driftType;
+}
+
+function getUrgencyLabel(urgency: EscalationUrgency, t: LabelT): string {
+  return t(`labels.urgency.${urgency}`);
+}
 
 export default function EscalationDetailContent({ escalationId }: { escalationId: string }) {
   const admin = useAdminProfile();
   const router = useRouter();
   const locale = useLocale();
+  const isRTL = locale === "ar";
+  const t = useTranslations("adminDashboard.escalations");
 
   const [data, setData] = useState<ReconciliationEscalationDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,11 +109,11 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
       const result = await escalationsApi.get(escalationId);
       setData(result);
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to load escalation");
+      toast.error(err instanceof ApiError ? err.message : t("detail.toasts.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [escalationId]);
+  }, [escalationId, t]);
 
   useEffect(() => {
     fetchData();
@@ -125,10 +123,10 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
     setActing("claim");
     try {
       await escalationsApi.claim(escalationId);
-      toast.success("Claimed — you own this escalation now");
+      toast.success(t("detail.toasts.claimed"));
       fetchData();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to claim");
+      toast.error(err instanceof ApiError ? err.message : t("detail.toasts.claimFailed"));
     } finally {
       setActing(null);
     }
@@ -136,18 +134,18 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
 
   const handleSendBack = async () => {
     if (note.trim().length < 10) {
-      toast.error("Note must be at least 10 characters");
+      toast.error(t("detail.toasts.noteTooShort"));
       return;
     }
     setActing("send-back");
     try {
       await escalationsApi.sendBack(escalationId, note.trim());
-      toast.success("Sent back to finance");
+      toast.success(t("detail.toasts.sentBack"));
       setSendBackOpen(false);
       setNote("");
       fetchData();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to send back");
+      toast.error(err instanceof ApiError ? err.message : t("detail.toasts.sendBackFailed"));
     } finally {
       setActing(null);
     }
@@ -155,18 +153,18 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
 
   const handleClose = async () => {
     if (note.trim().length < 10) {
-      toast.error("Note must be at least 10 characters");
+      toast.error(t("detail.toasts.noteTooShort"));
       return;
     }
     setActing("close");
     try {
       await escalationsApi.close(escalationId, note.trim());
-      toast.success("Escalation closed (no action)");
+      toast.success(t("detail.toasts.closed"));
       setCloseOpen(false);
       setNote("");
       fetchData();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to close");
+      toast.error(err instanceof ApiError ? err.message : t("detail.toasts.closeFailed"));
     } finally {
       setActing(null);
     }
@@ -216,11 +214,11 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
 
   const handleEnroll = async () => {
     if (!enrollStudentId || !enrollCourseId) {
-      toast.error("Both student and course are required");
+      toast.error(t("detail.toasts.enrollValidationBoth"));
       return;
     }
     if (enrollNote.trim().length < 10) {
-      toast.error("Note must be at least 10 characters");
+      toast.error(t("detail.toasts.noteTooShort"));
       return;
     }
     setActing("enroll");
@@ -230,11 +228,11 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
         courseId: enrollCourseId,
         note: enrollNote.trim(),
       });
-      const parts = ["Enrolled"];
-      if (result.paymentCreated) parts.push("payment created");
-      else if (result.paymentFlipped) parts.push("payment marked paid");
-      if (result.receiptApproved) parts.push("receipt approved");
-      parts.push("student notified");
+      const parts = [t("detail.toasts.enrolled")];
+      if (result.paymentCreated) parts.push(t("detail.toasts.paymentCreated"));
+      else if (result.paymentFlipped) parts.push(t("detail.toasts.paymentFlipped"));
+      if (result.receiptApproved) parts.push(t("detail.toasts.receiptApproved"));
+      parts.push(t("detail.toasts.studentNotified"));
       toast.success(parts.join(" — "));
       setEnrollOpen(false);
       setEnrollStudentId("");
@@ -244,7 +242,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
       setEnrollNote("");
       fetchData();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to enroll");
+      toast.error(err instanceof ApiError ? err.message : t("detail.toasts.enrollFailed"));
     } finally {
       setActing(null);
     }
@@ -252,16 +250,16 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
 
   const handleRefund = async () => {
     if (refundReason.trim().length === 0) {
-      toast.error("Refund reason is required");
+      toast.error(t("detail.toasts.refundReasonRequired"));
       return;
     }
     if (refundNote.trim().length < 10) {
-      toast.error("Note must be at least 10 characters");
+      toast.error(t("detail.toasts.noteTooShort"));
       return;
     }
     const amount = refundAmount ? Number(refundAmount) : undefined;
     if (refundAmount && (isNaN(amount as number) || (amount as number) <= 0)) {
-      toast.error("Refund amount must be a positive number");
+      toast.error(t("detail.toasts.refundAmountInvalid"));
       return;
     }
     setActing("refund");
@@ -273,8 +271,8 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
       });
       toast.success(
         result.gatewayRefundId
-          ? `Refund issued — gateway refund ${result.gatewayRefundId.slice(0, 12)}`
-          : "Refund issued",
+          ? t("detail.toasts.refundIssuedWithId", { id: result.gatewayRefundId.slice(0, 12) })
+          : t("detail.toasts.refundIssued"),
       );
       setRefundOpen(false);
       setRefundAmount("");
@@ -282,7 +280,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
       setRefundNote("");
       fetchData();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to refund");
+      toast.error(err instanceof ApiError ? err.message : t("detail.toasts.refundFailed"));
     } finally {
       setActing(null);
     }
@@ -303,13 +301,13 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
             </div>
             <AdminMobileSidebar admin={admin} />
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0" dir={isRTL ? "rtl" : "ltr"}>
               <button
                 onClick={() => router.push(`/${locale}/dashboard/admin/finance/escalations`)}
                 className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back to escalations
+                {t("detail.backToList")}
               </button>
 
               {loading ? (
@@ -318,7 +316,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                 </div>
               ) : !data ? (
                 <div className="text-center py-16 text-[var(--color-text-secondary)]">
-                  Escalation not found.
+                  {t("detail.notFound")}
                 </div>
               ) : (
                 <>
@@ -334,26 +332,25 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                             <span
                               className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${STATUS_PILL[data.status]}`}
                             >
-                              {STATUS_LABEL[data.status]}
+                              {getStatusLabel(data.status, t)}
                             </span>
                             <span
-                              className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${URGENCY_PILL[data.urgency]}`}
+                              className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${URGENCY_PILL[data.urgency]}`}
                             >
-                              {data.urgency} urgency
+                              {getUrgencyLabel(data.urgency, t)} {t("detail.urgencySuffix")}
                             </span>
                             <span className="text-[11px] text-[var(--color-text-secondary)] font-mono">
                               {data.id.slice(0, 8)}
                             </span>
                           </div>
                           <h1 className="text-lg font-bold text-[var(--color-text-primary)]">
-                            {DRIFT_TYPE_LABEL[data.driftType] || data.driftType} ·{" "}
+                            {getDriftTypeLabel(data.driftType, t)} ·{" "}
                             {data.gateway}
                           </h1>
                           <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-                            Proposed action:{" "}
+                            {t("detail.proposedActionLabel")}{" "}
                             <strong>
-                              {PROPOSED_ACTION_LABEL[data.proposedAction] ||
-                                data.proposedAction}
+                              {getProposedActionLabel(data.proposedAction, t)}
                             </strong>
                           </p>
                         </div>
@@ -365,29 +362,30 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                     {/* Context */}
                     <div className="lg:col-span-2 space-y-4">
                       {/* Customer + course */}
-                      <Card title="Customer & course" icon={<User className="w-4 h-4" />}>
-                        <Row label="Customer" value={data.customerName || data.customerEmail || "—"} />
-                        <Row label="Email" value={data.customerEmail || "—"} mono />
-                        <Row label="Course" value={data.courseTitle || "—"} />
+                      <Card title={t("detail.cards.customerCourse")} icon={<User className="w-4 h-4" />}>
+                        <Row label={t("detail.cards.customerLabel")} value={data.customerName || data.customerEmail || "—"} isRTL={isRTL} />
+                        <Row label={t("detail.cards.emailLabel")} value={data.customerEmail || "—"} mono isRTL={isRTL} />
+                        <Row label={t("detail.cards.courseLabel")} value={data.courseTitle || "—"} isRTL={isRTL} />
                       </Card>
 
                       {/* Payment */}
-                      <Card title="Payment" icon={<CreditCard className="w-4 h-4" />}>
-                        <Row label="Payment ID" value={data.paymentId || "—"} mono />
+                      <Card title={t("detail.cards.payment")} icon={<CreditCard className="w-4 h-4" />}>
+                        <Row label={t("detail.cards.paymentIdLabel")} value={data.paymentId || "—"} mono isRTL={isRTL} />
                         <Row
-                          label="Amount"
+                          label={t("detail.cards.amountLabel")}
                           value={
                             data.paymentAmount
                               ? `${data.paymentAmount} ${data.paymentCurrency || ""}`
                               : "—"
                           }
+                          isRTL={isRTL}
                         />
-                        <Row label="Status" value={data.paymentStatus || "—"} />
-                        <Row label="Gateway" value={data.paymentGateway || data.gateway} />
-                        <Row label="Method" value={data.paymentMethod || "—"} />
-                        <Row label="Gateway charge ID" value={data.gatewayChargeId || "—"} mono />
+                        <Row label={t("detail.cards.statusLabel")} value={data.paymentStatus || "—"} isRTL={isRTL} />
+                        <Row label={t("detail.cards.gatewayLabel")} value={data.paymentGateway || data.gateway} isRTL={isRTL} />
+                        <Row label={t("detail.cards.methodLabel")} value={data.paymentMethod || "—"} isRTL={isRTL} />
+                        <Row label={t("detail.cards.gatewayChargeIdLabel")} value={data.gatewayChargeId || "—"} mono isRTL={isRTL} />
                         <Row
-                          label="Created"
+                          label={t("detail.cards.createdLabel")}
                           value={
                             data.paymentCreatedAt
                               ? new Date(data.paymentCreatedAt).toLocaleString(
@@ -395,14 +393,15 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                                 )
                               : "—"
                           }
+                          isRTL={isRTL}
                         />
                       </Card>
 
                       {/* Drift evidence */}
-                      <Card title="Drift evidence" icon={<AlertTriangle className="w-4 h-4" />}>
+                      <Card title={t("detail.cards.driftEvidence")} icon={<AlertTriangle className="w-4 h-4" />}>
                         <div>
                           <div className="text-xs text-[var(--color-text-secondary)] font-medium mb-1">
-                            Our value
+                            {t("detail.cards.ourValue")}
                           </div>
                           <pre className="bg-[var(--color-surface-page)] p-2 rounded text-xs overflow-x-auto">
                             {JSON.stringify(data.ourValue, null, 2) || "null"}
@@ -410,7 +409,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                         </div>
                         <div className="mt-3">
                           <div className="text-xs text-[var(--color-text-secondary)] font-medium mb-1">
-                            Gateway value
+                            {t("detail.cards.gatewayValue")}
                           </div>
                           <pre className="bg-[var(--color-surface-page)] p-2 rounded text-xs overflow-x-auto">
                             {JSON.stringify(data.gatewayValue, null, 2) || "null"}
@@ -421,17 +420,18 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
 
                     {/* Right column — escalation + actions */}
                     <div className="space-y-4">
-                      <Card title="Finance's escalation">
-                        <Row label="Escalated by" value={data.escalatedByName || "System (cron)"} />
+                      <Card title={t("detail.cards.financeEscalation")}>
+                        <Row label={t("detail.cards.escalatedByLabel")} value={data.escalatedByName || t("detail.cards.escalatedByFallback")} isRTL={isRTL} />
                         <Row
-                          label="At"
+                          label={t("detail.cards.atLabel")}
                           value={new Date(data.escalatedAt).toLocaleString(
                             locale === "ar" ? "ar-SA" : "en-US",
                           )}
+                          isRTL={isRTL}
                         />
                         <div className="mt-3">
                           <div className="text-xs text-[var(--color-text-secondary)] font-medium mb-1">
-                            Note
+                            {t("detail.cards.noteLabel")}
                           </div>
                           <div className="text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-page)] p-3 rounded whitespace-pre-wrap">
                             {data.escalationNote}
@@ -440,12 +440,12 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                       </Card>
 
                       {data.status !== "pending" && (
-                        <Card title="Lifecycle">
+                        <Card title={t("detail.cards.lifecycle")}>
                           {data.claimedByName && (
                             <>
-                              <Row label="Claimed by" value={data.claimedByName} />
+                              <Row label={t("detail.cards.claimedByLabel")} value={data.claimedByName} isRTL={isRTL} />
                               <Row
-                                label="Claimed at"
+                                label={t("detail.cards.claimedAtLabel")}
                                 value={
                                   data.claimedAt
                                     ? new Date(data.claimedAt).toLocaleString(
@@ -453,23 +453,25 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                                       )
                                     : "—"
                                 }
+                                isRTL={isRTL}
                               />
                             </>
                           )}
                           {data.resolvedAt && (
                             <>
-                              <Row label="Resolved by" value={data.resolvedByName || "—"} />
+                              <Row label={t("detail.cards.resolvedByLabel")} value={data.resolvedByName || "—"} isRTL={isRTL} />
                               <Row
-                                label="At"
+                                label={t("detail.cards.atLabel")}
                                 value={new Date(data.resolvedAt).toLocaleString(
                                   locale === "ar" ? "ar-SA" : "en-US",
                                 )}
+                                isRTL={isRTL}
                               />
-                              <Row label="Action taken" value={data.actionTaken || "—"} />
+                              <Row label={t("detail.cards.actionTakenLabel")} value={data.actionTaken || "—"} isRTL={isRTL} />
                               {data.resolutionNote && (
                                 <div className="mt-3">
                                   <div className="text-xs text-[var(--color-text-secondary)] font-medium mb-1">
-                                    Resolution note
+                                    {t("detail.cards.resolutionNoteLabel")}
                                   </div>
                                   <div className="text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-page)] p-3 rounded whitespace-pre-wrap">
                                     {data.resolutionNote}
@@ -483,7 +485,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
 
                       {/* Action panel */}
                       {canAct && (
-                        <Card title="Actions">
+                        <Card title={t("detail.cards.actions")}>
                           {data.status === "pending" && (
                             <button
                               onClick={handleClaim}
@@ -495,7 +497,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                               ) : (
                                 <Hand className="w-4 h-4" />
                               )}
-                              Claim this escalation
+                              {t("detail.actions.claim")}
                             </button>
                           )}
 
@@ -508,7 +510,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-60 mb-2"
                           >
                             <UserPlus className="w-4 h-4" />
-                            Enroll student
+                            {t("detail.actions.enroll")}
                           </button>
                           <button
                             onClick={() => {
@@ -519,13 +521,13 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                             disabled={acting !== null || !data.paymentId}
                             title={
                               !data.paymentId
-                                ? "No payment linked — use Enroll instead, or close as no-action."
-                                : "Issue a refund through the gateway"
+                                ? t("detail.actions.refundNoPaymentTitle")
+                                : t("detail.actions.refundTitle")
                             }
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg disabled:opacity-60 mb-2"
                           >
                             <Undo2 className="w-4 h-4" />
-                            Issue refund
+                            {t("detail.actions.refund")}
                           </button>
 
                           <button
@@ -537,7 +539,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-lg disabled:opacity-60 mb-2"
                           >
                             <RotateCcw className="w-4 h-4" />
-                            Send back to finance
+                            {t("detail.actions.sendBack")}
                           </button>
                           <button
                             onClick={() => {
@@ -548,7 +550,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] rounded-lg disabled:opacity-60"
                           >
                             <X className="w-4 h-4" />
-                            Close without action
+                            {t("detail.actions.close")}
                           </button>
                         </Card>
                       )}
@@ -557,7 +559,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                         href={`/${locale}/dashboard/admin/finance`}
                         className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] block text-center"
                       >
-                        Open admin finance dashboard →
+                        {t("detail.openAdminFinance")}
                       </Link>
                     </div>
                   </div>
@@ -571,16 +573,18 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
       {/* Send back modal */}
       {sendBackOpen && (
         <ActionModal
-          title="Send back to finance"
-          subtitle="Tell finance what more info you need. The underlying finding will unlock so they can act again."
+          title={t("detail.modals.sendBack.title")}
+          subtitle={t("detail.modals.sendBack.subtitle")}
           icon={<RotateCcw className="w-5 h-5 text-violet-600" />}
-          confirmLabel="Send back"
+          confirmLabel={t("detail.modals.sendBack.confirm")}
           confirmClass="bg-violet-600 hover:bg-violet-700"
+          cancelLabel={t("detail.modals.cancel")}
+          counterLabel={t("detail.modals.notesCounter", { count: note.length })}
           onClose={() => setSendBackOpen(false)}
           onConfirm={handleSendBack}
           note={note}
           setNote={setNote}
-          notePlaceholder="Required (≥10 chars) — what's missing?"
+          notePlaceholder={t("detail.modals.sendBack.placeholder")}
           loading={acting === "send-back"}
         />
       )}
@@ -588,16 +592,18 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
       {/* Close without action modal */}
       {closeOpen && (
         <ActionModal
-          title="Close without action"
-          subtitle="Use when this escalation truly needs no action — finance confirmed it's a duplicate, test data, or out of scope."
+          title={t("detail.modals.close.title")}
+          subtitle={t("detail.modals.close.subtitle")}
           icon={<X className="w-5 h-5 text-[var(--color-text-secondary)]" />}
-          confirmLabel="Close"
+          confirmLabel={t("detail.modals.close.confirm")}
           confirmClass="bg-[var(--color-text-secondary)] hover:opacity-90"
+          cancelLabel={t("detail.modals.cancel")}
+          counterLabel={t("detail.modals.notesCounter", { count: note.length })}
           onClose={() => setCloseOpen(false)}
           onConfirm={handleClose}
           note={note}
           setNote={setNote}
-          notePlaceholder="Required (≥10 chars) — why this needs no action."
+          notePlaceholder={t("detail.modals.close.placeholder")}
           loading={acting === "close"}
         />
       )}
@@ -615,9 +621,9 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
             <div className="flex items-start gap-3 mb-4">
               <UserPlus className="w-5 h-5 text-emerald-600 mt-0.5" />
               <div className="flex-1">
-                <h3 className="text-base font-semibold">Enroll student</h3>
+                <h3 className="text-base font-semibold">{t("detail.modals.enroll.title")}</h3>
                 <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-                  Atomically creates the payment row (if missing), enrolls the student, sends them a confirmation email, and closes this escalation.
+                  {t("detail.modals.enroll.subtitle")}
                 </p>
               </div>
             </div>
@@ -626,7 +632,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
               {/* Student picker */}
               <div>
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                  Student <span className="text-red-500">*</span>
+                  {t("detail.modals.enroll.studentLabel")} <span className="text-red-500">*</span>
                 </label>
                 {enrollStudentId ? (
                   <div className="flex items-center justify-between px-3 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-page)]">
@@ -640,19 +646,21 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                       }}
                       className="text-xs text-[var(--color-text-secondary)] hover:text-red-600"
                     >
-                      Change
+                      {t("detail.modals.enroll.studentChange")}
                     </button>
                   </div>
                 ) : (
                   <>
                     <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
+                      <Search
+                        className={`absolute ${isRTL ? "right-2.5" : "left-2.5"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]`}
+                      />
                       <input
                         type="text"
                         value={enrollStudentSearch}
                         onChange={(e) => setEnrollStudentSearch(e.target.value)}
-                        placeholder="Search by name or email…"
-                        className="w-full pl-9 pr-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                        placeholder={t("detail.modals.enroll.studentSearchPlaceholder")}
+                        className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]`}
                       />
                     </div>
                     {(enrollStudentSearching ||
@@ -661,7 +669,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                         {enrollStudentSearching ? (
                           <div className="p-2 text-xs text-[var(--color-text-secondary)] flex items-center gap-2">
                             <Loader2 className="w-3 h-3 animate-spin" />
-                            Searching…
+                            {t("detail.modals.enroll.searching")}
                           </div>
                         ) : (
                           enrollStudentResults.map((u) => (
@@ -676,11 +684,11 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                                 setEnrollStudentSearch("");
                                 setEnrollStudentResults([]);
                               }}
-                              className="w-full text-left px-3 py-2 hover:bg-[var(--color-surface-page)] text-xs"
+                              className={`w-full ${isRTL ? "text-right" : "text-left"} px-3 py-2 hover:bg-[var(--color-surface-page)] text-xs`}
                             >
                               <div className="font-medium">
                                 {`${u.firstName || ""} ${u.lastName || ""}`.trim() ||
-                                  "—"}
+                                  t("detail.modals.enroll.unknownName")}
                               </div>
                               <div className="text-[var(--color-text-secondary)]">
                                 {u.email}
@@ -698,31 +706,31 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                   picker can be added later if Amna asks. */}
               <div>
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                  Course ID <span className="text-red-500">*</span>
+                  {t("detail.modals.enroll.courseIdLabel")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={enrollCourseId}
                   onChange={(e) => setEnrollCourseId(e.target.value)}
-                  placeholder="Paste course UUID"
+                  placeholder={t("detail.modals.enroll.courseIdPlaceholder")}
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-mono focus:outline-none focus:border-[var(--color-primary)]"
                 />
                 {!data?.courseId && (
                   <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
-                    Tip: for missing_local findings, the courseId is usually in the gateway metadata — check the drift evidence panel.
+                    {t("detail.modals.enroll.courseIdTip")}
                   </p>
                 )}
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                  Internal note <span className="text-red-500">*</span>
+                  {t("detail.modals.enroll.noteLabel")} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={enrollNote}
                   onChange={(e) => setEnrollNote(e.target.value)}
                   rows={3}
-                  placeholder="Required (≥10 chars) — captured in the audit log."
+                  placeholder={t("detail.modals.enroll.notePlaceholder")}
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
@@ -734,7 +742,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                 disabled={acting === "enroll"}
                 className="px-4 py-2 text-sm font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-60"
               >
-                Cancel
+                {t("detail.modals.enroll.cancel")}
               </button>
               <button
                 onClick={handleEnroll}
@@ -748,7 +756,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
               >
                 {acting === "enroll" && <Loader2 className="w-4 h-4 animate-spin" />}
                 <UserPlus className="w-4 h-4" />
-                Enroll
+                {t("detail.modals.enroll.submit")}
               </button>
             </div>
           </div>
@@ -768,9 +776,9 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
             <div className="flex items-start gap-3 mb-4">
               <Undo2 className="w-5 h-5 text-amber-600 mt-0.5" />
               <div className="flex-1">
-                <h3 className="text-base font-semibold">Issue refund</h3>
+                <h3 className="text-base font-semibold">{t("detail.modals.refund.title")}</h3>
                 <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-                  Calls the gateway immediately. If the gateway succeeds, the escalation closes and the finding resolves. If the gateway fails, the refund row stays in APPROVED for retry from the Refunds page.
+                  {t("detail.modals.refund.subtitle")}
                 </p>
               </div>
             </div>
@@ -778,7 +786,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                  Amount ({data?.paymentCurrency || "SAR"})
+                  {t("detail.modals.refund.amountLabel", { currency: data?.paymentCurrency || "SAR" })}
                 </label>
                 <input
                   type="number"
@@ -787,36 +795,39 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                   max={data?.paymentAmount || undefined}
                   value={refundAmount}
                   onChange={(e) => setRefundAmount(e.target.value)}
-                  placeholder={`Default: full payment (${data?.paymentAmount || "—"})`}
+                  placeholder={t("detail.modals.refund.amountPlaceholder", { amount: data?.paymentAmount ?? "—" })}
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
                 <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
-                  Leave blank for a full refund of {data?.paymentAmount} {data?.paymentCurrency}.
+                  {t("detail.modals.refund.amountHelp", {
+                    amount: data?.paymentAmount ?? "—",
+                    currency: data?.paymentCurrency || "",
+                  })}
                 </p>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                  Reason <span className="text-red-500">*</span>
+                  {t("detail.modals.refund.reasonLabel")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={refundReason}
                   onChange={(e) => setRefundReason(e.target.value)}
-                  placeholder="e.g. duplicate charge, customer dispute"
+                  placeholder={t("detail.modals.refund.reasonPlaceholder")}
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                  Internal note <span className="text-red-500">*</span>
+                  {t("detail.modals.refund.noteLabel")} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={refundNote}
                   onChange={(e) => setRefundNote(e.target.value)}
                   rows={3}
-                  placeholder="Required (≥10 chars) — captured in the audit log."
+                  placeholder={t("detail.modals.refund.notePlaceholder")}
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
@@ -828,7 +839,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
                 disabled={acting === "refund"}
                 className="px-4 py-2 text-sm font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-60"
               >
-                Cancel
+                {t("detail.modals.refund.cancel")}
               </button>
               <button
                 onClick={handleRefund}
@@ -841,7 +852,7 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
               >
                 {acting === "refund" && <Loader2 className="w-4 h-4 animate-spin" />}
                 <Undo2 className="w-4 h-4" />
-                Issue refund
+                {t("detail.modals.refund.submit")}
               </button>
             </div>
           </div>
@@ -871,12 +882,22 @@ function Card({
   );
 }
 
-function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function Row({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  /** Accepted for call-site symmetry; logical `text-end` already flips per dir. */
+  isRTL?: boolean;
+}) {
   return (
     <div className="flex justify-between items-start gap-3 text-sm">
       <dt className="text-[var(--color-text-secondary)] font-medium shrink-0">{label}</dt>
       <dd
-        className={`text-[var(--color-text-primary)] text-right break-all ${mono ? "font-mono text-xs" : ""}`}
+        className={`text-[var(--color-text-primary)] text-end break-all ${mono ? "font-mono text-xs" : ""}`}
       >
         {value}
       </dd>
@@ -890,6 +911,8 @@ function ActionModal({
   icon,
   confirmLabel,
   confirmClass,
+  cancelLabel,
+  counterLabel,
   onClose,
   onConfirm,
   note,
@@ -902,6 +925,8 @@ function ActionModal({
   icon: React.ReactNode;
   confirmLabel: string;
   confirmClass: string;
+  cancelLabel: string;
+  counterLabel: string;
   onClose: () => void;
   onConfirm: () => void;
   note: string;
@@ -932,14 +957,14 @@ function ActionModal({
           placeholder={notePlaceholder}
           className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
         />
-        <div className="text-xs text-[var(--color-text-secondary)] mt-1">{note.length}/10 minimum</div>
+        <div className="text-xs text-[var(--color-text-secondary)] mt-1">{counterLabel}</div>
         <div className="flex justify-end gap-2 mt-4">
           <button
             onClick={onClose}
             disabled={loading}
             className="px-4 py-2 text-sm font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-60"
           >
-            Cancel
+            {cancelLabel}
           </button>
           <button
             onClick={onConfirm}

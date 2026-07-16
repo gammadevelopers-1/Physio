@@ -732,7 +732,7 @@ function AuditTrail({
           onClick={onRefresh}
           disabled={loading}
           className="text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] disabled:opacity-40"
-          aria-label="Refresh audit trail"
+          aria-label={t("paymentDetail.refreshAuditTrail")}
         >
           <RefreshCcw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
         </button>

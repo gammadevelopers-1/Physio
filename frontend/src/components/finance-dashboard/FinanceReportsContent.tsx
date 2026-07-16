@@ -22,6 +22,12 @@ import {
 } from "lucide-react";
 import { financeApi } from "@/lib/api";
 import { toast } from "sonner";
+import {
+  formatInt as fmtInt,
+  formatSar as fmtSar,
+  formatDateTime as fmtDateTime,
+  formatDate as fmtDate,
+} from "./shared/financeFormat";
 
 /**
  * Finance Reports page.
@@ -103,41 +109,10 @@ function getDateRange(period: PeriodKey, customStart?: string, customEnd?: strin
   return { startDate, endDate };
 }
 
-function formatSAR(amount: number) {
-  // Latin digits always — Arabic-Indic numerals are intentionally not used
-  // in the platform's amount display.
-  return `SAR ${(amount || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function formatInt(n: number) {
-  return (n || 0).toLocaleString("en-US");
-}
-
-function formatDateTime(iso: string | null | undefined) {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString("en-US", {
-      year: "numeric", month: "short", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", hour12: false,
-    });
-  } catch {
-    return "—";
-  }
-}
-
-function formatDate(iso: string | null | undefined) {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString("en-US", {
-      year: "numeric", month: "short", day: "2-digit",
-    });
-  } catch {
-    return "—";
-  }
-}
+// Local wrappers around the shared finance formatters live inside each
+// component below so they can close over `locale` from useLocale() — this
+// keeps Latin digits everywhere while letting Arabic month names render in
+// AR mode. See ./shared/financeFormat.ts.
 
 // ─── Component ────────────────────────────────────────────────────
 
@@ -151,6 +126,14 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Locale-aware wrappers around the shared finance formatters — keep the
+  // existing (value) signatures the JSX callsites use by closing over
+  // `locale`. Latin digits everywhere, Arabic month names in AR mode.
+  const formatSAR = (amount: number) => `SAR ${fmtSar(amount || 0)}`;
+  const formatInt = (n: number) => fmtInt(n || 0, locale);
+  const formatDateTime = (iso: string | null | undefined) => fmtDateTime(iso, locale);
+  const formatDate = (iso: string | null | undefined) => fmtDate(iso, locale);
 
   const [selectedReport, setSelectedReport] = useState<ReportKey>("revenue");
   const [period, setPeriod] = useState<PeriodKey>("thisMonth");
@@ -980,6 +963,9 @@ const BreakdownTable = ({
   title, labelHeader, rows,
 }: { title: string; labelHeader: string; rows: { label: string; count: number; amount: number }[] }) => {
   const t = useTranslations("financeDashboard");
+  const locale = useLocale();
+  const formatSAR = (amount: number) => `SAR ${fmtSar(amount || 0)}`;
+  const formatInt = (n: number) => fmtInt(n || 0, locale);
   const totalAmount = rows.reduce((s, r) => s + r.amount, 0);
   if (rows.length === 0) {
     return (

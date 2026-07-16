@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { discountApi, CourseSaleItem } from "@/lib/api";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { fromRiyadhLocal, toRiyadhLocal } from "@/lib/riyadh-time";
+import { formatDateTime } from "@/components/finance-dashboard/shared/financeFormat";
 
 /**
  * Finance-dashboard surface for managing course-level sales (no coupon required).
@@ -45,7 +46,7 @@ export default function CourseSalesModal({
         const data = await discountApi.listCourseSales(q || undefined);
         setItems(data);
       } catch {
-        toast.error(t("discountsPage.sales.loadError") || "Failed to load courses");
+        toast.error(t("discountsPage.sales.loadError"));
       } finally {
         setLoading(false);
       }
@@ -95,22 +96,18 @@ export default function CourseSalesModal({
       setEditingId(null);
       toast.success(
         clear
-          ? t("discountsPage.sales.removed") || "Sale removed"
-          : t("discountsPage.sales.saved") || "Sale saved",
+          ? t("discountsPage.sales.removed")
+          : t("discountsPage.sales.saved"),
       );
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "";
-      toast.error(msg || t("discountsPage.sales.saveError") || "Failed to save sale");
+      toast.error(msg || t("discountsPage.sales.saveError"));
     } finally {
       setSavingId(null);
     }
   };
 
-  const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleString(isRTL ? "ar-SA" : "en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+  const fmtDate = (iso: string) => formatDateTime(iso, isRTL ? "ar" : "en");
 
   // A course has a percent set but isn't live right now — say exactly why.
   const inactiveReason = (c: CourseSaleItem): string => {
@@ -149,7 +146,7 @@ export default function CourseSalesModal({
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-[var(--color-border-subtle)]"
-            aria-label={t("discountsPage.sales.cancel") || "Close"}
+            aria-label={t("discountsPage.sales.cancel")}
           >
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>

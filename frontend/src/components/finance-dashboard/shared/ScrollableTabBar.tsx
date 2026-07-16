@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
@@ -30,6 +30,7 @@ interface Props {
 export default function ScrollableTabBar({ children, className = "" }: Props) {
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const t = useTranslations("financeDashboard.a11y");
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
@@ -91,7 +92,7 @@ export default function ScrollableTabBar({ children, className = "" }: Props) {
         <button
           type="button"
           onClick={() => scrollDir("left")}
-          aria-label="Scroll tabs left"
+          aria-label={t("scrollTabsLeft")}
           className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-[var(--color-surface-card)] border border-[var(--color-border)] shadow-sm hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
@@ -107,7 +108,7 @@ export default function ScrollableTabBar({ children, className = "" }: Props) {
         <button
           type="button"
           onClick={() => scrollDir("right")}
-          aria-label="Scroll tabs right"
+          aria-label={t("scrollTabsRight")}
           className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-[var(--color-surface-card)] border border-[var(--color-border)] shadow-sm hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
         >
           <ChevronRight className="w-3.5 h-3.5" />

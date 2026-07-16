@@ -659,7 +659,7 @@ const RefundDetailDrawer = ({
                 />
                 {data.gatewayChargeId && (
                   <Row
-                    label="Gateway Charge ID"
+                    label={t("refundsPage.drawer.overview.gatewayChargeId")}
                     value={
                       <span className="text-[12px] font-mono text-[var(--color-text-primary)] break-all max-w-[280px] text-right">
                         {data.gatewayChargeId}

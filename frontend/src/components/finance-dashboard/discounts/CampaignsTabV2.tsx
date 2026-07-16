@@ -431,7 +431,7 @@ const CampaignFormModal = ({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ramadan 2026"
+              placeholder={t("namePlaceholder")}
               className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
             />
           </div>
@@ -484,7 +484,7 @@ const CampaignFormModal = ({
                 type="text"
                 value={bannerCta ?? ""}
                 onChange={(e) => setBannerCta(e.target.value)}
-                placeholder="Shop now"
+                placeholder={t("bannerCtaPlaceholder")}
                 className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
               />
             </div>

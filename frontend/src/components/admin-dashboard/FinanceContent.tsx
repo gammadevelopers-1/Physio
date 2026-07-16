@@ -6,6 +6,7 @@ import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
 import Select from "./Select";
+import Money from "@/components/finance-dashboard/shared/Money";
 import {
   DollarSign,
   TrendingUp,
@@ -341,7 +342,10 @@ const FinanceContent = () => {
                             </span>
                           </td>
                           <td className={`px-4 py-4 text-sm font-medium ${tx.amount > 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-                            {tx.amount > 0 ? "+" : ""}SAR {Math.abs(tx.amount).toLocaleString()}
+                            <span className="inline-flex items-center gap-0.5" dir="ltr">
+                              {tx.amount > 0 ? "+" : "-"}
+                              <Money amount={Math.abs(tx.amount)} decimals={0} />
+                            </span>
                           </td>
                         </tr>
                       ))}

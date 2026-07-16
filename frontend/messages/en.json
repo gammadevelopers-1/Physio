@@ -10412,6 +10412,8 @@
         "card": "Card",
         "mada": "Mada",
         "apple_pay": "Apple Pay",
+        "samsung_pay": "Samsung Pay",
+        "stc_pay": "STC Pay",
         "bnpl": "BNPL",
         "bank_transfer": "Bank Transfer",
         "unknown": "Unknown"

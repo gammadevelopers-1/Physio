@@ -207,13 +207,13 @@ const PaymentsContent = ({ embedded = false }: PaymentsContentProps) => {
   // 'bnpl'. Bank transfer rows carry 'bank_transfer'.
   const methodOptions = [
     { value: "all", label: t("paymentsTable.filter.allMethods") },
-    { value: "card", label: t("paymentsTable.filter.card") },
-    { value: "mada", label: "Mada" },
-    { value: "applepay", label: "Apple Pay" },
-    { value: "samsungpay", label: "Samsung Pay" },
-    { value: "stcpay", label: "STC Pay" },
-    { value: "bnpl", label: "BNPL" },
-    { value: "bank_transfer", label: t("paymentsTable.filter.bankTransfer") },
+    { value: "card", label: t("reportsPage.methodLabels.card") },
+    { value: "mada", label: t("reportsPage.methodLabels.mada") },
+    { value: "applepay", label: t("reportsPage.methodLabels.apple_pay") },
+    { value: "samsungpay", label: t("reportsPage.methodLabels.samsung_pay") },
+    { value: "stcpay", label: t("reportsPage.methodLabels.stc_pay") },
+    { value: "bnpl", label: t("reportsPage.methodLabels.bnpl") },
+    { value: "bank_transfer", label: t("reportsPage.methodLabels.bank_transfer") },
   ];
 
   const totalPendingCount = (summary?.pendingPayments || 0) + (summary?.awaitingApprovalCount || 0);

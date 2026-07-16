@@ -10411,7 +10411,9 @@
       "methodLabels": {
         "card": "بطاقة",
         "mada": "مدى",
-        "apple_pay": "Apple Pay",
+        "apple_pay": "أبل باي",
+        "samsung_pay": "سامسونج باي",
+        "stc_pay": "إس تي سي باي",
         "bnpl": "الشراء الآجل",
         "bank_transfer": "تحويل بنكي",
         "unknown": "غير معروف"

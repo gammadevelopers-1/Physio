@@ -40,19 +40,24 @@ export class RefundsController {
     @Req() req: Request,
   ) {
     const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
-    const isAdmin =
-      user.roles.includes('FINANCE') ||
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN');
+    // Use activeRole (currently selected role) — not roles (all-time
+    // list of roles the account has). Otherwise a user with dual roles
+    // (STUDENT + ADMIN) operating in student mode still hits the admin
+    // bypass, and the policy is silently skipped when they request a
+    // refund "as a student".
+    const isAdminActing =
+      user.activeRole === 'FINANCE' ||
+      user.activeRole === 'ADMIN' ||
+      user.activeRole === 'SUPER_ADMIN';
 
-    // Admin / finance calling POST /refunds should NEVER be blocked by
-    // the student-side eligibility policy (course-not-started etc.). Any
-    // finance-dashboard entry point that lands here — the quick-action
-    // "Refund" button on the payments table, legacy callers — should
-    // behave like the dedicated /admin-initiate endpoint: bypass the
-    // gate, audit the override. Students still go through requestRefund
-    // and get the policy enforced.
-    if (isAdmin) {
+    // Admin / finance acting on the finance dashboard should NEVER be
+    // blocked by the student-side eligibility policy (course-not-started
+    // etc.). Any finance entry point that lands here — the quick-action
+    // "Refund" button on the payments table, legacy callers — behaves
+    // like the dedicated /admin-initiate endpoint: bypass the gate,
+    // audit the override. Students (activeRole === 'STUDENT') still go
+    // through requestRefund and get the policy enforced.
+    if (isAdminActing) {
       return this.refundService.adminInitiateRefund(
         user.id,
         { ...dto, bypassPolicy: true },

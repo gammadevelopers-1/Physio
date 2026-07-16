@@ -85,7 +85,14 @@ const RefundDetailDrawer = ({
   const [auditLoading, setAuditLoading] = useState(false);
   const [acting, setActing] = useState<"approve" | "reject" | "fail" | null>(null);
 
-  // Reject/Fail modal state — opened inline inside the drawer.
+  // Approve/Reject/Fail modal state — opened inline inside the drawer.
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [approveMode, setApproveMode] = useState<"full" | "partial">("full");
+  const [approveAmount, setApproveAmount] = useState<string>("");
+  const [approveNote, setApproveNote] = useState("");
+  const [approveReasonErr, setApproveReasonErr] = useState(false);
+  const [approveAmountErr, setApproveAmountErr] = useState<string | null>(null);
+
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
   const [rejectErr, setRejectErr] = useState(false);
@@ -126,6 +133,12 @@ const RefundDetailDrawer = ({
   useEffect(() => {
     if (refundId) {
       setTab("overview");
+      setApproveOpen(false);
+      setApproveMode("full");
+      setApproveAmount("");
+      setApproveNote("");
+      setApproveReasonErr(false);
+      setApproveAmountErr(null);
       setRejectOpen(false);
       setRejectNote("");
       setFailOpen(false);
@@ -139,12 +152,66 @@ const RefundDetailDrawer = ({
     if (refundId && tab === "audit") fetchAudit();
   }, [refundId, tab, fetchAudit]);
 
-  const handleApprove = async () => {
+  // Retry-gateway path (refund already APPROVED, gateway call previously
+  // failed) — amount is locked at the earlier approval; no modal needed.
+  const retryApprove = async () => {
     if (!refundId) return;
     setActing("approve");
     try {
       await refundApi.approve(refundId);
       toast.success(t("refundsPage.toasts.approveSuccess"));
+      await fetchDetail();
+      if (tab === "audit") await fetchAudit();
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e?.message || t("refundsPage.toasts.genericError"));
+    } finally {
+      setActing(null);
+    }
+  };
+
+  const openApproveModal = () => {
+    setApproveMode("full");
+    setApproveAmount(String(data?.refundAmount ?? ""));
+    setApproveNote("");
+    setApproveReasonErr(false);
+    setApproveAmountErr(null);
+    setApproveOpen(true);
+  };
+
+  const submitApprove = async () => {
+    if (!refundId) return;
+    const requested = Number(data?.refundAmount ?? 0);
+    let approvedAmount: number | undefined;
+    let approvalNote: string | undefined;
+
+    if (approveMode === "partial") {
+      const parsed = Number(approveAmount);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        setApproveAmountErr(t("refundsPage.approveModal.amountInvalid"));
+        return;
+      }
+      if (parsed > requested) {
+        setApproveAmountErr(
+          t("refundsPage.approveModal.amountExceedsRequested"),
+        );
+        return;
+      }
+      if (!approveNote.trim()) {
+        setApproveReasonErr(true);
+        return;
+      }
+      approvedAmount = parsed;
+      approvalNote = approveNote.trim();
+    } else if (approveNote.trim()) {
+      approvalNote = approveNote.trim();
+    }
+
+    setActing("approve");
+    try {
+      await refundApi.approve(refundId, { approvedAmount, approvalNote });
+      toast.success(t("refundsPage.toasts.approveSuccess"));
+      setApproveOpen(false);
       await fetchDetail();
       if (tab === "audit") await fetchAudit();
       onChanged?.();
@@ -248,7 +315,7 @@ const RefundDetailDrawer = ({
               <>
                 <button
                   type="button"
-                  onClick={handleApprove}
+                  onClick={openApproveModal}
                   disabled={acting !== null}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#16A34A] rounded-lg hover:bg-[#15803D] transition-colors disabled:opacity-50"
                 >
@@ -278,7 +345,7 @@ const RefundDetailDrawer = ({
               <>
                 <button
                   type="button"
-                  onClick={handleApprove}
+                  onClick={retryApprove}
                   disabled={acting !== null}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#2563EB] rounded-lg hover:bg-[#1D4ED8] transition-colors disabled:opacity-50"
                 >
@@ -716,6 +783,180 @@ const RefundDetailDrawer = ({
               }}
             />
           )}
+        </div>
+      )}
+
+      {/* Approve inline modal — lets finance approve for the full amount
+          or reduce to a partial amount with a mandatory reason. */}
+      {approveOpen && data && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setApproveOpen(false)}
+            aria-hidden
+          />
+          <div
+            className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden"
+            dir={isRTL ? "rtl" : "ltr"}
+          >
+            <header className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB] shrink-0">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-[#1F2937]">
+                  {t("refundsPage.approveModal.title")}
+                </h2>
+                <p className="text-xs text-[#6B7280] mt-0.5">
+                  {t("refundsPage.approveModal.subtitle")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setApproveOpen(false)}
+                className="p-1.5 rounded-md hover:bg-[#F3F4F6] shrink-0"
+                aria-label={t("refundsPage.approveModal.cancel")}
+              >
+                <XIcon className="w-4 h-4 text-[#6B7280]" />
+              </button>
+            </header>
+
+            <div className="px-5 py-4 space-y-4 overflow-y-auto">
+              <div className="rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] px-4 py-3">
+                <p className="text-xs text-[#6B7280]">
+                  {t("refundsPage.approveModal.requestedAmount")}
+                </p>
+                <p className="text-lg font-semibold text-[#1F2937] tabular-nums">
+                  <Money amount={Number(data.refundAmount || 0)} />
+                </p>
+              </div>
+
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-medium text-[#374151] mb-1">
+                  {t("refundsPage.approveModal.modeLabel")}
+                </legend>
+                {(["full", "partial"] as const).map((m) => (
+                  <label
+                    key={m}
+                    className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition ${
+                      approveMode === m
+                        ? "border-[var(--color-primary)] bg-[#FFFBF0]"
+                        : "border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="approve-mode"
+                      value={m}
+                      checked={approveMode === m}
+                      onChange={() => {
+                        setApproveMode(m);
+                        setApproveAmountErr(null);
+                        if (m === "full") {
+                          setApproveAmount(String(data.refundAmount ?? ""));
+                        }
+                      }}
+                      className="mt-0.5 accent-[var(--color-primary)]"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-[#1F2937]">
+                        {t(`refundsPage.approveModal.mode.${m}`)}
+                      </p>
+                      <p className="text-xs text-[#6B7280] mt-0.5">
+                        {t(`refundsPage.approveModal.modeHint.${m}`)}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </fieldset>
+
+              {approveMode === "partial" && (
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">
+                    {t("refundsPage.approveModal.amountLabel")}
+                  </label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    max={Number(data.refundAmount || 0)}
+                    value={approveAmount}
+                    onChange={(e) => {
+                      setApproveAmount(e.target.value);
+                      setApproveAmountErr(null);
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                      approveAmountErr
+                        ? "border-[#DC2626]"
+                        : "border-[#E5E7EB]"
+                    }`}
+                    placeholder="0.00"
+                  />
+                  {approveAmountErr && (
+                    <p className="text-xs text-[#DC2626] mt-1">
+                      {approveAmountErr}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">
+                  {approveMode === "partial"
+                    ? t("refundsPage.approveModal.reasonRequiredLabel")
+                    : t("refundsPage.approveModal.noteOptionalLabel")}
+                </label>
+                <textarea
+                  rows={3}
+                  value={approveNote}
+                  onChange={(e) => {
+                    setApproveNote(e.target.value);
+                    if (e.target.value.trim()) setApproveReasonErr(false);
+                  }}
+                  placeholder={
+                    approveMode === "partial"
+                      ? t("refundsPage.approveModal.reasonPlaceholder")
+                      : t("refundsPage.approveModal.notePlaceholder")
+                  }
+                  className={`w-full px-3 py-2 border rounded-lg text-sm resize-none ${
+                    approveReasonErr
+                      ? "border-[#DC2626]"
+                      : "border-[#E5E7EB]"
+                  }`}
+                />
+                {approveReasonErr && (
+                  <p className="text-xs text-[#DC2626] mt-1">
+                    {t("refundsPage.approveModal.reasonRequired")}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <footer className="flex items-center justify-end gap-2 px-5 py-4 border-t border-[#E5E7EB] shrink-0">
+              <button
+                type="button"
+                onClick={() => setApproveOpen(false)}
+                className="px-3 py-2 text-sm font-medium text-[#374151] hover:bg-[#F3F4F6] rounded-lg"
+              >
+                {t("refundsPage.approveModal.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={submitApprove}
+                disabled={acting === "approve"}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[#16A34A] rounded-lg hover:bg-[#15803D] transition-colors disabled:opacity-50"
+              >
+                {acting === "approve" ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+                {t("refundsPage.approveModal.confirm")}
+              </button>
+            </footer>
+          </div>
         </div>
       )}
 

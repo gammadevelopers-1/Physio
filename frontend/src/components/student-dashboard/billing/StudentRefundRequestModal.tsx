@@ -16,13 +16,19 @@ import { formatSar, pickCourseTitle } from "./billingHelpers";
 
 /**
  * Student-initiated refund request. Two screens:
- *   1. FORM       — reason picker + optional note + gateway-specific hint
+ *   1. FORM       — line-picker (multi-course carts) + reason picker +
+ *                    optional note + gateway-specific hint
  *   2. CONFIRM    — math summary (you'll receive X, processed when, refunded to ...)
  * After submit → success state, then closes and tells the parent to
  * refetch detail so the new pending refund shows in the history.
  *
- * Student requests are ALWAYS full refunds — partial is admin-only. The
- * backend re-validates eligibility on POST so we can't game the gates
+ * Partial refunds:
+ *   - Multi-course cart → student ticks which courses to refund; payload
+ *     includes paymentItemIds and the backend refunds just those lines.
+ *   - Single course     → picker is hidden; refund is the full payment.
+ *   - Amount override is admin-only (finance can approve for less than
+ *     the requested amount via ApproveRefundModal + audit trail).
+ * The backend re-validates eligibility on POST so we can't game the gates
  * client-side.
  */
 

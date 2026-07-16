@@ -36,17 +36,30 @@ export class RefundsController {
   @Roles('STUDENT', 'FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async requestRefund(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateRefundDto,
+    @Body() dto: CreateRefundDto & { justification?: string; refundAmount?: number },
     @Req() req: Request,
   ) {
     const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
-    // Finance/Admin can initiate refunds on behalf of learners
     const isAdmin =
       user.roles.includes('FINANCE') ||
       user.roles.includes('ADMIN') ||
       user.roles.includes('SUPER_ADMIN');
-    const requesterId = isAdmin ? (dto as any).userId || user.id : user.id;
-    return this.refundService.requestRefund(requesterId, dto, ipAddress);
+
+    // Admin / finance calling POST /refunds should NEVER be blocked by
+    // the student-side eligibility policy (course-not-started etc.). Any
+    // finance-dashboard entry point that lands here — the quick-action
+    // "Refund" button on the payments table, legacy callers — should
+    // behave like the dedicated /admin-initiate endpoint: bypass the
+    // gate, audit the override. Students still go through requestRefund
+    // and get the policy enforced.
+    if (isAdmin) {
+      return this.refundService.adminInitiateRefund(
+        user.id,
+        { ...dto, bypassPolicy: true },
+        ipAddress,
+      );
+    }
+    return this.refundService.requestRefund(user.id, dto, ipAddress);
   }
 
   @Post('admin-initiate')
@@ -217,6 +230,7 @@ export class RefundsController {
       user.id,
       ipAddress,
       dto.approvalNote,
+      dto.approvedAmount,
     );
   }
 

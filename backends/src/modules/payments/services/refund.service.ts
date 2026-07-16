@@ -626,7 +626,13 @@ export class RefundService {
     return refund;
   }
 
-  async approveRefund(refundId: string, processedBy: string, ipAddress?: string, approvalNote?: string) {
+  async approveRefund(
+    refundId: string,
+    processedBy: string,
+    ipAddress?: string,
+    approvalNote?: string,
+    approvedAmount?: number,
+  ) {
     const [refund] = await db
       .select()
       .from(refunds)
@@ -655,6 +661,48 @@ export class RefundService {
       throw new BadRequestException('Payment or charge ID not found');
     }
 
+    // Approve-time amount override. The requested amount is the ceiling:
+    // admin can approve LESS than requested (partial approval, e.g. student
+    // asked for 300 SAR and we approve 150), but never more. When reducing,
+    // approvalNote is mandatory — audit + email need the reason. The
+    // original requested amount is snapshotted into refund.metadata so we
+    // can display "asked for X, approved for Y" in the email and audit.
+    const requestedAmount = Number(refund.refundAmount);
+    let finalRefundAmount = requestedAmount;
+    let finalMerchantFee = Number(refund.deductionAmount);
+    let finalMerchantFeeReason = refund.deductionReason;
+    let isPartialApproval = false;
+    if (approvedAmount !== undefined && approvedAmount !== null) {
+      if (!Number.isFinite(approvedAmount) || approvedAmount <= 0) {
+        throw new BadRequestException(
+          'Approved amount must be a positive number',
+        );
+      }
+      if (approvedAmount > requestedAmount) {
+        throw new BadRequestException(
+          `Approved amount (${approvedAmount}) cannot exceed the requested amount (${requestedAmount})`,
+        );
+      }
+      // Only treat as partial when the amounts actually differ (guard for
+      // floating-point noise).
+      if (Math.abs(approvedAmount - requestedAmount) > 0.005) {
+        if (!approvalNote || !approvalNote.trim()) {
+          throw new BadRequestException(
+            'A reason (approvalNote) is required when approving a partial refund',
+          );
+        }
+        const recomputed = await this.computeRefundMath(
+          payment.gateway,
+          Number(payment.amount),
+          approvedAmount,
+        );
+        finalRefundAmount = recomputed.refundAmount;
+        finalMerchantFee = recomputed.merchantFeeAmount;
+        finalMerchantFeeReason = recomputed.merchantFeeReason;
+        isPartialApproval = true;
+      }
+    }
+
     // Step 1: Persist the approval decision BEFORE calling the gateway.
     // This ensures the approved state is saved even if the gateway call fails,
     // allowing a retry without re-doing the Finance Manager approval.
@@ -667,9 +715,38 @@ export class RefundService {
           processedBy,
           approvalNote: approvalNote || null,
           approvedAt: new Date(),
+          refundAmount: finalRefundAmount.toFixed(2),
+          deductionAmount: finalMerchantFee.toFixed(2),
+          deductionReason: finalMerchantFeeReason,
           updatedAt: new Date(),
         })
         .where(eq(refunds.id, refundId));
+
+      if (isPartialApproval) {
+        // Audit log is the source of truth for the partial-approval
+        // decision — refunds has no metadata column, so we snapshot the
+        // requested vs approved amount + reason here. The refund-completed
+        // email + admin UI both read this to render the "Partial approval"
+        // block.
+        await this.auditLogService.log({
+          entityType: 'refund',
+          entityId: refundId,
+          action: 'refund_amount_adjusted_at_approval',
+          performedBy: processedBy,
+          ipAddress,
+          metadata: {
+            requestedAmount: requestedAmount.toFixed(2),
+            approvedAmount: finalRefundAmount.toFixed(2),
+            delta: (requestedAmount - finalRefundAmount).toFixed(2),
+            reason: approvalNote,
+          },
+        });
+      }
+
+      // Re-read so the downstream gateway call uses the new amount snapshot.
+      refund.refundAmount = finalRefundAmount.toFixed(2);
+      refund.deductionAmount = finalMerchantFee.toFixed(2);
+      refund.deductionReason = finalMerchantFeeReason;
     }
 
     // Step 2: Call gateway to initiate the actual refund transfer.
@@ -776,10 +853,17 @@ export class RefundService {
         gatewayRefundId,
         refundAmount: refund.refundAmount,
         ...(approvalNote ? { approvalNote } : {}),
+        ...(isPartialApproval
+          ? {
+              partialApproval: true,
+              requestedAmount: requestedAmount.toFixed(2),
+              approvedAmount: finalRefundAmount.toFixed(2),
+            }
+          : {}),
       },
     });
 
-    return { status: 'approved', gatewayRefundId };
+    return { status: 'approved', gatewayRefundId, partialApproval: isPartialApproval };
   }
 
   async rejectRefund(

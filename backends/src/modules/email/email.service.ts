@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import { users } from '../../database/schema';
 import { userPreferences } from '../../database/schema/user-preferences';
+import { auditLogs } from '../../database/schema/audit-logs';
 import type { MissingRequirement } from '../../database/schema';
 import { Resend } from 'resend';
 import * as nodemailer from 'nodemailer';
@@ -2555,6 +2556,42 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
     }
   }
 
+  /**
+   * Look up the audit log entry approveRefund writes when finance approves
+   * a refund for LESS than the amount originally requested. When present,
+   * both the "approved" and "completed" emails render a bilingual "Partial
+   * approval" block so the student understands why the payout is smaller
+   * than what they asked for. Absent for full approvals.
+   */
+  private async getPartialApprovalInfo(
+    refundId: string,
+  ): Promise<{ requestedAmount: string; reason: string } | undefined> {
+    try {
+      const [entry] = await db
+        .select({ metadata: auditLogs.metadata })
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.entityType, 'refund'),
+            eq(auditLogs.entityId, refundId),
+            eq(auditLogs.action, 'refund_amount_adjusted_at_approval'),
+          ),
+        )
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(1);
+      if (!entry?.metadata) return undefined;
+      const meta = entry.metadata as any;
+      if (!meta?.requestedAmount || !meta?.reason) return undefined;
+      return {
+        requestedAmount: String(meta.requestedAmount),
+        reason: String(meta.reason),
+      };
+    } catch {
+      // Best-effort lookup — never break an email over the partial-block.
+      return undefined;
+    }
+  }
+
   async sendRefundApproved(
     userId: string,
     refundId: string,
@@ -2571,6 +2608,7 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
       if (!refund) return;
 
       const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+      const partial = await this.getPartialApprovalInfo(refundId);
 
       await this.send({
         to: user.email,
@@ -2579,11 +2617,13 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
           studentName,
           amount: String(refund.refundAmount),
           currency: 'SAR',
+          partial,
         }),
         text: getRefundApprovedText({
           studentName,
           amount: String(refund.refundAmount),
           currency: 'SAR',
+          partial,
         }),
       });
       this.logger.log(`Refund approved email sent to ${user.email}`);
@@ -2631,6 +2671,7 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
       if (!refund) return;
 
       const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+      const partial = await this.getPartialApprovalInfo(refundId);
 
       await this.send({
         to: user.email,
@@ -2641,6 +2682,7 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
           deductionAmount: String(refund.deductionAmount),
           refundAmount: String(refund.refundAmount),
           currency: 'SAR',
+          partial,
         }),
         text: getRefundCompletedText({
           studentName,
@@ -2648,6 +2690,7 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
           deductionAmount: String(refund.deductionAmount),
           refundAmount: String(refund.refundAmount),
           currency: 'SAR',
+          partial,
         }),
       });
       this.logger.log(`Refund completed email sent to ${user.email}`);

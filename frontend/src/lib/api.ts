@@ -8316,8 +8316,18 @@ export const refundApi = {
       actorEmail: string | null;
     }>>(`/refunds/${refundId}/audit`),
 
-  approve: (refundId: string, approvalNote?: string) =>
-    api.patch<{ status: string }>(`/refunds/${refundId}/approve`, approvalNote ? { approvalNote } : {}),
+  approve: (
+    refundId: string,
+    opts?: { approvalNote?: string; approvedAmount?: number },
+  ) => {
+    const body: { approvalNote?: string; approvedAmount?: number } = {};
+    if (opts?.approvalNote) body.approvalNote = opts.approvalNote;
+    if (opts?.approvedAmount !== undefined) body.approvedAmount = opts.approvedAmount;
+    return api.patch<{ status: string; partialApproval?: boolean }>(
+      `/refunds/${refundId}/approve`,
+      body,
+    );
+  },
 
   reject: (refundId: string, rejectionNote: string) =>
     api.patch<{ status: string }>(`/refunds/${refundId}/reject`, { rejectionNote }),

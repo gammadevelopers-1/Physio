@@ -9116,6 +9116,30 @@
         "confirm": "Reject Refund",
         "cancel": "Cancel"
       },
+      "approveModal": {
+        "title": "Approve Refund",
+        "subtitle": "Approve for the full requested amount, or reduce with a reason.",
+        "requestedAmount": "Requested amount",
+        "modeLabel": "Approval",
+        "mode": {
+          "full": "Approve full amount",
+          "partial": "Approve partial amount"
+        },
+        "modeHint": {
+          "full": "Refund the buyer exactly what they requested.",
+          "partial": "Refund the buyer a smaller amount — a reason is required and will be shown in the audit log and refund email."
+        },
+        "amountLabel": "Approved amount (SAR)",
+        "amountInvalid": "Enter a valid amount greater than 0.",
+        "amountExceedsRequested": "Approved amount can't exceed the requested amount.",
+        "reasonRequiredLabel": "Reason for reducing (required)",
+        "reasonPlaceholder": "e.g. student attended 2 of 4 sessions before requesting refund",
+        "reasonRequired": "A reason is required for a partial approval.",
+        "noteOptionalLabel": "Approval note (optional)",
+        "notePlaceholder": "Optional internal note captured in the audit log",
+        "confirm": "Approve",
+        "cancel": "Cancel"
+      },
       "failModal": {
         "title": "Mark Refund as Failed",
         "description": "Use this when the gateway can not complete the refund and a manual settlement is needed. The note is recorded in the audit log.",

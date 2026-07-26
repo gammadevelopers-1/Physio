@@ -368,10 +368,11 @@ function StatLine({ label, value }: { label: string; value: string }) {
 }
 
 function LoadingState() {
+  const t = useTranslations("supportDashboard.trainerApplication");
   return (
     <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] py-3">
       <Loader2 className="w-3 h-3 animate-spin" />
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("loading")}</span>
     </div>
   );
 }

@@ -24,7 +24,7 @@ import {
   formatDate,
   pickCourseTitle,
   statusPillClasses,
-  statusLabel,
+  resolvePaymentStatusChip,
 } from "./billingHelpers";
 
 type Props = {
@@ -239,10 +239,6 @@ const BillingOverviewTab = ({
               offLabel={t("policy.ruleOff")}
             />
           </ul>
-          <p className="mt-3 text-xs text-[#6B7280] flex items-start gap-1.5">
-            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-            <span>{t("policy.merchantDeductionNote")}</span>
-          </p>
         </section>
       )}
 
@@ -277,28 +273,47 @@ const BillingOverviewTab = ({
                 <button
                   type="button"
                   onClick={() => onOpenPayment(p.id)}
-                  className="w-full px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-[#F9FAFB] transition-colors text-left"
+                  // `text-start` is direction-aware — RTL flips it to the
+                  // right automatically. `dir="rtl"` on the outer page
+                  // cascades and flips the natural flex order so the
+                  // chevron and status chip end up on the leading edge in
+                  // Arabic without any reversed classes.
+                  className="w-full px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-[#F9FAFB] transition-colors text-start"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-[#1F2937] truncate">
+                  <div className="flex-1 min-w-0 block">
+                    <div
+                      className={`block text-sm font-medium text-[#1F2937] truncate ${isRTL ? "text-right" : "text-left"}`}
+                    >
                       {pickCourseTitle(
                         p.courseTitle,
                         p.courseTitleAr,
                         locale,
                       )}
                     </div>
-                    <div className="text-xs text-[#6B7280]">
+                    <div
+                      className={`block text-xs text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                    >
                       {formatDate(p.paidAt ?? p.createdAt, locale)}
                     </div>
                   </div>
                   <div className="text-sm font-semibold text-[#1F2937] tabular-nums">
                     {formatSar(p.amount)} {t("common.sar")}
                   </div>
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(p.status)}`}
-                  >
-                    {statusLabel(p.status, t)}
-                  </span>
+                  {(() => {
+                    const chip = resolvePaymentStatusChip(
+                      p.status,
+                      p.latestRefundStatus
+                        ? [{ status: p.latestRefundStatus }]
+                        : null,
+                    );
+                    return (
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(chip.pillKey)}`}
+                      >
+                        {t(chip.labelKey)}
+                      </span>
+                    );
+                  })()}
                   <ChevronRight
                     className={`w-4 h-4 text-[#9CA3AF] shrink-0 ${isRTL ? "rotate-180" : ""}`}
                   />

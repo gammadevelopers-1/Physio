@@ -249,6 +249,11 @@ const RefundsContent = ({ embedded = false }: RefundsContentProps) => {
     { value: "course_cancelled", label: t("refundsPage.reasonLabels.course_cancelled") },
     { value: "duplicate", label: t("refundsPage.reasonLabels.duplicate") },
     { value: "technical", label: t("refundsPage.reasonLabels.technical") },
+    // Buyer-facing reasons added with the refund-modal overhaul so finance
+    // can filter by the same slugs the student picked.
+    { value: "description_mismatch", label: t("refundsPage.reasonLabels.description_mismatch") },
+    { value: "wrong_course", label: t("refundsPage.reasonLabels.wrong_course") },
+    { value: "access_issue", label: t("refundsPage.reasonLabels.access_issue") },
     { value: "other", label: t("refundsPage.reasonLabels.other") },
   ];
 

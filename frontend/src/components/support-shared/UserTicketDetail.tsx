@@ -32,6 +32,7 @@ import {
   User,
 } from "lucide-react";
 import { useTicketDetail } from "@/hooks/support/useMyTickets";
+import { useVisibilityPolling } from "@/hooks/useVisibilityPolling";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import { FmtDate } from "@/components/ui/Fmt";
@@ -283,8 +284,14 @@ const UserTicketDetail = ({
   const isRTL = locale === "ar";
   const isAr = locale === "ar";
 
-  const { data: ticket, loading, refetch } = useTicketDetail(ticketId);
+  const { data: ticket, loading, refetch, refetchQuiet } =
+    useTicketDetail(ticketId);
   const platformLocale = usePlatformLocale();
+
+  // Poll the ticket every 8s so new staff replies land in the thread
+  // without the requester having to reload the page. Silent — no
+  // spinner, no error banner on transient failures.
+  useVisibilityPolling(refetchQuiet, 8000, Boolean(ticketId));
 
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);

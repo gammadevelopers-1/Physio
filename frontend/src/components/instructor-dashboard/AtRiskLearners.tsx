@@ -18,6 +18,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { instructorApi, supportApi, ApiError } from "@/lib/api";
+import Select from "@/components/ui/Select";
 
 interface AtRiskLearner {
   id: string;
@@ -340,15 +341,12 @@ function ThresholdSettingsModal({
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("atRisk.selectCourse")}
             </label>
-            <select
+            <Select
               value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-            >
-              {courses.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
+              onChange={setSelectedCourse}
+              className="w-full"
+              options={courses.map((c) => ({ value: c.value, label: c.label }))}
+            />
           </div>
 
           {/* Attendance threshold */}

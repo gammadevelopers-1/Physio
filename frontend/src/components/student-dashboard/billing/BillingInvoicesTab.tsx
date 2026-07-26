@@ -6,6 +6,8 @@ import { Download, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { invoiceApi } from "@/lib/api";
 import { formatSar, formatDate, statusPillClasses } from "./billingHelpers";
+import InvoiceLanguageDialog from "@/components/ui/InvoiceLanguageDialog";
+import { useInvoiceLanguage } from "@/hooks/useInvoiceLanguage";
 
 /**
  * Lists every invoice (tax invoice) issued to the student. Reuses the
@@ -61,10 +63,14 @@ const BillingInvoicesTab = () => {
     };
   }, [t]);
 
+  const { dialogProps: langDialogProps, promptForLocale } = useInvoiceLanguage();
+
   const handleDownload = async (id: string) => {
+    const chosen = await promptForLocale();
+    if (!chosen) return;
     setDownloadingId(id);
     try {
-      const res = await invoiceApi.getPdfUrl(id);
+      const res = await invoiceApi.getPdfUrl(id, chosen);
       if (res.url) {
         window.open(res.url, "_blank", "noopener,noreferrer");
       } else {
@@ -164,6 +170,7 @@ const BillingInvoicesTab = () => {
           </table>
         </div>
       )}
+      <InvoiceLanguageDialog {...langDialogProps} />
     </div>
   );
 };

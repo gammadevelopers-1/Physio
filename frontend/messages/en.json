@@ -18,6 +18,9 @@
       "title": "Application Summary",
       "sale": "Sale discount",
       "discount": "Coupon discount",
+      "campaignLine": "{campaign} (campaign)",
+      "campaignFallback": "Campaign discount",
+      "couponLine": "Coupon {code}",
       "beforeTax": "Subtotal (before VAT)",
       "vat": "VAT ({rate}%)",
       "amountDue": "Amount due",
@@ -1051,6 +1054,8 @@
     "card": {
       "viewDetails": "View Details",
       "percentOff": "{percent}% off",
+      "amountOff": "SAR {amount} off",
+      "earlyBird": "Early Bird",
       "liveOnline": "Live Online",
       "hoursUnit": "Hours",
       "tbd": "TBD",
@@ -1062,7 +1067,27 @@
       "courseEnded": "Course Ended",
       "enrollmentClosed": "Enrollment Closed",
       "seatsLeft": "{count} seats left",
-      "enrollBy": "Enroll by"
+      "enrollBy": "Enroll by",
+      "redeemWithPoints": {
+        "pill": "or {points} points",
+        "tooltipNotEnough": "Earn {deficit} more points to unlock",
+        "tooltipSignIn": "Sign in to see your points"
+      }
+    },
+    "detail": {
+      "redeemCta": {
+        "enabled": "Redeem for {points} points",
+        "needMore": "Need {deficit} more points",
+        "signInPrompt": "Sign in to redeem"
+      },
+      "redeemModal": {
+        "title": "Redeem course with points?",
+        "body": "You'll spend {points} points and enroll immediately in \"{course}\".",
+        "warning": "This can't be undone.",
+        "confirm": "Redeem now",
+        "cancel": "Cancel",
+        "successToast": "Course unlocked with points!"
+      }
     },
     "pagination": {
       "previous": "Previous",
@@ -1320,6 +1345,11 @@
       "total": "Total",
       "autoAppliedTitle": "Auto-applied",
       "autoAppliedBody": "Early-bird saving applied automatically.",
+      "campaignAppliedTitle": "{campaign} applied",
+      "campaignAppliedBody": "SAR {amount} off applied automatically",
+      "campaignFallback": "Campaign",
+      "campaignLine": "{campaign} (campaign)",
+      "couponLine": "Coupon {code}",
       "validating": "Validating...",
       "validFor": "Valid for this cart",
       "perLineBreakdownTitle": "Discount breakdown",
@@ -1715,6 +1745,8 @@
       "billing": "Billing",
       "applications": "My Applications",
       "inviteFriends": "My Points",
+      "myRewards": "My Rewards",
+      "myRewardsUnreadDot": "Unused rewards",
       "transcript": "Transcript",
       "support": "Support",
       "settings": "Settings",
@@ -1943,6 +1975,12 @@
         "reenrollCta": "Re-enroll now",
         "dismiss": "Dismiss"
       },
+      "sourceChip": {
+        "pointsRedemption": "Redeemed with points",
+        "reward": "From reward",
+        "adminGrant": "Granted by admin",
+        "freePublic": "Free"
+      },
       "recentCourses": "Recent Courses",
       "loadMore": "Load more",
       "loadingMore": "Loading more...",
@@ -2027,7 +2065,8 @@
       "reviewAlreadySubmitted": "You have already reviewed this course",
       "reviewAlreadyTitle": "Review Submitted",
       "reviewAlreadyDesc": "Thank you — you have already reviewed this course.",
-      "completedBadge": "Completed"
+      "completedBadge": "Completed",
+      "notEnrolled": "You are not enrolled in this course"
     },
     "favourites": {
       "title": "Favorites",
@@ -2286,6 +2325,7 @@
       "statusCancelled": "Cancelled",
       "statusRefunded": "Refunded",
       "statusRefundPending": "Refund Pending",
+      "statusRefundRejected": "Refund Rejected",
       "moreOptions": "More options",
       "viewInvoice": "View Invoice",
       "downloadInvoice": "Download Invoice",
@@ -2340,6 +2380,16 @@
         "loading": "Loading…",
         "loadFailed": "Failed to load. Please try again.",
         "empty": "Nothing to show yet."
+      },
+      "refund": {
+        "status": {
+          "pending": "Refund requested",
+          "approved": "Approved — awaiting payout",
+          "processing": "Processing",
+          "completed": "Refunded",
+          "rejected": "Rejected",
+          "failed": "Refund failed"
+        }
       },
       "payments": {
         "title": "Payments",
@@ -2443,7 +2493,8 @@
         "viewCourse": "View course",
         "multiCourseSummary": "{count} courses",
         "lineItemsTitle": "Courses in this payment",
-        "lineRefunded": "Refunded"
+        "lineRefunded": "Refunded",
+        "lineRefundInProgress": "Refund requested"
       },
       "policy": {
         "title": "Refund policy at a glance",
@@ -2481,18 +2532,27 @@
         "selectedCoursesTitle": "Courses being refunded",
         "partialCartNotice": "Other courses on this payment will keep their enrollments active.",
         "reasonLabel": "Why do you want a refund?",
+        "reasonPlaceholder": "Select a reason",
         "reasonSelect": "Please select a reason",
         "reasons": {
-          "policy": "Course doesn't match what was described",
-          "cancelled": "I no longer need it / changed my mind",
+          "description_mismatch": "The course does not match the description",
+          "cancelled": "I no longer need the course / I changed my mind",
           "technical": "Technical issue with the platform",
           "duplicate": "Duplicate payment",
-          "other": "Other (please explain below)"
+          "wrong_course": "Incorrect course purchased",
+          "access_issue": "Unable to access the course",
+          "course_cancelled": "Course was cancelled by the provider",
+          "other": "Other (please specify)",
+          "policy": "Course doesn't match what was described"
         },
-        "noteLabel": "Additional notes (optional)",
-        "noteRequiredLabel": "Please describe what happened",
+        "noteLabel": "Additional details (optional)",
+        "noteRequiredLabel": "Please tell us more",
         "notePlaceholder": "Give us any details that will help us review your request faster.",
         "noteRequired": "A short explanation is required when choosing \"Other\".",
+        "noteMinLength": "Please write at least 3 characters.",
+        "noteCharCounter": "{count}/500",
+        "addDetailsToggle": "Add details",
+        "hideDetailsToggle": "Hide details",
         "gatewayHints": {
           "moyasar": "Card refunds typically arrive within 5–10 business days, depending on your bank.",
           "tamara": "Tamara will adjust your remaining instalments; any amount already paid is refunded to your original method.",
@@ -2556,6 +2616,177 @@
         "adminGrant": "Bonus granted",
         "adminDeduct": "Adjustment",
         "systemExpire": "Points expired"
+      },
+      "hero": {
+        "balanceLabel": "Your points balance",
+        "earnedThisMonth": "You've earned +{count} points this month",
+        "exploreRewardsCta": "Explore rewards",
+        "seeEarnRulesCta": "See ways to earn"
+      },
+      "waysToEarn": {
+        "title": "Ways to earn points",
+        "subtitle": "Complete these actions to grow your balance",
+        "pointsPill": "+{count} pts",
+        "emptyState": "Ways to earn coming soon",
+        "inviteFriendCta": "Invite a friend",
+        "eventLabel": {
+          "invite_friend": "Invite a friend",
+          "enroll": "Enroll in a course",
+          "complete_course": "Complete a course",
+          "review": "Leave a review",
+          "daily_login": "Daily login",
+          "other": "Bonus activity"
+        }
+      },
+      "redeemRewards": {
+        "title": "Redeem your points",
+        "subtitle": "Trade points for coupons, courses, or exclusive rewards"
+      },
+      "redeemCourses": {
+        "title": "Unlock courses with points",
+        "subtitle": "Spend your points on any of these courses",
+        "emptyState": "No courses available for redemption yet — check back soon",
+        "enrolledBadge": "Enrolled",
+        "redeemCta": "Redeem",
+        "needMorePoints": "Need {count} more points",
+        "originalPrice": "{price} SAR",
+        "pointsCost": "{count} pts"
+      },
+      "recentRewards": {
+        "title": "Your recent rewards",
+        "subtitle": "Your latest redemptions",
+        "viewAllLink": "View all",
+        "emptyState": "No redemptions yet — try redeeming something above!",
+        "statusLabel": {
+          "unused": "Ready to use",
+          "fulfilled": "Fulfilled",
+          "pending": "Pending",
+          "expired": "Expired",
+          "reversed": "Reversed",
+          "failed": "Failed"
+        }
+      },
+      "recentActivity": {
+        "title": "Recent activity",
+        "subtitle": "Your last point transactions",
+        "viewAllLink": "View full history",
+        "emptyState": "No activity yet",
+        "eventLabel": {
+          "earn:enroll": "Enrolled in a course",
+          "earn:complete": "Completed a course",
+          "earn:review": "Review approved",
+          "earn:invite": "Invited a friend",
+          "earn:manual_grant": "Bonus granted",
+          "redeem:hold": "Redemption held",
+          "redeem:committed": "Redemption completed",
+          "redeem:released": "Points refunded",
+          "redeem:course:committed": "Course unlocked",
+          "other": "Points activity"
+        }
+      },
+      "rewards": {
+        "title": "Redeem your points",
+        "pointsLabel": "PTS",
+        "stockLeft": "{n} left",
+        "perUserLeft": "{n} left for you",
+        "redeemBtn": "Redeem",
+        "needMore": "Need {n} more points",
+        "outOfStock": "Out of stock",
+        "perUserCapReached": "Already redeemed max",
+        "confirmTitle": "Confirm redemption",
+        "confirmBody": "Redeem <name></name> for <cost></cost> points?",
+        "currentBalance": "Current balance",
+        "cost": "Cost",
+        "newBalance": "New balance",
+        "cancel": "Cancel",
+        "confirmBtn": "Yes, redeem",
+        "successTitle": "Redeemed successfully!",
+        "successBody": "You just unlocked <name></name>.",
+        "yourCode": "Your coupon code",
+        "copy": "Copy",
+        "expiresOn": "Expires {date}",
+        "goToCourse": "Go to your course",
+        "registeredForWebinar": "You're registered for: {title}",
+        "pendingFulfillment": "Your reward is being processed by our team — you'll be notified once it's ready.",
+        "done": "Done",
+        "selectCourseTitle": "Choose one course to unlock",
+        "selectCourseSearch": "Search courses…",
+        "selectCourseEmpty": "No courses match your search.",
+        "selectCoursePrice": "SAR {price}",
+        "selectCourseFree": "Free",
+        "viewAllRewardsLink": "View all your rewards",
+        "result": {
+          "otherPendingWithinDays": "Your reward will appear in My Rewards within {days} days.",
+          "viewRewardsLink": "View your rewards"
+        },
+        "errors": {
+          "redeemFailed": "Redemption failed. Please try again."
+        }
+      }
+    },
+    "myRewards": {
+      "title": "My Rewards",
+      "subtitle": "Everything you've unlocked with your points — coupons, free unlocks, and courses purchased with points.",
+      "pointsUnit": "pts",
+      "activeTab": "Active",
+      "historyTab": "History",
+      "empty": {
+        "active": {
+          "title": "No active rewards yet",
+          "body": "Redeem your points for coupons, free courses, or free webinars from the catalog.",
+          "cta": "Browse the catalog"
+        },
+        "history": {
+          "title": "Nothing in your history yet",
+          "body": "Used and expired rewards will appear here once you've redeemed a few."
+        }
+      },
+      "coupon": {
+        "expiresIn": "Expires in {days} days",
+        "expired": "Expired",
+        "usedOn": "Used on {date}",
+        "copyButton": "Copy code",
+        "copiedToast": "Copied to clipboard",
+        "useAtCheckoutCta": "Use at checkout"
+      },
+      "freeCourse": {
+        "goToCourse": "Go to course",
+        "enrolledOn": "Enrolled on {date}"
+      },
+      "coursePurchase": {
+        "pointsPaidChip": "Paid with {points} points",
+        "goToCourseCta": "Go to course",
+        "completedStatus": "Completed",
+        "droppedStatus": "Dropped",
+        "expiredStatus": "Expired"
+      },
+      "freeWebinar": {
+        "joinCta": "Join webinar",
+        "scheduledFor": "Scheduled for {date}",
+        "ended": "Webinar ended"
+      },
+      "other": {
+        "pending": "Pending",
+        "fulfilled": "Fulfilled",
+        "failed": "Fulfillment failed",
+        "reversed": "Reversed",
+        "pendingNote": "Pending fulfillment — an admin will notify you when it's ready.",
+        "expectedBy": "Expected by: {date}",
+        "pendingBody": "Admin will notify you when your reward is ready.",
+        "yourCode": "Your code:",
+        "yourLink": "Your reward is ready:",
+        "messageFromAdmin": "Message from admin:",
+        "openLink": "Open link",
+        "copyCode": "Copy code",
+        "copied": "Copied!",
+        "adminNoteLabel": "Note:",
+        "failedBody": "Your points have been refunded.",
+        "reversedBody": "Redemption reversed; points refunded."
+      },
+      "pagination": {
+        "showing": "Showing {shown} of {total}",
+        "prev": "Previous",
+        "next": "Next"
       }
     },
     "settings": {
@@ -2753,6 +2984,7 @@
       "pictureInPicture": "Picture-in-Picture",
       "resumeFrom": "Resuming from {time}",
       "skipPrevented": "You cannot skip ahead beyond what you have watched",
+      "videoLoadError": "Could not load this video. Please refresh and try again.",
       "nextUp": "Next: {title}",
       "autoAdvanceIn": "Auto-advancing in {seconds}s",
       "cancel": "Cancel",
@@ -3171,6 +3403,9 @@
       "statusRescheduled": "Rescheduled",
       "finalizeSession": "Finalize & Lock",
       "endSessionConfirm": "End this lecture? All participants will be disconnected from Zoom.",
+      "endSessionTitle": "End Lecture",
+      "endSessionConfirmLabel": "End Lecture",
+      "cancel": "Cancel",
       "sessionEnded": "Lecture ended successfully",
       "endSessionError": "Failed to end lecture",
       "zoomEndFailed": "Lecture completed, but the Zoom meeting could not be ended. Please end it manually in Zoom.",
@@ -3528,6 +3763,8 @@
       "noUnassignedMaterials": "No unassigned materials available. Upload materials first from the Content page.",
       "unlinkMaterial": "Remove from Module",
       "unlinkConfirm": "Remove this material from the module? It will remain in your content library.",
+      "unlinkTitle": "Remove Material",
+      "unlinkConfirmLabel": "Remove",
       "assignToModule": "Assign to Module",
       "materialAssigned": "Material assigned to module",
       "materialUnlinked": "Material removed from module",
@@ -4307,6 +4544,12 @@
       "cancel": "Cancel",
       "upload": "Upload",
       "uploadError": "Failed to upload file. Please try again.",
+      "uploadErrorTooLarge": "File is {size} MB — exceeds the {limit} MB limit for this type. Please compress or choose a smaller file.",
+      "uploadErrorTooLargeGeneric": "File is too large. Please compress or choose a smaller file.",
+      "uploadErrorType": "This file type is not supported for upload.",
+      "uploadErrorNetwork": "Upload interrupted — check your connection and try again.",
+      "uploadErrorForbidden": "You don't have permission to upload to this course.",
+      "uploadErrorProcessing": "Another version of this file is still being processed. Please wait a moment and try again.",
       "deleteError": "Failed to delete file. Please try again.",
       "deleteErrorProcessing": "This file is still being processed by the system. Please wait until processing finishes, then try deleting again.",
       "deleteErrorNotFound": "This file no longer exists. It may have already been deleted by another user — refresh the page to see the latest list.",
@@ -4869,7 +5112,10 @@
         "hideFromPublic": "Hide from public site",
         "showOnPublic": "Show on public site",
         "feature": "Mark as Featured",
-        "unfeature": "Remove from Featured"
+        "unfeature": "Remove from Featured",
+        "duplicate": "Duplicate",
+        "duplicateSuccess": "Course duplicated. Set the new dates to continue.",
+        "duplicateFailed": "Failed to duplicate course"
       },
       "hiddenFromPublic": "Course hidden from public site",
       "shownOnPublic": "Course is now visible on public site",
@@ -5133,7 +5379,173 @@
       "materialRemoveError": "Failed to remove material",
       "moduleAssessments": "Assessments",
       "marks": "marks",
-      "submissions": "submissions"
+      "submissions": "submissions",
+      "tabs": {
+        "overview": "Overview",
+        "modules": "Modules",
+        "sessions": "Sessions",
+        "assessments": "Assessments",
+        "students": "Students",
+        "team": "Team",
+        "reviews": "Reviews",
+        "analytics": "Analytics",
+        "certificates": "Certificates",
+        "audit": "Audit Log",
+        "settings": "Settings"
+      },
+      "auditPlaceholder": "Audit history will appear here.",
+      "analyticsCards": {
+        "totalStudents": "Total Students",
+        "activeStudents": "Active",
+        "completedStudents": "Completed",
+        "droppedStudents": "Dropped",
+        "avgProgress": "Avg. Progress",
+        "totalSessions": "Total Sessions",
+        "completedSessions": "Completed Sessions",
+        "avgRating": "Avg. Rating"
+      },
+      "enrollmentsEmpty": "No students enrolled yet.",
+      "sessionsEmpty": "No lectures scheduled yet.",
+      "assessmentsEmpty": "No assessments have been added to this course yet.",
+      "instructorCardTitle": "Instructor",
+      "reassignInstructor": "Reassign",
+      "dangerZone": "Danger Zone",
+      "dangerZoneDesc": "These actions are irreversible. Proceed with caution.",
+      "editCourseCta": "Edit Course",
+      "editCourseDesc": "Update course content, schedule, and settings.",
+      "studentsSearchPlaceholder": "Search students...",
+      "columnStudent": "Student",
+      "columnScfhs": "SCFHS #",
+      "columnEnrolled": "Enrolled",
+      "progress": "Progress",
+      "columnStatusLabel": "Status",
+      "studentStatus": {
+        "active": "Active",
+        "completed": "Completed",
+        "dropped": "Dropped",
+        "suspended": "Suspended"
+      },
+      "sessionStatus": {
+        "scheduled": "Scheduled",
+        "live": "Live",
+        "ended": "Ended",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "missed": "Missed",
+        "rescheduled": "Rescheduled"
+      },
+      "sessionAttendanceLabel": "Attendance",
+      "assessmentModuleLabel": "Module",
+      "assessmentNoModule": "Unassigned",
+      "sessionDateColumn": "Date & Time",
+      "sessionTitleColumn": "Title",
+      "students": {
+        "addStudentBtn": "Add Student",
+        "addStudentTitle": "Add student to course",
+        "addStudentSubtitle": "Search and pick a student. Provide a reason for the manual enrolment.",
+        "searchPlaceholder": "Search by name, email, or SCFHS number",
+        "noResults": "No students match your search",
+        "reasonLabel": "Reason (required)",
+        "reasonPlaceholder": "Why is this student being enrolled?",
+        "addBtn": "Add to Course",
+        "addSuccess": "Student added",
+        "addFailed": "Failed to add student",
+        "removeTitle": "Remove student from course",
+        "removeSubtitle": "You're about to drop {name} from this course.",
+        "removeReasonLabel": "Reason (required)",
+        "removeReasonPlaceholder": "Why is this student being removed?",
+        "removeFinanceNote": "Finance will review this reason to decide whether a refund is warranted. No refund is issued automatically.",
+        "removeBtn": "Remove Student",
+        "removeSuccess": "Student removed",
+        "removeFailed": "Failed to remove student",
+        "manuallyEnrolledChip": "Manually enrolled",
+        "removedSectionTitle": "Removed Students",
+        "removedOnBy": "Removed on {date}",
+        "removalReasonLabel": "Removal reason",
+        "rowAction": {
+          "remove": "Remove"
+        },
+        "cancel": "Cancel"
+      },
+      "audit": {
+        "emptyState": "No audit events for this course yet.",
+        "whenColumn": "When",
+        "whoColumn": "Performed by",
+        "actionColumn": "Action",
+        "detailsColumn": "Details",
+        "actions": {
+          "course.created": "Course created",
+          "course.update": "Course updated",
+          "course.updated": "Course updated",
+          "course.activate": "Course activated",
+          "course.archive": "Course archived",
+          "course.complete": "Course completed",
+          "course.cancelled": "Course cancelled",
+          "course.rescheduled": "Course rescheduled",
+          "course.request_changes": "Requested changes",
+          "course.soft_deleted": "Course deleted",
+          "course.restored": "Course restored",
+          "course.toggle_featured": "Toggled featured",
+          "course.instructor_reassigned": "Instructor reassigned",
+          "course_duplicated": "Course duplicated",
+          "enrollment.manual_created": "Student manually enrolled",
+          "enrollment.removed_by_admin": "Student removed"
+        }
+      },
+      "unknownUser": "Unknown user",
+      "managerCardTitle": "Course Manager",
+      "certificates": {
+        "empty": "No certificate requests for this course yet.",
+        "total": "{count} certificate(s)",
+        "rejectedReasonLabel": "Reason",
+        "assessmentPassed": "Passed",
+        "assessmentFailed": "Failed",
+        "filter": {
+          "all": "All statuses"
+        },
+        "status": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "held": "On hold",
+          "revoked": "Revoked"
+        },
+        "column": {
+          "attendance": "Attendance",
+          "assessment": "Assessment",
+          "requested": "Requested"
+        },
+        "action": {
+          "approve": "Approve",
+          "reject": "Reject",
+          "hold": "Hold",
+          "revoke": "Revoke",
+          "view": "View",
+          "approveSuccess": "Certificate approved",
+          "approveFailed": "Failed to approve certificate",
+          "rejectSuccess": "Certificate rejected",
+          "rejectFailed": "Failed to reject certificate",
+          "holdSuccess": "Certificate placed on hold",
+          "holdFailed": "Failed to place certificate on hold",
+          "revokeSuccess": "Certificate revoked",
+          "revokeFailed": "Failed to revoke certificate"
+        },
+        "modal": {
+          "approveTitle": "Approve certificate",
+          "rejectTitle": "Reject certificate",
+          "holdTitle": "Place certificate on hold",
+          "revokeTitle": "Revoke certificate",
+          "approveConfirm": "Approve certificate",
+          "rejectConfirm": "Reject certificate",
+          "holdConfirm": "Place on hold",
+          "revokeConfirm": "Revoke certificate",
+          "approveConfirm_text": "The student will receive their certificate immediately once approved.",
+          "reasonLabel": "Reason (required)",
+          "rejectPlaceholder": "Why is this request being rejected?",
+          "holdPlaceholder": "Why is this request being held? Notes are shown to the student.",
+          "revokePlaceholder": "Why is this certificate being revoked?"
+        }
+      }
     },
     "editCourse": {
       "title": "Edit Course",
@@ -5148,6 +5560,13 @@
         "deadlinePassed": "The enrollment deadline for this course has already passed.",
         "capacityDecrease": "Enrollment capacity can only be increased, not decreased. Raise the number instead.",
         "capacityBelowEnrolled": "Capacity ({capacity}) cannot be lower than the current number of enrolled students ({enrolled}). Set it to {enrolled} or higher."
+      },
+      "tabs": {
+        "basic": "Basic",
+        "content": "Content",
+        "assignment": "Assignment",
+        "schedule": "Schedule & Pricing",
+        "seo": "SEO"
       }
     },
     "sessionsPage": {
@@ -6566,7 +6985,9 @@
         "rules": "Earn Rules",
         "config": "Redemption Config",
         "courses": "Eligible Courses",
+        "rewards": "Rewards Catalog",
         "grants": "Manual Grants",
+        "courseRedemptions": "Course Redemptions",
         "history": "User History"
       },
       "toasts": {
@@ -6624,7 +7045,203 @@
         "autoCost": "Auto",
         "enabled": "Enabled",
         "disabled": "Disabled",
-        "empty": "No courses match your search."
+        "empty": "No courses match your search.",
+        "remove": "Remove from eligibility",
+        "removeConfirm": "Remove this course from points-redemption entirely?",
+        "removeTitle": "Remove Course",
+        "removeConfirmLabel": "Remove",
+        "cancel": "Cancel",
+        "removedToast": "Course removed from redemption",
+        "redemptionsLast30d": "{count, plural, =0 {No redemptions in the last 30 days} =1 {1 redemption in the last 30 days} other {# redemptions in the last 30 days}}",
+        "filters": {
+          "all": "All",
+          "enabled": "Enabled",
+          "disabled": "Disabled",
+          "unconfigured": "Never configured"
+        },
+        "delivery": {
+          "zoom": "Live Online",
+          "onsite": "On-site",
+          "blended": "Blended",
+          "self-paced": "Self-paced",
+          "webinar": "Webinar"
+        },
+        "bulkEnable": {
+          "button": "Bulk enable",
+          "title": "Enable for all paid courses",
+          "body": "Sets the point cost = price × multiplier for every eligible paid course that doesn't already have a redemption row. Existing rows are left alone.",
+          "multiplierLabel": "Points per SAR",
+          "multiplierHint": "Default matches your platform rate ({rate} pts/SAR). Higher = more expensive redemption.",
+          "cancel": "Cancel",
+          "confirm": "Apply",
+          "doneToast": "Enabled {count} course(s) for redemption"
+        },
+        "emptyState": {
+          "title": "No courses yet enabled for point-redemption",
+          "body": "Configure your first course so students can spend their earned points to enroll instead of paying with a card.",
+          "cta": "Configure your first course"
+        }
+      },
+      "rewards": {
+        "panels": {
+          "catalog": "Catalog",
+          "redemptions": "Redemptions"
+        },
+        "createBtn": "New reward",
+        "createTitle": "Create reward",
+        "editTitle": "Edit reward",
+        "save": "Save",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "delete": "Delete",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "viewCoupon": "View coupon",
+        "confirmDelete": "Deactivate this reward? Students won't see it anymore.",
+        "deleteTitle": "Deactivate Reward",
+        "deleteConfirmLabel": "Deactivate",
+        "cancel": "Cancel",
+        "unlimited": "Unlimited",
+        "pointsUnit": "pts",
+        "stockLeftBadge": "{n} left",
+        "redeemedCount": "{n} redeemed",
+        "prev": "Prev",
+        "next": "Next",
+        "pageOf": "Page {page} of {total}",
+        "markFulfilled": "Mark fulfilled",
+        "reverse": "Reverse",
+        "reversalReasonPrompt": "Reversal reason (visible to auditors):",
+        "noRedemptions": "No redemptions yet.",
+        "cols": {
+          "name": "Reward",
+          "type": "Type",
+          "cost": "Cost",
+          "stock": "Stock",
+          "redeemed": "Redeemed",
+          "status": "Status",
+          "actions": ""
+        },
+        "redemptionCols": {
+          "when": "When",
+          "user": "User",
+          "reward": "Reward",
+          "points": "Points",
+          "status": "Status",
+          "actions": ""
+        },
+        "types": {
+          "discount_coupon": "% Discount coupon",
+          "fixed_discount_coupon": "Fixed discount coupon",
+          "free_course": "Free course unlock",
+          "free_webinar": "Free webinar",
+          "other": "Other"
+        },
+        "statuses": {
+          "active": "Active",
+          "inactive": "Inactive",
+          "pending": "Pending",
+          "fulfilled": "Fulfilled",
+          "failed": "Failed",
+          "reversed": "Reversed"
+        },
+        "filters": {
+          "allStatuses": "All statuses"
+        },
+        "fields": {
+          "type": "Reward type",
+          "typeHelp": "Type cannot be changed after creation.",
+          "nameEn": "Name (English)",
+          "nameAr": "Name (Arabic)",
+          "descriptionEn": "Description (English)",
+          "descriptionAr": "Description (Arabic)",
+          "pointsCost": "Points cost",
+          "displayOrder": "Display order",
+          "maxPerUser": "Max per user (empty = unlimited)",
+          "totalStock": "Total stock (empty = unlimited)",
+          "validFrom": "Valid from (optional)",
+          "validUntil": "Valid until (optional)",
+          "isActive": "Active (visible to students)"
+        },
+        "scope": {
+          "label": "Coupon scope",
+          "all_paid": "All paid courses",
+          "specific_courses": "Specific courses",
+          "by_delivery_type": "By delivery type",
+          "deliveryTypePlaceholder": "Pick one or more delivery types"
+        },
+        "multiSelect": {
+          "search": "Search…",
+          "empty": "Nothing to select",
+          "clearAll": "Clear all",
+          "loading": "Loading…"
+        },
+        "payload": {
+          "expiryDays": "Coupon expiry (days)",
+          "discount_coupon": {
+            "title": "Coupon settings",
+            "percent": "Percent off"
+          },
+          "fixed_discount_coupon": {
+            "title": "Coupon settings",
+            "amountSar": "Amount off (SAR)"
+          },
+          "free_course": {
+            "title": "Free course settings",
+            "help": "The student picks one of these courses at redemption time.",
+            "pickerPlaceholder": "Pick one or more courses",
+            "pickerEmpty": "No courses match",
+            "freeBadge": "Free"
+          },
+          "free_webinar": {
+            "title": "Free webinar settings",
+            "pickerPlaceholder": "Pick an upcoming webinar session",
+            "pickerEmpty": "No upcoming webinar sessions"
+          },
+          "other": {
+            "title": "Custom reward",
+            "instructionsEn": "Fulfillment instructions (English)",
+            "instructionsAr": "Fulfillment instructions (Arabic)",
+            "pendingNotice": "Custom rewards stay pending until an admin marks them fulfilled from the Redemptions tab.",
+            "expectedDeliveryDaysLabel": "Expected delivery (days)",
+            "expectedDeliveryDaysPlaceholder": "7",
+            "expectedDeliveryDaysHelper": "How many days after redemption the student should expect this reward to arrive. Shown as an ETA on their My Rewards page."
+          }
+        },
+        "other": {
+          "fulfill": {
+            "modalTitle": "Fulfill Other reward",
+            "viewModalTitle": "Fulfillment artifact",
+            "viewArtifactButton": "View artifact",
+            "kindLabel": "Artifact type",
+            "kindCode": "Code",
+            "kindLink": "Link",
+            "kindNote": "Note",
+            "valueLabel": "Value",
+            "valueRequired": "Please enter a value",
+            "valuePlaceholderCode": "e.g. GIFT-CODE-XXXX",
+            "valuePlaceholderLink": "e.g. https://gift.example.com/redeem/abc",
+            "valuePlaceholderNote": "e.g. Thank you! Your voucher will arrive by post in 3-5 days.",
+            "adminNoteLabel": "Admin note (optional)",
+            "adminNoteHelper": "Internal note or message for the student",
+            "submitButton": "Mark fulfilled",
+            "closeButton": "Close"
+          }
+        },
+        "empty": {
+          "title": "No rewards yet",
+          "body": "Create your first reward so students can spend the points they earn.",
+          "cta": "Create your first reward"
+        },
+        "errors": {
+          "nameRequired": "English name is required"
+        },
+        "toasts": {
+          "created": "Reward created",
+          "updated": "Reward updated",
+          "deleted": "Reward deactivated",
+          "fulfilled": "Redemption marked fulfilled",
+          "reversed": "Redemption reversed"
+        }
       },
       "grants": {
         "pickStudentTitle": "Select a student",
@@ -6649,6 +7266,70 @@
         "dateColumn": "Date",
         "reasonColumn": "Reason",
         "deltaColumn": "Change"
+      },
+      "userHistory": {
+        "reasons": {
+          "adminGrant": "Admin grant",
+          "adminDeduct": "Admin deduction",
+          "earnSignup": "Welcome bonus for signing up",
+          "earnCourseCompleted": "Reward for completing an enrolled course",
+          "earnReviewApproved": "Reward for a course review approved by a manager",
+          "redeemHold": "Points held for a redemption",
+          "redeemCommitted": "Reward redemption committed",
+          "redeemCourseCommitted": "Course unlock committed",
+          "redeemReleased": "Redemption released — points refunded",
+          "reverseCourseCancelled": "Points reversed after course cancellation",
+          "systemExpire": "Points expired"
+        }
+      },
+      "courseRedemptions": {
+        "summary": {
+          "count": "Total redemptions",
+          "points": "Total points spent",
+          "sar": "Equivalent SAR"
+        },
+        "filters": {
+          "search": "Search student",
+          "searchPlaceholder": "Name or email…",
+          "course": "Course",
+          "allCourses": "All courses",
+          "status": "Enrollment status",
+          "startDate": "From",
+          "endDate": "To"
+        },
+        "statuses": {
+          "all": "All statuses",
+          "active": "Active",
+          "completed": "Completed",
+          "dropped": "Dropped",
+          "suspended": "Suspended",
+          "pendingPayment": "Pending payment",
+          "unknown": "No enrollment"
+        },
+        "columns": {
+          "date": "Date",
+          "student": "Student",
+          "course": "Course",
+          "points": "Points",
+          "sar": "SAR value",
+          "status": "Status"
+        },
+        "exportCsv": "Export CSV",
+        "exportSuccess": "Export downloaded",
+        "empty": {
+          "title": "No course redemptions yet",
+          "body": "No students have unlocked a course with points under the current filters."
+        },
+        "pagination": {
+          "showing": "Showing {shown} of {total}",
+          "prev": "Previous",
+          "next": "Next",
+          "pageOf": "Page {page} of {total}"
+        },
+        "errors": {
+          "loadFailed": "Failed to load course redemptions",
+          "exportFailed": "Export failed"
+        }
       }
     },
     "securityPage": {
@@ -6764,6 +7445,9 @@
       "triggerLeftSuccess": "'left' trigger sent successfully",
       "triggerFailed": "Failed to send trigger statement",
       "confirmLeft": "Send the 'left' offboarding trigger to NELC? This signals that the platform is terminating its integration. Use 'joined' for normal onboarding.",
+      "confirmLeftTitle": "Send Offboarding Trigger",
+      "confirmLeftLabel": "Send",
+      "cancel": "Cancel",
       "retry": "Retry",
       "retryQueued": "Retry enqueued — refreshing shortly",
       "retryNotEnqueued": "Statement was already sent or queue unavailable",
@@ -7191,6 +7875,9 @@
       "save": "Save Template",
       "resetToDefault": "Reset to default",
       "confirmReset": "Reset this template to the platform default? Any customizations will be lost.",
+      "resetTitle": "Reset Template",
+      "resetConfirmLabel": "Reset",
+      "cancel": "Cancel",
       "resetDone": "Template reset to default",
       "resetFailed": "Could not reset the template.",
       "subject": "Subject",
@@ -7218,6 +7905,21 @@
         "assessments": "Assessments",
         "content": "Content Review",
         "whatsapp": "WhatsApp"
+      },
+      "testSend": {
+        "button": "Send test to me",
+        "tooltip": "Renders this template with sample data and emails it to your own admin address.",
+        "sentOverride": "Test sent to {email}. Your edited template was used.",
+        "sentDefault": "Test sent to {email}. The default (unedited) template was used — save your edits first, then click again.",
+        "failed": "Failed to send test email."
+      },
+      "startFresh": {
+        "hint": "Prefer drag-and-drop over HTML? Click to clear the canvas and build with visual blocks (text, image, button).",
+        "button": "Start Fresh",
+        "title": "Start Fresh",
+        "confirm": "Clear the current template and start with a blank canvas? Your unsaved changes will be lost.",
+        "confirmLabel": "Clear Canvas",
+        "cancel": "Cancel"
       }
     },
     "settingsPage": {
@@ -7850,14 +8552,23 @@
             "created": "Incident created",
             "createFailed": "Couldn't create incident",
             "updatePosted": "Update posted",
-            "updateFailed": "Couldn't post update"
-          }
+            "updateFailed": "Couldn't post update",
+            "reportSaved": "Report saved",
+            "reportSaveFailed": "Could not save report",
+            "allowPopups": "Allow pop-ups to export PDF"
+          },
+          "report": "Report",
+          "hideReport": "Hide report",
+          "reportLoadError": "Couldn't load report."
         },
         "toasts": {
           "loadFailed": "Couldn't load service status",
           "componentSaved": "Component updated",
           "saveFailed": "Couldn't save",
           "confirmDelete": "Delete this incident and its entire timeline?",
+          "deleteTitle": "Delete Incident",
+          "deleteConfirmLabel": "Delete",
+          "cancel": "Cancel",
           "incidentDeleted": "Incident deleted",
           "deleteFailed": "Couldn't delete incident",
           "overrideCleared": "Manual override cleared — auto-detection resumed"
@@ -7885,6 +8596,48 @@
         "confirmPoint3": "The site comes back within ~30 seconds of you turning maintenance off.",
         "confirmCancel": "Cancel",
         "confirmEnable": "Yes, enable maintenance"
+      },
+      "scheduledMaintenance": {
+        "toasts": {
+          "loadFailed": "Couldn't load scheduled maintenance windows",
+          "windowCancelled": "Window cancelled",
+          "windowUpdated": "Window updated",
+          "windowScheduled": "Maintenance window scheduled"
+        },
+        "fields": {
+          "titleEn": "Title (EN)",
+          "titleAr": "Title (AR)",
+          "descriptionPlaceholder": "What's happening, what to expect…"
+        }
+      },
+      "statusAnalytics": {
+        "toasts": {
+          "startFailed": "Couldn't start export",
+          "allowPopups": "Allow pop-ups to export PDF"
+        }
+      },
+      "mailSettings": {
+        "title": "Outgoing Email Sender",
+        "subtitle": "Change the From address and display name for every platform email — no code deploy required.",
+        "loading": "Loading current settings…",
+        "senderEmailLabel": "Sender Email",
+        "senderEmailHelp": "Leave empty to fall back to the MAIL_FROM environment variable.",
+        "senderNameLabel": "Sender Name",
+        "senderNameHelp": "Display name shown in recipients' inbox (e.g., PhysioGuidance).",
+        "previewLabel": "Preview",
+        "previewFallback": "MAIL_FROM (env)",
+        "save": "Save mail settings",
+        "warning": {
+          "title": "Domain must be verified",
+          "body": "The sender email must use a domain that is verified with the mail provider (Resend). Sending from an unverified domain will fail silently. Contact devops before changing the domain."
+        },
+        "errors": {
+          "invalidEmail": "Enter a valid email address."
+        },
+        "toasts": {
+          "saved": "Mail settings saved. New emails will use the updated sender within 30 seconds.",
+          "saveFailed": "Failed to save mail settings."
+        }
       }
     },
     "supportPage": {
@@ -9364,7 +10117,10 @@
         "course_cancelled": "Course Cancelled by Admin",
         "duplicate": "Duplicate Payment",
         "technical": "Technical Error",
-        "other": "Other"
+        "other": "Other",
+        "description_mismatch": "The course does not match the description",
+        "wrong_course": "Incorrect course purchased",
+        "access_issue": "Unable to access the course"
       },
       "actions": {
         "approve": "Approve",
@@ -9552,14 +10308,18 @@
       "sales": {
         "openButton": "Course Sales",
         "title": "Course Sales",
-        "subtitle": "Set a percentage off a course — students pay the discounted price automatically, no code required.",
+        "subtitle": "Set a percentage or fixed SAR amount off a course — students pay the discounted price automatically, no code required.",
         "searchPlaceholder": "Search courses…",
-        "empty": "No courses found",
+        "empty": "No paid courses found",
         "loadError": "Failed to load courses",
         "percentOff": "{percent}% off",
+        "amountOff": "SAR {amount} off",
         "liveBadge": "Live",
         "startsOn": "{percent}% off — starts {date}",
         "endedOn": "{percent}% off — ended {date}",
+        "startsOnLabel": "{label} — starts {date}",
+        "endedOnLabel": "{label} — ended {date}",
+        "inactiveLabel": "{label} — inactive",
         "endsOn": "ends {date}",
         "freeNoEffect": "Course is free — sale has no effect",
         "inactive": "{percent}% off — inactive",
@@ -9567,8 +10327,17 @@
         "noSale": "No sale",
         "setSale": "Set sale",
         "edit": "Edit",
+        "freeCourse": "Free course",
+        "freeCourseHint": "This course is free — sales can only be applied to paid courses. Set a base price first.",
+        "typeLabel": "Sale type",
+        "types": {
+          "percentage": "Percentage",
+          "fixed": "Fixed amount (SAR)"
+        },
         "percentLabel": "Percentage (% off)",
         "percentHint": "1–100. 100% makes the course free.",
+        "amountLabel": "Amount off (SAR)",
+        "amountHint": "Must be less than the course price (SAR {price}).",
         "allowCoupon": "Allow a coupon on top of this sale",
         "startsLabel": "Sale starts",
         "endsLabel": "Sale ends",
@@ -9577,7 +10346,12 @@
         "save": "Save",
         "saved": "Sale saved",
         "removed": "Sale removed",
-        "saveError": "Failed to save sale"
+        "saveError": "Failed to save sale",
+        "errors": {
+          "percentRange": "Percentage must be between 1 and 100",
+          "amountPositive": "Amount must be greater than 0",
+          "amountTooLarge": "SAR {amount} is not less than the course price (SAR {price}). Lower the amount."
+        }
       },
       "export": "Export CSV",
       "exportSuccess": "Export downloaded successfully",
@@ -9711,6 +10485,9 @@
         "saveButton": "Save campaign",
         "deactivateButton": "Deactivate",
         "deactivateConfirm": "Deactivate this campaign? Child codes will be rejected at checkout.",
+        "deactivateTitle": "Deactivate Campaign",
+        "deactivateConfirmLabel": "Deactivate",
+        "cancel": "Cancel",
         "activeFilter": "Active",
         "expiredFilter": "Expired",
         "allFilter": "All",
@@ -9936,7 +10713,9 @@
           "saleStackingTooltip": "This course is on sale. Coupons stack on top of the sale.",
           "saleNoStackingTooltip": "This course is on sale. Coupons will be REJECTED at checkout unless the sale allows stacking.",
           "noStackBadge": "No-stack",
-          "noStackTooltip": "The sale on this course does not allow coupon stacking. A coupon attached here will be rejected at checkout."
+          "noStackTooltip": "The sale on this course does not allow coupon stacking. A coupon attached here will be rejected at checkout.",
+          "freeBadge": "Free",
+          "freeCourseCannotBeAdded": "Free courses can't take a coupon — set a base price first."
         },
         "step3": {
           "heading": "Usage limits",
@@ -10013,7 +10792,9 @@
           "hint": "Restrict to specific courses or let codes work on any course.",
           "all": "All courses",
           "specific": "Specific courses",
-          "searchPlaceholder": "Search courses…"
+          "searchPlaceholder": "Search courses…",
+          "freeBadge": "Free",
+          "freeCourseCannotBeAdded": "Free courses can't take a coupon — set a base price first."
         },
         "step4": {
           "heading": "Settings",
@@ -10055,28 +10836,58 @@
           "all": "All"
         },
         "create": "New campaign",
+        "createEarlyBird": "New Early Bird",
+        "createEarlyBirdHint": "Opens a new campaign pre-filled with early-bird defaults: 7-day window, banner on, auto-apply enabled.",
         "empty": "No campaigns yet",
         "emptyHint": "Group related coupon codes under a campaign with a shared budget and banner.",
         "budget": "Budget",
         "unlimited": "Unlimited",
         "codes": "codes",
         "banner": "Site banner",
+        "earlyBirdPill": "Early Bird",
+        "offPill": "off",
+        "typePill": {
+          "standard": "Standard",
+          "earlyBird": "Early Bird"
+        },
+        "cardCouponStack": "Coupons stack on top",
+        "cardCodeContainer": "Code-based campaign",
+        "cardCodeContainerHint": "{n} coupon code(s) attached — buyers enter a code to redeem.",
+        "scopeSummary": {
+          "allPaid": "Applies to all paid courses",
+          "byDeliveryType": "Applies to: {list}",
+          "byDeliveryTypeEmpty": "Pick delivery types in Edit",
+          "specificCourses": "Applies to {n} selected course(s)",
+          "codeOnly": "{n} code(s) attached — no direct discount"
+        },
         "confirmDeactivate": "Deactivate this campaign? Child codes will be rejected at checkout.",
         "toasts": {
           "deactivated": "Campaign deactivated",
-          "deactivateError": "Failed to deactivate"
+          "activated": "Campaign activated",
+          "deleted": "Campaign deleted",
+          "deactivateError": "Failed to deactivate",
+          "activateError": "Failed to activate",
+          "deleteError": "Failed to delete"
         },
         "actions": {
           "open": "Open",
           "edit": "Edit",
-          "deactivate": "Deactivate"
+          "deactivate": "Deactivate",
+          "activate": "Activate",
+          "delete": "Delete"
         },
         "form": {
           "createTitle": "New campaign",
           "editTitle": "Edit campaign",
           "name": "Name",
+          "nameEn": "Name (English)",
+          "nameAr": "Name (Arabic)",
+          "nameArPlaceholder": "رمضان 2026",
+          "nameArHint": "Shown to visitors browsing the Arabic site.",
           "namePlaceholder": "Ramadan 2026",
           "description": "Description",
+          "descriptionEn": "Description (English)",
+          "descriptionAr": "Description (Arabic)",
           "startsAt": "Starts at",
           "endsAt": "Ends at",
           "budget": "Budget (SAR, optional)",
@@ -10084,12 +10895,63 @@
           "showBanner": "Show banner on public site",
           "showBannerHint": "A gradient strip appears above the courses pages while the campaign is live.",
           "bannerCta": "Banner CTA (optional)",
+          "bannerCtaEn": "Banner CTA — English (optional)",
+          "bannerCtaAr": "Banner CTA — Arabic (optional)",
           "bannerCtaPlaceholder": "Shop now",
+          "bannerCtaArPlaceholder": "تسوّق الآن",
           "cancel": "Cancel",
           "save": "Save campaign",
           "createdToast": "Campaign created",
           "editedToast": "Campaign saved",
-          "saveError": "Failed to save"
+          "saveError": "Failed to save",
+          "campaignType": "Campaign type",
+          "campaignTypes": {
+            "standard": "Standard",
+            "early_bird": "Early Bird"
+          },
+          "discountSection": "Discount",
+          "discountSectionHint": "Optional. When set, this discount applies at checkout without requiring a code.",
+          "discountType": "Discount type",
+          "discountTypes": {
+            "none": "No direct discount (attach codes instead)",
+            "percentage": "Percentage off",
+            "fixed": "Fixed amount off (SAR)"
+          },
+          "percentValue": "Percentage (1–100)",
+          "fixedValue": "Amount (SAR)",
+          "scope": "Applies to",
+          "scopes": {
+            "all_paid": "All paid courses",
+            "by_delivery_type": "By delivery type",
+            "specific_courses": "Specific courses"
+          },
+          "scopeHints": {
+            "all_paid": "Every paid course qualifies. Free courses are always skipped.",
+            "by_delivery_type": "Only paid courses whose delivery type matches your selection.",
+            "specific_courses": "Only the specific paid courses you pick below."
+          },
+          "deliveryTypes": {
+            "zoom": "Zoom",
+            "onsite": "On-site",
+            "blended": "Blended",
+            "self-paced": "Self-paced",
+            "webinar": "Webinar"
+          },
+          "courseSearchPlaceholder": "Search courses…",
+          "noCoursesFound": "No courses match your search",
+          "freeCourseCannotBeAdded": "Free courses can't have a discount",
+          "freeLabel": "Free",
+          "selectedCount": "{n} course(s) selected",
+          "allowsCoupon": "Allow a coupon on top of this discount",
+          "allowsCouponHint": "When off, the checkout hides the coupon field while this campaign is active.",
+          "errors": {
+            "discountValueRequired": "Enter a discount value greater than 0",
+            "percentRange": "Percentage must be between 1 and 100",
+            "scopeNeedsDiscount": "Pick a discount type (percentage or fixed) for this scope",
+            "pickDeliveryTypes": "Pick at least one delivery type",
+            "pickCourses": "Pick at least one course",
+            "fixedTooLargeForCourse": "Fixed discount SAR {amount} is not less than \"{title}\" (SAR {price}). Lower the discount or unselect the course."
+          }
         },
         "drawer": {
           "loading": "Loading…",
@@ -10102,9 +10964,41 @@
           },
           "totalSpent": "Total redeemed",
           "ofBudget": "of",
+          "unlimitedBudget": "Unlimited budget — no cap on redemptions",
           "period": "Period",
           "codeCount": "Codes",
-          "bannerActive": "Banner active on public site",
+          "bannerActive": "Banner is showing on public site",
+          "bannerActiveHint": "The gradient strip is visible above the courses pages.",
+          "bannerInactive": "Banner is off",
+          "bannerInactiveHint": "Turn it on to promote this campaign at the top of the courses pages.",
+          "bannerTurnOn": "Turn banner on",
+          "bannerTurnOff": "Turn banner off",
+          "bannerCta": "Banner CTA text",
+          "bannerCtaEn": "CTA — English",
+          "bannerCtaArLabel": "CTA — Arabic",
+          "bannerCtaPlaceholder": "Shop now",
+          "bannerCtaArPlaceholder": "تسوّق الآن",
+          "bannerSaveCta": "Save",
+          "bannerToasts": {
+            "on": "Banner is now visible on the public site",
+            "off": "Banner hidden",
+            "ctaSaved": "Banner CTA saved",
+            "error": "Could not update banner"
+          },
+          "directDiscount": "Direct discount",
+          "scopeLabel": "Applies to",
+          "couponStackOn": "Coupons stack on top",
+          "couponStackOnHint": "Buyers can also enter a coupon code — savings combine.",
+          "couponStackOff": "Coupons blocked",
+          "couponStackOffHint": "The checkout hides the coupon field while this campaign is active.",
+          "codesAttached": "{n} coupon code(s) attached",
+          "codesAttachedHint": "Buyers who enter one of these codes get this campaign's discount rules.",
+          "viewCodes": "View codes",
+          "bilingualEn": "English",
+          "bilingualAr": "Arabic",
+          "bilingualMissing": "No Arabic translation — edit the campaign to add one.",
+          "emptyDiscount": "No discount configured",
+          "emptyDiscountHint": "Edit this campaign to attach a direct discount or generate coupon codes.",
           "noCodes": "No codes attached yet",
           "cols": {
             "code": "Code",
@@ -10138,6 +11032,7 @@
         "saved": "saved",
         "empty": "No Early Bird codes yet",
         "emptyHint": "Create one to feature a limited-time discount with a countdown badge on course cards.",
+        "campaignBasedHint": "New early birds can also be created as campaigns from the Campaigns tab — pick \"Early Bird\" as the campaign type. Those show up with an Early Bird pill and apply directly at checkout without a code.",
         "sections": {
           "live": "Active now",
           "scheduled": "Scheduled",
@@ -10160,7 +11055,17 @@
           "overview": "Overview",
           "config": "Configuration",
           "usage": "Usage",
-          "audit": "Audit"
+          "audit": "Audit",
+          "pointsReward": "Points Reward"
+        },
+        "pointsReward": {
+          "header": "Created from Points Reward",
+          "rewardType": "Reward type",
+          "pointsCost": "Points cost",
+          "redeemedAt": "Redeemed at",
+          "redeemedBy": "Redeemed by",
+          "redemptionId": "Redemption ID",
+          "note": "This coupon was minted by the points system. Manage rewards in the Points dashboard."
         },
         "statusPill": {
           "active": "Active",
@@ -10223,9 +11128,13 @@
         "bulkDeleteTitle": "Delete {n} coupons?",
         "bulkDeleteBody": "This removes the selected coupons and their redemption history. Audit logs are preserved. Can’t be undone.",
         "bulkDeleteBtn": "Delete {n}",
-        "deactivateCampaignTitle": "Delete campaign?",
-        "deactivateCampaignBody": "Permanently deletes the campaign. Child coupons stay, but their campaign link is cleared. Audit logs are preserved.",
-        "deactivateCampaignBtn": "Delete campaign"
+        "deactivateCampaignTitle": "Deactivate campaign?",
+        "deactivateCampaignBody": "Pauses the campaign. Its coupon codes stop working at checkout. You can re-activate it later — nothing is deleted.",
+        "deactivateCampaignBtn": "Deactivate",
+        "deleteCampaignTitle": "Delete campaign?",
+        "deleteCampaignBody": "Permanently deletes the campaign. Child coupons stay, but their campaign link is cleared. Audit logs are preserved.",
+        "deleteCampaignBodyWithSpend": "This campaign has already generated SAR {spend} in redeemed discounts. Deleting is permanent — the spend history stays in reports but the campaign record itself is gone.",
+        "deleteCampaignBtn": "Delete permanently"
       }
     },
     "reportsPage": {
@@ -10243,14 +11152,38 @@
       "previewNote": "Preview shows the first results — exports include all rows.",
       "noResults": "No data for the selected filters.",
       "cards": {
-        "revenue": { "title": "Revenue", "desc": "Totals, gateway and method breakdown, VAT collected." },
-        "refunds": { "title": "Refunds", "desc": "Every refund with status, reason, gateway and processing agent." },
-        "payments": { "title": "Payments", "desc": "Transactional ledger filterable by gateway, status and method." },
-        "courseSales": { "title": "Course Sales", "desc": "Units sold, gross, refunds and net per course." },
-        "webinarSales": { "title": "Webinar Sales", "desc": "Per-session paid seats and revenue." },
-        "studentPurchases": { "title": "Student Purchases", "desc": "Lifetime spend leaderboard by student." },
-        "financeActivity": { "title": "Finance Activity", "desc": "Audit trail of every finance-side action." },
-        "vat": { "title": "VAT / Tax", "desc": "ZATCA-style monthly VAT summary." }
+        "revenue": {
+          "title": "Revenue",
+          "desc": "Totals, gateway and method breakdown, VAT collected."
+        },
+        "refunds": {
+          "title": "Refunds",
+          "desc": "Every refund with status, reason, gateway and processing agent."
+        },
+        "payments": {
+          "title": "Payments",
+          "desc": "Transactional ledger filterable by gateway, status and method."
+        },
+        "courseSales": {
+          "title": "Course Sales",
+          "desc": "Units sold, gross, refunds and net per course."
+        },
+        "webinarSales": {
+          "title": "Webinar Sales",
+          "desc": "Per-session paid seats and revenue."
+        },
+        "studentPurchases": {
+          "title": "Student Purchases",
+          "desc": "Lifetime spend leaderboard by student."
+        },
+        "financeActivity": {
+          "title": "Finance Activity",
+          "desc": "Audit trail of every finance-side action."
+        },
+        "vat": {
+          "title": "VAT / Tax",
+          "desc": "ZATCA-style monthly VAT summary."
+        }
       },
       "filters": {
         "title": "Filters",
@@ -10302,6 +11235,10 @@
         "events": "Events",
         "actors": "Actors",
         "entities": "Entities"
+      },
+      "pointRedemptionsSummary": {
+        "label": "Point redemptions",
+        "detail": "{count, plural, =0 {No enrollments} =1 {1 enrollment} other {# enrollments}} · {points} points spent · SAR {sar} equivalent"
       },
       "tables": {
         "byGateway": "Revenue by gateway",
@@ -11058,7 +11995,12 @@
       "chargeback": "Chargeback",
       "processing": "Processing",
       "rejected": "Rejected",
-      "abandoned": "Abandoned"
+      "abandoned": "Abandoned",
+      "refundPending": "Refund requested",
+      "refundApproved": "Approved — awaiting payout",
+      "refundProcessing": "Processing",
+      "refundRejected": "Refund rejected",
+      "refundFailed": "Refund failed"
     },
     "analytics": {
       "title": "Analytics",
@@ -11328,7 +12270,244 @@
       "statusDrivenByBusinessHours": "Status follows business hours",
       "editProfile": "Edit Profile",
       "viewProfile": "View Profile",
-      "logout": "Logout"
+      "logout": "Logout",
+      "uploadPhoto": "Upload Photo",
+      "removePhoto": "Remove Photo",
+      "roleSupervisor": "Supervisor",
+      "roleAgent": "Agent",
+      "csatOutOf5": "CSAT /5",
+      "emptyStateSupervisor": "You don't have assigned tickets yet. View your team's performance in Reports.",
+      "emptyStateAgent": "You haven't been assigned any tickets yet.",
+      "toasts": {
+        "photoUpdated": "Profile photo updated",
+        "photoUploadFailed": "Failed to upload photo",
+        "photoRemoved": "Profile photo removed",
+        "photoRemoveFailed": "Failed to remove photo"
+      }
+    },
+    "activeIncidents": {
+      "activeCount": "{count, plural, one {# active incident} other {# active incidents}}",
+      "ticketCount": "{count, plural, one {# ticket} other {# tickets}}",
+      "loading": "Loading tickets…",
+      "loadFailed": "Couldn't load",
+      "noLinkedTickets": "No tickets linked to this incident yet.",
+      "severity": {
+        "minor": "Minor",
+        "major": "Major",
+        "critical": "Critical"
+      },
+      "status": {
+        "investigating": "Investigating",
+        "identified": "Identified",
+        "monitoring": "Monitoring",
+        "resolved": "Resolved"
+      },
+      "audience": {
+        "endUser": "End-user"
+      },
+      "ticketStatus": {
+        "new": "New",
+        "in_progress": "In Progress",
+        "on_hold": "On Hold",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      }
+    },
+    "incidentLinker": {
+      "title": "Linked incidents",
+      "loading": "Loading incidents…",
+      "emptyDescription": "No linked incidents. Link this ticket to an active incident so the requester is notified automatically on resolution.",
+      "resolvedLabel": "Resolved",
+      "activeLabel": "Active",
+      "unlinkAria": "Unlink",
+      "closePickerAria": "Close picker",
+      "pickActive": "Pick active incident",
+      "noneAvailable": "No active incidents available to link.",
+      "selectPlaceholder": "Select…",
+      "linkButton": "Link",
+      "linkToActive": "Link to active incident",
+      "toasts": {
+        "linked": "Ticket linked to incident",
+        "linkFailed": "Could not link",
+        "unlinked": "Unlinked",
+        "unlinkFailed": "Could not unlink"
+      }
+    },
+    "ticketTagPanel": {
+      "addTag": "Tag",
+      "noTagsDefined": "No tags defined yet — add some under Settings.",
+      "clearAll": "Clear all",
+      "updateFailed": "Failed to update tags",
+      "clearFailed": "Failed to clear tags",
+      "commonNames": {
+        "refund": "Refund",
+        "billing": "Billing",
+        "urgent": "Urgent",
+        "escalated": "Escalated",
+        "vip": "VIP",
+        "resolved": "Resolved",
+        "pending": "Pending",
+        "duplicate": "Duplicate",
+        "bug": "Bug",
+        "featurerequest": "Feature request",
+        "concernprogress": "Concern in progress",
+        "concerninprogress": "Concern in progress",
+        "certificate": "Certificate",
+        "login": "Login",
+        "payment": "Payment",
+        "technical": "Technical",
+        "content": "Content",
+        "webinar": "Webinar",
+        "course": "Course",
+        "trainer": "Trainer",
+        "spam": "Spam",
+        "followup": "Follow up",
+        "waitingcustomer": "Waiting on customer",
+        "onhold": "On hold"
+      }
+    },
+    "tagFilter": {
+      "filterByTag": "Filter by tag",
+      "tagCount": "{count, plural, one {# tag} other {# tags}}",
+      "searchPlaceholder": "Search tags…",
+      "noMatches": "No matches.",
+      "noTags": "No tags available.",
+      "clearAll": "Clear all",
+      "done": "Done",
+      "removeTag": "Remove {name}",
+      "archivedTitle": "Archived or missing tag",
+      "archivedLabel": "archived"
+    },
+    "tagsManager": {
+      "autoApplyRules": "Auto-apply rules",
+      "panelTitle": "Ticket Tags",
+      "newTag": "New tag",
+      "tabs": {
+        "active": "Active",
+        "archived": "Archived",
+        "analytics": "Analytics"
+      },
+      "ticketCount": "{count, plural, one {# ticket} other {# tickets}}",
+      "emptyActive": "No active tags yet. Create one to start tagging tickets.",
+      "emptyArchived": "No archived tags. Archived tags show up here so you can restore them.",
+      "actions": {
+        "edit": "Edit",
+        "archive": "Archive (hide from picker, keep history)",
+        "restore": "Restore tag",
+        "delete": "Delete (cascades — removes from all tickets)"
+      },
+      "dialog": {
+        "newTitle": "New tag",
+        "editTitle": "Edit tag",
+        "nameLabel": "Name",
+        "namePlaceholder": "e.g. Refund",
+        "colorLabel": "Color",
+        "pickColor": "Pick {color}",
+        "hexHint": "or paste a hex value",
+        "descriptionLabel": "Description (optional)",
+        "descriptionPlaceholder": "When to use this tag",
+        "previewFallback": "Preview",
+        "cancel": "Cancel",
+        "save": "Save",
+        "create": "Create"
+      },
+      "delete": {
+        "title": "Delete tag \"{name}\"?",
+        "appliedTo": "This tag is currently applied to <strong>{count, plural, one {# ticket} other {# tickets}}</strong>. Deleting cascades — the tag will be removed from all of them and lost from filters and reports.",
+        "considerArchive": "Consider <link>archiving</link> instead — that hides the tag from the picker but keeps history searchable.",
+        "safeToRemove": "This tag isn't on any tickets. Safe to remove.",
+        "rulesWarning": "{count, plural, one {# auto-apply rule} other {# auto-apply rules}} will also be deleted.",
+        "confirmButton": "Delete tag"
+      },
+      "toasts": {
+        "nameRequired": "Name is required",
+        "tagUpdated": "Tag updated",
+        "tagCreated": "Tag created",
+        "saveFailed": "Save failed",
+        "tagDeleted": "Tag deleted",
+        "deleteFailed": "Delete failed",
+        "tagArchived": "Archived \"{name}\"",
+        "archiveFailed": "Archive failed",
+        "tagRestored": "Restored \"{name}\"",
+        "restoreFailed": "Restore failed"
+      }
+    },
+    "tagRules": {
+      "title": "Auto-apply rules",
+      "closeAria": "Close",
+      "intro": "When a new ticket contains any phrase below in the chosen scope, this tag is attached automatically (case-insensitive). Disable a rule to pause without losing it.",
+      "phraseLabel": "Phrase to match",
+      "phrasePlaceholder": "e.g. refund, login error, can't access",
+      "addButton": "Add",
+      "existingRules": "Existing rules",
+      "noRules": "No rules yet — this tag is only ever applied by hand.",
+      "enableRuleAria": "Enable rule",
+      "disableRuleAria": "Disable rule",
+      "deleteRuleAria": "Delete rule",
+      "doneButton": "Done",
+      "scopes": {
+        "both": "Subject + description",
+        "bothHint": "Default — match anywhere in the ticket",
+        "subject": "Subject only",
+        "subjectHint": "Tighter — won't fire from a tangential keyword in the body",
+        "description": "Description only",
+        "descriptionHint": "Useful when subjects are template-like"
+      },
+      "toasts": {
+        "enterPhrase": "Enter a phrase to match",
+        "ruleAdded": "Rule added",
+        "ruleAddFailed": "Failed to add rule",
+        "ruleRemoved": "Rule removed",
+        "ruleDeleteFailed": "Failed to delete",
+        "updateFailed": "Failed to update"
+      }
+    },
+    "tagAnalytics": {
+      "totalTags": "Total tags",
+      "active": "Active",
+      "archived": "Archived",
+      "archivedBadge": "archived",
+      "loadFailed": "Failed to load analytics",
+      "topTags": "Top tags",
+      "noActivity": "No tag activity yet.",
+      "stats": {
+        "total": "total",
+        "in30d": "in 30d",
+        "resolved": "resolved",
+        "totalAssignmentsTitle": "Total assignments",
+        "last30DaysTitle": "Last 30 days",
+        "resolvedTitle": "On resolved or closed tickets"
+      },
+      "trendTitle": "Tag applications, last 30 days",
+      "trendEmpty": "No assignments in the last 30 days.",
+      "peakPerDay": "Peak: {value}/day",
+      "byCategoryTitle": "Tags by category",
+      "byCategoryEmpty": "No assignments yet.",
+      "categories": {
+        "course": "Course",
+        "technical": "Technical",
+        "certificate": "Certificate",
+        "billing": "Billing",
+        "trainer": "Trainer",
+        "webinar": "Webinar",
+        "refunds": "Refunds",
+        "content": "Content",
+        "login": "Login",
+        "other": "Other",
+        "general": "General"
+      }
+    },
+    "retentionPolicy": {
+      "title": "Ticket retention",
+      "description": "Closed tickets older than this many days are eligible for purge. Set to <code>0</code> to disable retention enforcement.",
+      "daysLabel": "days",
+      "save": "Save",
+      "saving": "Saving…",
+      "toasts": {
+        "mustBeNonNegative": "Retention must be a non-negative number of days",
+        "saved": "Retention policy saved",
+        "saveFailed": "Save failed"
+      }
     },
     "attachmentPreview": {
       "untitled": "Attachment",
@@ -11346,7 +12525,18 @@
       "remove": "Remove",
       "removeConfirm": "Remove this attachment? It will stay in the version history but will no longer appear in the active list.",
       "removeConfirmTitle": "Remove attachment?",
-      "removeConfirmDescription": "{name} will be removed from this message. It will stay in the version history."
+      "removeConfirmDescription": "{name} will be removed from this message. It will stay in the version history.",
+      "fileType": {
+        "image": "IMAGE",
+        "pdf": "PDF",
+        "file": "FILE"
+      },
+      "scanStatus": {
+        "pending": "Scanning",
+        "quarantined": "Blocked",
+        "error": "Scan error",
+        "malicious": "Malicious"
+      }
     },
     "attachmentAudit": {
       "title": "Attachments — history & access",
@@ -11364,6 +12554,7 @@
     },
     "trainerApplication": {
       "title": "Trainer application",
+      "loading": "Loading…",
       "loadError": "Couldn't load application context.",
       "viewFull": "View full application",
       "activity": "Activity",
@@ -11446,7 +12637,9 @@
       "vsLastWeek": "vs last week",
       "target": "Target: {value}",
       "breachesToday": "{count} breaches today",
-      "escalatedTickets": "Escalated Tickets"
+      "escalatedTickets": "Escalated Tickets",
+      "csatResponses": "{count} responses",
+      "csatNoResponses": "No responses yet"
     },
     "ticketsBoard": {
       "title": "Recent Tickets",
@@ -11499,7 +12692,8 @@
         "resolved": "Resolved",
         "closed": "Closed"
       },
-      "noTickets": "No tickets found"
+      "noTickets": "No tickets found",
+      "unknownCustomer": "Unknown"
     },
     "sla": {
       "title": "SLA & Team",
@@ -11545,7 +12739,13 @@
       "newTicket": "New Ticket",
       "knowledgeBase": "Knowledge Base",
       "exportReport": "Export Report",
-      "teamChat": "Team Chat"
+      "teamChat": "Team Chat",
+      "relativeTime": {
+        "justNow": "Just now",
+        "minutesAgo": "{count}m ago",
+        "hoursAgo": "{count}h ago",
+        "daysAgo": "{count}d ago"
+      }
     },
     "activity": {
       "noRecent": "No recent activity yet.",
@@ -11934,6 +13134,7 @@
       "emptyHint": "Create your first article to start building the Help Center.",
       "noMatches": "No articles match your filters",
       "noMatchesHint": "Try clearing the search, category, or status filter.",
+      "untitled": "(untitled)",
       "stats": {
         "totalArticles": "Total Articles",
         "published": "Published",
@@ -12165,6 +13366,80 @@
         "downloadedPdf": "PDF downloaded",
         "exportPdfFailed": "Failed to export PDF",
         "refreshed": "Report refreshed"
+      },
+      "kbSearchPanel": {
+        "query": "Query",
+        "title": "Help Center search analytics",
+        "description": "Most-asked questions and zero-result queries (content gaps).",
+        "empty": "No search activity in this period.",
+        "kpis": {
+          "totalSearches": "Total searches",
+          "zeroResult": "Zero-result",
+          "gapRate": "Gap rate"
+        },
+        "columns": {
+          "lang": "Lang",
+          "searches": "Searches",
+          "avgResults": "Avg results",
+          "empty": "Empty"
+        },
+        "untitledArticle": "(untitled)",
+        "suggestedFaqs": {
+          "title": "Suggested FAQ opportunities",
+          "description": "These queries returned no results 3 or more times — strong candidates for new help articles.",
+          "emptyCount": "{count} empty",
+          "createFaq": "Create FAQ"
+        },
+        "mostViewed": {
+          "title": "Most viewed articles",
+          "allTime": "(all time)",
+          "empty": "No published articles have been viewed yet."
+        },
+        "lowEngagement": {
+          "title": "Low engagement articles",
+          "subtitle": "(30+ days old, fewest views)",
+          "empty": "No articles older than 30 days yet — check back later.",
+          "edit": "Edit"
+        }
+      },
+      "additionalReports": {
+        "title": "Additional reports",
+        "description": "Direct-download exports. Use the period filter above to scope the date range.",
+        "reports": {
+          "frt": {
+            "title": "First Response Time",
+            "description": "Per-ticket FRT in minutes, vs SLA target. Filtered by reply date."
+          },
+          "ttr": {
+            "title": "Resolution Time",
+            "description": "Per-ticket TTR in business minutes (on-hold excluded). Filtered by resolution date."
+          },
+          "escalation": {
+            "title": "Escalations",
+            "description": "Every SLA breach, priority bump, and reassignment in the period."
+          },
+          "overdue": {
+            "title": "Overdue Tickets (live)",
+            "description": "Currently open tickets that have passed FRT or TTR target. Ignores date filter."
+          }
+        },
+        "toasts": {
+          "downloaded": "Report downloaded",
+          "exportFailed": "Export failed"
+        }
+      },
+      "categories": {
+        "course": "Course",
+        "technical": "Technical",
+        "certificate": "Certificate",
+        "billing": "Billing",
+        "trainer": "Trainer",
+        "webinar": "Webinar",
+        "refunds": "Refunds",
+        "content": "Content",
+        "login": "Login",
+        "other": "Other",
+        "general": "General"
       }
     },
     "settingsPage": {
@@ -12730,7 +14005,11 @@
         "composerHint": "Only Support and other looped-in collaborators see this. ⌘/Ctrl+Enter to send.",
         "supportLabel": "Support",
         "youLabel": "You",
-        "unknownAuthor": "Team member"
+        "unknownAuthor": "Team member",
+        "waitForUploads": "Please wait for the file upload to finish.",
+        "attachRejectedType": "Unsupported file type: {names}",
+        "attachRejectedSize": "File too large: {names}",
+        "attachRejectedCap": "You reached the attachment limit."
       },
       "banner": {
         "requester": "You are the requester on this ticket. Replies are public.",
@@ -12752,7 +14031,11 @@
         "sendReply": "Send",
         "sendFailed": "Couldn't send message",
         "youLabel": "You",
-        "unknownAuthor": "Team member"
+        "unknownAuthor": "Team member",
+        "waitForUploads": "Please wait for the file upload to finish.",
+        "attachRejectedType": "Unsupported file type: {names}",
+        "attachRejectedSize": "File too large: {names}",
+        "attachRejectedCap": "You reached the attachment limit."
       },
       "collaborators": {
         "title": "Involved Departments",
@@ -12781,7 +14064,15 @@
         "pickRequired": "Pick a department and a member",
         "alreadyActive": "Already a collaborator on this ticket",
         "addedSuccess": "Collaborator added",
-        "addFailed": "Could not add collaborator"
+        "addFailed": "Could not add collaborator",
+        "stepMessage": "Message & attachments",
+        "messageOptional": "optional",
+        "messagePlaceholder": "Add context so the new collaborator knows what to do…",
+        "messageHint": "Message and attachments are posted as an internal comment on the ticket.",
+        "waitForUploads": "Please wait for the file upload to finish.",
+        "attachRejectedType": "Unsupported file type: {names}",
+        "attachRejectedSize": "File too large: {names}",
+        "attachRejectedCap": "You reached the attachment limit."
       },
       "transfer": {
         "title": "Transfer ticket",
@@ -12799,7 +14090,12 @@
         "confirmTransfer": "Transfer",
         "pickBoth": "Pick both a category and a department",
         "transferredSuccess": "Ticket transferred",
-        "transferFailed": "Could not transfer the ticket"
+        "transferFailed": "Could not transfer the ticket",
+        "attachmentsLabel": "Supporting documents",
+        "waitForUploads": "Please wait for the file upload to finish.",
+        "attachRejectedType": "Unsupported file type: {names}",
+        "attachRejectedSize": "File too large: {names}",
+        "attachRejectedCap": "You reached the attachment limit."
       },
       "loopedInInbox": {
         "title": "Assisting Support",
@@ -13221,6 +14517,14 @@
       "title": "Failed to load data",
       "description": "Something went wrong while fetching this information. Please try again.",
       "retry": "Retry"
+    },
+    "attachmentPicker": {
+      "attachButton": "Attach files",
+      "attachHint": "Attach up to {max} files (≤ {size} MB each). PDF, JPG, PNG, WebP, DOC, DOCX, XLS, XLSX.",
+      "capReached": "Maximum {max} files reached.",
+      "countOfMax": "{current} of {max}",
+      "remove": "Remove",
+      "uploadFailed": "Upload failed"
     }
   },
   "dashboardSearch": {
@@ -13302,6 +14606,53 @@
       "warning": "Warning",
       "info": "Info"
     },
+    "assignedAsTA": {
+      "title": "Assigned as Teaching Assistant",
+      "body": "You have been assigned as a Teaching Assistant for \"{courseName}\""
+    },
+    "pointsEarned": {
+      "title": "Points earned!",
+      "body": "+{points} points — {reason}"
+    },
+    "ta": {
+      "assignedInstructor": {
+        "title": "Teaching Assistant Assigned",
+        "body": "TA {taName} has been assigned to your course \"{courseName}\""
+      },
+      "workloadWarning": {
+        "title": "TA Workload Notice",
+        "body": "TA {taName} assigned to \"{courseName}\" is also assigned to {count} other course(s)"
+      },
+      "suggestionManager": {
+        "title": "TA Suggestion",
+        "body": "{suggesterName} suggested TA {taName} for Course \"{courseName}\"",
+        "bodyWithWorkload": "{suggesterName} suggested TA {taName} for Course \"{courseName}\" (Note: This TA is currently assigned to {count} other course(s))"
+      },
+      "suggestedAsTA": {
+        "title": "Suggested as Teaching Assistant",
+        "body": "You have been suggested as a Teaching Assistant for \"{courseName}\". Awaiting manager approval."
+      },
+      "suggestionApprovedInstructor": {
+        "title": "TA Suggestion Approved",
+        "body": "Your TA suggestion for {taName} on \"{courseName}\" was approved and activated"
+      },
+      "assignmentApprovedTA": {
+        "title": "TA Assignment Approved",
+        "body": "Your TA assignment for \"{courseName}\" has been approved. You are now active."
+      },
+      "suggestionRejectedInstructor": {
+        "title": "TA Suggestion Rejected",
+        "body": "Your TA suggestion for {taName} on \"{courseName}\" was rejected. Reason: {reason}"
+      },
+      "suggestionRejectedTA": {
+        "title": "TA Suggestion Not Approved",
+        "body": "Your TA suggestion for \"{courseName}\" was not approved. Reason: {reason}"
+      },
+      "accountDeactivatedManager": {
+        "title": "TA Account Deactivated",
+        "body": "TA {taName}'s account has been deactivated. They have been removed from \"{courseName}\". A replacement may be needed."
+      }
+    },
     "instructor": {
       "profile_updated": {
         "title": "Instructor profile updated",
@@ -13339,7 +14690,8 @@
     "types": {
       "course_approved": {
         "title": "Course Approved",
-        "message": "Your course has been approved and is now active."
+        "message": "Your course has been approved and is now active.",
+        "messageWithTitle": "Your course \"{courseTitle}\" has been approved and is now active."
       },
       "course_changes_requested": {
         "title": "Changes Requested",
@@ -13348,6 +14700,47 @@
       "course_completed": {
         "title": "Course Completed",
         "message": "Your course has been marked as completed."
+      },
+      "course_auto_completed": {
+        "title": "Course Auto-Completed",
+        "messageInstructor": "Your course \"{courseTitle}\" has been automatically completed as the end date has passed. {count} enrollment(s) were finalized.",
+        "messageManager": "Course \"{courseTitle}\" has been automatically completed (end date reached). {count} enrollment(s) were finalized."
+      },
+      "course_managed": {
+        "title": "Course Assigned to You",
+        "message": "You have been assigned as manager for a course."
+      },
+      "course_reopened": {
+        "title": "Course Reopened",
+        "message": "A course has been reopened."
+      },
+      "course_rescheduled": {
+        "title": "Course Rescheduled",
+        "message": "A course has been rescheduled."
+      },
+      "course_submitted_for_review": {
+        "title": "Course Submitted for Review",
+        "message": "A course has been submitted for your review."
+      },
+      "ta_account_deactivated": {
+        "title": "Teaching Assistant Deactivated",
+        "message": "A teaching assistant account has been deactivated."
+      },
+      "ta_assignment": {
+        "title": "TA Assignment",
+        "message": "You have a new teaching assistant assignment."
+      },
+      "ta_recommendation": {
+        "title": "TA Recommendation",
+        "message": "A teaching assistant has been recommended."
+      },
+      "ta_suggestion_approved": {
+        "title": "TA Suggestion Approved",
+        "message": "A teaching assistant suggestion was approved."
+      },
+      "ta_suggestion_rejected": {
+        "title": "TA Suggestion Rejected",
+        "message": "A teaching assistant suggestion was rejected."
       },
       "course_cancelled": {
         "title": "Course Cancelled",
@@ -13624,7 +15017,38 @@
       "editProfile": "Edit Profile",
       "uploadPhoto": "Upload photo",
       "removePhoto": "Remove photo",
-      "logout": "Logout"
+      "logout": "Logout",
+      "roleBadge": "Teaching Assistant"
+    },
+    "common": {
+      "retry": "Retry",
+      "close": "Close",
+      "back": "Back",
+      "save": "Save",
+      "lock": "Lock",
+      "assign": "Assign",
+      "syncing": "Syncing...",
+      "loading": "Loading..."
+    },
+    "sessionTypes": {
+      "zoom": "Zoom",
+      "onsite": "Onsite",
+      "hybrid": "Hybrid",
+      "webinar": "Webinar"
+    },
+    "courseStatus": {
+      "assigned": "Assigned",
+      "pre_assigned": "Pre-assigned",
+      "suggested": "Suggested",
+      "rejected": "Rejected",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "durations": {
+      "oneDay": "1 day",
+      "daysCount": "{count} days",
+      "today": "Today"
     },
     "home": {
       "title": "Dashboard",
@@ -13768,7 +15192,12 @@
       "today": "Today",
       "upcoming": "Upcoming",
       "past": "Past",
-      "more": "more"
+      "more": "more",
+      "joinCta": "Join session",
+      "startsIn": "Starts in {relative}",
+      "startsSoon": "Your session hasn't opened yet",
+      "joinLoading": "Preparing your session…",
+      "joinError": "Couldn't open your session — please try again"
     },
     "attendance": {
       "title": "Lecture Attendance",
@@ -13788,10 +15217,28 @@
       "markAll": "Mark all",
       "save": "Save Attendance",
       "saved": "Attendance saved successfully",
+      "savedAndLocked": "Attendance saved & locked",
       "saveError": "Failed to save attendance",
       "noChanges": "No changes to save",
       "noteRequired": "Please add a note for all late/excused students",
-      "notePlaceholder": "Add reason for late/excused..."
+      "notePlaceholder": "Add reason for late/excused...",
+      "zoomSession": "Zoom Lecture",
+      "syncFromZoom": "Sync from Zoom",
+      "syncComplete": "Zoom Sync Complete: {synced} synced, {skipped} skipped",
+      "lockedFinal": "Attendance is finalized & locked",
+      "lockedUnmatched": "Verified attendance is locked — assign unmatched participants below",
+      "lockedInactive": "Attendance is locked. It can only be edited during a live lecture.",
+      "markAllLabel": "Mark All",
+      "markedBy": "Marked by",
+      "markedByRoles": {
+        "TEACHING_ASSISTANT": "TA",
+        "INSTRUCTOR": "Instructor",
+        "system": "System"
+      },
+      "lastUpdated": "Last updated",
+      "note": "Note",
+      "unmatchedParticipants": "{count, plural, =1 {# unmatched Zoom participant} other {# unmatched Zoom participants}}",
+      "selectStudent": "Select student"
     },
     "submissions": {
       "title": "Assessment Submissions",
@@ -14098,6 +15545,13 @@
       }
     }
   },
+  "invoiceLanguage": {
+    "title": "Choose invoice language",
+    "description": "Pick the language for the PDF you're about to download.",
+    "english": "English",
+    "arabic": "Arabic",
+    "close": "Close"
+  },
   "verifyInvoice": {
     "verifying": "Verifying invoice...",
     "notFound": "Invoice Not Found",
@@ -14137,7 +15591,10 @@
     "timeLeftHours": "{hours}h {minutes}m",
     "timeLeftMinutes": "{minutes}m",
     "cta": "Browse Courses",
+    "ctaSingleCourse": "View course",
     "learnMore": "Learn more",
-    "tag": "Promotion"
+    "tag": "Promotion",
+    "prev": "Previous promotion",
+    "next": "Next promotion"
   }
 }

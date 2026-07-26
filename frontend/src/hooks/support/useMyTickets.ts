@@ -44,53 +44,67 @@ export function useTicketDetail(ticketId: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDetail = useCallback(async () => {
-    if (!ticketId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await supportApi.getTicket(ticketId);
-      const mapped: TicketDetail = {
-        id: result.id,
-        category: result.category,
-        priority: result.priority,
-        subject: result.subject,
-        description: result.description,
-        attachmentUrl: result.attachmentUrl ?? null,
-        status: result.status,
-        satisfactionRating: result.satisfactionRating ?? null,
-        courseTitle: result.courseName ?? null,
-        courseTitleAr: null,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-        resolvedAt: result.resolvedAt ?? null,
-        closedAt: result.closedAt ?? null,
-        replies: (result.comments ?? []).map((c: any) => ({
-          id: c.id,
-          message: c.message,
-          isStaffReply: Boolean(c.isStaffReply),
-          createdAt: c.createdAt,
-          userName:
-            [c.userFirstName, c.userLastName].filter(Boolean).join(" ") ||
-            "Unknown",
-          attachments: Array.isArray(c.attachments) ? c.attachments : [],
-        })),
-      };
-      setData(mapped);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load ticket",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [ticketId]);
+  // Two entry points into the same fetch: the initial load flips the
+  // page-level `loading` spinner, but the poller must NOT — otherwise
+  // the whole ticket page would flash to a spinner every few seconds.
+  const runFetch = useCallback(
+    async (opts: { silent: boolean }) => {
+      if (!ticketId) return;
+      if (!opts.silent) setLoading(true);
+      setError(null);
+      try {
+        const result = await supportApi.getTicket(ticketId);
+        const mapped: TicketDetail = {
+          id: result.id,
+          category: result.category,
+          priority: result.priority,
+          subject: result.subject,
+          description: result.description,
+          attachmentUrl: result.attachmentUrl ?? null,
+          status: result.status,
+          satisfactionRating: result.satisfactionRating ?? null,
+          courseTitle: result.courseName ?? null,
+          courseTitleAr: null,
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt,
+          resolvedAt: result.resolvedAt ?? null,
+          closedAt: result.closedAt ?? null,
+          replies: (result.comments ?? []).map((c: any) => ({
+            id: c.id,
+            message: c.message,
+            isStaffReply: Boolean(c.isStaffReply),
+            createdAt: c.createdAt,
+            userName:
+              [c.userFirstName, c.userLastName].filter(Boolean).join(" ") ||
+              "Unknown",
+            attachments: Array.isArray(c.attachments) ? c.attachments : [],
+          })),
+        };
+        setData(mapped);
+      } catch (err) {
+        // Silent polls should NOT surface an error banner — a transient
+        // network hiccup on tick 3 shouldn't wipe the thread the user
+        // is reading. Only the initial load reports errors.
+        if (!opts.silent) {
+          setError(
+            err instanceof Error ? err.message : "Failed to load ticket",
+          );
+        }
+      } finally {
+        if (!opts.silent) setLoading(false);
+      }
+    },
+    [ticketId],
+  );
+
+  const fetchDetail = useCallback(() => runFetch({ silent: false }), [runFetch]);
+  const refetchQuiet = useCallback(() => runFetch({ silent: true }), [runFetch]);
 
   useEffect(() => {
     fetchDetail();
   }, [fetchDetail]);
 
-  return { data, loading, error, refetch: fetchDetail };
+  return { data, loading, error, refetch: fetchDetail, refetchQuiet };
 }
 
 export function useTicketCategories() {

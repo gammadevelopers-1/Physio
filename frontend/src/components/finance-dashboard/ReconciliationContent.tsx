@@ -776,7 +776,7 @@ export default function ReconciliationContent({ embedded = false }: Reconciliati
                               />
                             )}
                           </th>
-                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>
+                          <th className={`${isRTL ? "text-end" : "text-start"} p-3 font-medium`}>
                             <span className="inline-flex items-center gap-1">
                               {t("table.drift")}
                               <button
@@ -789,11 +789,11 @@ export default function ReconciliationContent({ embedded = false }: Reconciliati
                               </button>
                             </span>
                           </th>
-                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>{t("table.gateway")}</th>
-                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>{t("table.chargeOrPaymentId")}</th>
-                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>{t("table.customer")}</th>
-                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>{t("table.detected")}</th>
-                          <th className={`${isRTL ? "text-left" : "text-right"} p-3 font-medium`}>{t("table.actions")}</th>
+                          <th className={`${isRTL ? "text-end" : "text-start"} p-3 font-medium`}>{t("table.gateway")}</th>
+                          <th className={`${isRTL ? "text-end" : "text-start"} p-3 font-medium`}>{t("table.chargeOrPaymentId")}</th>
+                          <th className={`${isRTL ? "text-end" : "text-start"} p-3 font-medium`}>{t("table.customer")}</th>
+                          <th className={`${isRTL ? "text-end" : "text-start"} p-3 font-medium`}>{t("table.detected")}</th>
+                          <th className={`${isRTL ? "text-start" : "text-end"} p-3 font-medium`}>{t("table.actions")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -859,7 +859,7 @@ export default function ReconciliationContent({ embedded = false }: Reconciliati
                               <td className="p-3 align-top text-[var(--color-text-secondary)]">
                                 {formatDateTime(f.createdAt)}
                               </td>
-                              <td className={`p-3 align-top ${isRTL ? "text-left" : "text-right"}`}>
+                              <td className={`p-3 align-top ${isRTL ? "text-start" : "text-end"}`}>
                                 <div className={`flex gap-1 flex-wrap ${isRTL ? "justify-start" : "justify-end"}`}>
                                   <button
                                     onClick={() => {
@@ -1380,7 +1380,7 @@ function DetailField({
   return (
     <div className="flex justify-between gap-3 items-baseline">
       <dt className="text-[12px] text-[var(--color-text-secondary)] flex-shrink-0">{label}</dt>
-      <dd className={`text-[var(--color-text-primary)] text-right break-words min-w-0 ${mono ? "font-mono text-xs" : "text-sm"}`}>
+      <dd className={`text-[var(--color-text-primary)] text-end break-words min-w-0 ${mono ? "font-mono text-xs" : "text-sm"}`}>
         {value}
       </dd>
     </div>

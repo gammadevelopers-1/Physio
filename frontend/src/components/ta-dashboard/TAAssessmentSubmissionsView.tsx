@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Info, FileText, ChevronDown, ChevronUp, Paperclip } from "lucide-react";
+import { ArrowLeft, ArrowRight, Info, FileText, ChevronDown, ChevronUp, Paperclip } from "lucide-react";
 import { taApi } from "@/lib/api";
 
 interface SubmissionAnswer {
@@ -48,6 +48,7 @@ const TAAssessmentSubmissionsView = ({
 }: TAAssessmentSubmissionsViewProps) => {
   const t = useTranslations("taDashboard");
   const locale = useLocale();
+  const isRTL = locale === "ar";
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -86,7 +87,11 @@ const TAAssessmentSubmissionsView = ({
           onClick={onBack}
           className="p-2 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
+          {isRTL ? (
+            <ArrowRight className="w-5 h-5 text-[var(--color-text-secondary)]" />
+          ) : (
+            <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
+          )}
         </button>
         <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
           {t("submissions.title")}
@@ -115,16 +120,16 @@ const TAAssessmentSubmissionsView = ({
             <table className="w-full">
               <thead>
                 <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
-                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
+                  <th className="text-start px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
                     {t("submissions.studentName")}
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
+                  <th className="text-start px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
                     {t("submissions.studentId")}
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
+                  <th className="text-start px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
                     {t("submissions.submittedAt")}
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
+                  <th className="text-start px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
                     {t("submissions.score")}
                   </th>
                 </tr>
@@ -158,7 +163,7 @@ const TAAssessmentSubmissionsView = ({
                             <span className="font-medium text-[var(--color-text-primary)]">
                               {submission.score}/{submission.totalMarks}
                               {submission.percentage !== null && (
-                                <span className="text-[var(--color-text-secondary)] ml-1">
+                                <span className="text-[var(--color-text-secondary)] ms-1">
                                   ({submission.percentage}%)
                                 </span>
                               )}

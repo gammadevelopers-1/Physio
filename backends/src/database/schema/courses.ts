@@ -33,9 +33,13 @@ export const courses = pgTable(
     maxEnrollment: integer('max_enrollment'),
     price: numeric('price', { precision: 10, scale: 2 }).default('0'),
     // Course-level sale (no coupon needed). `price` stays the canonical original
-    // price; the effective price is derived. salePercent 1..100 (100 = free).
-    // Optional window — null start = already active, null end = until cleared.
+    // price; the effective price is derived. Exactly one of salePercent /
+    // saleAmount may be set at a time — a DB CHECK enforces it. salePercent
+    // 1..100 (100 = free). saleAmount is a positive SAR value ≤ price
+    // (validated at write time). Optional window — null start = already
+    // active, null end = until cleared.
     salePercent: integer('sale_percent'),
+    saleAmount: numeric('sale_amount', { precision: 10, scale: 2 }),
     saleStartsAt: timestamp('sale_starts_at'),
     saleEndsAt: timestamp('sale_ends_at'),
     // Finance-manager toggle: may a coupon ALSO be applied on top of this sale?

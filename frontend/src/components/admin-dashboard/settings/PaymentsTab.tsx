@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { TabShell } from "./TabShell";
 import { useSettingsCategory } from "./useSettingsCategory";
+import Select from "@/components/ui/Select";
 import {
   adminFinanceApi,
   type AdminGatewayName,
@@ -346,23 +347,24 @@ export default function PaymentsTab() {
                 <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
                   {t("payments.tamaraMode")}
                 </label>
-                <select
+                <Select
                   value={draft.tamara.mode ?? ""}
-                  onChange={(e) =>
+                  onChange={(v) =>
                     setDraft((d) => ({
                       ...d,
                       tamara: {
                         ...d.tamara,
-                        mode: (e.target.value || undefined) as TamaraMode | undefined,
+                        mode: (v || undefined) as TamaraMode | undefined,
                       },
                     }))
                   }
-                  className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
-                >
-                  <option value="">{t("payments.tamaraModeAuto")}</option>
-                  <option value="test">{t("payments.modeTest")}</option>
-                  <option value="live">{t("payments.modeLive")}</option>
-                </select>
+                  className="w-full"
+                  options={[
+                    { value: "", label: t("payments.tamaraModeAuto") },
+                    { value: "test", label: t("payments.modeTest") },
+                    { value: "live", label: t("payments.modeLive") },
+                  ]}
+                />
                 <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                   {t("payments.tamaraModeHelp")}
                 </p>

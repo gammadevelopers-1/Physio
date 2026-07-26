@@ -49,7 +49,13 @@ export class MaterialsController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB hard cap
+      // 600 MB Multer cap — deliberately ABOVE the per-type SIZE_LIMITS
+      // in materials.service.ts (video=500MB, pdf/doc=50MB, image=20MB)
+      // so the service-level check wins on oversize. Multer's own
+      // "File too large" error is generic and cryptic; letting the
+      // service throw PayloadTooLargeException gives the frontend a
+      // parseable "X MB exceeds Y MB" string it can localize per type.
+      limits: { fileSize: 600 * 1024 * 1024 },
       fileFilter: (_req, file, cb) => {
         const allAllowed = [
           // video
@@ -246,7 +252,13 @@ export class MaterialsController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB hard cap
+      // 600 MB Multer cap — deliberately ABOVE the per-type SIZE_LIMITS
+      // in materials.service.ts (video=500MB, pdf/doc=50MB, image=20MB)
+      // so the service-level check wins on oversize. Multer's own
+      // "File too large" error is generic and cryptic; letting the
+      // service throw PayloadTooLargeException gives the frontend a
+      // parseable "X MB exceeds Y MB" string it can localize per type.
+      limits: { fileSize: 600 * 1024 * 1024 },
       fileFilter: (_req, file, cb) => {
         const allAllowed = [
           'video/mp4',

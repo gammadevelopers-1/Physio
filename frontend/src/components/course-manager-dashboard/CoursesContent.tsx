@@ -12,6 +12,7 @@ import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useCourseManagerCourses } from "@/hooks/useCourseManagerCourses";
 import { courseManagerApi, ApiError } from "@/lib/api";
+import Select from "@/components/admin-dashboard/Select";
 import {
   Search,
   Plus,
@@ -38,6 +39,7 @@ import {
   Eye,
   EyeOff,
   Star,
+  Copy,
 } from "lucide-react";
 
 const CourseCardSkeleton = () => (
@@ -178,6 +180,28 @@ const CoursesContent = () => {
     [t, refetch]
   );
 
+  const handleDuplicate = useCallback(
+    async (courseId: string) => {
+      setOpenDropdown(null);
+      setStatusLoading(courseId);
+      try {
+        const created = await courseManagerApi.duplicateCourse(courseId);
+        toast.success(t("coursesPage.actions.duplicateSuccess"));
+        // Land straight on the new draft so the manager can set the new
+        // dates immediately — this is the whole point of Duplicate.
+        router.push(`/${locale}/dashboard/manager/courses/${created.id}`);
+      } catch (err) {
+        if (err instanceof ApiError) {
+          toast.error(err.message);
+        } else {
+          toast.error(t("coursesPage.actions.duplicateFailed"));
+        }
+        setStatusLoading(null);
+      }
+    },
+    [locale, router, t]
+  );
+
   const handleRequestChanges = useCallback(
     async (courseId: string) => {
       if (!requestChangesNote.trim()) return;
@@ -304,77 +328,46 @@ const CoursesContent = () => {
                     />
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    <select
+                    <Select
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="all">
-                        {t("coursesPage.filters.allStatus")}
-                      </option>
-                      <option value="active">
-                        {t("coursesPage.filters.active")}
-                      </option>
-                      <option value="draft">
-                        {t("coursesPage.filters.draft")}
-                      </option>
-                      <option value="pending_review">
-                        {t("coursesPage.filters.pendingReview")}
-                      </option>
-                      <option value="changes_requested">
-                        {t("coursesPage.filters.changesRequested")}
-                      </option>
-                      <option value="completed">
-                        {t("coursesPage.filters.completed")}
-                      </option>
-                      <option value="cancelled">
-                        {t("coursesPage.filters.cancelled")}
-                      </option>
-                      <option value="archived">
-                        {t("coursesPage.filters.archived")}
-                      </option>
-                    </select>
+                      onChange={setStatusFilter}
+                      className="w-40"
+                      options={[
+                        { value: "all", label: t("coursesPage.filters.allStatus") },
+                        { value: "active", label: t("coursesPage.filters.active") },
+                        { value: "draft", label: t("coursesPage.filters.draft") },
+                        { value: "pending_review", label: t("coursesPage.filters.pendingReview") },
+                        { value: "changes_requested", label: t("coursesPage.filters.changesRequested") },
+                        { value: "completed", label: t("coursesPage.filters.completed") },
+                        { value: "cancelled", label: t("coursesPage.filters.cancelled") },
+                        { value: "archived", label: t("coursesPage.filters.archived") },
+                      ]}
+                    />
 
-                    <select
+                    <Select
                       value={deliveryFilter}
-                      onChange={(e) => setDeliveryFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="all">
-                        {t("coursesPage.filters.allDelivery")}
-                      </option>
-                      <option value="zoom">
-                        {t("coursesPage.delivery.zoom")}
-                      </option>
-                      <option value="onsite">
-                        {t("coursesPage.delivery.onsite")}
-                      </option>
-                      <option value="blended">
-                        {t("coursesPage.delivery.blended")}
-                      </option>
-                      <option value="webinar">
-                        {t("coursesPage.delivery.webinar")}
-                      </option>
-                    </select>
+                      onChange={setDeliveryFilter}
+                      className="w-40"
+                      options={[
+                        { value: "all", label: t("coursesPage.filters.allDelivery") },
+                        { value: "zoom", label: t("coursesPage.delivery.zoom") },
+                        { value: "onsite", label: t("coursesPage.delivery.onsite") },
+                        { value: "blended", label: t("coursesPage.delivery.blended") },
+                        { value: "webinar", label: t("coursesPage.delivery.webinar") },
+                      ]}
+                    />
 
-                    <select
+                    <Select
                       value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="newest">
-                        {t("coursesPage.sort.newest")}
-                      </option>
-                      <option value="oldest">
-                        {t("coursesPage.sort.oldest")}
-                      </option>
-                      <option value="students">
-                        {t("coursesPage.sort.mostStudents")}
-                      </option>
-                      <option value="alphabetical">
-                        {t("coursesPage.sort.alphabetical")}
-                      </option>
-                    </select>
+                      onChange={setSortBy}
+                      className="w-40"
+                      options={[
+                        { value: "newest", label: t("coursesPage.sort.newest") },
+                        { value: "oldest", label: t("coursesPage.sort.oldest") },
+                        { value: "students", label: t("coursesPage.sort.mostStudents") },
+                        { value: "alphabetical", label: t("coursesPage.sort.alphabetical") },
+                      ]}
+                    />
                   </div>
                 </div>
               </div>
@@ -488,7 +481,10 @@ const CoursesContent = () => {
                             menu can extend below the thumbnail without being
                             clipped by the next card. Anchored to the outer
                             card via `relative` set on its root. */}
-                        {(course.status === "draft" || course.status === "pending_review" || course.status === "active" || course.status === "completed") && (
+                        {/* Dropdown always renders — Duplicate is available
+                            on every status, and each status branch below
+                            adds its own lifecycle actions on top of it. */}
+                        {(
                           <div className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-30`} ref={openDropdown === course.id ? dropdownRef : undefined}>
                             <button
                               onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
@@ -510,6 +506,18 @@ const CoursesContent = () => {
                                 <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                   {t("coursesPage.actions.title")}
                                 </p>
+
+                                {/* Duplicate — available for every status.
+                                    Clones the course into a fresh draft and
+                                    navigates straight to its edit page. */}
+                                <button
+                                  onClick={() => handleDuplicate(course.id)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                                  role="menuitem"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                  {t("coursesPage.actions.duplicate")}
+                                </button>
 
                                 {/* Draft: Activate + Delete */}
                                 {course.status === "draft" && (

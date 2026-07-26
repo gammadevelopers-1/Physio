@@ -220,16 +220,31 @@ export default function CourseSalesModal({
                       )}
                     </div>
                   </div>
-                  {editingId !== c.id && (
-                    <button
-                      onClick={() => beginEdit(c)}
-                      className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)] text-[var(--color-text-primary)]"
-                    >
-                      {c.salePercent
-                        ? t("discountsPage.sales.edit")
-                        : t("discountsPage.sales.setSale")}
-                    </button>
-                  )}
+                  {editingId !== c.id && (() => {
+                    const isFree = Number(c.price) <= 0;
+                    // Free course: no sale allowed (and none should exist to edit).
+                    // Show a disabled label + hint instead of a working button.
+                    if (isFree) {
+                      return (
+                        <span
+                          className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] cursor-not-allowed"
+                          title={t("discountsPage.sales.freeCourseHint")}
+                        >
+                          {t("discountsPage.sales.freeCourse")}
+                        </span>
+                      );
+                    }
+                    return (
+                      <button
+                        onClick={() => beginEdit(c)}
+                        className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)] text-[var(--color-text-primary)]"
+                      >
+                        {c.salePercent
+                          ? t("discountsPage.sales.edit")
+                          : t("discountsPage.sales.setSale")}
+                      </button>
+                    );
+                  })()}
                 </div>
 
                 {editingId === c.id && (

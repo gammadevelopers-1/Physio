@@ -273,7 +273,13 @@ const StudentCourseDetailContent = () => {
               ) : error || !data ? (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                   <p className="text-[var(--color-text-secondary)]">
-                    {error || t("courseDetail.notFound")}
+                    {/* Backend NotFoundException raises a raw English message
+                        ("You are not enrolled in this course"). Detect it and
+                        swap in the localized copy so Arabic mode doesn't leak
+                        untranslated backend strings into the UI. */}
+                    {error && /not enrolled/i.test(error)
+                      ? t("myCourses.notEnrolled")
+                      : error || t("courseDetail.notFound")}
                   </p>
                 </div>
               ) : (

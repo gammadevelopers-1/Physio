@@ -1,44 +1,35 @@
 /**
- * CSAT followup email template for PhysioGuidance
+ * CSAT low-score followup email — sent when a learner gives ≤3 stars.
+ * Prompts them to reopen the ticket or contact support. Bilingual (EN + AR).
  */
+import { EmailLocale, getEmailStrings, htmlAttrs, t as tt, textAlign } from '../email-i18n';
+
 export function getCsatFollowupHtml(
   learnerName: string,
   ticketId: string,
   score: number,
+  locale: EmailLocale = 'en',
 ): string {
-  const supportUrl = `${(process.env.FRONTEND_URL || 'https://physioguidance.org').replace(/\/$/, '')}/en/support`;
+  const s = getEmailStrings(locale);
+  const supportUrl = `${(process.env.FRONTEND_URL || 'https://physioguidance.org').replace(/\/$/, '')}/${locale}/support`;
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>We'd like to help - PhysioGuidance</title>
+  <title>${s.csatLowScoreTitle} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
     <tr>
       <td align="center" style="padding:40px 16px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-
-          <!-- Header with brand gradient -->
           <tr>
             <td style="background:linear-gradient(135deg,#a37f49,#6b4e24);padding:32px 32px 24px;text-align:center;">
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
-                <tr>
-                  <td style="padding-bottom:4px;">
-                    <span style="font-size:24px;font-weight:700;color:#ffffff;font-family:'DM Sans',Arial,sans-serif;letter-spacing:-0.5px;">Physio</span><span style="font-size:24px;font-weight:700;color:#f5f0e8;font-family:'DM Sans',Arial,sans-serif;letter-spacing:-0.5px;">Guidance</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
-                  </td>
-                </tr>
-              </table>
+              <span style="font-size:24px;font-weight:700;color:#ffffff;">Physio</span><span style="font-size:24px;font-weight:700;color:#f5f0e8;">Guidance</span>
+              <br/><span style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
             </td>
           </tr>
-
-          <!-- Title -->
           <tr>
             <td style="padding:32px 32px 0;text-align:center;">
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
@@ -48,53 +39,36 @@ export function getCsatFollowupHtml(
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">We're Sorry</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;">${s.csatLowScoreTitle}</h1>
             </td>
           </tr>
-
-          <!-- Message -->
           <tr>
             <td style="padding:0 32px 24px;">
-              <p style="margin:0 0 16px;font-size:14px;color:#4b5563;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:center;">
-                Hi ${learnerName},
+              <p style="margin:0 0 16px;font-size:14px;color:#4b5563;line-height:1.6;text-align:center;">
+                ${s.hi} ${learnerName},
               </p>
-              <p style="margin:0 0 16px;font-size:14px;color:#4b5563;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:center;">
-                We noticed you rated your recent support experience as <strong>${score}/5</strong>. We're sorry it didn't meet your expectations.
+              <p style="margin:0 0 16px;font-size:14px;color:#4b5563;line-height:1.6;text-align:${textAlign(locale)};">
+                ${tt(s.csatLowScoreBody, { score })}
               </p>
-              <p style="margin:0 0 24px;font-size:14px;color:#4b5563;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:center;">
-                We'd like to understand what went wrong. You can reopen your ticket or contact us.
+              <p style="margin:0 0 24px;font-size:14px;color:#4b5563;line-height:1.6;text-align:${textAlign(locale)};">
+                ${s.csatLowScoreCta}
               </p>
             </td>
           </tr>
-
-          <!-- CTA Button -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <a href="${supportUrl}" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;font-family:'DM Sans',Arial,sans-serif;">
-                Contact Support
+              <a href="${supportUrl}" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">
+                ${s.csatContactSupportCta}
               </a>
             </td>
           </tr>
-
-          <!-- Divider -->
-          <tr>
-            <td style="padding:0 32px;">
-              <div style="height:1px;background-color:#e5e7eb;"></div>
-            </td>
-          </tr>
-
-          <!-- Footer -->
+          <tr><td style="padding:0 32px;"><div style="height:1px;background-color:#e5e7eb;"></div></td></tr>
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
-              <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-              </p>
-              <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
-              </p>
+              <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;">&copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}</p>
+              <p style="margin:0;font-size:11px;color:#9ca3af;">${s.nelcFooter}</p>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
@@ -107,18 +81,20 @@ export function getCsatFollowupText(
   learnerName: string,
   ticketId: string,
   score: number,
+  locale: EmailLocale = 'en',
 ): string {
-  const supportUrl = `${(process.env.FRONTEND_URL || 'https://physioguidance.org').replace(/\/$/, '')}/en/support`;
-  return `PhysioGuidance - We'd like to help
+  const s = getEmailStrings(locale);
+  const supportUrl = `${(process.env.FRONTEND_URL || 'https://physioguidance.org').replace(/\/$/, '')}/${locale}/support`;
+  return `PhysioGuidance - ${s.csatLowScoreTitle}
 
-Hi ${learnerName},
+${s.hi} ${learnerName},
 
-We noticed you rated your recent support experience as ${score}/5. We're sorry it didn't meet your expectations.
+${tt(s.csatLowScoreBody, { score })}
 
-We'd like to understand what went wrong. You can reopen your ticket or contact us.
+${s.csatLowScoreCta}
 
-Contact Support: ${supportUrl}
+${s.csatContactSupportCta}: ${supportUrl}
 
-\u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited \u00b7 Saudi Arabia`;
+© ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 }

@@ -5,8 +5,13 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies. Hardened against flaky egress (Docker Desktop's HTTP
+# proxy occasionally wedges mid-`npm ci` with ECONNRESET / broken pipe).
+RUN npm ci --only=production \
+      --fetch-retries=6 \
+      --fetch-timeout=600000 \
+      --fetch-retry-mintimeout=20000 \
+      --fetch-retry-maxtimeout=120000
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
@@ -51,9 +56,18 @@ ENV SENTRY_ORG=${SENTRY_ORG}
 ENV SENTRY_PROJECT=${SENTRY_PROJECT}
 ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 
-# Copy package files and install all dependencies (including dev)
+# Copy package files and install all dependencies (including dev). Same
+# egress hardening as the deps stage (see comment above).
 COPY package.json package-lock.json ./
-RUN npm ci
+# --maxsockets=3 throttles parallel downloads. Default (15-20) can exhaust
+# NAT tables or connection pools on flaky networks, causing mid-install
+# ECONNRESET after ~50-80s. Slower but reliable.
+RUN npm ci \
+      --maxsockets=3 \
+      --fetch-retries=6 \
+      --fetch-timeout=600000 \
+      --fetch-retry-mintimeout=20000 \
+      --fetch-retry-maxtimeout=120000
 
 # Copy source code
 COPY . .

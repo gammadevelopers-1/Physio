@@ -23,6 +23,7 @@ export interface CourseFiltersLabels {
   filterPricingLabel?: string;
   filterFreeLabel?: string;
   filterPaidLabel?: string;
+  filterOnSaleLabel?: string;
   filterAvailabilityLabel?: string;
   filterAvailOpenLabel?: string;
   filterAvailStartingSoonLabel?: string;
@@ -91,6 +92,7 @@ const CourseFilters = ({
   filterPricingLabel,
   filterFreeLabel,
   filterPaidLabel,
+  filterOnSaleLabel,
   filterAvailabilityLabel,
   filterAvailOpenLabel,
   filterAvailStartingSoonLabel,
@@ -130,6 +132,9 @@ const CourseFilters = ({
     { value: "", label: filterAllLabel },
     { value: "free", label: filterFreeLabel },
     { value: "paid", label: filterPaidLabel },
+    // "On sale" is a status filter but rides in the same radio group so
+    // students see "All / Free / Paid / On sale" as one decision.
+    { value: "on_sale", label: filterOnSaleLabel },
   ];
   const visiblePricing = pricingOptions.filter((o) => !!o.label);
 

@@ -18,6 +18,9 @@ import {
 import Link from "next/link";
 import { supportApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVisibilityPolling } from "@/hooks/useVisibilityPolling";
+import { useSupportAttachmentUpload } from "@/hooks/useSupportAttachmentUpload";
+import AttachmentPickerBar from "@/components/support-shared/AttachmentPickerBar";
 import AttachmentChip, {
   type Attachment as ChipAttachment,
 } from "@/components/support-dashboard/AttachmentChip";
@@ -163,6 +166,22 @@ export default function CollaboratorTicketView({ backHref }: Props) {
   const [sending, setSending] = useState(false);
   const [contextOpen, setContextOpen] = useState(true);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const upload = useSupportAttachmentUpload();
+
+  const notifyAttachmentRejects = (
+    r: ReturnType<typeof upload.addFiles>,
+  ) => {
+    if (r.rejectedType.length)
+      toast.error(
+        t("collab.attachRejectedType", { names: r.rejectedType.join(", ") }),
+      );
+    if (r.rejectedSize.length)
+      toast.error(
+        t("collab.attachRejectedSize", { names: r.rejectedSize.join(", ") }),
+      );
+    if (r.rejectedCap.length)
+      toast.error(t("collab.attachRejectedCap"));
+  };
 
   useEffect(() => {
     if (!ticketId) return;
@@ -190,16 +209,43 @@ export default function CollaboratorTicketView({ backHref }: Props) {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [ticket?.comments?.length]);
 
+  // Poll the ticket every 8s so new replies from the requester or
+  // other collaborators appear without a manual refresh. Silent — a
+  // transient failure must not disturb what the user is reading.
+  useVisibilityPolling(
+    async () => {
+      if (!ticketId) return;
+      try {
+        const refreshed = await supportApi.getTicket(ticketId);
+        setTicket(refreshed as Ticket);
+      } catch {
+        // ignore transient poll failures
+      }
+    },
+    8000,
+    Boolean(ticketId),
+  );
+
   const handleSend = async () => {
-    if (!reply.trim() || sending) return;
+    const richAtts = upload.getDoneRich();
+    // Allow attachment-only sends (a Finance collab dropping a
+    // reference PDF with no accompanying note is a valid pattern).
+    if (!reply.trim() && richAtts.length === 0) return;
+    if (sending) return;
+    if (upload.isUploading) {
+      toast.error(t("collab.waitForUploads"));
+      return;
+    }
     setSending(true);
     try {
       // Always internal — collaborators never reach the requester.
       await supportApi.addComment(ticketId, {
         message: reply.trim(),
         isInternal: true,
+        attachments: richAtts.length > 0 ? richAtts : undefined,
       });
       setReply("");
+      upload.clear();
       const refreshed = await supportApi.getTicket(ticketId);
       setTicket(refreshed as Ticket);
     } catch (e: any) {
@@ -442,7 +488,7 @@ export default function CollaboratorTicketView({ backHref }: Props) {
           </div>
 
           {/* Composer */}
-          <div className="border-t border-[var(--color-border-subtle)] px-5 py-3">
+          <div className="border-t border-[var(--color-border-subtle)] px-5 py-3 space-y-2">
             <div className="relative">
               <textarea
                 value={reply}
@@ -461,7 +507,11 @@ export default function CollaboratorTicketView({ backHref }: Props) {
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={!reply.trim() || sending}
+                disabled={
+                  sending ||
+                  upload.isUploading ||
+                  (!reply.trim() && upload.pending.length === 0)
+                }
                 className="absolute end-2 bottom-2 inline-flex items-center justify-center w-9 h-9 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
                 aria-label={t("collab.sendReply")}
               >
@@ -472,7 +522,15 @@ export default function CollaboratorTicketView({ backHref }: Props) {
                 )}
               </button>
             </div>
-            <p className="text-[10px] text-[var(--color-text-secondary)] mt-1.5">
+            <AttachmentPickerBar
+              pending={upload.pending}
+              onAdd={(files) => notifyAttachmentRejects(upload.addFiles(files))}
+              onRemove={upload.remove}
+              disabled={sending}
+              maxCount={upload.maxCount}
+              maxBytes={upload.maxBytes}
+            />
+            <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("collab.composerHint")}
             </p>
           </div>

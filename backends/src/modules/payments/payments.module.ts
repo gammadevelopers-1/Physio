@@ -133,6 +133,9 @@ import { GatewayCredentialsService } from './gateways/gateway-credentials.servic
     // Exported so CoursesService.cancelCourse can issue refunds through the
     // same state machine + gateway integrations as the admin refund UI.
     RefundService,
+    // Exported so CoursesService can tag catalog courses with any active
+    // campaign auto-apply discount (public /courses list + course detail).
+    DiscountService,
   ],
 })
 export class PaymentsModule {}

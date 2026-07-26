@@ -13,6 +13,9 @@
       "title": "ملخص الطلب",
       "sale": "خصم البيع",
       "discount": "خصم الكوبون",
+      "campaignLine": "{campaign} (حملة)",
+      "campaignFallback": "خصم الحملة",
+      "couponLine": "كوبون {code}",
       "beforeTax": "المجموع قبل الضريبة",
       "vat": "ضريبة القيمة المضافة ({rate}%)",
       "amountDue": "المبلغ المطلوب",
@@ -1051,6 +1054,8 @@
     "card": {
       "viewDetails": "عرض التفاصيل",
       "percentOff": "خصم {percent}٪",
+      "amountOff": "خصم {amount} ر.س",
+      "earlyBird": "حجز مبكر",
       "liveOnline": "العيش على الانترنت",
       "hoursUnit": "ساعات",
       "tbd": "يُحدد لاحقاً",
@@ -1062,7 +1067,27 @@
       "courseEnded": "الدورة منتهية",
       "enrollmentClosed": "التسجيل مغلق",
       "seatsLeft": "{count} مقاعد متبقية",
-      "enrollBy": "التسجيل قبل"
+      "enrollBy": "التسجيل قبل",
+      "redeemWithPoints": {
+        "pill": "أو {points} نقطة",
+        "tooltipNotEnough": "اربح {deficit} نقطة إضافية لفتحه",
+        "tooltipSignIn": "سجّل الدخول لعرض نقاطك"
+      }
+    },
+    "detail": {
+      "redeemCta": {
+        "enabled": "استبدال مقابل {points} نقطة",
+        "needMore": "تحتاج إلى {deficit} نقطة إضافية",
+        "signInPrompt": "سجّل الدخول للاستبدال"
+      },
+      "redeemModal": {
+        "title": "استبدال الدورة بالنقاط؟",
+        "body": "ستُنفق {points} نقطة وتنضم للدورة \"{course}\" مباشرة.",
+        "warning": "لا يمكن التراجع عن هذه العملية.",
+        "confirm": "استبدل الآن",
+        "cancel": "إلغاء",
+        "successToast": "تم فتح الدورة باستخدام النقاط!"
+      }
     },
     "pagination": {
       "previous": "السابق",
@@ -1320,6 +1345,11 @@
       "total": "المجموع",
       "autoAppliedTitle": "مُطبّق تلقائياً",
       "autoAppliedBody": "تم تطبيق خصم الحجز المبكر تلقائياً.",
+      "campaignAppliedTitle": "تم تطبيق {campaign}",
+      "campaignAppliedBody": "خصم {amount} ر.س تم تطبيقه تلقائياً",
+      "campaignFallback": "الحملة",
+      "campaignLine": "{campaign} (حملة)",
+      "couponLine": "كوبون {code}",
       "validating": "جارٍ التحقق...",
       "validFor": "صالح لهذه السلة",
       "perLineBreakdownTitle": "تفاصيل الخصم",
@@ -1715,6 +1745,8 @@
       "billing": "الفوترة",
       "applications": "طلباتي",
       "inviteFriends": "نقاطي",
+      "myRewards": "مكافآتي",
+      "myRewardsUnreadDot": "مكافآت غير مستخدمة",
       "transcript": "كشف الدرجات",
       "support": "الدعم",
       "settings": "الإعدادات",
@@ -1943,6 +1975,12 @@
         "reenrollCta": "إعادة التسجيل الآن",
         "dismiss": "إخفاء"
       },
+      "sourceChip": {
+        "pointsRedemption": "تم الاستبدال بالنقاط",
+        "reward": "من مكافأة",
+        "adminGrant": "منحه المشرف",
+        "freePublic": "مجانية"
+      },
       "recentCourses": "الدورات الأخيرة",
       "loadMore": "تحميل المزيد",
       "loadingMore": "جارٍ تحميل المزيد...",
@@ -2027,7 +2065,8 @@
       "reviewRatingRequired": "يرجى اختيار تقييم",
       "reviewAlreadySubmitted": "لقد قمت بمراجعة هذه الدورة من قبل",
       "reviewAlreadyTitle": "تم إرسال المراجعة",
-      "reviewAlreadyDesc": "شكراً — لقد قمت بمراجعة هذه الدورة من قبل."
+      "reviewAlreadyDesc": "شكراً — لقد قمت بمراجعة هذه الدورة من قبل.",
+      "notEnrolled": "أنت غير مسجل في هذه الدورة"
     },
     "favourites": {
       "title": "المفضلة",
@@ -2286,6 +2325,7 @@
       "statusCancelled": "ملغي",
       "statusRefunded": "مسترد",
       "statusRefundPending": "استرداد قيد المراجعة",
+      "statusRefundRejected": "تم رفض الاسترداد",
       "moreOptions": "المزيد من الخيارات",
       "viewInvoice": "عرض الفاتورة",
       "downloadInvoice": "تحميل الفاتورة",
@@ -2340,6 +2380,16 @@
         "loading": "جارٍ التحميل…",
         "loadFailed": "تعذّر التحميل. حاول مرة أخرى.",
         "empty": "لا يوجد شيء لعرضه بعد."
+      },
+      "refund": {
+        "status": {
+          "pending": "طلب استرداد",
+          "approved": "تمت الموافقة — بانتظار الدفع",
+          "processing": "قيد المعالجة",
+          "completed": "تم الاسترداد",
+          "rejected": "مرفوض",
+          "failed": "فشل الاسترداد"
+        }
       },
       "payments": {
         "title": "المدفوعات",
@@ -2443,7 +2493,8 @@
         "viewCourse": "عرض الدورة",
         "multiCourseSummary": "{count} دورات",
         "lineItemsTitle": "الدورات في هذه الدفعة",
-        "lineRefunded": "تم استرداده"
+        "lineRefunded": "تم استرداده",
+        "lineRefundInProgress": "طلب استرداد"
       },
       "policy": {
         "title": "سياسة الاسترداد باختصار",
@@ -2481,18 +2532,27 @@
         "selectedCoursesTitle": "الدورات الجاري استردادها",
         "partialCartNotice": "ستبقى الدورات الأخرى في هذه الدفعة نشطة كما هي.",
         "reasonLabel": "ما سبب طلب الاسترداد؟",
+        "reasonPlaceholder": "اختر سببًا",
         "reasonSelect": "يرجى اختيار سبب",
         "reasons": {
-          "policy": "الدورة لا تطابق ما وُصِف",
-          "cancelled": "لم أعد بحاجة إليها / غيّرت رأيي",
+          "description_mismatch": "الدورة لا تطابق الوصف",
+          "cancelled": "لم أعد بحاجة إلى الدورة / غيّرت رأيي",
           "technical": "مشكلة فنية في المنصة",
           "duplicate": "دفعة مكررة",
-          "other": "سبب آخر (يرجى التوضيح أدناه)"
+          "wrong_course": "دورة خاطئة تم شراؤها",
+          "access_issue": "غير قادر على الوصول إلى الدورة",
+          "course_cancelled": "تم إلغاء الدورة من قِبَل المزوّد",
+          "other": "سبب آخر (يرجى التوضيح)",
+          "policy": "الدورة لا تطابق ما وُصِف"
         },
-        "noteLabel": "ملاحظات إضافية (اختياري)",
-        "noteRequiredLabel": "يرجى وصف ما حدث",
+        "noteLabel": "تفاصيل إضافية (اختياري)",
+        "noteRequiredLabel": "يرجى إخبارنا المزيد",
         "notePlaceholder": "أعطنا أي تفاصيل تساعدنا في مراجعة طلبك بسرعة أكبر.",
         "noteRequired": "يجب كتابة شرح مختصر عند اختيار \"سبب آخر\".",
+        "noteMinLength": "يرجى كتابة 3 أحرف على الأقل.",
+        "noteCharCounter": "{count}/500",
+        "addDetailsToggle": "إضافة تفاصيل",
+        "hideDetailsToggle": "إخفاء التفاصيل",
         "gatewayHints": {
           "moyasar": "تصل عمليات الاسترداد على البطاقة عادةً خلال 5–10 أيام عمل، حسب البنك.",
           "tamara": "ستعدّل تمارا الأقساط المتبقية، وأي مبلغ سبق دفعه يُسترَدّ إلى طريقة الدفع الأصلية.",
@@ -2556,6 +2616,177 @@
         "adminGrant": "منحة مكافأة",
         "adminDeduct": "تعديل",
         "systemExpire": "انتهاء صلاحية النقاط"
+      },
+      "hero": {
+        "balanceLabel": "رصيد نقاطك",
+        "earnedThisMonth": "لقد كسبت +{count} نقطة هذا الشهر",
+        "exploreRewardsCta": "استعرض المكافآت",
+        "seeEarnRulesCta": "طرق الكسب"
+      },
+      "waysToEarn": {
+        "title": "طرق كسب النقاط",
+        "subtitle": "أكمل هذه الإجراءات لزيادة رصيدك",
+        "pointsPill": "+{count} نقطة",
+        "emptyState": "طرق الكسب قادمة قريبًا",
+        "inviteFriendCta": "ادعُ صديقًا",
+        "eventLabel": {
+          "invite_friend": "دعوة صديق",
+          "enroll": "التسجيل في دورة",
+          "complete_course": "إكمال دورة",
+          "review": "ترك مراجعة",
+          "daily_login": "تسجيل الدخول اليومي",
+          "other": "نشاط مكافأة"
+        }
+      },
+      "redeemRewards": {
+        "title": "استبدل نقاطك",
+        "subtitle": "استبدل النقاط بقسائم أو دورات أو مكافآت حصرية"
+      },
+      "redeemCourses": {
+        "title": "افتح الدورات بالنقاط",
+        "subtitle": "أنفق نقاطك على أي من هذه الدورات",
+        "emptyState": "لا توجد دورات متاحة للاستبدال حاليًا — تفقّد لاحقًا",
+        "enrolledBadge": "مسجَّل",
+        "redeemCta": "استبدال",
+        "needMorePoints": "تحتاج {count} نقطة إضافية",
+        "originalPrice": "{price} ر.س",
+        "pointsCost": "{count} نقطة"
+      },
+      "recentRewards": {
+        "title": "أحدث مكافآتك",
+        "subtitle": "أحدث عمليات الاستبدال",
+        "viewAllLink": "عرض الكل",
+        "emptyState": "لا توجد استبدالات بعد — جرّب استبدال شيء أعلاه!",
+        "statusLabel": {
+          "unused": "جاهزة للاستخدام",
+          "fulfilled": "مُنجزة",
+          "pending": "قيد التنفيذ",
+          "expired": "منتهية",
+          "reversed": "ملغاة",
+          "failed": "فاشلة"
+        }
+      },
+      "recentActivity": {
+        "title": "أحدث النشاطات",
+        "subtitle": "آخر معاملات النقاط",
+        "viewAllLink": "عرض السجل الكامل",
+        "emptyState": "لا يوجد نشاط بعد",
+        "eventLabel": {
+          "earn:enroll": "تسجيل في دورة",
+          "earn:complete": "إكمال دورة",
+          "earn:review": "اعتماد مراجعة",
+          "earn:invite": "دعوة صديق",
+          "earn:manual_grant": "منحة مكافأة",
+          "redeem:hold": "استبدال محجوز",
+          "redeem:committed": "اكتمل الاستبدال",
+          "redeem:released": "إعادة النقاط",
+          "redeem:course:committed": "فتح دورة",
+          "other": "نشاط نقاط"
+        }
+      },
+      "rewards": {
+        "title": "استبدل نقاطك",
+        "pointsLabel": "نقطة",
+        "stockLeft": "متبقٍ {n}",
+        "perUserLeft": "متبقٍ لك {n}",
+        "redeemBtn": "استبدال",
+        "needMore": "تحتاج {n} نقطة إضافية",
+        "outOfStock": "نفدت الكمية",
+        "perUserCapReached": "استبدلته بالحد الأقصى",
+        "confirmTitle": "تأكيد الاستبدال",
+        "confirmBody": "استبدال <name></name> مقابل <cost></cost> نقطة؟",
+        "currentBalance": "الرصيد الحالي",
+        "cost": "التكلفة",
+        "newBalance": "الرصيد الجديد",
+        "cancel": "إلغاء",
+        "confirmBtn": "نعم، استبدل",
+        "successTitle": "تم الاستبدال بنجاح!",
+        "successBody": "لقد استبدلت <name></name>.",
+        "yourCode": "كود القسيمة",
+        "copy": "نسخ",
+        "expiresOn": "تنتهي في {date}",
+        "goToCourse": "اذهب إلى الدورة",
+        "registeredForWebinar": "تم تسجيلك في: {title}",
+        "pendingFulfillment": "جاري معالجة مكافأتك من قبل فريقنا، وسنبلغك حال جاهزيتها.",
+        "done": "تم",
+        "selectCourseTitle": "اختر دورة واحدة لاستبدالها",
+        "selectCourseSearch": "ابحث في الدورات…",
+        "selectCourseEmpty": "لا توجد دورات تطابق البحث.",
+        "selectCoursePrice": "{price} ر.س",
+        "selectCourseFree": "مجاني",
+        "viewAllRewardsLink": "عرض جميع مكافآتك",
+        "result": {
+          "otherPendingWithinDays": "ستظهر مكافأتك في «مكافآتي» خلال {days} يومًا.",
+          "viewRewardsLink": "عرض مكافآتك"
+        },
+        "errors": {
+          "redeemFailed": "فشل الاستبدال. حاول مرة أخرى."
+        }
+      }
+    },
+    "myRewards": {
+      "title": "مكافآتي",
+      "subtitle": "كل ما فتحته بنقاطك — قسائم الخصم، الفتوحات المجانية، والدورات المُشتراة بالنقاط.",
+      "pointsUnit": "نقطة",
+      "activeTab": "نشطة",
+      "historyTab": "السجل",
+      "empty": {
+        "active": {
+          "title": "لا توجد مكافآت نشطة بعد",
+          "body": "استبدل نقاطك بقسائم خصم أو دورات مجانية أو ندوات عبر الإنترنت من الكتالوج.",
+          "cta": "تصفّح الكتالوج"
+        },
+        "history": {
+          "title": "لا يوجد شيء في سجلّك بعد",
+          "body": "ستظهر المكافآت المستخدمة والمنتهية هنا بعد أن تستبدل بعضاً منها."
+        }
+      },
+      "coupon": {
+        "expiresIn": "تنتهي خلال {days} يومًا",
+        "expired": "منتهية",
+        "usedOn": "استُخدمت في {date}",
+        "copyButton": "نسخ الكود",
+        "copiedToast": "تم النسخ إلى الحافظة",
+        "useAtCheckoutCta": "استخدم عند الدفع"
+      },
+      "freeCourse": {
+        "goToCourse": "اذهب إلى الدورة",
+        "enrolledOn": "التسجيل في {date}"
+      },
+      "coursePurchase": {
+        "pointsPaidChip": "تم الدفع بـ {points} نقطة",
+        "goToCourseCta": "اذهب إلى الدورة",
+        "completedStatus": "مكتملة",
+        "droppedStatus": "منسحب",
+        "expiredStatus": "منتهية"
+      },
+      "freeWebinar": {
+        "joinCta": "الانضمام للندوة",
+        "scheduledFor": "مجدولة في {date}",
+        "ended": "انتهت الندوة"
+      },
+      "other": {
+        "pending": "قيد التنفيذ",
+        "fulfilled": "مُنجزة",
+        "failed": "فشل التنفيذ",
+        "reversed": "ملغاة",
+        "pendingNote": "قيد التنفيذ — سيقوم المسؤول بإبلاغك عند الجاهزية.",
+        "expectedBy": "متوقع بحلول: {date}",
+        "pendingBody": "سيقوم المسؤول بإبلاغك عند جاهزية مكافأتك.",
+        "yourCode": "الكود الخاص بك:",
+        "yourLink": "مكافأتك جاهزة:",
+        "messageFromAdmin": "رسالة من المسؤول:",
+        "openLink": "فتح الرابط",
+        "copyCode": "نسخ الكود",
+        "copied": "تم النسخ!",
+        "adminNoteLabel": "ملاحظة:",
+        "failedBody": "تمت إعادة نقاطك.",
+        "reversedBody": "تم عكس الاستبدال؛ وأُعيدت النقاط."
+      },
+      "pagination": {
+        "showing": "عرض {shown} من {total}",
+        "prev": "السابق",
+        "next": "التالي"
       }
     },
     "settings": {
@@ -2753,6 +2984,7 @@
       "pictureInPicture": "صورة داخل صورة",
       "resumeFrom": "استئناف من {time}",
       "skipPrevented": "لا يمكنك التخطي إلى ما بعد ما شاهدته",
+      "videoLoadError": "تعذّر تحميل هذا الفيديو. يرجى تحديث الصفحة والمحاولة مرة أخرى.",
       "nextUp": "التالي: {title}",
       "autoAdvanceIn": "الانتقال التلقائي خلال {seconds} ثانية",
       "cancel": "إلغاء",
@@ -3171,6 +3403,9 @@
       "statusRescheduled": "مُعاد جدولته",
       "finalizeSession": "إنهاء وقفل الحضور",
       "endSessionConfirm": "إنهاء هذه المحاضرة؟ سيتم فصل جميع المشاركين من زووم.",
+      "endSessionTitle": "إنهاء المحاضرة",
+      "endSessionConfirmLabel": "إنهاء المحاضرة",
+      "cancel": "إلغاء",
       "sessionEnded": "تم إنهاء المحاضرة بنجاح",
       "endSessionError": "فشل في إنهاء المحاضرة",
       "zoomEndFailed": "تم إكمال المحاضرة، لكن لم يتم إنهاء اجتماع زووم. يرجى إنهاؤه يدوياً في زووم.",
@@ -3528,6 +3763,8 @@
       "noUnassignedMaterials": "لا يوجد محتوى غير مخصص. قم بتحميل المحتوى أولاً من صفحة المحتوى.",
       "unlinkMaterial": "إزالة من الوحدة",
       "unlinkConfirm": "هل تريد إزالة هذا المحتوى من الوحدة؟ سيبقى في مكتبة المحتوى.",
+      "unlinkTitle": "إزالة المحتوى",
+      "unlinkConfirmLabel": "إزالة",
       "assignToModule": "تخصيص للوحدة",
       "materialAssigned": "تم تخصيص المحتوى للوحدة",
       "materialUnlinked": "تم إزالة المحتوى من الوحدة",
@@ -4307,6 +4544,12 @@
       "cancel": "إلغاء",
       "upload": "رفع",
       "uploadError": "فشل في رفع الملف. يرجى المحاولة مرة أخرى.",
+      "uploadErrorTooLarge": "حجم الملف {size} ميجابايت — يتجاوز الحد الأقصى {limit} ميجابايت لهذا النوع. يرجى ضغطه أو اختيار ملف أصغر.",
+      "uploadErrorTooLargeGeneric": "حجم الملف كبير جداً. يرجى ضغطه أو اختيار ملف أصغر.",
+      "uploadErrorType": "نوع الملف غير مدعوم للرفع.",
+      "uploadErrorNetwork": "تم قطع الرفع — تحقّق من اتصالك بالإنترنت وحاول مرة أخرى.",
+      "uploadErrorForbidden": "لا تملك صلاحية الرفع إلى هذه الدورة.",
+      "uploadErrorProcessing": "لا يزال إصدار آخر من هذا الملف قيد المعالجة. يرجى الانتظار قليلاً والمحاولة مرة أخرى.",
       "deleteError": "فشل في حذف الملف. يرجى المحاولة مرة أخرى.",
       "deleteErrorProcessing": "لا يزال هذا الملف قيد المعالجة من قبل النظام. يرجى الانتظار حتى تنتهي المعالجة ثم المحاولة مرة أخرى.",
       "deleteErrorNotFound": "هذا الملف لم يعد موجوداً. ربما تم حذفه بالفعل من قبل مستخدم آخر — يرجى تحديث الصفحة لرؤية القائمة الأحدث.",
@@ -4869,7 +5112,10 @@
         "hideFromPublic": "إخفاء من الموقع العام",
         "showOnPublic": "إظهار على الموقع العام",
         "feature": "تمييز على الصفحة الرئيسية",
-        "unfeature": "إلغاء التمييز"
+        "unfeature": "إلغاء التمييز",
+        "duplicate": "تكرار الدورة",
+        "duplicateSuccess": "تم تكرار الدورة. قم بتعيين التواريخ الجديدة للمتابعة.",
+        "duplicateFailed": "فشل تكرار الدورة"
       },
       "hiddenFromPublic": "تم إخفاء الدورة من الموقع العام",
       "shownOnPublic": "الدورة ظاهرة الآن على الموقع العام",
@@ -5133,7 +5379,173 @@
       "materialRemoveError": "فشل في إزالة المحتوى",
       "moduleAssessments": "التقييمات",
       "marks": "درجات",
-      "submissions": "تسليم"
+      "submissions": "تسليم",
+      "tabs": {
+        "overview": "نظرة عامة",
+        "modules": "الوحدات",
+        "sessions": "المحاضرات",
+        "assessments": "التقييمات",
+        "students": "الطلاب",
+        "team": "الفريق",
+        "reviews": "التقييمات",
+        "analytics": "التحليلات",
+        "certificates": "الشهادات",
+        "audit": "سجل التدقيق",
+        "settings": "الإعدادات"
+      },
+      "auditPlaceholder": "سيظهر سجل التدقيق هنا.",
+      "analyticsCards": {
+        "totalStudents": "إجمالي الطلاب",
+        "activeStudents": "نشط",
+        "completedStudents": "مكتمل",
+        "droppedStudents": "انسحب",
+        "avgProgress": "متوسط التقدم",
+        "totalSessions": "إجمالي المحاضرات",
+        "completedSessions": "المحاضرات المكتملة",
+        "avgRating": "متوسط التقييم"
+      },
+      "enrollmentsEmpty": "لم يتم تسجيل طلاب بعد.",
+      "sessionsEmpty": "لم يتم جدولة محاضرات بعد.",
+      "assessmentsEmpty": "لم تتم إضافة تقييمات لهذه الدورة بعد.",
+      "instructorCardTitle": "المدرب",
+      "reassignInstructor": "إعادة تعيين",
+      "dangerZone": "منطقة الخطر",
+      "dangerZoneDesc": "هذه الإجراءات لا يمكن التراجع عنها. يرجى التعامل بحذر.",
+      "editCourseCta": "تعديل الدورة",
+      "editCourseDesc": "قم بتحديث محتوى الدورة والجدول والإعدادات.",
+      "studentsSearchPlaceholder": "ابحث عن الطلاب...",
+      "columnStudent": "الطالب",
+      "columnScfhs": "رقم الهيئة السعودية",
+      "columnEnrolled": "تاريخ التسجيل",
+      "progress": "التقدم",
+      "columnStatusLabel": "الحالة",
+      "studentStatus": {
+        "active": "نشط",
+        "completed": "مكتمل",
+        "dropped": "انسحب",
+        "suspended": "معلق"
+      },
+      "sessionStatus": {
+        "scheduled": "مجدول",
+        "live": "مباشر",
+        "ended": "منتهي",
+        "completed": "مكتمل",
+        "cancelled": "ملغي",
+        "missed": "فائت",
+        "rescheduled": "معاد جدولته"
+      },
+      "sessionAttendanceLabel": "الحضور",
+      "assessmentModuleLabel": "الوحدة",
+      "assessmentNoModule": "غير مخصص",
+      "sessionDateColumn": "التاريخ والوقت",
+      "sessionTitleColumn": "العنوان",
+      "students": {
+        "addStudentBtn": "إضافة طالب",
+        "addStudentTitle": "إضافة طالب إلى الدورة",
+        "addStudentSubtitle": "ابحث واختر طالبًا. قدم سببًا للتسجيل اليدوي.",
+        "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني أو رقم الهيئة السعودية للتخصصات الصحية",
+        "noResults": "لا يوجد طلاب يطابقون بحثك",
+        "reasonLabel": "السبب (مطلوب)",
+        "reasonPlaceholder": "لماذا يتم تسجيل هذا الطالب؟",
+        "addBtn": "إضافة إلى الدورة",
+        "addSuccess": "تمت إضافة الطالب",
+        "addFailed": "فشل في إضافة الطالب",
+        "removeTitle": "إزالة الطالب من الدورة",
+        "removeSubtitle": "أنت على وشك إزالة {name} من هذه الدورة.",
+        "removeReasonLabel": "السبب (مطلوب)",
+        "removeReasonPlaceholder": "لماذا يتم إزالة هذا الطالب؟",
+        "removeFinanceNote": "سوف تراجع الشؤون المالية هذا السبب لتقرر ما إذا كان استرداد المبلغ مبرراً. لا يتم إصدار استرداد تلقائي.",
+        "removeBtn": "إزالة الطالب",
+        "removeSuccess": "تم إزالة الطالب",
+        "removeFailed": "فشل في إزالة الطالب",
+        "manuallyEnrolledChip": "مسجل يدويًا",
+        "removedSectionTitle": "الطلاب المزالون",
+        "removedOnBy": "تمت الإزالة في {date}",
+        "removalReasonLabel": "سبب الإزالة",
+        "rowAction": {
+          "remove": "إزالة"
+        },
+        "cancel": "إلغاء"
+      },
+      "audit": {
+        "emptyState": "لا توجد أحداث تدقيق لهذه الدورة حتى الآن.",
+        "whenColumn": "متى",
+        "whoColumn": "قام به",
+        "actionColumn": "الإجراء",
+        "detailsColumn": "التفاصيل",
+        "actions": {
+          "course.created": "تم إنشاء الدورة",
+          "course.update": "تم تحديث الدورة",
+          "course.updated": "تم تحديث الدورة",
+          "course.activate": "تم تفعيل الدورة",
+          "course.archive": "تمت أرشفة الدورة",
+          "course.complete": "تم إكمال الدورة",
+          "course.cancelled": "تم إلغاء الدورة",
+          "course.rescheduled": "تمت إعادة جدولة الدورة",
+          "course.request_changes": "تم طلب التعديلات",
+          "course.soft_deleted": "تم حذف الدورة",
+          "course.restored": "تمت استعادة الدورة",
+          "course.toggle_featured": "تم تبديل حالة التمييز",
+          "course.instructor_reassigned": "تمت إعادة تعيين المدرب",
+          "course_duplicated": "تم تكرار الدورة",
+          "enrollment.manual_created": "تم تسجيل الطالب يدويًا",
+          "enrollment.removed_by_admin": "تمت إزالة الطالب"
+        }
+      },
+      "unknownUser": "مستخدم غير معروف",
+      "managerCardTitle": "مدير الدورة",
+      "certificates": {
+        "empty": "لا توجد طلبات شهادات لهذه الدورة حتى الآن.",
+        "total": "{count} شهادة",
+        "rejectedReasonLabel": "السبب",
+        "assessmentPassed": "ناجح",
+        "assessmentFailed": "راسب",
+        "filter": {
+          "all": "جميع الحالات"
+        },
+        "status": {
+          "pending": "قيد الانتظار",
+          "approved": "معتمد",
+          "rejected": "مرفوض",
+          "held": "معلق",
+          "revoked": "ملغى"
+        },
+        "column": {
+          "attendance": "الحضور",
+          "assessment": "التقييم",
+          "requested": "تاريخ الطلب"
+        },
+        "action": {
+          "approve": "موافقة",
+          "reject": "رفض",
+          "hold": "تعليق",
+          "revoke": "إلغاء",
+          "view": "عرض",
+          "approveSuccess": "تمت الموافقة على الشهادة",
+          "approveFailed": "فشل في الموافقة على الشهادة",
+          "rejectSuccess": "تم رفض الشهادة",
+          "rejectFailed": "فشل في رفض الشهادة",
+          "holdSuccess": "تم تعليق الشهادة",
+          "holdFailed": "فشل في تعليق الشهادة",
+          "revokeSuccess": "تم إلغاء الشهادة",
+          "revokeFailed": "فشل في إلغاء الشهادة"
+        },
+        "modal": {
+          "approveTitle": "الموافقة على الشهادة",
+          "rejectTitle": "رفض الشهادة",
+          "holdTitle": "تعليق الشهادة",
+          "revokeTitle": "إلغاء الشهادة",
+          "approveConfirm": "الموافقة على الشهادة",
+          "rejectConfirm": "رفض الشهادة",
+          "holdConfirm": "تعليق",
+          "revokeConfirm": "إلغاء الشهادة",
+          "approveConfirm_text": "سوف يستلم الطالب شهادته فور الموافقة.",
+          "reasonLabel": "السبب (مطلوب)",
+          "rejectPlaceholder": "لماذا يتم رفض هذا الطلب؟",
+          "holdPlaceholder": "لماذا يتم تعليق هذا الطلب؟ الملاحظات ظاهرة للطالب.",
+          "revokePlaceholder": "لماذا يتم إلغاء هذه الشهادة؟"
+        }
+      }
     },
     "editCourse": {
       "title": "تعديل الدورة",
@@ -5148,6 +5560,13 @@
         "deadlinePassed": "انتهى الموعد النهائي للتسجيل في هذه الدورة.",
         "capacityDecrease": "يمكن زيادة سعة التسجيل فقط، لا يمكن تقليلها. قم برفع الرقم بدلاً من ذلك.",
         "capacityBelowEnrolled": "لا يمكن أن تكون السعة ({capacity}) أقل من عدد الطلاب المسجلين حالياً ({enrolled}). اضبطها على {enrolled} أو أعلى."
+      },
+      "tabs": {
+        "basic": "الأساسيات",
+        "content": "المحتوى",
+        "assignment": "التعيين",
+        "schedule": "الجدولة والتسعير",
+        "seo": "تحسين محركات البحث"
       }
     },
     "sessionsPage": {
@@ -6566,7 +6985,9 @@
         "rules": "قواعد الكسب",
         "config": "إعدادات الاستبدال",
         "courses": "الدورات المؤهلة",
+        "rewards": "كتالوج المكافآت",
         "grants": "منح يدوية",
+        "courseRedemptions": "استبدالات الدورات",
         "history": "سجل المستخدم"
       },
       "toasts": {
@@ -6624,7 +7045,203 @@
         "autoCost": "تلقائي",
         "enabled": "مفعّلة",
         "disabled": "معطّلة",
-        "empty": "لا توجد دورات تطابق بحثك."
+        "empty": "لا توجد دورات تطابق بحثك.",
+        "remove": "إزالة من الأهلية",
+        "removeConfirm": "هل تريد إزالة هذه الدورة من الاستبدال بالنقاط نهائياً؟",
+        "removeTitle": "إزالة الدورة",
+        "removeConfirmLabel": "إزالة",
+        "cancel": "إلغاء",
+        "removedToast": "تمت إزالة الدورة من الاستبدال",
+        "redemptionsLast30d": "{count, plural, =0 {لا استبدالات في آخر 30 يوماً} =1 {استبدال واحد في آخر 30 يوماً} =2 {استبدالان في آخر 30 يوماً} other {# استبدالات في آخر 30 يوماً}}",
+        "filters": {
+          "all": "الكل",
+          "enabled": "مفعّلة",
+          "disabled": "معطّلة",
+          "unconfigured": "غير معدّة"
+        },
+        "delivery": {
+          "zoom": "أونلاين مباشرة",
+          "onsite": "حضورية",
+          "blended": "مدمجة",
+          "self-paced": "ذاتية",
+          "webinar": "ويبينار"
+        },
+        "bulkEnable": {
+          "button": "تفعيل جماعي",
+          "title": "تفعيل جميع الدورات المدفوعة",
+          "body": "يحدّد تكلفة النقاط = السعر × المضاعف لكل دورة مدفوعة مؤهلة لا تحتوي على إعداد بعد. لن يتم تعديل الدورات المعدّة مسبقاً.",
+          "multiplierLabel": "نقاط لكل ريال",
+          "multiplierHint": "الافتراضي يطابق معدل المنصة ({rate} نقطة/ر.س). القيمة الأعلى تعني استبدالاً أعلى تكلفة.",
+          "cancel": "إلغاء",
+          "confirm": "تطبيق",
+          "doneToast": "تم تفعيل {count} دورة للاستبدال"
+        },
+        "emptyState": {
+          "title": "لا توجد دورات مفعّلة للاستبدال بالنقاط",
+          "body": "قم بإعداد أول دورة ليتمكن الطلاب من إنفاق نقاطهم للتسجيل بدلاً من الدفع بالبطاقة.",
+          "cta": "أعدّ أول دورة"
+        }
+      },
+      "rewards": {
+        "panels": {
+          "catalog": "الكتالوج",
+          "redemptions": "الاستبدالات"
+        },
+        "createBtn": "مكافأة جديدة",
+        "createTitle": "إنشاء مكافأة",
+        "editTitle": "تعديل المكافأة",
+        "save": "حفظ",
+        "cancel": "إلغاء",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "activate": "تفعيل",
+        "deactivate": "تعطيل",
+        "viewCoupon": "عرض القسيمة",
+        "confirmDelete": "تعطيل هذه المكافأة؟ لن يراها الطلاب بعد الآن.",
+        "deleteTitle": "تعطيل المكافأة",
+        "deleteConfirmLabel": "تعطيل",
+        "cancel": "إلغاء",
+        "unlimited": "غير محدود",
+        "pointsUnit": "نقطة",
+        "stockLeftBadge": "متبقي {n}",
+        "redeemedCount": "استُبدلت {n} مرة",
+        "prev": "السابق",
+        "next": "التالي",
+        "pageOf": "الصفحة {page} من {total}",
+        "markFulfilled": "تم التنفيذ",
+        "reverse": "عكس",
+        "reversalReasonPrompt": "سبب العكس (يظهر للمدققين):",
+        "noRedemptions": "لا توجد استبدالات بعد.",
+        "cols": {
+          "name": "المكافأة",
+          "type": "النوع",
+          "cost": "التكلفة",
+          "stock": "المخزون",
+          "redeemed": "المُستبدل",
+          "status": "الحالة",
+          "actions": ""
+        },
+        "redemptionCols": {
+          "when": "المتى",
+          "user": "المستخدم",
+          "reward": "المكافأة",
+          "points": "النقاط",
+          "status": "الحالة",
+          "actions": ""
+        },
+        "types": {
+          "discount_coupon": "قسيمة خصم نسبي",
+          "fixed_discount_coupon": "قسيمة خصم ثابت",
+          "free_course": "دورة مجانية",
+          "free_webinar": "ندوة مجانية",
+          "other": "أخرى"
+        },
+        "statuses": {
+          "active": "مفعّلة",
+          "inactive": "معطّلة",
+          "pending": "قيد الانتظار",
+          "fulfilled": "تم التنفيذ",
+          "failed": "فشل",
+          "reversed": "معكوسة"
+        },
+        "filters": {
+          "allStatuses": "جميع الحالات"
+        },
+        "fields": {
+          "type": "نوع المكافأة",
+          "typeHelp": "لا يمكن تغيير النوع بعد الإنشاء.",
+          "nameEn": "الاسم (إنجليزي)",
+          "nameAr": "الاسم (عربي)",
+          "descriptionEn": "الوصف (إنجليزي)",
+          "descriptionAr": "الوصف (عربي)",
+          "pointsCost": "تكلفة النقاط",
+          "displayOrder": "ترتيب العرض",
+          "maxPerUser": "الحد الأقصى لكل مستخدم (فارغ = غير محدود)",
+          "totalStock": "إجمالي المخزون (فارغ = غير محدود)",
+          "validFrom": "صالح من (اختياري)",
+          "validUntil": "صالح حتى (اختياري)",
+          "isActive": "مفعّلة (تظهر للطلاب)"
+        },
+        "scope": {
+          "label": "نطاق القسيمة",
+          "all_paid": "جميع الدورات المدفوعة",
+          "specific_courses": "دورات محددة",
+          "by_delivery_type": "حسب نوع التقديم",
+          "deliveryTypePlaceholder": "اختر نوع تقديم أو أكثر"
+        },
+        "multiSelect": {
+          "search": "بحث…",
+          "empty": "لا شيء للاختيار",
+          "clearAll": "مسح الكل",
+          "loading": "جاري التحميل…"
+        },
+        "payload": {
+          "expiryDays": "انتهاء القسيمة (أيام)",
+          "discount_coupon": {
+            "title": "إعدادات القسيمة",
+            "percent": "نسبة الخصم"
+          },
+          "fixed_discount_coupon": {
+            "title": "إعدادات القسيمة",
+            "amountSar": "مبلغ الخصم (ر.س)"
+          },
+          "free_course": {
+            "title": "إعدادات الدورة المجانية",
+            "help": "يختار الطالب واحدة من هذه الدورات عند الاستبدال.",
+            "pickerPlaceholder": "اختر دورة أو أكثر",
+            "pickerEmpty": "لا توجد دورات مطابقة",
+            "freeBadge": "مجاني"
+          },
+          "free_webinar": {
+            "title": "إعدادات الندوة المجانية",
+            "pickerPlaceholder": "اختر جلسة ندوة قادمة",
+            "pickerEmpty": "لا توجد جلسات ندوة قادمة"
+          },
+          "other": {
+            "title": "مكافأة مخصصة",
+            "instructionsEn": "تعليمات التنفيذ (إنجليزي)",
+            "instructionsAr": "تعليمات التنفيذ (عربي)",
+            "pendingNotice": "تظل المكافآت المخصصة قيد الانتظار حتى يقوم المسؤول بتنفيذها من علامة الاستبدالات.",
+            "expectedDeliveryDaysLabel": "مدة التسليم المتوقعة (أيام)",
+            "expectedDeliveryDaysPlaceholder": "٧",
+            "expectedDeliveryDaysHelper": "عدد الأيام بعد الاستبدال التي يتوقع الطالب خلالها وصول المكافأة. تُعرض كموعد متوقع في صفحة مكافآتي."
+          }
+        },
+        "other": {
+          "fulfill": {
+            "modalTitle": "تنفيذ مكافأة مخصصة",
+            "viewModalTitle": "بيانات التسليم",
+            "viewArtifactButton": "عرض التسليم",
+            "kindLabel": "نوع التسليم",
+            "kindCode": "كود",
+            "kindLink": "رابط",
+            "kindNote": "ملاحظة",
+            "valueLabel": "القيمة",
+            "valueRequired": "الرجاء إدخال قيمة",
+            "valuePlaceholderCode": "مثال: GIFT-CODE-XXXX",
+            "valuePlaceholderLink": "مثال: https://gift.example.com/redeem/abc",
+            "valuePlaceholderNote": "مثال: شكرًا لك! ستصل قسيمتك بالبريد خلال ٣ إلى ٥ أيام.",
+            "adminNoteLabel": "ملاحظة للمسؤول (اختياري)",
+            "adminNoteHelper": "ملاحظة داخلية أو رسالة للطالب",
+            "submitButton": "وضع علامة التنفيذ",
+            "closeButton": "إغلاق"
+          }
+        },
+        "empty": {
+          "title": "لا توجد مكافآت بعد",
+          "body": "أنشئ أول مكافأة ليتمكن الطلاب من إنفاق نقاطهم.",
+          "cta": "أنشئ أول مكافأة"
+        },
+        "errors": {
+          "nameRequired": "الاسم الإنجليزي مطلوب"
+        },
+        "toasts": {
+          "created": "تم إنشاء المكافأة",
+          "updated": "تم تحديث المكافأة",
+          "deleted": "تم تعطيل المكافأة",
+          "fulfilled": "تم وضع علامة تنفيذ الاستبدال",
+          "reversed": "تم عكس الاستبدال"
+        }
       },
       "grants": {
         "pickStudentTitle": "اختر طالباً",
@@ -6649,6 +7266,70 @@
         "dateColumn": "التاريخ",
         "reasonColumn": "السبب",
         "deltaColumn": "التغيير"
+      },
+      "userHistory": {
+        "reasons": {
+          "adminGrant": "منح من الإدارة",
+          "adminDeduct": "خصم من الإدارة",
+          "earnSignup": "مكافأة ترحيبية عند التسجيل",
+          "earnCourseCompleted": "مكافأة إكمال دورة مسجَّلة",
+          "earnReviewApproved": "مكافأة اعتماد المدير لمراجعة الدورة",
+          "redeemHold": "حجز نقاط لعملية استبدال",
+          "redeemCommitted": "تأكيد استبدال المكافأة",
+          "redeemCourseCommitted": "تأكيد فتح الدورة بالنقاط",
+          "redeemReleased": "إلغاء الحجز — استرداد النقاط",
+          "reverseCourseCancelled": "استرداد النقاط بعد إلغاء الدورة",
+          "systemExpire": "انتهت صلاحية النقاط"
+        }
+      },
+      "courseRedemptions": {
+        "summary": {
+          "count": "إجمالي الاستبدالات",
+          "points": "إجمالي النقاط المُنفَقة",
+          "sar": "المقابل بالريال"
+        },
+        "filters": {
+          "search": "بحث عن طالب",
+          "searchPlaceholder": "الاسم أو البريد…",
+          "course": "الدورة",
+          "allCourses": "كل الدورات",
+          "status": "حالة التسجيل",
+          "startDate": "من",
+          "endDate": "إلى"
+        },
+        "statuses": {
+          "all": "جميع الحالات",
+          "active": "نشط",
+          "completed": "مكتمل",
+          "dropped": "منسحب",
+          "suspended": "مُوقَف",
+          "pendingPayment": "بانتظار الدفع",
+          "unknown": "لا يوجد تسجيل"
+        },
+        "columns": {
+          "date": "التاريخ",
+          "student": "الطالب",
+          "course": "الدورة",
+          "points": "النقاط",
+          "sar": "القيمة بالريال",
+          "status": "الحالة"
+        },
+        "exportCsv": "تصدير CSV",
+        "exportSuccess": "تم تنزيل الملف",
+        "empty": {
+          "title": "لا توجد استبدالات دورات بعد",
+          "body": "لم يقم أي طالب بفتح دورة بالنقاط ضمن عوامل التصفية الحالية."
+        },
+        "pagination": {
+          "showing": "عرض {shown} من {total}",
+          "prev": "السابق",
+          "next": "التالي",
+          "pageOf": "الصفحة {page} من {total}"
+        },
+        "errors": {
+          "loadFailed": "تعذر تحميل الاستبدالات",
+          "exportFailed": "فشل التصدير"
+        }
       }
     },
     "securityPage": {
@@ -6764,6 +7445,9 @@
       "triggerLeftSuccess": "تم إرسال إشعار 'left' بنجاح",
       "triggerFailed": "فشل إرسال عبارة الإشعار",
       "confirmLeft": "هل تريد إرسال إشعار 'left' لإنهاء التكامل مع NELC؟ هذا يعني إنهاء استخدام المنصة. استخدم 'joined' للربط العادي.",
+      "confirmLeftTitle": "إرسال إشعار الإنهاء",
+      "confirmLeftLabel": "إرسال",
+      "cancel": "إلغاء",
       "retry": "إعادة المحاولة",
       "retryQueued": "تم وضع إعادة المحاولة في قائمة الانتظار — جاري التحديث",
       "retryNotEnqueued": "تم إرسال العبارة مسبقاً أو قائمة الانتظار غير متاحة",
@@ -7191,6 +7875,9 @@
       "save": "حفظ القالب",
       "resetToDefault": "إعادة التعيين للافتراضي",
       "confirmReset": "هل تريد إعادة هذا القالب إلى الافتراضي؟ ستُفقَد التخصيصات.",
+      "resetTitle": "إعادة تعيين القالب",
+      "resetConfirmLabel": "إعادة تعيين",
+      "cancel": "إلغاء",
       "resetDone": "تمت إعادة القالب للافتراضي",
       "resetFailed": "تعذّر إعادة تعيين القالب.",
       "subject": "العنوان",
@@ -7218,6 +7905,21 @@
         "assessments": "التقييمات",
         "content": "مراجعة المحتوى",
         "whatsapp": "واتساب"
+      },
+      "testSend": {
+        "button": "أرسل نسخة اختبار إليّ",
+        "tooltip": "يعرض هذا القالب ببيانات تجريبية ويرسله إلى بريدك الإداري.",
+        "sentOverride": "تم إرسال الاختبار إلى {email}. تم استخدام القالب المُعدَّل الخاص بك.",
+        "sentDefault": "تم إرسال الاختبار إلى {email}. تم استخدام القالب الافتراضي (غير المُعدَّل) — احفظ تعديلاتك أولًا ثم انقر مرة أخرى.",
+        "failed": "فشل إرسال بريد الاختبار."
+      },
+      "startFresh": {
+        "hint": "تفضّل السحب والإفلات بدلًا من HTML؟ انقر لمسح المحتوى الحالي والبناء باستخدام كتل مرئية (نص، صورة، زر).",
+        "button": "ابدأ من جديد",
+        "title": "ابدأ من جديد",
+        "confirm": "هل تريد مسح القالب الحالي والبدء بلوحة فارغة؟ ستُفقد تغييراتك غير المحفوظة.",
+        "confirmLabel": "مسح اللوحة",
+        "cancel": "إلغاء"
       }
     },
     "settingsPage": {
@@ -7850,14 +8552,23 @@
             "created": "تم إنشاء الحادث",
             "createFailed": "تعذّر إنشاء الحادث",
             "updatePosted": "تم نشر التحديث",
-            "updateFailed": "تعذّر نشر التحديث"
-          }
+            "updateFailed": "تعذّر نشر التحديث",
+            "reportSaved": "تم حفظ التقرير",
+            "reportSaveFailed": "تعذّر حفظ التقرير",
+            "allowPopups": "اسمح بالنوافذ المنبثقة لتصدير PDF"
+          },
+          "report": "التقرير",
+          "hideReport": "إخفاء التقرير",
+          "reportLoadError": "تعذّر تحميل التقرير."
         },
         "toasts": {
           "loadFailed": "تعذّر تحميل حالة الخدمات",
           "componentSaved": "تم تحديث المكوّن",
           "saveFailed": "تعذّر الحفظ",
           "confirmDelete": "هل تريد حذف هذا الحادث وجدوله الزمني بالكامل؟",
+          "deleteTitle": "حذف الحادث",
+          "deleteConfirmLabel": "حذف",
+          "cancel": "إلغاء",
           "incidentDeleted": "تم حذف الحادث",
           "deleteFailed": "تعذّر حذف الحادث",
           "overrideCleared": "تم إلغاء التثبيت — استأنف الكشف التلقائي"
@@ -7885,6 +8596,48 @@
         "confirmPoint3": "يعود الموقع خلال ~30 ثانية من إيقاف الصيانة.",
         "confirmCancel": "إلغاء",
         "confirmEnable": "نعم، فعّل الصيانة"
+      },
+      "scheduledMaintenance": {
+        "toasts": {
+          "loadFailed": "تعذر تحميل نوافذ الصيانة المجدولة",
+          "windowCancelled": "تم إلغاء النافذة",
+          "windowUpdated": "تم تحديث النافذة",
+          "windowScheduled": "تمت جدولة نافذة الصيانة"
+        },
+        "fields": {
+          "titleEn": "العنوان (إنجليزي)",
+          "titleAr": "العنوان (عربي)",
+          "descriptionPlaceholder": "ماذا يحدث، وماذا تتوقع…"
+        }
+      },
+      "statusAnalytics": {
+        "toasts": {
+          "startFailed": "تعذر بدء التصدير",
+          "allowPopups": "اسمح بالنوافذ المنبثقة لتصدير PDF"
+        }
+      },
+      "mailSettings": {
+        "title": "مُرسِل البريد الصادر",
+        "subtitle": "غيّر عنوان المرسل والاسم الظاهر لجميع رسائل المنصة — دون الحاجة إلى نشر جديد للكود.",
+        "loading": "جارٍ تحميل الإعدادات الحالية…",
+        "senderEmailLabel": "بريد المرسل",
+        "senderEmailHelp": "اتركه فارغًا للرجوع إلى متغير البيئة MAIL_FROM.",
+        "senderNameLabel": "اسم المرسل",
+        "senderNameHelp": "الاسم الظاهر في صناديق البريد الواردة (مثال: PhysioGuidance).",
+        "previewLabel": "معاينة",
+        "previewFallback": "MAIL_FROM (بيئة التشغيل)",
+        "save": "حفظ إعدادات البريد",
+        "warning": {
+          "title": "يجب توثيق النطاق",
+          "body": "يجب أن يكون بريد المرسل من نطاق موثّق لدى مزوّد البريد (Resend). الإرسال من نطاق غير موثّق سيفشل بصمت. يُرجى التواصل مع فريق devops قبل تغيير النطاق."
+        },
+        "errors": {
+          "invalidEmail": "أدخل عنوان بريد إلكتروني صحيح."
+        },
+        "toasts": {
+          "saved": "تم حفظ إعدادات البريد. ستستخدم الرسائل الجديدة المرسِل المحدَّث خلال 30 ثانية.",
+          "saveFailed": "فشل حفظ إعدادات البريد."
+        }
       }
     },
     "supportPage": {
@@ -9364,7 +10117,10 @@
         "course_cancelled": "إلغاء الدورة من قِبل الإدارة",
         "duplicate": "دفعة مكررة",
         "technical": "خطأ تقني",
-        "other": "أخرى"
+        "other": "أخرى",
+        "description_mismatch": "الدورة لا تطابق الوصف",
+        "wrong_course": "دورة خاطئة تم شراؤها",
+        "access_issue": "غير قادر على الوصول إلى الدورة"
       },
       "actions": {
         "approve": "موافقة",
@@ -9552,14 +10308,18 @@
       "sales": {
         "openButton": "تخفيضات الدورات",
         "title": "تخفيضات الدورات",
-        "subtitle": "حدد نسبة خصم على دورة — يدفع الطلاب السعر المخفّض تلقائيًا دون الحاجة إلى كود.",
+        "subtitle": "حدد نسبة خصم أو مبلغًا ثابتًا بالريال على دورة — يدفع الطلاب السعر المخفّض تلقائيًا دون الحاجة إلى كود.",
         "searchPlaceholder": "ابحث عن الدورات…",
-        "empty": "لا توجد دورات",
+        "empty": "لا توجد دورات مدفوعة",
         "loadError": "فشل تحميل الدورات",
         "percentOff": "خصم {percent}٪",
+        "amountOff": "خصم {amount} ر.س",
         "liveBadge": "مُفعّل",
         "startsOn": "خصم {percent}٪ — يبدأ {date}",
         "endedOn": "خصم {percent}٪ — انتهى {date}",
+        "startsOnLabel": "{label} — يبدأ {date}",
+        "endedOnLabel": "{label} — انتهى {date}",
+        "inactiveLabel": "{label} — غير مُفعّل",
         "endsOn": "ينتهي {date}",
         "freeNoEffect": "الدورة مجانية — لا أثر للتخفيض",
         "inactive": "خصم {percent}٪ — غير مُفعّل",
@@ -9567,8 +10327,17 @@
         "noSale": "لا يوجد تخفيض",
         "setSale": "إضافة تخفيض",
         "edit": "تعديل",
+        "freeCourse": "دورة مجانية",
+        "freeCourseHint": "هذه الدورة مجانية — لا يمكن إضافة تخفيض إلا للدورات المدفوعة. اضبط سعرًا أولاً.",
+        "typeLabel": "نوع التخفيض",
+        "types": {
+          "percentage": "نسبة مئوية",
+          "fixed": "مبلغ ثابت (ر.س)"
+        },
         "percentLabel": "النسبة (٪ خصم)",
         "percentHint": "من 1 إلى 100. النسبة 100٪ تجعل الدورة مجانية.",
+        "amountLabel": "قيمة الخصم (ر.س)",
+        "amountHint": "يجب أن تكون أقل من سعر الدورة ({price} ر.س).",
         "allowCoupon": "السماح باستخدام كود خصم مع هذا التخفيض",
         "startsLabel": "يبدأ التخفيض",
         "endsLabel": "ينتهي التخفيض",
@@ -9577,7 +10346,12 @@
         "save": "حفظ",
         "saved": "تم حفظ التخفيض",
         "removed": "تمت إزالة التخفيض",
-        "saveError": "فشل حفظ التخفيض"
+        "saveError": "فشل حفظ التخفيض",
+        "errors": {
+          "percentRange": "يجب أن تكون النسبة بين 1 و 100",
+          "amountPositive": "يجب أن يكون المبلغ أكبر من 0",
+          "amountTooLarge": "{amount} ر.س ليس أقل من سعر الدورة ({price} ر.س). قلّل المبلغ."
+        }
       },
       "export": "تصدير CSV",
       "exportSuccess": "تم تحميل التصدير بنجاح",
@@ -9711,6 +10485,9 @@
         "saveButton": "حفظ الحملة",
         "deactivateButton": "إيقاف",
         "deactivateConfirm": "إيقاف هذه الحملة؟ ستُرفض الأكواد التابعة لها عند الدفع.",
+        "deactivateTitle": "إيقاف الحملة",
+        "deactivateConfirmLabel": "إيقاف",
+        "cancel": "إلغاء",
         "activeFilter": "فعّالة",
         "expiredFilter": "منتهية",
         "allFilter": "الكل",
@@ -9936,7 +10713,9 @@
           "saleStackingTooltip": "هذه الدورة عليها تخفيض. تُضاف القسائم فوق التخفيض.",
           "saleNoStackingTooltip": "هذه الدورة عليها تخفيض. سيتم رفض القسائم عند الدفع ما لم يسمح التخفيض بالجمع.",
           "noStackBadge": "لا جمع",
-          "noStackTooltip": "التخفيض على هذه الدورة لا يسمح بجمع القسائم. سيتم رفض أي قسيمة مرفقة بها عند الدفع."
+          "noStackTooltip": "التخفيض على هذه الدورة لا يسمح بجمع القسائم. سيتم رفض أي قسيمة مرفقة بها عند الدفع.",
+          "freeBadge": "مجانية",
+          "freeCourseCannotBeAdded": "الدورات المجانية لا تقبل كوبونات — اضبط سعراً أولاً."
         },
         "step3": {
           "heading": "حدود الاستخدام",
@@ -10013,7 +10792,9 @@
           "hint": "تقييد لدورات محددة أو السماح لجميع الدورات.",
           "all": "كل الدورات",
           "specific": "دورات محددة",
-          "searchPlaceholder": "بحث…"
+          "searchPlaceholder": "بحث…",
+          "freeBadge": "مجانية",
+          "freeCourseCannotBeAdded": "الدورات المجانية لا تقبل كوبونات — اضبط سعراً أولاً."
         },
         "step4": {
           "heading": "الإعدادات",
@@ -10055,28 +10836,58 @@
           "all": "الكل"
         },
         "create": "حملة جديدة",
+        "createEarlyBird": "عرض الحجز المبكر",
+        "createEarlyBirdHint": "يفتح نموذج حملة معبأ مسبقاً بإعدادات الحجز المبكر: نافذة 7 أيام، البانر مفعل، التطبيق التلقائي مفعل.",
         "empty": "لا توجد حملات بعد",
         "emptyHint": "اجمع الأكواد المرتبطة تحت حملة بميزانية مشتركة وبانر.",
         "budget": "الميزانية",
         "unlimited": "بلا حد",
         "codes": "أكواد",
         "banner": "بانر",
+        "earlyBirdPill": "حجز مبكر",
+        "offPill": "خصم",
+        "typePill": {
+          "standard": "قياسية",
+          "earlyBird": "حجز مبكر"
+        },
+        "cardCouponStack": "الكوبونات تُضاف فوقه",
+        "cardCodeContainer": "حملة بأكواد",
+        "cardCodeContainerHint": "{n} كود مرفق — يُدخل المشتري الكود عند الدفع.",
+        "scopeSummary": {
+          "allPaid": "تطبق على جميع الدورات المدفوعة",
+          "byDeliveryType": "تطبق على: {list}",
+          "byDeliveryTypeEmpty": "اختر أنواع التقديم من تعديل الحملة",
+          "specificCourses": "تطبق على {n} دورة مختارة",
+          "codeOnly": "{n} كود مرفق — بلا خصم مباشر"
+        },
         "confirmDeactivate": "تعطيل هذه الحملة؟ سيتم رفض الأكواد التابعة عند الدفع.",
         "toasts": {
           "deactivated": "تم تعطيل الحملة",
-          "deactivateError": "فشل التعطيل"
+          "activated": "تم تفعيل الحملة",
+          "deleted": "تم حذف الحملة",
+          "deactivateError": "فشل التعطيل",
+          "activateError": "فشل التفعيل",
+          "deleteError": "فشل الحذف"
         },
         "actions": {
           "open": "فتح",
           "edit": "تعديل",
-          "deactivate": "تعطيل"
+          "deactivate": "تعطيل",
+          "activate": "تفعيل",
+          "delete": "حذف"
         },
         "form": {
           "createTitle": "حملة جديدة",
           "editTitle": "تعديل الحملة",
           "name": "الاسم",
-          "namePlaceholder": "رمضان 2026",
+          "nameEn": "الاسم (بالإنجليزية)",
+          "nameAr": "الاسم (بالعربية)",
+          "nameArPlaceholder": "رمضان 2026",
+          "nameArHint": "يظهر لزوّار الموقع باللغة العربية.",
+          "namePlaceholder": "Ramadan 2026",
           "description": "الوصف",
+          "descriptionEn": "الوصف (بالإنجليزية)",
+          "descriptionAr": "الوصف (بالعربية)",
           "startsAt": "تبدأ في",
           "endsAt": "تنتهي في",
           "budget": "الميزانية (ريال، اختياري)",
@@ -10084,12 +10895,63 @@
           "showBanner": "عرض البانر على الموقع العام",
           "showBannerHint": "يظهر شريط ملون أعلى صفحات الدورات أثناء الحملة.",
           "bannerCta": "نص زر البانر (اختياري)",
-          "bannerCtaPlaceholder": "تسوّق الآن",
+          "bannerCtaEn": "نص زر البانر — بالإنجليزية (اختياري)",
+          "bannerCtaAr": "نص زر البانر — بالعربية (اختياري)",
+          "bannerCtaPlaceholder": "Shop now",
+          "bannerCtaArPlaceholder": "تسوّق الآن",
           "cancel": "إلغاء",
           "save": "حفظ الحملة",
           "createdToast": "تم إنشاء الحملة",
           "editedToast": "تم حفظ الحملة",
-          "saveError": "فشل الحفظ"
+          "saveError": "فشل الحفظ",
+          "campaignType": "نوع الحملة",
+          "campaignTypes": {
+            "standard": "قياسية",
+            "early_bird": "حجز مبكر"
+          },
+          "discountSection": "الخصم",
+          "discountSectionHint": "اختياري. عند تفعيله، يُطبَّق الخصم عند الدفع دون الحاجة لكود.",
+          "discountType": "نوع الخصم",
+          "discountTypes": {
+            "none": "لا يوجد خصم مباشر (اربط أكواداً بدلاً من ذلك)",
+            "percentage": "نسبة مئوية",
+            "fixed": "مبلغ ثابت (ريال)"
+          },
+          "percentValue": "النسبة (1–100)",
+          "fixedValue": "المبلغ (ريال)",
+          "scope": "يشمل",
+          "scopes": {
+            "all_paid": "جميع الدورات المدفوعة",
+            "by_delivery_type": "حسب نوع التقديم",
+            "specific_courses": "دورات محددة"
+          },
+          "scopeHints": {
+            "all_paid": "تشمل جميع الدورات المدفوعة. الدورات المجانية مستثناة تلقائياً.",
+            "by_delivery_type": "الدورات المدفوعة التي يطابق نوع تقديمها اختيارك فقط.",
+            "specific_courses": "الدورات المدفوعة التي تحددها أدناه فقط."
+          },
+          "deliveryTypes": {
+            "zoom": "زووم",
+            "onsite": "حضوري",
+            "blended": "مدمج",
+            "self-paced": "ذاتي",
+            "webinar": "ندوة"
+          },
+          "courseSearchPlaceholder": "بحث عن دورات…",
+          "noCoursesFound": "لا توجد دورات مطابقة",
+          "freeCourseCannotBeAdded": "لا يمكن تطبيق خصم على الدورات المجانية",
+          "freeLabel": "مجاني",
+          "selectedCount": "{n} دورة محددة",
+          "allowsCoupon": "السماح باستخدام كود خصم مع هذه الحملة",
+          "allowsCouponHint": "عند تعطيله، يخفي الدفع خانة كود الخصم أثناء نشاط هذه الحملة.",
+          "errors": {
+            "discountValueRequired": "أدخل قيمة خصم أكبر من صفر",
+            "percentRange": "يجب أن تكون النسبة بين 1 و 100",
+            "scopeNeedsDiscount": "اختر نوع خصم (نسبة أو مبلغ) لهذا النطاق",
+            "pickDeliveryTypes": "اختر نوع تقديم واحداً على الأقل",
+            "pickCourses": "اختر دورة واحدة على الأقل",
+            "fixedTooLargeForCourse": "الخصم الثابت {amount} ر.س ليس أقل من \"{title}\" ({price} ر.س). قلّل الخصم أو أزل الدورة من الاختيار."
+          }
         },
         "drawer": {
           "loading": "جاري التحميل…",
@@ -10102,9 +10964,41 @@
           },
           "totalSpent": "إجمالي الاستخدام",
           "ofBudget": "من",
+          "unlimitedBudget": "ميزانية غير محدودة — لا يوجد حد للاستخدام",
           "period": "الفترة",
           "codeCount": "الأكواد",
-          "bannerActive": "البانر نشط على الموقع العام",
+          "bannerActive": "البانر ظاهر على الموقع العام",
+          "bannerActiveHint": "الشريط المتدرج ظاهر أعلى صفحات الدورات.",
+          "bannerInactive": "البانر متوقف",
+          "bannerInactiveHint": "شغّله للترويج لهذه الحملة أعلى صفحات الدورات.",
+          "bannerTurnOn": "تشغيل البانر",
+          "bannerTurnOff": "إيقاف البانر",
+          "bannerCta": "نص الزر في البانر",
+          "bannerCtaEn": "نص الزر — بالإنجليزية",
+          "bannerCtaArLabel": "نص الزر — بالعربية",
+          "bannerCtaPlaceholder": "Shop now",
+          "bannerCtaArPlaceholder": "تسوّق الآن",
+          "bannerSaveCta": "حفظ",
+          "bannerToasts": {
+            "on": "أصبح البانر ظاهراً على الموقع العام",
+            "off": "تم إخفاء البانر",
+            "ctaSaved": "تم حفظ نص زر البانر",
+            "error": "تعذّر تحديث البانر"
+          },
+          "directDiscount": "خصم مباشر",
+          "scopeLabel": "يُطبَّق على",
+          "couponStackOn": "يمكن استخدام كوبون فوق الخصم",
+          "couponStackOnHint": "يستطيع المشتري إدخال كوبون أيضاً وتضاف قيمته للخصم.",
+          "couponStackOff": "لا يُسمح بالكوبونات",
+          "couponStackOffHint": "يخفي الدفع خانة الكوبون طوال فترة الحملة.",
+          "codesAttached": "{n} كود كوبون مرفق",
+          "codesAttachedHint": "من يدخل أحد هذه الأكواد يحصل على شروط خصم هذه الحملة.",
+          "viewCodes": "عرض الأكواد",
+          "bilingualEn": "الإنجليزية",
+          "bilingualAr": "العربية",
+          "bilingualMissing": "لا توجد ترجمة عربية — عدّل الحملة لإضافة واحدة.",
+          "emptyDiscount": "لم يتم إعداد خصم",
+          "emptyDiscountHint": "عدّل الحملة لإضافة خصم مباشر أو توليد أكواد كوبون.",
           "noCodes": "لا توجد أكواد مرفقة بعد",
           "cols": {
             "code": "الكود",
@@ -10138,6 +11032,7 @@
         "saved": "وفّر",
         "empty": "لا توجد أكواد حجز مبكر بعد",
         "emptyHint": "أنشئ كود حجز مبكر لعرض خصم محدود الوقت بشارة على بطاقات الدورات.",
+        "campaignBasedHint": "يمكن الآن إنشاء عروض الحجز المبكر أيضاً كحملات من تبويب \"الحملات\" — اختر \"حجز مبكر\" كنوع الحملة. تظهر بشارة حجز مبكر وتُطبَّق مباشرة عند الدفع دون كود.",
         "sections": {
           "live": "مباشر الآن",
           "scheduled": "مجدول",
@@ -10160,7 +11055,17 @@
           "overview": "نظرة عامة",
           "config": "الإعدادات",
           "usage": "الاستخدام",
-          "audit": "السجل"
+          "audit": "السجل",
+          "pointsReward": "مكافأة النقاط"
+        },
+        "pointsReward": {
+          "header": "أُنشئت من مكافأة نقاط",
+          "rewardType": "نوع المكافأة",
+          "pointsCost": "تكلفة النقاط",
+          "redeemedAt": "تاريخ الاستبدال",
+          "redeemedBy": "استُبدلت بواسطة",
+          "redemptionId": "معرف الاستبدال",
+          "note": "أنشأ نظام النقاط هذه القسيمة تلقائياً. يمكن إدارة المكافآت من لوحة النقاط."
         },
         "statusPill": {
           "active": "نشط",
@@ -10223,9 +11128,13 @@
         "bulkDeleteTitle": "حذف {n} قسائم؟",
         "bulkDeleteBody": "سيتم حذف القسائم المختارة وسجلات استخدامها. سجلات التدقيق محفوظة. لا يمكن التراجع.",
         "bulkDeleteBtn": "حذف {n}",
-        "deactivateCampaignTitle": "حذف الحملة؟",
-        "deactivateCampaignBody": "سيتم حذف الحملة نهائياً. القسائم التابعة تبقى لكن سيتم إزالة ارتباطها بالحملة. سجلات التدقيق محفوظة.",
-        "deactivateCampaignBtn": "حذف الحملة"
+        "deactivateCampaignTitle": "تعطيل الحملة؟",
+        "deactivateCampaignBody": "يوقف الحملة مؤقتاً. أكواد الخصم التابعة تتوقف عن العمل عند الدفع. يمكنك إعادة تفعيلها لاحقاً — لا شيء يُحذف.",
+        "deactivateCampaignBtn": "تعطيل",
+        "deleteCampaignTitle": "حذف الحملة؟",
+        "deleteCampaignBody": "يحذف الحملة نهائياً. الأكواد التابعة تبقى لكن يُلغى ارتباطها بالحملة. سجلات التدقيق محفوظة.",
+        "deleteCampaignBodyWithSpend": "أنتجت هذه الحملة {spend} ريال من الخصومات المستخدمة. الحذف نهائي — سجل الإنفاق يبقى في التقارير لكن الحملة نفسها ستُحذف.",
+        "deleteCampaignBtn": "حذف نهائياً"
       }
     },
     "reportsPage": {
@@ -10243,14 +11152,38 @@
       "previewNote": "المعاينة تعرض النتائج الأولية — التصدير يشمل جميع الصفوف.",
       "noResults": "لا توجد بيانات للفلاتر المحددة.",
       "cards": {
-        "revenue": { "title": "الإيرادات", "desc": "الإجمالي، التوزيع حسب البوابة وطريقة الدفع، وضريبة القيمة المضافة المُحصَّلة." },
-        "refunds": { "title": "الاستردادات", "desc": "كل عملية استرداد مع الحالة والسبب والبوابة والموظف المعالِج." },
-        "payments": { "title": "المدفوعات", "desc": "سجل المعاملات مع فلاتر البوابة والحالة وطريقة الدفع." },
-        "courseSales": { "title": "مبيعات الدورات", "desc": "الوحدات المباعة، الإجمالي، الاستردادات والصافي لكل دورة." },
-        "webinarSales": { "title": "مبيعات الندوات", "desc": "المقاعد المدفوعة والإيرادات لكل جلسة." },
-        "studentPurchases": { "title": "مشتريات الطلاب", "desc": "قائمة الإنفاق الإجمالي لكل طالب." },
-        "financeActivity": { "title": "نشاط المالية", "desc": "سجل التدقيق لكل إجراء من جانب المالية." },
-        "vat": { "title": "ضريبة القيمة المضافة", "desc": "ملخص شهري لضريبة القيمة المضافة على نمط ZATCA." }
+        "revenue": {
+          "title": "الإيرادات",
+          "desc": "الإجمالي، التوزيع حسب البوابة وطريقة الدفع، وضريبة القيمة المضافة المُحصَّلة."
+        },
+        "refunds": {
+          "title": "الاستردادات",
+          "desc": "كل عملية استرداد مع الحالة والسبب والبوابة والموظف المعالِج."
+        },
+        "payments": {
+          "title": "المدفوعات",
+          "desc": "سجل المعاملات مع فلاتر البوابة والحالة وطريقة الدفع."
+        },
+        "courseSales": {
+          "title": "مبيعات الدورات",
+          "desc": "الوحدات المباعة، الإجمالي، الاستردادات والصافي لكل دورة."
+        },
+        "webinarSales": {
+          "title": "مبيعات الندوات",
+          "desc": "المقاعد المدفوعة والإيرادات لكل جلسة."
+        },
+        "studentPurchases": {
+          "title": "مشتريات الطلاب",
+          "desc": "قائمة الإنفاق الإجمالي لكل طالب."
+        },
+        "financeActivity": {
+          "title": "نشاط المالية",
+          "desc": "سجل التدقيق لكل إجراء من جانب المالية."
+        },
+        "vat": {
+          "title": "ضريبة القيمة المضافة",
+          "desc": "ملخص شهري لضريبة القيمة المضافة على نمط ZATCA."
+        }
       },
       "filters": {
         "title": "الفلاتر",
@@ -10302,6 +11235,10 @@
         "events": "الأحداث",
         "actors": "المنفذون",
         "entities": "الكيانات"
+      },
+      "pointRedemptionsSummary": {
+        "label": "استبدال النقاط",
+        "detail": "{count, plural, =0 {لا تسجيلات} =1 {تسجيل واحد} =2 {تسجيلان} other {# تسجيلات}} · {points} نقطة مصروفة · ما يعادل {sar} ر.س"
       },
       "tables": {
         "byGateway": "الإيرادات حسب البوابة",
@@ -11058,7 +11995,12 @@
       "chargeback": "استرجاع بنكي",
       "processing": "قيد المعالجة",
       "rejected": "مرفوض",
-      "abandoned": "متروك"
+      "abandoned": "متروك",
+      "refundPending": "طلب استرداد",
+      "refundApproved": "تمت الموافقة — بانتظار الدفع",
+      "refundProcessing": "قيد المعالجة",
+      "refundRejected": "مرفوض الاسترداد",
+      "refundFailed": "فشل الاسترداد"
     },
     "analytics": {
       "title": "التحليلات",
@@ -11328,7 +12270,244 @@
       "statusDrivenByBusinessHours": "الحالة تتبع ساعات العمل",
       "editProfile": "تعديل الملف",
       "viewProfile": "عرض الملف الشخصي",
-      "logout": "تسجيل الخروج"
+      "logout": "تسجيل الخروج",
+      "uploadPhoto": "رفع صورة",
+      "removePhoto": "إزالة الصورة",
+      "roleSupervisor": "مشرف",
+      "roleAgent": "موظف دعم",
+      "csatOutOf5": "CSAT من 5",
+      "emptyStateSupervisor": "لم تُسنَد إليك تذاكر بعد. يمكنك متابعة أداء فريقك من التقارير.",
+      "emptyStateAgent": "لم تُسنَد إليك أي تذاكر بعد.",
+      "toasts": {
+        "photoUpdated": "تم تحديث صورة الملف الشخصي",
+        "photoUploadFailed": "فشل رفع الصورة",
+        "photoRemoved": "تم إزالة صورة الملف الشخصي",
+        "photoRemoveFailed": "فشل إزالة الصورة"
+      }
+    },
+    "activeIncidents": {
+      "activeCount": "{count, plural, zero {لا حوادث نشطة} one {حادث نشط واحد} two {حادثان نشطان} few {# حوادث نشطة} many {# حادثاً نشطاً} other {# حادث نشط}}",
+      "ticketCount": "{count, plural, zero {لا تذاكر} one {تذكرة واحدة} two {تذكرتان} few {# تذاكر} many {# تذكرة} other {# تذكرة}}",
+      "loading": "جارٍ تحميل التذاكر…",
+      "loadFailed": "تعذّر التحميل",
+      "noLinkedTickets": "لا توجد تذاكر مرتبطة بهذا الحادث بعد.",
+      "severity": {
+        "minor": "طفيف",
+        "major": "كبير",
+        "critical": "حرج"
+      },
+      "status": {
+        "investigating": "قيد التحقيق",
+        "identified": "تم التحديد",
+        "monitoring": "قيد المراقبة",
+        "resolved": "تم الحل"
+      },
+      "audience": {
+        "endUser": "المستخدم النهائي"
+      },
+      "ticketStatus": {
+        "new": "جديدة",
+        "in_progress": "قيد المعالجة",
+        "on_hold": "معلّقة",
+        "resolved": "محلولة",
+        "closed": "مغلقة"
+      }
+    },
+    "incidentLinker": {
+      "title": "الحوادث المرتبطة",
+      "loading": "جارٍ التحميل…",
+      "emptyDescription": "لا توجد حوادث مرتبطة. اربط هذه التذكرة بحادث نشط ليُشعَر صاحبها تلقائياً عند الحل.",
+      "resolvedLabel": "تم الحل",
+      "activeLabel": "نشط",
+      "unlinkAria": "إلغاء الربط",
+      "closePickerAria": "إغلاق أداة الاختيار",
+      "pickActive": "اختر حادثاً نشطاً",
+      "noneAvailable": "لا توجد حوادث نشطة متاحة للربط.",
+      "selectPlaceholder": "اختر…",
+      "linkButton": "ربط",
+      "linkToActive": "ربط بحادث نشط",
+      "toasts": {
+        "linked": "تم ربط التذكرة بالحادث",
+        "linkFailed": "تعذّر الربط",
+        "unlinked": "تم إلغاء الربط",
+        "unlinkFailed": "تعذّر إلغاء الربط"
+      }
+    },
+    "ticketTagPanel": {
+      "addTag": "وسم",
+      "noTagsDefined": "لا توجد وسوم معرّفة بعد — أضِف بعضها من الإعدادات.",
+      "clearAll": "مسح الكل",
+      "updateFailed": "فشل تحديث الوسوم",
+      "clearFailed": "فشل مسح الوسوم",
+      "commonNames": {
+        "refund": "استرداد",
+        "billing": "الفوترة",
+        "urgent": "عاجل",
+        "escalated": "مصعّدة",
+        "vip": "عميل مميّز",
+        "resolved": "محلولة",
+        "pending": "قيد الانتظار",
+        "duplicate": "مكرّرة",
+        "bug": "خلل",
+        "featurerequest": "طلب ميزة",
+        "concernprogress": "قيد المعالجة",
+        "concerninprogress": "قيد المعالجة",
+        "certificate": "الشهادات",
+        "login": "تسجيل الدخول",
+        "payment": "الدفع",
+        "technical": "تقني",
+        "content": "المحتوى",
+        "webinar": "البث المباشر",
+        "course": "الدورة",
+        "trainer": "المدرّب",
+        "spam": "مزعجة",
+        "followup": "متابعة",
+        "waitingcustomer": "بانتظار العميل",
+        "onhold": "معلّقة"
+      }
+    },
+    "tagFilter": {
+      "filterByTag": "تصفية حسب الوسم",
+      "tagCount": "{count, plural, zero {لا وسوم} one {وسم واحد} two {وسمان} few {# وسوم} many {# وسمًا} other {# وسم}}",
+      "searchPlaceholder": "ابحث في الوسوم…",
+      "noMatches": "لا توجد نتائج.",
+      "noTags": "لا توجد وسوم متاحة.",
+      "clearAll": "مسح الكل",
+      "done": "تم",
+      "removeTag": "إزالة {name}",
+      "archivedTitle": "وسم مؤرشف أو محذوف",
+      "archivedLabel": "مؤرشف"
+    },
+    "tagsManager": {
+      "autoApplyRules": "قواعد التطبيق التلقائي",
+      "panelTitle": "وسوم التذاكر",
+      "newTag": "وسم جديد",
+      "tabs": {
+        "active": "النشطة",
+        "archived": "المؤرشفة",
+        "analytics": "التحليلات"
+      },
+      "ticketCount": "{count, plural, zero {لا تذاكر} one {تذكرة واحدة} two {تذكرتان} few {# تذاكر} many {# تذكرة} other {# تذكرة}}",
+      "emptyActive": "لا توجد وسوم نشطة بعد. أنشئ وسمًا لتبدأ بوسم التذاكر.",
+      "emptyArchived": "لا توجد وسوم مؤرشفة. تظهر الوسوم المؤرشفة هنا حتى تتمكن من استعادتها.",
+      "actions": {
+        "edit": "تعديل",
+        "archive": "أرشفة (إخفاء من قائمة الاختيار مع الاحتفاظ بالسجل)",
+        "restore": "استعادة الوسم",
+        "delete": "حذف (متسلسل — يزيل الوسم من جميع التذاكر)"
+      },
+      "dialog": {
+        "newTitle": "وسم جديد",
+        "editTitle": "تعديل الوسم",
+        "nameLabel": "الاسم",
+        "namePlaceholder": "مثال: استرداد",
+        "colorLabel": "اللون",
+        "pickColor": "اختر {color}",
+        "hexHint": "أو الصق قيمة hex",
+        "descriptionLabel": "الوصف (اختياري)",
+        "descriptionPlaceholder": "متى يُستخدم هذا الوسم",
+        "previewFallback": "معاينة",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "create": "إنشاء"
+      },
+      "delete": {
+        "title": "حذف الوسم \"{name}\"؟",
+        "appliedTo": "هذا الوسم مُطبَّق حالياً على <strong>{count, plural, zero {لا تذاكر} one {تذكرة واحدة} two {تذكرتان} few {# تذاكر} many {# تذكرة} other {# تذكرة}}</strong>. الحذف متسلسل — سيُزال الوسم منها جميعاً ولن يظهر في الفلاتر والتقارير.",
+        "considerArchive": "بدلاً من ذلك يمكنك <link>الأرشفة</link> — تُخفي الوسم من قائمة الاختيار مع الإبقاء على السجل قابلاً للبحث.",
+        "safeToRemove": "هذا الوسم غير مستخدم على أي تذكرة. الحذف آمن.",
+        "rulesWarning": "{count, plural, zero {لا قواعد تطبيق تلقائي} one {قاعدة تطبيق تلقائي واحدة ستُحذف} two {قاعدتا تطبيق تلقائي ستُحذفان} few {# قواعد تطبيق تلقائي ستُحذف} many {# قاعدة تطبيق تلقائي ستُحذف} other {# قاعدة تطبيق تلقائي ستُحذف}}.",
+        "confirmButton": "حذف الوسم"
+      },
+      "toasts": {
+        "nameRequired": "الاسم مطلوب",
+        "tagUpdated": "تم تحديث الوسم",
+        "tagCreated": "تم إنشاء الوسم",
+        "saveFailed": "فشل الحفظ",
+        "tagDeleted": "تم حذف الوسم",
+        "deleteFailed": "فشل الحذف",
+        "tagArchived": "تمت أرشفة \"{name}\"",
+        "archiveFailed": "فشلت الأرشفة",
+        "tagRestored": "تمت استعادة \"{name}\"",
+        "restoreFailed": "فشلت الاستعادة"
+      }
+    },
+    "tagRules": {
+      "title": "قواعد التطبيق التلقائي",
+      "closeAria": "إغلاق",
+      "intro": "عند احتواء تذكرة جديدة على أيّ من العبارات أدناه ضمن النطاق المختار، يُلصَق هذا الوسم تلقائياً (غير حسّاس لحالة الأحرف). عطّل قاعدةً لإيقافها مؤقتاً دون فقدها.",
+      "phraseLabel": "العبارة المطلوبة",
+      "phrasePlaceholder": "مثال: استرداد، خطأ تسجيل الدخول، لا يمكنني الوصول",
+      "addButton": "إضافة",
+      "existingRules": "القواعد الحالية",
+      "noRules": "لا توجد قواعد بعد — يُطبَّق هذا الوسم يدوياً فقط.",
+      "enableRuleAria": "تفعيل القاعدة",
+      "disableRuleAria": "تعطيل القاعدة",
+      "deleteRuleAria": "حذف القاعدة",
+      "doneButton": "تم",
+      "scopes": {
+        "both": "الموضوع + الوصف",
+        "bothHint": "الافتراضي — يطابق في أي مكان من التذكرة",
+        "subject": "الموضوع فقط",
+        "subjectHint": "أكثر تحديداً — لا يُفعَّل من كلمة عابرة في المحتوى",
+        "description": "الوصف فقط",
+        "descriptionHint": "مفيد عندما تكون المواضيع مبنية على قوالب"
+      },
+      "toasts": {
+        "enterPhrase": "أدخل عبارة للمطابقة",
+        "ruleAdded": "تمت إضافة القاعدة",
+        "ruleAddFailed": "فشل إضافة القاعدة",
+        "ruleRemoved": "تم حذف القاعدة",
+        "ruleDeleteFailed": "فشل الحذف",
+        "updateFailed": "فشل التحديث"
+      }
+    },
+    "tagAnalytics": {
+      "totalTags": "إجمالي الوسوم",
+      "archivedBadge": "مؤرشف",
+      "loadFailed": "تعذّر تحميل التحليلات",
+      "topTags": "الوسوم الأكثر استخداماً",
+      "noActivity": "لا يوجد نشاط للوسوم بعد.",
+      "stats": {
+        "total": "إجمالي",
+        "in30d": "خلال 30 يوماً",
+        "resolved": "محلولة",
+        "totalAssignmentsTitle": "إجمالي التعيينات",
+        "last30DaysTitle": "آخر 30 يوماً",
+        "resolvedTitle": "على تذاكر محلولة أو مغلقة"
+      },
+      "trendTitle": "استخدام الوسوم خلال آخر 30 يوماً",
+      "trendEmpty": "لا تعيينات خلال آخر 30 يوماً.",
+      "peakPerDay": "الأعلى: {value}/يوم",
+      "byCategoryTitle": "الوسوم حسب الفئة",
+      "byCategoryEmpty": "لا تعيينات بعد.",
+      "categories": {
+        "course": "الدورات",
+        "technical": "تقني",
+        "certificate": "الشهادات",
+        "billing": "الفوترة",
+        "trainer": "المدرّبون",
+        "webinar": "البث المباشر",
+        "refunds": "المبالغ المستردّة",
+        "content": "المحتوى",
+        "login": "تسجيل الدخول",
+        "other": "أخرى",
+        "general": "عام"
+      },
+      "active": "نشط",
+      "archived": "مؤرشف"
+    },
+    "retentionPolicy": {
+      "title": "الاحتفاظ بالتذاكر",
+      "description": "التذاكر المغلقة الأقدم من هذا العدد من الأيام مؤهّلة للحذف. اضبط القيمة على <code>0</code> لتعطيل تطبيق سياسة الاحتفاظ.",
+      "daysLabel": "أيام",
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ…",
+      "toasts": {
+        "mustBeNonNegative": "يجب أن تكون مدة الاحتفاظ عددًا موجبًا من الأيام",
+        "saved": "تم حفظ سياسة الاحتفاظ",
+        "saveFailed": "فشل الحفظ"
+      }
     },
     "attachmentPreview": {
       "untitled": "مرفق",
@@ -11346,7 +12525,18 @@
       "remove": "إزالة",
       "removeConfirm": "هل تريد إزالة هذا المرفق؟ سيظل في سجل النسخ ولكن لن يظهر في القائمة النشطة.",
       "removeConfirmTitle": "إزالة المرفق؟",
-      "removeConfirmDescription": "ستتم إزالة {name} من هذه الرسالة. سيظل في سجل النسخ."
+      "removeConfirmDescription": "ستتم إزالة {name} من هذه الرسالة. سيظل في سجل النسخ.",
+      "fileType": {
+        "image": "صورة",
+        "pdf": "PDF",
+        "file": "ملف"
+      },
+      "scanStatus": {
+        "pending": "قيد الفحص",
+        "quarantined": "محجوب",
+        "error": "خطأ في الفحص",
+        "malicious": "ضار"
+      }
     },
     "attachmentAudit": {
       "title": "المرفقات — السجل والوصول",
@@ -11364,6 +12554,7 @@
     },
     "trainerApplication": {
       "title": "طلب المدرب",
+      "loading": "جارٍ التحميل…",
       "loadError": "تعذّر تحميل بيانات الطلب.",
       "viewFull": "عرض الطلب كاملاً",
       "activity": "النشاط",
@@ -11446,7 +12637,9 @@
       "vsLastWeek": "مقارنة بالأسبوع الماضي",
       "target": "الهدف: {value}",
       "breachesToday": "{count} انتهاكات اليوم",
-      "escalatedTickets": "التذاكر المُصعّدة"
+      "escalatedTickets": "التذاكر المُصعّدة",
+      "csatResponses": "{count} ردود",
+      "csatNoResponses": "لا توجد ردود بعد"
     },
     "ticketsBoard": {
       "title": "التذاكر الأخيرة",
@@ -11499,7 +12692,8 @@
         "resolved": "تم الحل",
         "closed": "مغلق"
       },
-      "noTickets": "لا توجد تذاكر"
+      "noTickets": "لا توجد تذاكر",
+      "unknownCustomer": "غير معروف"
     },
     "sla": {
       "title": "اتفاقية الخدمة والفريق",
@@ -11545,7 +12739,13 @@
       "newTicket": "تذكرة جديدة",
       "knowledgeBase": "قاعدة المعرفة",
       "exportReport": "تصدير التقرير",
-      "teamChat": "محادثة الفريق"
+      "teamChat": "محادثة الفريق",
+      "relativeTime": {
+        "justNow": "الآن",
+        "minutesAgo": "قبل {count} د",
+        "hoursAgo": "قبل {count} س",
+        "daysAgo": "قبل {count} ي"
+      }
     },
     "activity": {
       "noRecent": "لا يوجد نشاط حديث بعد.",
@@ -11934,6 +13134,7 @@
       "emptyHint": "أنشئ أول مقال لتبدأ مركز المساعدة.",
       "noMatches": "لا توجد مقالات تطابق الفلاتر",
       "noMatchesHint": "حاول مسح البحث أو الفئة أو الحالة.",
+      "untitled": "(بدون عنوان)",
       "stats": {
         "totalArticles": "إجمالي المقالات",
         "published": "منشورة",
@@ -12165,6 +13366,80 @@
         "downloadedPdf": "تم تنزيل PDF",
         "exportPdfFailed": "تعذّر تصدير PDF",
         "refreshed": "تم تحديث التقرير"
+      },
+      "kbSearchPanel": {
+        "query": "الاستعلام",
+        "title": "تحليلات البحث في مركز المساعدة",
+        "description": "الأسئلة الأكثر بحثاً والاستعلامات التي لم تُرجع أي نتائج (فجوات المحتوى).",
+        "empty": "لا يوجد نشاط بحث في هذه الفترة.",
+        "kpis": {
+          "totalSearches": "إجمالي عمليات البحث",
+          "zeroResult": "بلا نتائج",
+          "gapRate": "نسبة الفجوة"
+        },
+        "columns": {
+          "lang": "اللغة",
+          "searches": "عمليات البحث",
+          "avgResults": "متوسط النتائج",
+          "empty": "فارغة"
+        },
+        "untitledArticle": "(بدون عنوان)",
+        "suggestedFaqs": {
+          "title": "أسئلة شائعة مقترحة",
+          "description": "لم تُرجع هذه الاستعلامات أي نتائج 3 مرات أو أكثر — مرشحات قوية لمقالات مساعدة جديدة.",
+          "emptyCount": "{count} فارغة",
+          "createFaq": "إنشاء سؤال شائع"
+        },
+        "mostViewed": {
+          "title": "المقالات الأكثر مشاهدة",
+          "allTime": "(كل الأوقات)",
+          "empty": "لم يتم عرض أي مقال منشور بعد."
+        },
+        "lowEngagement": {
+          "title": "مقالات ذات تفاعل منخفض",
+          "subtitle": "(أقدم من 30 يوماً، الأقل مشاهدة)",
+          "empty": "لا توجد مقالات أقدم من 30 يوماً بعد — عد لاحقاً.",
+          "edit": "تعديل"
+        }
+      },
+      "additionalReports": {
+        "title": "تقارير إضافية",
+        "description": "تصدير مباشر. استخدم فلتر الفترة أعلاه لتحديد النطاق الزمني.",
+        "reports": {
+          "frt": {
+            "title": "زمن الاستجابة الأولى",
+            "description": "زمن الاستجابة الأولى لكل تذكرة بالدقائق مقارنةً بهدف SLA. مُفلتَر حسب تاريخ الرد."
+          },
+          "ttr": {
+            "title": "زمن الحل",
+            "description": "زمن الحل لكل تذكرة بدقائق العمل (باستثناء التعليق). مُفلتَر حسب تاريخ الحل."
+          },
+          "escalation": {
+            "title": "التصعيدات",
+            "description": "كل إخلال SLA، ورفع أولوية، وإعادة إسناد خلال الفترة."
+          },
+          "overdue": {
+            "title": "التذاكر المتأخرة (لحظياً)",
+            "description": "التذاكر المفتوحة حالياً التي تجاوزت هدف FRT أو TTR. يتجاهل فلتر التاريخ."
+          }
+        },
+        "toasts": {
+          "downloaded": "تم تنزيل التقرير",
+          "exportFailed": "فشل التصدير"
+        }
+      },
+      "categories": {
+        "course": "الدورات",
+        "technical": "تقني",
+        "certificate": "الشهادات",
+        "billing": "الفوترة",
+        "trainer": "المدرّبون",
+        "webinar": "البث المباشر",
+        "refunds": "المبالغ المستردّة",
+        "content": "المحتوى",
+        "login": "تسجيل الدخول",
+        "other": "أخرى",
+        "general": "عام"
       }
     },
     "settingsPage": {
@@ -12730,7 +14005,11 @@
         "composerHint": "يرى هذه الرسائل الدعم والمشاركون الآخرون فقط. اضغط ⌘/Ctrl+Enter للإرسال.",
         "supportLabel": "الدعم",
         "youLabel": "أنت",
-        "unknownAuthor": "عضو الفريق"
+        "unknownAuthor": "عضو الفريق",
+        "waitForUploads": "يرجى الانتظار حتى يكتمل رفع الملف.",
+        "attachRejectedType": "نوع الملف غير مدعوم: {names}",
+        "attachRejectedSize": "حجم الملف كبير جدًا: {names}",
+        "attachRejectedCap": "تجاوزت الحد الأقصى للمرفقات."
       },
       "banner": {
         "requester": "أنت صاحب الطلب على هذه التذكرة. الردود علنية.",
@@ -12752,7 +14031,11 @@
         "sendReply": "إرسال",
         "sendFailed": "تعذّر إرسال الرسالة",
         "youLabel": "أنت",
-        "unknownAuthor": "عضو الفريق"
+        "unknownAuthor": "عضو الفريق",
+        "waitForUploads": "يرجى الانتظار حتى يكتمل رفع الملف.",
+        "attachRejectedType": "نوع الملف غير مدعوم: {names}",
+        "attachRejectedSize": "حجم الملف كبير جدًا: {names}",
+        "attachRejectedCap": "تجاوزت الحد الأقصى للمرفقات."
       },
       "collaborators": {
         "title": "الإدارات المشاركة",
@@ -12781,7 +14064,15 @@
         "pickRequired": "اختر إدارة وعضواً",
         "alreadyActive": "هذا العضو مشارك بالفعل في هذه التذكرة",
         "addedSuccess": "تم إضافة المشارك",
-        "addFailed": "تعذرت إضافة المشارك"
+        "addFailed": "تعذرت إضافة المشارك",
+        "stepMessage": "رسالة ومرفقات",
+        "messageOptional": "اختياري",
+        "messagePlaceholder": "أضف سياقًا حتى يعرف المتعاون الجديد ما يجب فعله…",
+        "messageHint": "تُنشر الرسالة والمرفقات كتعليق داخلي على التذكرة.",
+        "waitForUploads": "يرجى الانتظار حتى يكتمل رفع الملف.",
+        "attachRejectedType": "نوع الملف غير مدعوم: {names}",
+        "attachRejectedSize": "حجم الملف كبير جدًا: {names}",
+        "attachRejectedCap": "تجاوزت الحد الأقصى للمرفقات."
       },
       "transfer": {
         "title": "تحويل التذكرة",
@@ -12799,7 +14090,12 @@
         "confirmTransfer": "تحويل",
         "pickBoth": "اختر تصنيفًا وإدارة",
         "transferredSuccess": "تم تحويل التذكرة",
-        "transferFailed": "تعذر تحويل التذكرة"
+        "transferFailed": "تعذر تحويل التذكرة",
+        "attachmentsLabel": "مستندات داعمة",
+        "waitForUploads": "يرجى الانتظار حتى يكتمل رفع الملف.",
+        "attachRejectedType": "نوع الملف غير مدعوم: {names}",
+        "attachRejectedSize": "حجم الملف كبير جدًا: {names}",
+        "attachRejectedCap": "تجاوزت الحد الأقصى للمرفقات."
       },
       "loopedInInbox": {
         "title": "مساعدة الدعم",
@@ -13221,6 +14517,14 @@
       "title": "تعذّر تحميل البيانات",
       "description": "حدث خطأ أثناء جلب هذه البيانات. يرجى المحاولة مرة أخرى.",
       "retry": "إعادة المحاولة"
+    },
+    "attachmentPicker": {
+      "attachButton": "إرفاق ملفات",
+      "attachHint": "أرفق حتى {max} ملفات (≤ {size} ميجابايت لكل ملف). PDF، JPG، PNG، WebP، DOC، DOCX، XLS، XLSX.",
+      "capReached": "تم بلوغ الحد الأقصى ({max} ملفات).",
+      "countOfMax": "{current} من {max}",
+      "remove": "إزالة",
+      "uploadFailed": "فشل الرفع"
     }
   },
   "dashboardSearch": {
@@ -13302,6 +14606,53 @@
       "warning": "تحذير",
       "info": "معلومة"
     },
+    "assignedAsTA": {
+      "title": "تم تعيينك كمساعد تدريس",
+      "body": "تم تعيينك كمساعد تدريس للدورة \"{courseName}\""
+    },
+    "pointsEarned": {
+      "title": "نقاط مكتسبة!",
+      "body": "+{points} نقطة — {reason}"
+    },
+    "ta": {
+      "assignedInstructor": {
+        "title": "تم تعيين مساعد تدريس",
+        "body": "تم تعيين المساعد {taName} لدورتك \"{courseName}\""
+      },
+      "workloadWarning": {
+        "title": "إشعار عبء عمل المساعد",
+        "body": "المساعد {taName} المعين في \"{courseName}\" معين أيضاً في {count} دورة أخرى"
+      },
+      "suggestionManager": {
+        "title": "اقتراح مساعد تدريس",
+        "body": "{suggesterName} اقترح المساعد {taName} للدورة \"{courseName}\"",
+        "bodyWithWorkload": "{suggesterName} اقترح المساعد {taName} للدورة \"{courseName}\" (ملاحظة: هذا المساعد معين حالياً في {count} دورة أخرى)"
+      },
+      "suggestedAsTA": {
+        "title": "تم اقتراحك كمساعد تدريس",
+        "body": "تم اقتراحك كمساعد تدريس للدورة \"{courseName}\". بانتظار موافقة المدير."
+      },
+      "suggestionApprovedInstructor": {
+        "title": "تمت الموافقة على اقتراح المساعد",
+        "body": "تمت الموافقة على اقتراحك للمساعد {taName} في الدورة \"{courseName}\" وتم تفعيله"
+      },
+      "assignmentApprovedTA": {
+        "title": "تمت الموافقة على تعيينك كمساعد",
+        "body": "تمت الموافقة على تعيينك كمساعد تدريس للدورة \"{courseName}\". أنت الآن نشط."
+      },
+      "suggestionRejectedInstructor": {
+        "title": "تم رفض اقتراح المساعد",
+        "body": "تم رفض اقتراحك للمساعد {taName} في الدورة \"{courseName}\". السبب: {reason}"
+      },
+      "suggestionRejectedTA": {
+        "title": "لم تتم الموافقة على اقتراح المساعد",
+        "body": "لم تتم الموافقة على اقتراحك كمساعد في \"{courseName}\". السبب: {reason}"
+      },
+      "accountDeactivatedManager": {
+        "title": "تم إلغاء تفعيل حساب المساعد",
+        "body": "تم إلغاء تفعيل حساب المساعد {taName}. تمت إزالته من \"{courseName}\". قد تكون هناك حاجة لبديل."
+      }
+    },
     "instructor": {
       "profile_updated": {
         "title": "تم تحديث ملف المدرب",
@@ -13339,7 +14690,8 @@
     "types": {
       "course_approved": {
         "title": "تمت الموافقة على الدورة",
-        "message": "تمت الموافقة على دورتك وهي الآن نشطة."
+        "message": "تمت الموافقة على دورتك وهي الآن نشطة.",
+        "messageWithTitle": "تمت الموافقة على دورتك \"{courseTitle}\" وهي الآن نشطة."
       },
       "course_changes_requested": {
         "title": "تم طلب تعديلات",
@@ -13348,6 +14700,47 @@
       "course_completed": {
         "title": "اكتملت الدورة",
         "message": "تم تعيين دورتك كمكتملة."
+      },
+      "course_auto_completed": {
+        "title": "اكتملت الدورة تلقائياً",
+        "messageInstructor": "تم إكمال دورتك \"{courseTitle}\" تلقائياً بعد انتهاء تاريخ الانتهاء. تم إنهاء {count} تسجيل(ات).",
+        "messageManager": "تم إكمال الدورة \"{courseTitle}\" تلقائياً (تم الوصول لتاريخ الانتهاء). تم إنهاء {count} تسجيل(ات)."
+      },
+      "course_managed": {
+        "title": "تم تعيين دورة لك",
+        "message": "تم تعيينك كمدير لدورة."
+      },
+      "course_reopened": {
+        "title": "تم إعادة فتح الدورة",
+        "message": "تم إعادة فتح دورة."
+      },
+      "course_rescheduled": {
+        "title": "تم إعادة جدولة الدورة",
+        "message": "تم إعادة جدولة دورة."
+      },
+      "course_submitted_for_review": {
+        "title": "تم إرسال الدورة للمراجعة",
+        "message": "تم إرسال دورة لمراجعتك."
+      },
+      "ta_account_deactivated": {
+        "title": "تم إلغاء تنشيط مساعد التدريس",
+        "message": "تم إلغاء تنشيط حساب مساعد تدريس."
+      },
+      "ta_assignment": {
+        "title": "تعيين مساعد تدريس",
+        "message": "لديك تعيين جديد كمساعد تدريس."
+      },
+      "ta_recommendation": {
+        "title": "توصية مساعد تدريس",
+        "message": "تم ترشيح مساعد تدريس."
+      },
+      "ta_suggestion_approved": {
+        "title": "تمت الموافقة على اقتراح مساعد التدريس",
+        "message": "تمت الموافقة على اقتراح مساعد التدريس."
+      },
+      "ta_suggestion_rejected": {
+        "title": "تم رفض اقتراح مساعد التدريس",
+        "message": "تم رفض اقتراح مساعد التدريس."
       },
       "course_cancelled": {
         "title": "تم إلغاء الدورة",
@@ -13624,7 +15017,38 @@
       "editProfile": "تعديل الملف الشخصي",
       "uploadPhoto": "رفع صورة",
       "removePhoto": "إزالة الصورة",
-      "logout": "تسجيل الخروج"
+      "logout": "تسجيل الخروج",
+      "roleBadge": "مساعد تدريس"
+    },
+    "common": {
+      "retry": "إعادة المحاولة",
+      "close": "إغلاق",
+      "back": "رجوع",
+      "save": "حفظ",
+      "lock": "قفل",
+      "assign": "تعيين",
+      "syncing": "جارٍ المزامنة...",
+      "loading": "جارٍ التحميل..."
+    },
+    "sessionTypes": {
+      "zoom": "زووم",
+      "onsite": "حضورية",
+      "hybrid": "مختلطة",
+      "webinar": "ندوة"
+    },
+    "courseStatus": {
+      "assigned": "معيّن",
+      "pre_assigned": "معيّن مسبقاً",
+      "suggested": "مقترح",
+      "rejected": "مرفوض",
+      "active": "نشط",
+      "completed": "مكتمل",
+      "cancelled": "ملغى"
+    },
+    "durations": {
+      "oneDay": "يوم واحد",
+      "daysCount": "{count} يوم",
+      "today": "اليوم"
     },
     "home": {
       "title": "لوحة التحكم",
@@ -13768,7 +15192,12 @@
       "today": "اليوم",
       "upcoming": "القادمة",
       "past": "السابقة",
-      "more": "المزيد"
+      "more": "المزيد",
+      "joinCta": "الانضمام إلى الجلسة",
+      "startsIn": "يبدأ خلال {relative}",
+      "startsSoon": "لم يُفتح الانضمام بعد",
+      "joinLoading": "جارٍ التحضير…",
+      "joinError": "تعذّر فتح الجلسة — يرجى إعادة المحاولة"
     },
     "attendance": {
       "title": "حضور المحاضرة",
@@ -13788,10 +15217,28 @@
       "markAll": "تحديد الكل",
       "save": "حفظ الحضور",
       "saved": "تم حفظ الحضور بنجاح",
+      "savedAndLocked": "تم حفظ وقفل الحضور نهائياً",
       "saveError": "فشل في حفظ الحضور",
       "noChanges": "لا توجد تغييرات للحفظ",
       "noteRequired": "يرجى إضافة ملاحظة لجميع الطلاب المتأخرين/المعذورين",
-      "notePlaceholder": "أضف سبب التأخر/العذر..."
+      "notePlaceholder": "أضف سبب التأخر/العذر...",
+      "zoomSession": "محاضرة زووم",
+      "syncFromZoom": "مزامنة من زووم",
+      "syncComplete": "اكتملت مزامنة زووم: {synced} تمت مزامنته، {skipped} تم تخطيه",
+      "lockedFinal": "تم قفل الحضور نهائياً",
+      "lockedUnmatched": "الحضور المُتحقق منه مقفل — يمكنك تعيين المشاركين غير المطابَقين أدناه",
+      "lockedInactive": "الحضور مقفل. يمكن تعديله فقط أثناء المحاضرة المباشرة.",
+      "markAllLabel": "تحديد الكل",
+      "markedBy": "تم التحديد بواسطة",
+      "markedByRoles": {
+        "TEACHING_ASSISTANT": "مساعد تدريس",
+        "INSTRUCTOR": "المدرب",
+        "system": "النظام"
+      },
+      "lastUpdated": "آخر تحديث",
+      "note": "ملاحظة",
+      "unmatchedParticipants": "{count, plural, =1 {مشارك زووم غير مطابق} other {# مشاركين في زووم غير مطابقين}}",
+      "selectStudent": "اختر طالباً"
     },
     "submissions": {
       "title": "تسليمات التقييم",
@@ -14098,6 +15545,13 @@
       }
     }
   },
+  "invoiceLanguage": {
+    "title": "اختر لغة الفاتورة",
+    "description": "اختر اللغة التي تريد تنزيل ملف PDF بها.",
+    "english": "الإنجليزية",
+    "arabic": "العربية",
+    "close": "إغلاق"
+  },
   "verifyInvoice": {
     "verifying": "جارٍ التحقق من الفاتورة...",
     "notFound": "لم يتم العثور على الفاتورة",
@@ -14137,7 +15591,10 @@
     "timeLeftHours": "{hours} س {minutes} د",
     "timeLeftMinutes": "{minutes} د",
     "cta": "تصفّح الدورات",
+    "ctaSingleCourse": "عرض الدورة",
     "learnMore": "اعرف المزيد",
-    "tag": "عرض ترويجي"
+    "tag": "عرض ترويجي",
+    "prev": "العرض السابق",
+    "next": "العرض التالي"
   }
 }

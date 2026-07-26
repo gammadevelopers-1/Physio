@@ -370,6 +370,28 @@ export class EmailService {
     }
   }
 
+  /**
+   * Public entry point for the admin "Send test" button. Bypasses the
+   * per-user preference gate + category toggle so admin gets the mail
+   * even if their own notification settings disabled that category.
+   * Uses the same underlying send() so From-header + provider path
+   * are byte-identical to production sends.
+   */
+  async sendTestRendering(options: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+  }): Promise<void> {
+    await this.send({
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+      skipPreferenceCheck: true,
+    });
+  }
+
   private async send(options: {
     to: string | string[];
     subject: string;
@@ -435,11 +457,29 @@ export class EmailService {
       if (enabledRecipients.length === 0) return;
       options.to = enabledRecipients.length === 1 ? enabledRecipients[0] : enabledRecipients;
     }
+    // Sender identity resolves at send-time from the admin `mail`
+    // settings row, with fallback to env vars (existing behavior) and
+    // finally to hardcoded defaults. Admin can change either without
+    // a code deploy. AdminSettingsService caches the row for 30s so
+    // this doesn't hit the DB on every send.
+    const mailSettings = await this.adminSettings
+      .getMailSettings()
+      .catch(() => ({ senderEmail: null, senderName: null }));
     const from =
+      mailSettings.senderEmail ||
       this.configService.get<string>('MAIL_FROM') ||
       'noreply@physioguidance.org';
+    const senderName = mailSettings.senderName || 'PhysioGuidance';
     const replyTo = this.configService.get<string>('MAIL_REPLY_TO');
-    const fromHeader = `PhysioGuidance <${from}>`;
+    // RFC-5322 display-name quoting: names that contain commas / quotes
+    // MUST be double-quoted, and any embedded double-quote or backslash
+    // must be backslash-escaped. Without this an admin who saves
+    // "Foo, Inc." would produce a malformed From header.
+    const needsQuoting = /[",<>@]/.test(senderName);
+    const escapedName = needsQuoting
+      ? `"${senderName.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+      : senderName;
+    const fromHeader = `${escapedName} <${from}>`;
 
     if (this.resend) {
       const { error } = await this.resend.emails.send({
@@ -1723,18 +1763,25 @@ export class EmailService {
     learnerName: string,
     ticketRef: string,
     surveyId: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
+    const locale = await this.resolveLocaleByEmail(to, localeOverride);
     const baseUrl =
       this.configService.get('NEXT_PUBLIC_API_URL')?.replace('/api', '') ||
       'http://localhost:3000';
-    const surveyBaseUrl = `${baseUrl}/en/surveys/csat/${surveyId}`;
-
+    const surveyBaseUrl = `${baseUrl}/${locale}/surveys/csat/${surveyId}`;
+    const s = getEmailStrings(locale);
     try {
       await this.send({
         to,
-        subject: `How did we do? — Ticket ${ticketRef}`,
-        html: getCsatSurveyHtml(learnerName, ticketRef, surveyBaseUrl),
-        text: getCsatSurveyText(learnerName, ticketRef, surveyBaseUrl),
+        subject: `${s.csatSurveyTitle} — ${ticketRef}`,
+        html: getCsatSurveyHtml(learnerName, ticketRef, surveyBaseUrl, locale),
+        text: getCsatSurveyText(learnerName, ticketRef, surveyBaseUrl, locale),
+        template: {
+          eventKey: 'csat_survey',
+          locale,
+          params: { learnerName, ticketRef, surveyId },
+        },
       });
       this.logger.log(`CSAT survey email sent to ${to} for ticket ${ticketRef}`);
     } catch (error) {
@@ -1750,13 +1797,21 @@ export class EmailService {
     learnerName: string,
     ticketRef: string,
     score: number,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
+    const locale = await this.resolveLocaleByEmail(to, localeOverride);
+    const s = getEmailStrings(locale);
     try {
       await this.send({
         to,
-        subject: `We're sorry — can we help further?`,
-        html: getCsatFollowupHtml(learnerName, ticketRef, score),
-        text: getCsatFollowupText(learnerName, ticketRef, score),
+        subject: s.csatLowScoreTitle,
+        html: getCsatFollowupHtml(learnerName, ticketRef, score, locale),
+        text: getCsatFollowupText(learnerName, ticketRef, score, locale),
+        template: {
+          eventKey: 'csat_followup',
+          locale,
+          params: { learnerName, ticketRef, score },
+        },
       });
       this.logger.log(
         `CSAT followup email sent to ${to} for ticket ${ticketRef}`,
@@ -1778,13 +1833,21 @@ export class EmailService {
     // Optional. When provided (guest tickets), the email's CTA points
     // to the public tracking URL instead of the learner dashboard.
     trackingUrl?: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
+    const locale = await this.resolveLocaleByEmail(to, localeOverride);
+    const s = getEmailStrings(locale);
     try {
       await this.send({
         to,
-        subject: `Ticket ${ticketRef} received — PhysioGuidance Support`,
-        html: getTicketCreatedLearnerHtml(learnerName, ticketRef, expectedResponse, mode, trackingUrl),
-        text: getTicketCreatedLearnerText(learnerName, ticketRef, expectedResponse, mode, trackingUrl),
+        subject: `${s.ticketReceivedTitle} #${ticketRef} — PhysioGuidance`,
+        html: getTicketCreatedLearnerHtml(learnerName, ticketRef, expectedResponse, mode, trackingUrl, locale),
+        text: getTicketCreatedLearnerText(learnerName, ticketRef, expectedResponse, mode, trackingUrl, locale),
+        template: {
+          eventKey: 'ticket_created_learner',
+          locale,
+          params: { learnerName, ticketRef, expectedResponse },
+        },
       });
       this.logger.log(
         `Ticket created email sent to ${to} for ticket ${ticketRef}`,
@@ -1839,13 +1902,21 @@ export class EmailService {
     // to the public tracking URL so the guest can reply without a
     // dashboard login.
     trackingUrl?: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
+    const locale = await this.resolveLocaleByEmail(to, localeOverride);
+    const s = getEmailStrings(locale);
     try {
       await this.send({
         to,
-        subject: `New reply on ticket ${ticketRef}`,
-        html: getTicketReplyHtml(recipientName, senderName, ticketRef, messagePreview, trackingUrl),
-        text: getTicketReplyText(recipientName, senderName, ticketRef, messagePreview, trackingUrl),
+        subject: t(s.ticketReplyHeadingWithId, { id: ticketRef }),
+        html: getTicketReplyHtml(recipientName, senderName, ticketRef, messagePreview, trackingUrl, locale),
+        text: getTicketReplyText(recipientName, senderName, ticketRef, messagePreview, trackingUrl, locale),
+        template: {
+          eventKey: 'ticket_reply_notification',
+          locale,
+          params: { recipientName, senderName, ticketRef, messagePreview },
+        },
       });
       this.logger.log(
         `Ticket reply notification sent to ${to} for ticket ${ticketRef}`,
@@ -1926,17 +1997,24 @@ export class EmailService {
     learnerName: string,
     ticketRef: string,
     surveyId?: string | null,
-    locale: string = 'en',
+    localeOverride?: EmailLocale,
   ): Promise<void> {
+    const locale = await this.resolveLocaleByEmail(to, localeOverride);
+    const s = getEmailStrings(locale);
     try {
       const surveyUrl = surveyId
         ? `${this.getFrontendBaseUrl()}/${locale}/surveys/csat/${surveyId}`
         : null;
       await this.send({
         to,
-        subject: `Your ticket ${ticketRef} has been resolved`,
-        html: getTicketResolvedHtml(learnerName, ticketRef, surveyUrl),
-        text: getTicketResolvedText(learnerName, ticketRef, surveyUrl),
+        subject: t(s.ticketResolvedSubject, { id: ticketRef }),
+        html: getTicketResolvedHtml(learnerName, ticketRef, surveyUrl, locale),
+        text: getTicketResolvedText(learnerName, ticketRef, surveyUrl, locale),
+        template: {
+          eventKey: 'ticket_resolved',
+          locale,
+          params: { learnerName, ticketRef },
+        },
       });
       this.logger.log(
         `Ticket resolved email sent to ${to} for ticket ${ticketRef}`,
@@ -1958,13 +2036,21 @@ export class EmailService {
     to: string,
     learnerName: string,
     ticketRef: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
+    const locale = await this.resolveLocaleByEmail(to, localeOverride);
+    const s = getEmailStrings(locale);
     try {
       await this.send({
         to,
-        subject: `Your ticket ${ticketRef} has been closed`,
-        html: getTicketClosedHtml(learnerName, ticketRef),
-        text: getTicketClosedText(learnerName, ticketRef),
+        subject: t(s.ticketClosedSubject, { id: ticketRef }),
+        html: getTicketClosedHtml(learnerName, ticketRef, locale),
+        text: getTicketClosedText(learnerName, ticketRef, locale),
+        template: {
+          eventKey: 'ticket_closed',
+          locale,
+          params: { learnerName, ticketRef },
+        },
       });
       this.logger.log(
         `Ticket closed email sent to ${to} for ticket ${ticketRef}`,
@@ -1992,15 +2078,23 @@ export class EmailService {
     ticketRef: string,
     newStatus: string,
     reason?: string | null,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
     if (newStatus === 'resolved' || newStatus === 'closed') return;
 
+    const locale = await this.resolveLocaleByEmail(to, localeOverride);
+    const s = getEmailStrings(locale);
     try {
       await this.send({
         to,
-        subject: `Ticket ${ticketRef} status updated`,
-        html: getTicketStatusChangeHtml(learnerName, ticketRef, newStatus, reason),
-        text: getTicketStatusChangeText(learnerName, ticketRef, newStatus, reason),
+        subject: t(s.ticketStatusSubject, { id: ticketRef, status: newStatus }),
+        html: getTicketStatusChangeHtml(learnerName, ticketRef, newStatus, reason, locale),
+        text: getTicketStatusChangeText(learnerName, ticketRef, newStatus, reason, locale),
+        template: {
+          eventKey: 'ticket_status_change',
+          locale,
+          params: { learnerName, ticketRef, newStatus, reason },
+        },
       });
       this.logger.log(
         `Ticket status-change email sent to ${to} for ticket ${ticketRef} (${newStatus})`,
@@ -2111,6 +2205,54 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
   }
   // ─── Payment Email Methods ──────────────────────────────
 
+  /**
+   * Resolve the outbound-email locale for a recipient. If the caller passed
+   * an explicit override, honor it verbatim; otherwise read `users.language`
+   * (default 'en'). Kept private + best-effort — if the lookup fails for any
+   * reason we fall back to English so an email always goes out.
+   */
+  private async resolveLocale(
+    userId: string,
+    override?: EmailLocale,
+  ): Promise<EmailLocale> {
+    if (override) return override;
+    try {
+      const [row] = await db
+        .select({ language: users.language })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      const lang = (row?.language || 'en').toLowerCase();
+      return lang === 'ar' ? 'ar' : 'en';
+    } catch {
+      return 'en';
+    }
+  }
+
+  /**
+   * Same as resolveLocale but keyed by email address — for send methods
+   * that only know the recipient's email (ticket + CSAT flows). Falls
+   * back to English on any lookup failure, including guest tickets where
+   * no user row exists.
+   */
+  private async resolveLocaleByEmail(
+    email: string,
+    override?: EmailLocale,
+  ): Promise<EmailLocale> {
+    if (override) return override;
+    try {
+      const [row] = await db
+        .select({ language: users.language })
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+      const lang = (row?.language || 'en').toLowerCase();
+      return lang === 'ar' ? 'ar' : 'en';
+    } catch {
+      return 'en';
+    }
+  }
+
   private async getUserData(userId: string) {
     const [user] = await db
       .select({
@@ -2128,10 +2270,13 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
     userId: string,
     paymentId: string,
     pdfAttachment?: { buffer: Buffer; filename: string },
+    localeOverride?: EmailLocale,
   ): Promise<void> {
     try {
       const user = await this.getUserData(userId);
       if (!user) return;
+      const locale = await this.resolveLocale(userId, localeOverride);
+      const s = getEmailStrings(locale);
 
       const [payment] = await db
         .select()
@@ -2183,9 +2328,10 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
       await this.send({
         to: user.email,
-        subject: `Payment Confirmed - ${courseName}`,
-        html: getPaymentConfirmationHtml(params),
-        text: getPaymentConfirmationText(params),
+        subject: t(s.paymentConfirmedSubject, { course: courseName }),
+        html: getPaymentConfirmationHtml(params, locale),
+        text: getPaymentConfirmationText(params, locale),
+        template: { eventKey: 'payment_confirmation', locale, params },
         ...(pdfAttachment && {
           attachments: [
             {
@@ -2201,10 +2347,16 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
     }
   }
 
-  async sendPaymentFailed(userId: string, paymentId: string): Promise<void> {
+  async sendPaymentFailed(
+    userId: string,
+    paymentId: string,
+    localeOverride?: EmailLocale,
+  ): Promise<void> {
     try {
       const user = await this.getUserData(userId);
       if (!user) return;
+      const locale = await this.resolveLocale(userId, localeOverride);
+      const s = getEmailStrings(locale);
 
       const [payment] = await db
         .select()
@@ -2229,9 +2381,10 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
       await this.send({
         to: user.email,
-        subject: `Payment Failed - ${course?.title || 'Course'}`,
-        html: getPaymentFailedHtml(params),
-        text: getPaymentFailedText(params),
+        subject: t(s.paymentFailedSubject, { course: course?.title || 'Course' }),
+        html: getPaymentFailedHtml(params, locale),
+        text: getPaymentFailedText(params, locale),
+        template: { eventKey: 'payment_failed', locale, params },
       });
       this.logger.log(`Payment failed email sent to ${user.email}`);
     } catch (error) {
@@ -2309,10 +2462,13 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
   async sendBankTransferReceived(
     userId: string,
     paymentId: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
     try {
       const user = await this.getUserData(userId);
       if (!user) return;
+      const locale = await this.resolveLocale(userId, localeOverride);
+      const s = getEmailStrings(locale);
 
       const [payment] = await db
         .select()
@@ -2340,9 +2496,10 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
       await this.send({
         to: user.email,
-        subject: `Bank transfer receipt received - ${course?.title || 'Course'}`,
-        html: getBankTransferReceivedHtml(params),
-        text: getBankTransferReceivedText(params),
+        subject: s.bankReceivedSubject,
+        html: getBankTransferReceivedHtml(params, locale),
+        text: getBankTransferReceivedText(params, locale),
+        template: { eventKey: 'bank_transfer_received', locale, params },
       });
       this.logger.log(`Bank transfer receipt acknowledgement sent to ${user.email}`);
     } catch (error) {
@@ -2353,6 +2510,7 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
   async sendBankTransferRejected(
     paymentId: string,
     reviewerNote: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
     try {
       const [payment] = await db
@@ -2364,6 +2522,8 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
       const user = await this.getUserData(payment.userId);
       if (!user) return;
+      const locale = await this.resolveLocale(payment.userId, localeOverride);
+      const s = getEmailStrings(locale);
 
       const [course] = await db
         .select({ title: courses.title })
@@ -2375,7 +2535,7 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
         `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
       const appBase =
         process.env.FRONTEND_URL || 'https://physioguidance.org';
-      const uploadUrl = `${appBase}/en/payment/bank-transfer/${paymentId}`;
+      const uploadUrl = `${appBase}/${locale}/payment/bank-transfer/${paymentId}`;
 
       const params = {
         studentName,
@@ -2389,9 +2549,10 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
       await this.send({
         to: user.email,
-        subject: `Bank transfer receipt could not be approved - ${course?.title || 'Course'}`,
-        html: getBankTransferRejectedHtml(params),
-        text: getBankTransferRejectedText(params),
+        subject: s.bankRejectedSubject,
+        html: getBankTransferRejectedHtml(params, locale),
+        text: getBankTransferRejectedText(params, locale),
+        template: { eventKey: 'bank_transfer_rejected', locale, params },
       });
       this.logger.log(`Bank transfer rejection email sent to ${user.email}`);
     } catch (error) {
@@ -2522,10 +2683,13 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
   async sendRefundRequested(
     userId: string,
     refundId: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
     try {
       const user = await this.getUserData(userId);
       if (!user) return;
+      const locale = await this.resolveLocale(userId, localeOverride);
+      const s = getEmailStrings(locale);
 
       const [refund] = await db
         .select()
@@ -2538,17 +2702,22 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
       await this.send({
         to: user.email,
-        subject: 'Refund Request Received - PhysioGuidance',
+        subject: t(s.refundSubmittedSubject, { course: 'PhysioGuidance' }),
         html: getRefundRequestedHtml({
           studentName,
           amount: String(refund.refundAmount),
           currency: 'SAR',
-        }),
+        }, locale),
         text: getRefundRequestedText({
           studentName,
           amount: String(refund.refundAmount),
           currency: 'SAR',
-        }),
+        }, locale),
+        template: {
+          eventKey: 'refund_requested',
+          locale,
+          params: { studentName, amount: String(refund.refundAmount), currency: 'SAR' },
+        },
       });
       this.logger.log(`Refund requested email sent to ${user.email}`);
     } catch (error) {
@@ -2595,10 +2764,13 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
   async sendRefundApproved(
     userId: string,
     refundId: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
     try {
       const user = await this.getUserData(userId);
       if (!user) return;
+      const locale = await this.resolveLocale(userId, localeOverride);
+      const s = getEmailStrings(locale);
 
       const [refund] = await db
         .select()
@@ -2612,19 +2784,24 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
       await this.send({
         to: user.email,
-        subject: 'Refund Approved - PhysioGuidance',
+        subject: t(s.refundApprovedSubject, { course: 'PhysioGuidance' }),
         html: getRefundApprovedHtml({
           studentName,
           amount: String(refund.refundAmount),
           currency: 'SAR',
           partial,
-        }),
+        }, locale),
         text: getRefundApprovedText({
           studentName,
           amount: String(refund.refundAmount),
           currency: 'SAR',
           partial,
-        }),
+        }, locale),
+        template: {
+          eventKey: 'refund_approved',
+          locale,
+          params: { studentName, amount: String(refund.refundAmount), currency: 'SAR' },
+        },
       });
       this.logger.log(`Refund approved email sent to ${user.email}`);
     } catch (error) {
@@ -2636,18 +2813,26 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
     userId: string,
     refundId: string,
     rejectionNote: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
     try {
       const user = await this.getUserData(userId);
       if (!user) return;
+      const locale = await this.resolveLocale(userId, localeOverride);
+      const s = getEmailStrings(locale);
 
       const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
 
       await this.send({
         to: user.email,
-        subject: 'Refund Request Update - PhysioGuidance',
-        html: getRefundRejectedHtml({ studentName, rejectionNote }),
-        text: getRefundRejectedText({ studentName, rejectionNote }),
+        subject: t(s.refundRejectedSubject, { course: 'PhysioGuidance' }),
+        html: getRefundRejectedHtml({ studentName, rejectionNote }, locale),
+        text: getRefundRejectedText({ studentName, rejectionNote }, locale),
+        template: {
+          eventKey: 'refund_rejected',
+          locale,
+          params: { studentName, rejectionNote },
+        },
       });
       this.logger.log(`Refund rejected email sent to ${user.email}`);
     } catch (error) {
@@ -2658,10 +2843,13 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
   async sendRefundCompleted(
     userId: string,
     refundId: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
     try {
       const user = await this.getUserData(userId);
       if (!user) return;
+      const locale = await this.resolveLocale(userId, localeOverride);
+      const s = getEmailStrings(locale);
 
       const [refund] = await db
         .select()
@@ -2675,7 +2863,7 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
       await this.send({
         to: user.email,
-        subject: 'Refund Completed - PhysioGuidance',
+        subject: t(s.refundCompletedSubject, { course: 'PhysioGuidance' }),
         html: getRefundCompletedHtml({
           studentName,
           originalAmount: String(refund.originalAmount),
@@ -2683,7 +2871,7 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
           refundAmount: String(refund.refundAmount),
           currency: 'SAR',
           partial,
-        }),
+        }, locale),
         text: getRefundCompletedText({
           studentName,
           originalAmount: String(refund.originalAmount),
@@ -2691,7 +2879,18 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
           refundAmount: String(refund.refundAmount),
           currency: 'SAR',
           partial,
-        }),
+        }, locale),
+        template: {
+          eventKey: 'refund_completed',
+          locale,
+          params: {
+            studentName,
+            originalAmount: String(refund.originalAmount),
+            deductionAmount: String(refund.deductionAmount),
+            refundAmount: String(refund.refundAmount),
+            currency: 'SAR',
+          },
+        },
       });
       this.logger.log(`Refund completed email sent to ${user.email}`);
     } catch (error) {

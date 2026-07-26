@@ -451,7 +451,7 @@ export default function HelpCenterManager({
         description={
           pendingDeleteArticle
             ? t("kbPage.toasts.confirmDeleteDescription", {
-                name: pendingDeleteArticle.title || "(untitled)",
+                name: pendingDeleteArticle.title || t("kbPage.untitled"),
               })
             : ""
         }
@@ -488,7 +488,7 @@ function ArticleCard({
   const title =
     isRTL && article.titleAr
       ? article.titleAr
-      : article.titleEn || article.titleAr || "(untitled)";
+      : article.titleEn || article.titleAr || t("kbPage.untitled");
   const categoryLabel = category
     ? isRTL && category.nameAr
       ? category.nameAr
@@ -595,6 +595,7 @@ function ArticlePreviewSheet({
 }) {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
+  const isRTL = locale === "ar";
   const [lang, setLang] = useState<"en" | "ar">(locale === "ar" ? "ar" : "en");
   const title = lang === "ar" ? article.titleAr || article.titleEn : article.titleEn || article.titleAr;
   const body = lang === "ar" ? article.bodyAr || article.bodyEn : article.bodyEn || article.bodyAr;
@@ -602,7 +603,7 @@ function ArticlePreviewSheet({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-[60]" onClick={onClose} />
-      <aside className="fixed right-0 top-0 h-full w-full max-w-2xl bg-[var(--color-surface-card)] z-[70] shadow-xl overflow-y-auto">
+      <aside className={`fixed top-0 h-full w-full max-w-2xl bg-[var(--color-surface-card)] z-[70] shadow-xl overflow-y-auto ${isRTL ? "left-0" : "right-0"}`}>
         <div className="sticky top-0 bg-[var(--color-surface-card)] border-b border-[var(--color-border)] px-5 py-4 flex items-center justify-between z-10">
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("kbPage.preview.title")}
@@ -642,7 +643,7 @@ function ArticlePreviewSheet({
             </span>
           )}
           <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4">
-            {title || "(untitled)"}
+            {title || t("kbPage.untitled")}
           </h2>
           {body ? (
             <div

@@ -19,12 +19,13 @@ import TANavbar from "./TANavbar";
 import TASessionsContent from "./TASessionsContent";
 import TAAttendanceView from "./TAAttendanceView";
 import TAAssessmentSubmissionsView from "./TAAssessmentSubmissionsView";
+import TASessionJoinButton from "./TASessionJoinButton";
 import SessionsCalendarWidget from "../instructor-dashboard/SessionsCalendarWidget";
-import api from "@/lib/api";
 import { taApi, userNotificationsApi } from "@/lib/api";
 import type { TAAssignedCourse, UserNotification } from "@/lib/api";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDate, formatPlatformTime, type PlatformLocaleSettings } from "@/lib/platform-locale";
+import { relativeTime, tOrFallback } from "@/lib/notification-i18n";
 
 type TAView = "home" | "sessions" | "attendance" | "submissions";
 
@@ -49,20 +50,23 @@ interface AssignedSession {
   assessmentId?: string | null;
 }
 
-function formatRelativeDate(isoString: string, settings: PlatformLocaleSettings): string {
+/**
+ * Age-aware notification timestamp. Under a week we render via the
+ * shared `notifications.*` catalog (JustNow / minutesAgo / …) so the
+ * strings and unit letters stay in the viewer's UI locale; older rows
+ * fall back to an absolute date via platform locale formatting.
+ */
+function formatRelativeDate(
+  isoString: string,
+  settings: PlatformLocaleSettings,
+  tNotifications: ReturnType<typeof useTranslations>,
+): string {
   try {
     const date = new Date(isoString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-
+    const diffMs = Date.now() - date.getTime();
+    if (diffMs < 7 * 86_400_000) {
+      return relativeTime(tNotifications, isoString);
+    }
     return formatPlatformDate(date, settings);
   } catch {
     return "";
@@ -73,7 +77,10 @@ const TADashboardContent = ({
   initialView = "home",
 }: TADashboardContentProps) => {
   const t = useTranslations("taDashboard");
+  const tNotifications = useTranslations("notifications");
+  const tRoot = useTranslations();
   const locale = useLocale();
+  const isRTL = locale === "ar";
   const platformLocale = usePlatformLocale();
   const [currentView, setCurrentView] = useState<TAView>(initialView);
   const [todaySessions, setTodaySessions] = useState<AssignedSession[]>([]);
@@ -273,15 +280,10 @@ const TADashboardContent = ({
   };
 
   const getCourseStatusLabel = (status: string) => {
-    const map: Record<string, string> = {
-      approved: "Assigned",
-      pre_assigned: "Pre-assigned",
-      suggested: "Suggested",
-      rejected: "Rejected",
-      active: "Active",
-      completed: "Completed",
-    };
-    return map[status] || status;
+    // Map DB status → catalog key. `approved` is a TA-assignment status
+    // whose label is "Assigned" in the courses list; the rest passthrough.
+    const key = status === "approved" ? "assigned" : status;
+    return t.has(`courseStatus.${key}`) ? t(`courseStatus.${key}`) : status;
   };
 
   const formatTime = (dateStr: string) =>
@@ -295,8 +297,8 @@ const TADashboardContent = ({
       label: t("home.kpi.assignedCourses"),
       value: courses.filter((c) => c.status === "approved").length,
       icon: BookOpen,
-      iconBg: "bg-[#FEF3C7]",
-      iconColor: "text-[#D4A520]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       label: t("home.kpi.todaysSessions"),
@@ -309,15 +311,15 @@ const TADashboardContent = ({
       label: t("home.kpi.thisWeek"),
       value: weekSessions.length,
       icon: CalendarDays,
-      iconBg: "bg-[#CCFBF1]",
-      iconColor: "text-[#0D9488]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       label: t("home.kpi.upcoming"),
       value: upcomingSessions.length,
       icon: Clock,
       iconBg: "bg-[var(--color-border-subtle)]",
-      iconColor: "text-[#6366F1]",
+      iconColor: "text-[var(--color-primary)]",
     },
   ];
 
@@ -389,7 +391,7 @@ const TADashboardContent = ({
                         className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(session.status)}`}
                       >
                         {session.status === "live" && (
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse mr-1.5" />
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse me-1.5" />
                         )}
                         {t(`sessions.${session.status}`)}
                       </span>
@@ -398,7 +400,9 @@ const TADashboardContent = ({
                     <div className="flex items-center gap-4 text-sm text-[var(--color-text-secondary)] mb-4">
                       <span className="flex items-center gap-1.5">
                         {getTypeIcon(session.type)}
-                        {session.type}
+                        {t.has(`sessionTypes.${session.type}`)
+                          ? t(`sessionTypes.${session.type}`)
+                          : session.type}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <Clock className="w-4 h-4" />
@@ -408,21 +412,14 @@ const TADashboardContent = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {session.status === "live" && session.zoomLink && (
-                        <button
-                          onClick={async () => {
-                            try {
-                              const { joinUrl } = await api.get<{ joinUrl: string }>(`/sessions/${session.id}/ta-join`);
-                              window.open(joinUrl, "_blank");
-                            } catch {
-                              window.open(session.zoomLink!, "_blank");
-                            }
-                          }}
-                          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors"
-                        >
-                          <Video className="w-4 h-4" />
-                          {t("sessions.joinZoom")}
-                        </button>
+                      {(session.type === "zoom" || session.type === "hybrid") && (
+                        <TASessionJoinButton
+                          sessionId={session.id}
+                          scheduledAt={session.scheduledAt}
+                          durationMinutes={session.durationMinutes}
+                          status={session.status}
+                          size="md"
+                        />
                       )}
                       {(session.status === "live" ||
                         session.status === "ended" ||
@@ -528,19 +525,33 @@ const TADashboardContent = ({
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h4 className="text-sm font-medium text-[var(--color-text-primary)] leading-tight">
-                        {notification.title}
+                        {tOrFallback(
+                          tRoot,
+                          notification.titleKey,
+                          notification.titleParams,
+                          tNotifications.has(`types.${notification.type}.title`)
+                            ? tNotifications(`types.${notification.type}.title`)
+                            : notification.title,
+                        )}
                       </h4>
                       {!notification.isRead && (
                         <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] flex-shrink-0 mt-1.5" />
                       )}
                     </div>
                     <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
-                      {notification.message}
+                      {tOrFallback(
+                        tRoot,
+                        notification.messageKey,
+                        notification.messageParams,
+                        tNotifications.has(`types.${notification.type}.message`)
+                          ? tNotifications(`types.${notification.type}.message`)
+                          : notification.message,
+                      )}
                     </p>
                     <div className="flex items-center gap-1 mt-1.5">
                       <Clock className="w-3 h-3 text-[var(--color-text-secondary)]" />
                       <span className="text-[11px] text-[var(--color-text-secondary)]">
-                        {formatRelativeDate(notification.createdAt, platformLocale)}
+                        {formatRelativeDate(notification.createdAt, platformLocale, tNotifications)}
                       </span>
                     </div>
                   </div>
@@ -559,7 +570,7 @@ const TADashboardContent = ({
                 href={`/${locale}/dashboard/teaching-assistant/sessions`}
                 className="text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium transition-colors"
               >
-                {t("home.upcomingSessions.viewAll")} &rarr;
+                {t("home.upcomingSessions.viewAll")} {isRTL ? "←" : "→"}
               </Link>
             </div>
 
@@ -613,7 +624,7 @@ const TADashboardContent = ({
                 href={`/${locale}/dashboard/teaching-assistant/courses`}
                 className="text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium transition-colors"
               >
-                {t("home.coursesOverview.viewAll")} &rarr;
+                {t("home.coursesOverview.viewAll")} {isRTL ? "←" : "→"}
               </Link>
             </div>
 

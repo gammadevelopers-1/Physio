@@ -337,6 +337,88 @@ export type AuditTrailEntry = {
 // ===========================================
 // FormData Upload (multipart/form-data)
 // ===========================================
+
+/**
+ * Structured error thrown by the XHR upload helpers below. UI catch
+ * blocks can look at `code` to pick a localized message with args,
+ * instead of showing a generic "Upload failed" for every failure
+ * mode.
+ *
+ *   status         HTTP status ('network' if the request never got a response)
+ *   code           One of a short, stable set the UI knows about
+ *   serverMessage  Best-effort human-readable message from the server
+ *   sizeMB/limitMB Populated when code === 'too_large'
+ */
+export type UploadErrorCode =
+  | 'too_large'
+  | 'unsupported_type'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'processing'
+  | 'network'
+  | 'server';
+
+export class UploadError extends Error {
+  readonly status: number | 'network';
+  readonly code: UploadErrorCode;
+  readonly serverMessage: string | null;
+  readonly sizeMB?: number;
+  readonly limitMB?: number;
+
+  constructor(params: {
+    status: number | 'network';
+    code: UploadErrorCode;
+    serverMessage: string | null;
+    sizeMB?: number;
+    limitMB?: number;
+  }) {
+    super(params.serverMessage ?? `Upload failed (${params.code})`);
+    this.name = 'UploadError';
+    this.status = params.status;
+    this.code = params.code;
+    this.serverMessage = params.serverMessage;
+    this.sizeMB = params.sizeMB;
+    this.limitMB = params.limitMB;
+  }
+}
+
+/**
+ * Parse an XHR response into an UploadError. Handles both JSON bodies
+ * from Nest (`{statusCode, message, error}`) and raw strings.
+ */
+function parseUploadError(status: number, responseText: string): UploadError {
+  let serverMessage: string | null = null;
+  try {
+    const body = JSON.parse(responseText);
+    if (typeof body?.message === 'string') serverMessage = body.message;
+    else if (Array.isArray(body?.message)) serverMessage = body.message.join('; ');
+  } catch {
+    if (responseText && responseText.length < 500) serverMessage = responseText;
+  }
+
+  // Extract "X MB exceeds Y MB" numbers from the server message if
+  // present — matches the format materials.service.ts emits.
+  let sizeMB: number | undefined;
+  let limitMB: number | undefined;
+  const m = serverMessage?.match(/([0-9.]+)\s*MB\s*exceeds\s*(?:the\s*)?([0-9.]+)\s*MB/i);
+  if (m) {
+    sizeMB = Math.round(parseFloat(m[1]));
+    limitMB = Math.round(parseFloat(m[2]));
+  }
+
+  let code: UploadErrorCode;
+  if (status === 413) code = 'too_large';
+  else if (status === 415) code = 'unsupported_type';
+  else if (status === 400 && /mime type|not allowed/i.test(serverMessage ?? '')) code = 'unsupported_type';
+  else if (status === 400 && /size.*exceeds/i.test(serverMessage ?? '')) code = 'too_large';
+  else if (status === 401) code = 'unauthorized';
+  else if (status === 403) code = 'forbidden';
+  else if (status === 409) code = 'processing';
+  else code = 'server';
+
+  return new UploadError({ status, code, serverMessage, sizeMB, limitMB });
+}
+
 export async function uploadFormData<T>(
   endpoint: string,
   formData: FormData,
@@ -1862,7 +1944,9 @@ export const instructorApi = {
   getCertificates: (params?: { courseId?: string; status?: string; page?: number; limit?: number }) => {
     const sp = new URLSearchParams();
     if (params?.courseId && params.courseId !== 'all') sp.set('courseId', params.courseId);
-    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    // Send status even when it's "all" — backend treats absent status
+    // as "default to pending" but "all" as "no status filter".
+    if (params?.status) sp.set('status', params.status);
     if (params?.page) sp.set('page', String(params.page));
     if (params?.limit) sp.set('limit', String(params.limit));
     const qs = sp.toString();
@@ -1975,7 +2059,8 @@ export type SettingsCategory =
   | 'auth'
   | 'payments'
   | 'notifications'
-  | 'maintenance';
+  | 'maintenance'
+  | 'mail';
 
 export interface NotificationTemplate {
   id: string;
@@ -2217,14 +2302,20 @@ export const adminFinanceApi = {
     }>(`/admin/finance/invoices/${invoiceId}/force-cancel`, body),
 
   /** Re-render an invoice PDF with current tax + branding settings. */
-  regenerateInvoicePdf: (invoiceId: string, body: { reason: string }) =>
+  regenerateInvoicePdf: (
+    invoiceId: string,
+    body: { reason: string; locale?: 'en' | 'ar' },
+  ) =>
     api.post<{ ok: true; invoiceNumber: string }>(
       `/admin/finance/invoices/${invoiceId}/regenerate-pdf`,
       body,
     ),
 
   /** Re-send the invoice email to the original buyer with the PDF attached. */
-  resendInvoiceEmail: (invoiceId: string, body: { reason: string }) =>
+  resendInvoiceEmail: (
+    invoiceId: string,
+    body: { reason: string; locale?: 'en' | 'ar' },
+  ) =>
     api.post<{ sent: true; invoiceNumber: string }>(
       `/admin/finance/invoices/${invoiceId}/resend-email`,
       body,
@@ -2756,6 +2847,21 @@ export const templatesApi = {
 
   reset: (eventKey: string, locale: TemplateLocale) =>
     api.delete<void>(`/admin/templates/${eventKey}/${locale}`),
+
+  /**
+   * Send a rendered test of this template to the current admin's own
+   * email. Uses registry sample variables so what lands in the inbox
+   * looks like a real production email.
+   *
+   * `usedOverride` tells the UI whether the send used the admin-saved
+   * row (true) or the shipped-code default (false) — so the admin can
+   * confirm their edit actually took effect.
+   */
+  testSend: (eventKey: string, locale: TemplateLocale) =>
+    api.post<{ ok: true; to: string; usedOverride: boolean }>(
+      `/admin/templates/${eventKey}/${locale}/test-send`,
+      {},
+    ),
 };
 
 // ===========================================
@@ -3323,11 +3429,12 @@ export const materialsApi = {
         if (xhr.status >= 200 && xhr.status < 300) {
           resolve(JSON.parse(xhr.responseText));
         } else {
-          reject(new Error(xhr.responseText || 'Upload failed'));
+          reject(parseUploadError(xhr.status, xhr.responseText));
         }
       };
 
-      xhr.onerror = () => reject(new Error('Upload failed'));
+      xhr.onerror = () =>
+        reject(new UploadError({ status: 'network', code: 'network', serverMessage: null }));
 
       const fd = new FormData();
       fd.append('file', file);
@@ -3386,11 +3493,12 @@ export const materialsApi = {
         if (xhr.status >= 200 && xhr.status < 300) {
           resolve(JSON.parse(xhr.responseText));
         } else {
-          reject(new Error(xhr.responseText || 'Replace failed'));
+          reject(parseUploadError(xhr.status, xhr.responseText));
         }
       };
 
-      xhr.onerror = () => reject(new Error('Replace failed'));
+      xhr.onerror = () =>
+        reject(new UploadError({ status: 'network', code: 'network', serverMessage: null }));
 
       const fd = new FormData();
       fd.append('file', file);
@@ -3977,6 +4085,66 @@ export const courseManagerApi = {
   getEnrollments: (params: { courseId: string }) =>
     api.get<CourseEnrollment[]>(`/courses/${params.courseId}/enrollments`),
 
+  // Manager/admin — manually enrol a student. Bypasses capacity/waitlist.
+  // Reason is captured in audit + on the enrollment row itself.
+  manualEnrollStudent: (courseId: string, studentId: string, reason: string) =>
+    api.post<CourseEnrollment>(`/courses/${courseId}/manual-enroll`, { studentId, reason }),
+
+  // Manager/admin — remove an enrolled student. Reason is mandatory;
+  // finance reads it to decide refund. Does NOT auto-refund.
+  removeEnrolledStudent: (courseId: string, studentId: string, reason: string) =>
+    api.delete<{ id: string; status: string }>(
+      `/courses/${courseId}/enrollments/${studentId}`,
+      { reason },
+    ),
+
+  // Per-course audit log for the manager/admin Audit tab. Legacy
+  // per-entity endpoint (GET /audit-logs?entityType=course&entityId=...).
+  // Includes create/update/duplicate/activate/archive/complete/cancel/
+  // reschedule/reassign_instructor/manual_enroll/remove_enrollment/etc.
+  getCourseAuditLogs: (courseId: string, page = 1, limit = 50) => {
+    const sp = new URLSearchParams();
+    sp.set('entityType', 'course');
+    sp.set('entityId', courseId);
+    sp.set('page', String(page));
+    sp.set('limit', String(limit));
+    return api.get<{
+      data: Array<{
+        id: string;
+        entityType: string;
+        entityId: string;
+        action: string;
+        performedBy: string | null;
+        metadata: Record<string, unknown> | null;
+        ipAddress: string | null;
+        createdAt: string;
+        performerFirstName: string | null;
+        performerLastName: string | null;
+        performerEmail: string | null;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/audit-logs?${sp.toString()}`);
+  },
+
+  // Narrow student picker for the manual-enroll modal. Backed by
+  // /auth/students-search, gated to MANAGER/ADMIN.
+  searchStudents: (q: string, limit = 20) => {
+    const sp = new URLSearchParams();
+    if (q) sp.set('q', q);
+    sp.set('limit', String(limit));
+    return api.get<
+      Array<{
+        id: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+        scfhsNumber: string | null;
+      }>
+    >(`/auth/students-search?${sp.toString()}`);
+  },
+
   // Course detail (single course with modules)
   getCourseDetail: (courseId: string) =>
     api.get<CourseDetailResponse>(`/courses/${courseId}`),
@@ -4008,6 +4176,11 @@ export const courseManagerApi = {
   // Delete course (draft only)
   deleteCourse: (courseId: string) =>
     api.delete(`/courses/${courseId}`),
+
+  // Duplicate course — clones everything except dates/enrollments; returns
+  // the new draft row so the caller can navigate straight to its edit page.
+  duplicateCourse: (courseId: string) =>
+    api.post<{ id: string; title: string }>(`/courses/${courseId}/duplicate`, {}),
 
   // Content Review
   getPendingReviews: () =>
@@ -4086,6 +4259,9 @@ export const courseManagerApi = {
     if (params?.sort) sp.set('sort', params.sort);
     if (params?.search) sp.set('search', params.search);
     const qs = sp.toString();
+    // NOTE: hits the MANAGER-view endpoint (all moderation states) so
+    // the course-manager reviews page shows pending + rejected reviews
+    // too. The public endpoint at /courses/:id/ratings hides those.
     return api.get<{
       data: Array<{
         id: string;
@@ -4101,7 +4277,7 @@ export const courseManagerApi = {
       avgRating: number;
       totalRatings: number;
       distribution: Record<'1' | '2' | '3' | '4' | '5', number>;
-    }>(`/courses/${courseId}/ratings${qs ? `?${qs}` : ''}`);
+    }>(`/courses/${courseId}/ratings/manager-view${qs ? `?${qs}` : ''}`);
   },
 
   getCourseRatingStats: (courseId: string) =>
@@ -4321,7 +4497,12 @@ export const courseManagerApi = {
   }) => {
     const sp = new URLSearchParams();
     if (params?.courseId && params.courseId !== 'all') sp.set('courseId', params.courseId);
-    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    // Send status even when it's "all" — the backend treats "all" as
+    // "no status filter" but treats an ABSENT status as "default to
+    // pending". Stripping "all" here meant callers who wanted every
+    // status silently got pending-only. Callers that legitimately want
+    // pending-only should NOT pass any status (backward compatible).
+    if (params?.status) sp.set('status', params.status);
     if (params?.page) sp.set('page', String(params.page));
     if (params?.limit) sp.set('limit', String(params.limit));
     if (params?.managerId) sp.set('managerId', params.managerId);
@@ -5157,6 +5338,21 @@ export interface RedeemableCourse {
   isCmeAccredited: boolean;
   costPoints: number;
   affordable: boolean;
+  /**
+   * Whether the user already has an active or completed enrollment in
+   * this course. Populated by the backend so the UI can show an
+   * "Enrolled" badge instead of the Redeem CTA. Phase 4.
+   */
+  alreadyEnrolled: boolean;
+}
+
+/**
+ * Phase-4 hero summary — pairs the raw balance with a month-to-date earn
+ * counter. Read from `GET /points/me`.
+ */
+export interface PointsMe {
+  balance: number;
+  earnedThisMonth: number;
 }
 
 export interface PointRule {
@@ -5192,7 +5388,16 @@ export interface ActiveRule {
 export const pointsApi = {
   getBalance: () => api.get<PointsBalance>('/points/me/balance'),
 
+  /**
+   * Phase-4 hero summary. Prefer this over `getBalance` for surfaces
+   * that need the month-to-date earn counter alongside the balance.
+   */
+  getMe: () => api.get<PointsMe>('/points/me'),
+
   getActiveRules: () => api.get<ActiveRule[]>('/points/me/rules'),
+
+  /** Alias used by Phase-4 components; points at the same endpoint. */
+  getEarnRules: () => api.get<ActiveRule[]>('/points/me/rules'),
 
   getTransactions: (params?: { page?: number; limit?: number }) => {
     const qs = new URLSearchParams();
@@ -5213,15 +5418,228 @@ export const pointsApi = {
     api.post<{
       redemptionId: string;
       enrollmentId: string;
+      courseId: string;
       pointsUsed: number;
+      pointsSpent: number;
       newBalance: number;
-    }>('/points/redeem-course', { courseId }),
+    }>(`/points/me/redeem-course/${courseId}`),
+
+  // ─── Rewards catalog ─────────────────────────────────────
+  getRewards: () => api.get<RewardCardData[]>('/points/me/rewards'),
+
+  getMyRedemptions: () =>
+    api.get<RewardRedemptionRow[]>('/points/me/rewards/redemptions'),
+
+  redeemReward: (
+    rewardId: string,
+    body: { selectedCourseId?: string; selectedDeliveryType?: string } = {},
+  ) =>
+    api.post<RedeemRewardResult>(
+      `/points/me/rewards/${rewardId}/redeem`,
+      body,
+    ),
+
+  /**
+   * Comprehensive My-Rewards history. Backs the `/dashboard/student/my-rewards`
+   * page. `unusedCouponCount` is what the sidebar red-dot listens to.
+   */
+  getMyRewardHistory: (params?: { page?: number; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return api.get<RewardHistoryPage>(
+      `/points/me/rewards/history${q ? `?${q}` : ''}`,
+    );
+  },
 };
+
+// ─── Rewards types ─────────────────────────────────────────────
+
+export type RewardType =
+  | 'discount_coupon'
+  | 'fixed_discount_coupon'
+  | 'free_course'
+  | 'free_webinar'
+  | 'other';
+
+/**
+ * Envelope-level reward type reported by the My Rewards history endpoint.
+ * Extends the catalog `RewardType` with `course_purchase` — a synthetic
+ * marker for point-based course unlocks (rows from `point_redemptions`),
+ * distinct from a reward-catalog `free_course` entry. `course_purchase`
+ * is NEVER a valid `reward_catalog.type` value; keeping it out of
+ * `RewardType` makes admin CRUD flows type-safe.
+ */
+export type RewardHistoryEnvelopeType = RewardType | 'course_purchase';
+
+export interface RewardCardData {
+  id: string;
+  nameEn: string;
+  nameAr: string | null;
+  descriptionEn: string | null;
+  descriptionAr: string | null;
+  icon: string | null;
+  type: RewardType;
+  pointsCost: number;
+  payload: Record<string, unknown>;
+  stockLeft: number | null;
+  perUserLeft: number | null;
+  myRedemptionsCount: number;
+  canRedeem: boolean;
+  canAfford: boolean;
+  inStock: boolean;
+  withinUserCap: boolean;
+  /**
+   * Resolved course list for `free_course` rewards — the payload stores
+   * only ids; the backend joins `courses` so the student picker doesn't
+   * need a follow-up round trip. Empty array for every other reward type.
+   */
+  courses: Array<{
+    id: string;
+    title: string;
+    titleAr: string | null;
+    thumbnail: string | null;
+    priceSar: number;
+  }>;
+}
+
+export interface RewardRedemptionRow {
+  id: string;
+  rewardId: string;
+  rewardNameEn: string;
+  rewardNameAr: string | null;
+  rewardType: RewardType;
+  pointsSpent: number;
+  status: 'pending' | 'fulfilled' | 'failed' | 'reversed';
+  fulfillmentPayload: Record<string, unknown>;
+  redeemedAt: string;
+  expiresAt: string | null;
+}
+
+export interface RedeemRewardResult {
+  redemptionId: string;
+  pointsSpent: number;
+  newBalance: number;
+  status: 'pending' | 'fulfilled';
+  type: RewardType;
+  fulfillment: Record<string, unknown>;
+  expiresAt: string | null;
+}
+
+// ─── My Rewards history (Phase 1) ─────────────────────────────
+
+export type RewardHistoryStatus =
+  | 'unused'
+  | 'used'
+  | 'expired'
+  | 'pending'
+  | 'fulfilled'
+  | 'failed'
+  | 'reversed';
+
+export interface CouponHistoryItem {
+  kind: 'coupon';
+  code: string;
+  expiresAt: string | null;
+  currentUses: number;
+  maxUses: number;
+  status: 'unused' | 'used' | 'expired';
+  usedInPaymentId?: string | null;
+}
+
+export interface FreeCourseHistoryItem {
+  kind: 'free_course';
+  courseId: string;
+  courseTitle: string;
+  courseTitleAr: string | null;
+  thumbnail: string | null;
+  enrollmentId: string | null;
+  enrolledAt: string | null;
+  courseStartDate: string | null;
+  courseSlug?: string | null;
+}
+
+export interface FreeWebinarHistoryItem {
+  kind: 'free_webinar';
+  sessionId: string;
+  sessionTitle: string;
+  sessionTitleAr: string | null;
+  sessionStartAt: string | null;
+  registrationStatus: string | null;
+  joinUrl?: string | null;
+}
+
+export interface OtherHistoryItem {
+  kind: 'other';
+  status: 'pending' | 'fulfilled' | 'failed' | 'reversed';
+  fulfilledAt: string | null;
+  adminNote: string | null;
+  /**
+   * Reward-catalog `expectedDeliveryDays` echoed onto every projection so
+   * the FE can render the "expected by" countdown without a second fetch.
+   * Legacy rewards created before Phase 2 fall back to 7 on the server.
+   */
+  expectedDeliveryDays: number;
+  /** Duplicate of the envelope's redeemedAt for convenience. */
+  redeemedAt: string;
+  /**
+   * Only present when `status === 'fulfilled'`. Non-fulfilled statuses
+   * always project `null` — the row on the server keeps the artifact for
+   * audit trail but student projection is gated on status.
+   */
+  artifact: { kind: 'code' | 'link' | 'note'; value: string } | null;
+}
+
+/**
+ * Point-based course purchase — sourced from `point_redemptions`, not
+ * `reward_redemptions`. Distinct from `FreeCourseHistoryItem` (a
+ * reward-catalog `free_course` entry) so the UI can show it in its own
+ * card style ("Purchased with N points") without conflating the two.
+ */
+export interface CoursePurchaseHistoryItem {
+  kind: 'course_purchase';
+  courseId: string;
+  courseTitle: string;
+  courseTitleAr: string | null;
+  thumbnail: string | null;
+  enrollmentId: string | null;
+  enrollmentStatus: 'active' | 'completed' | 'dropped' | 'expired' | null;
+  redeemedAt: string;
+  pointsSpent: number;
+}
+
+export type RewardHistoryProjection =
+  | CouponHistoryItem
+  | FreeCourseHistoryItem
+  | FreeWebinarHistoryItem
+  | OtherHistoryItem
+  | CoursePurchaseHistoryItem;
+
+export interface RewardHistoryRow {
+  redemptionId: string;
+  rewardId: string;
+  rewardName: string;
+  rewardNameAr: string | null;
+  rewardType: RewardHistoryEnvelopeType;
+  pointsSpent: number;
+  redeemedAt: string;
+  projection: RewardHistoryProjection;
+}
+
+export interface RewardHistoryPage {
+  items: RewardHistoryRow[];
+  total: number;
+  page: number;
+  limit: number;
+  unusedCouponCount: number;
+}
 
 export interface AdminCourseRedemption {
   id: string;
   title: string;
   titleAr: string | null;
+  thumbnail: string | null;
   deliveryType: string;
   price: string | number;
   cmeHours: number;
@@ -5229,6 +5647,20 @@ export interface AdminCourseRedemption {
   redeemableForFree: boolean;
   freeUnlockCostPoints: number | null;
   maxRedemptionPct: number | null;
+  /** 30-day count of redemptions actually applied. Read-only summary. */
+  redemptionsLast30d: number;
+  /** True when a row exists in course_redemption_settings, even if disabled. */
+  configured: boolean;
+}
+
+export interface AdminWebinarSession {
+  id: string;
+  title: string;
+  scheduledAt: string;
+  courseId: string;
+  courseTitle: string;
+  courseTitleAr: string | null;
+  isWebinar: boolean;
 }
 
 export interface AdminUserSearchResult {
@@ -5236,6 +5668,65 @@ export interface AdminUserSearchResult {
   email: string;
   firstName: string | null;
   lastName: string | null;
+}
+
+export interface AdminCourseRedemptionFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  courseId?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface AdminCourseRedemptionRow {
+  redemptionId: string;
+  redeemedAt: string;
+  pointsSpent: number;
+  equivalentSar: number;
+  user: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+  };
+  course: {
+    id: string;
+    title: string;
+    titleAr: string | null;
+    priceSar: number;
+  };
+  enrollment: {
+    id: string;
+    status: string | null;
+  } | null;
+}
+
+export interface AdminCourseRedemptionsPage {
+  items: AdminCourseRedemptionRow[];
+  total: number;
+  page: number;
+  limit: number;
+  summary: {
+    count: number;
+    totalPointsSpent: number;
+    equivalentValueSar: number;
+  };
+}
+
+function buildCourseRedemptionQuery(
+  filters: AdminCourseRedemptionFilters,
+): string {
+  const qs = new URLSearchParams();
+  if (filters.page) qs.set('page', String(filters.page));
+  if (filters.limit) qs.set('limit', String(filters.limit));
+  if (filters.search) qs.set('search', filters.search);
+  if (filters.courseId) qs.set('courseId', filters.courseId);
+  if (filters.status && filters.status !== 'all') qs.set('status', filters.status);
+  if (filters.startDate) qs.set('startDate', filters.startDate);
+  if (filters.endDate) qs.set('endDate', filters.endDate);
+  return qs.toString();
 }
 
 export const pointsAdminApi = {
@@ -5251,6 +5742,12 @@ export const pointsAdminApi = {
     const qs = search ? `?search=${encodeURIComponent(search)}` : '';
     return api.get<AdminCourseRedemption[]>(`/admin/points/courses${qs}`);
   },
+  listWebinarSessions: (search?: string) => {
+    const qs = search ? `?search=${encodeURIComponent(search)}` : '';
+    return api.get<AdminWebinarSession[]>(
+      `/admin/points/webinar-sessions${qs}`,
+    );
+  },
   updateCourseRedemption: (
     courseId: string,
     body: Partial<{
@@ -5262,6 +5759,13 @@ export const pointsAdminApi = {
     api.patch<AdminCourseRedemption>(
       `/admin/points/courses/${courseId}`,
       body,
+    ),
+  deleteCourseRedemption: (courseId: string) =>
+    api.delete<void>(`/admin/points/courses/${courseId}`),
+  bulkEnableCourseRedemption: (multiplier: number) =>
+    api.post<{ inserted: number; skipped: number; multiplier: number }>(
+      `/admin/points/courses/bulk-enable`,
+      { multiplier },
     ),
   searchUsers: (q: string) =>
     api.get<AdminUserSearchResult[]>(
@@ -5281,7 +5785,144 @@ export const pointsAdminApi = {
   },
   getUserBalance: (userId: string) =>
     api.get<{ balance: number }>(`/admin/points/users/${userId}/balance`),
+
+  // ─── Rewards catalog CRUD ───────────────────────────────
+  listRewards: () => api.get<AdminReward[]>('/admin/points/rewards'),
+  createReward: (body: AdminRewardInput) =>
+    api.post<AdminReward>('/admin/points/rewards', body),
+  updateReward: (id: string, body: Partial<AdminRewardInput>) =>
+    api.patch<AdminReward>(`/admin/points/rewards/${id}`, body),
+  deleteReward: (id: string) =>
+    api.delete<void>(`/admin/points/rewards/${id}`),
+
+  // ─── Redemptions history ────────────────────────────────
+  listRedemptions: (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    rewardId?: string;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.status) qs.set('status', params.status);
+    if (params?.rewardId) qs.set('rewardId', params.rewardId);
+    const q = qs.toString();
+    return api.get<AdminRedemptionsPage>(
+      `/admin/points/redemptions${q ? `?${q}` : ''}`,
+    );
+  },
+  transitionRedemption: (
+    id: string,
+    body: {
+      status: 'fulfilled' | 'failed' | 'reversed';
+      artifact?: { kind: 'code' | 'link' | 'note'; value: string };
+      adminNote?: string;
+      reason?: string;
+    },
+  ) =>
+    api.post<{ ok: boolean; status: string }>(
+      `/admin/points/redemptions/${id}/transition`,
+      body,
+    ),
+
+  // ─── Course redemptions (point-based course unlocks) ───────
+  listCourseRedemptions: (filters: AdminCourseRedemptionFilters = {}) => {
+    const qs = buildCourseRedemptionQuery(filters);
+    return api.get<AdminCourseRedemptionsPage>(
+      `/admin/points/course-redemptions${qs ? `?${qs}` : ''}`,
+    );
+  },
+  exportCourseRedemptionsCsv: async (
+    filters: AdminCourseRedemptionFilters = {},
+  ) => {
+    const qs = buildCourseRedemptionQuery(filters);
+    const blob = await fetchBlob(
+      `/admin/points/course-redemptions/export.csv${qs ? `?${qs}` : ''}`,
+    );
+    const ts = new Date().toISOString().split('T')[0];
+    downloadBlob(blob, `course-redemptions-${ts}.csv`);
+  },
 };
+
+// ─── Admin reward types ────────────────────────────────────────
+
+export interface AdminReward {
+  id: string;
+  nameEn: string;
+  nameAr: string | null;
+  descriptionEn: string | null;
+  descriptionAr: string | null;
+  /** @deprecated column kept in DB for legacy rows; no longer edited in UI. */
+  icon: string | null;
+  type: RewardType;
+  pointsCost: number;
+  payload: Record<string, unknown>;
+  isActive: boolean;
+  displayOrder: number;
+  maxPerUser: number | null;
+  totalStock: number | null;
+  totalRedeemed: number;
+  validFrom: string | null;
+  validUntil: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminRewardInput {
+  nameEn: string;
+  nameAr?: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
+  type: RewardType;
+  pointsCost: number;
+  payload: Record<string, unknown>;
+  isActive?: boolean;
+  displayOrder?: number;
+  maxPerUser?: number | null;
+  totalStock?: number | null;
+  validFrom?: string | null;
+  validUntil?: string | null;
+}
+
+export interface AdminRedemptionRow {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userFirstName: string | null;
+  userLastName: string | null;
+  rewardId: string;
+  rewardName: string;
+  rewardType: RewardType;
+  pointsSpent: number;
+  status: 'pending' | 'fulfilled' | 'failed' | 'reversed';
+  fulfillmentPayload: Record<string, unknown>;
+  /**
+   * Phase 2: artifact the admin attached when fulfilling an `other`-type
+   * redemption. `null` for pending/failed/reversed and for every non-Other
+   * reward type. `meta.note` — when set — holds the admin's private note.
+   */
+  fulfillmentArtifact: {
+    kind: 'code' | 'link' | 'note';
+    value: string;
+    meta?: { note?: string } | null;
+  } | null;
+  /** Only set when rewardType === 'other' (else null). */
+  expectedDeliveryDays: number | null;
+  failureReason: string | null;
+  redeemedAt: string;
+  fulfilledAt: string | null;
+}
+
+export interface AdminRedemptionsPage {
+  rows: AdminRedemptionRow[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
 
 // ===========================================
 // Public API (no auth)
@@ -5291,12 +5932,16 @@ export const publicApi = {
   getCourses: (params?: {
     search?: string;
     delivery?: string;
+    pricing?: 'free' | 'paid';
+    onSale?: boolean;
     page?: number;
     limit?: number;
   }) => {
     const qs = new URLSearchParams();
     if (params?.search) qs.set('search', params.search);
     if (params?.delivery) qs.set('delivery', params.delivery);
+    if (params?.pricing) qs.set('pricing', params.pricing);
+    if (params?.onSale) qs.set('onSale', 'true');
     if (params?.page) qs.set('page', String(params.page));
     if (params?.limit) qs.set('limit', String(params.limit));
     const queryString = qs.toString();
@@ -5436,7 +6081,31 @@ export const courseAssistantsApi = {
 // ===========================================
 // Teaching Assistant API (TA Dashboard)
 // ===========================================
+
+/**
+ * Result of `GET /sessions/:id/ta-join`. Time-gated: only returns a
+ * `joinUrl` when the session is currently joinable (opens 15 min before
+ * scheduled start; closes 30 min after scheduled end). Otherwise
+ * returns the reason + boundaries so the client can render "Starts in
+ * {rel}" / "Ended".
+ */
+export type TaSessionJoin =
+  | {
+      joinable: false;
+      reason: 'not_yet' | 'ended' | 'not_authorized';
+      startsAt?: string;
+      endsAt?: string;
+    }
+  | {
+      joinable: true;
+      joinType: 'panelist' | 'meeting-attendee';
+      joinUrl: string;
+      displayName: string;
+    };
+
 export const taApi = {
+  getSessionJoin: (sessionId: string) =>
+    api.get<TaSessionJoin>(`/sessions/${sessionId}/ta-join`),
   getMyAssignedSessions: (params?: {
     dateRange?: string;
     status?: string;
@@ -6515,7 +7184,21 @@ export const supportApi = {
 
   addCollaborator: (
     ticketId: string,
-    data: { userId: string; department: string },
+    data: {
+      userId: string;
+      department: string;
+      // Optional context reply posted as an internal comment so the
+      // new collab can see WHY they were looped in. When both message
+      // and attachments are absent the loop-in is silent (legacy
+      // behavior). See addCollaborator() in support.service.ts.
+      message?: string;
+      attachments?: {
+        url: string;
+        filename?: string;
+        mimeType?: string;
+        sizeBytes?: number;
+      }[];
+    },
   ) =>
     api.post<{ id: string; alreadyActive: boolean }>(
       `/tickets/${ticketId}/collaborators`,
@@ -6550,6 +7233,14 @@ export const supportApi = {
       toDepartment: string;
       userId?: string;
       noteToRequester?: string;
+      // Optional supporting docs pinned to the transfer system
+      // message — visible to the requester alongside the note.
+      attachments?: {
+        url: string;
+        filename?: string;
+        mimeType?: string;
+        sizeBytes?: number;
+      }[];
     },
   ) =>
     api.post<{
@@ -7173,7 +7864,14 @@ export const paymentApi = {
     // this off entirely because the DB CHECK constraint on payment_method
     // doesn't include 'bank_transfer' (the value lives in `gateway`).
     paymentMethod?: string;
+    // REAL coupon code the buyer typed (or an auto-applied code-based
+    // early-bird). NEVER a synthetic `CAMPAIGN:xxx` string — the
+    // direct-campaign leg rides on `applyActiveCampaign` below.
     discountCode?: string;
+    // Opt-in for stacking the active direct-campaign discount on top of
+    // the cart. Set when the auto-apply endpoint returned
+    // `isCampaignDirect: true`. Backend re-validates eligibility.
+    applyActiveCampaign?: boolean;
     locale?: string;
   }) => api.post<{ paymentId: string; redirectUrl: string; amount: number; currency: string }>('/payments/initiate', data),
 
@@ -7182,7 +7880,11 @@ export const paymentApi = {
    * /initiate (course exists, capacity, NELC, discount) — but no DB row is
    * created. Returns the line items + totals to render the summary.
    */
-  quote: (data: { courseIds: string[]; discountCode?: string }) =>
+  quote: (data: {
+    courseIds: string[];
+    discountCode?: string;
+    applyActiveCampaign?: boolean;
+  }) =>
     api.post<{
       courseIds: string[];
       lineItems: Array<{
@@ -7203,10 +7905,21 @@ export const paymentApi = {
         originalSubtotal: number;
         subtotal: number;
         saleDiscount: number;
+        // Combined (campaign + coupon) — kept for backward compat.
         discountAmount: number;
         discountCode: string | null;
         discountId: string | null;
+        // Coupon leg only.
+        couponAmount: number;
+        couponId: string | null;
+        couponCode: string | null;
+        // Direct-campaign leg (may be zero when only a coupon fired,
+        // or non-zero when the buyer accepted an auto-applied campaign).
+        campaignAmount: number;
+        campaignId: string | null;
+        campaignName: string | null;
         taxAmount: number;
+        taxRate?: number;
         totalAmount: number;
         currency: string;
       };
@@ -7220,7 +7933,12 @@ export const paymentApi = {
    * can't actually use. See backend prescoreTabby + Tabby docs:
    * https://docs.tabby.ai/pay-in-4-custom-integration/checkout-flow#background-pre-scoring-check
    */
-  tabbyPreScore: (data: { courseIds: string[]; discountCode?: string; locale?: 'ar' | 'en' }) =>
+  tabbyPreScore: (data: {
+    courseIds: string[];
+    discountCode?: string;
+    applyActiveCampaign?: boolean;
+    locale?: 'ar' | 'en';
+  }) =>
     api.post<{ eligible: boolean; reason?: string; message?: string }>(
       '/payments/tabby/pre-score',
       data,
@@ -7459,12 +8177,13 @@ export const bankTransferApi = {
       refundBankName: string;
       refundNationalId?: string;
     },
-    opts?: { discountCode?: string },
+    opts?: { discountCode?: string; applyActiveCampaign?: boolean },
   ) => {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('courseIds', courseIds.join(','));
     if (opts?.discountCode) fd.append('discountCode', opts.discountCode);
+    if (opts?.applyActiveCampaign) fd.append('applyActiveCampaign', 'true');
     fd.append('refundAccountHolder', refundInfo.refundAccountHolder);
     fd.append('refundIban', refundInfo.refundIban);
     fd.append('refundBankName', refundInfo.refundBankName);
@@ -7481,10 +8200,13 @@ export const bankTransferApi = {
   // Fetches the PDF directly as a Blob so the FE can trigger a download
   // without ever exposing the buffer to a tab navigation. Goes through plain
   // fetch (not fetchApi) because fetchApi assumes JSON; we need the raw body.
-  downloadProforma: async (paymentId: string): Promise<Blob> => {
+  downloadProforma: async (
+    paymentId: string,
+    locale: 'en' | 'ar' = 'en',
+  ): Promise<Blob> => {
     const token = getAccessToken();
     const res = await fetch(
-      `${API_URL}/payments/bank-transfer/${paymentId}/proforma`,
+      `${API_URL}/payments/bank-transfer/${paymentId}/proforma?locale=${locale}`,
       {
         method: 'GET',
         credentials: 'include',
@@ -7507,6 +8229,8 @@ export const bankTransferApi = {
   downloadProformaFromQuote: async (data: {
     courseIds: string[];
     discountCode?: string;
+    applyActiveCampaign?: boolean;
+    locale?: 'en' | 'ar';
   }): Promise<Blob> => {
     const token = getAccessToken();
     const res = await fetch(
@@ -8144,14 +8868,22 @@ export const invoiceApi = {
       actorEmail: string | null;
     }>>(`/invoices/${invoiceId}/audit?limit=${limit}`),
 
-  getPdfUrl: (invoiceId: string) =>
-    api.get<{ url: string; invoiceNumber: string }>(`/invoices/${invoiceId}/pdf`),
+  getPdfUrl: (invoiceId: string, locale: 'en' | 'ar' = 'en') =>
+    api.get<{ url: string; invoiceNumber: string }>(
+      `/invoices/${invoiceId}/pdf?locale=${locale}`,
+    ),
 
-  resend: (invoiceId: string) =>
-    api.post<{ sent: boolean; invoiceNumber: string }>(`/invoices/${invoiceId}/resend`),
+  resend: (invoiceId: string, locale: 'en' | 'ar' = 'en') =>
+    api.post<{ sent: boolean; invoiceNumber: string }>(
+      `/invoices/${invoiceId}/resend`,
+      { locale },
+    ),
 
-  regeneratePdf: (invoiceId: string) =>
-    api.post<{ ok: boolean; invoiceNumber: string }>(`/invoices/${invoiceId}/regenerate-pdf`),
+  regeneratePdf: (invoiceId: string, locale: 'en' | 'ar' = 'en') =>
+    api.post<{ ok: boolean; invoiceNumber: string }>(
+      `/invoices/${invoiceId}/regenerate-pdf`,
+      { locale },
+    ),
 
   cancel: (invoiceId: string, reason: string) =>
     api.post<{ ok: boolean; invoiceNumber: string }>(`/invoices/${invoiceId}/cancel`, { reason }),
@@ -8534,6 +9266,7 @@ export interface StudentFinanceOverview {
     createdAt: string;
     courseTitle: string | null;
     courseTitleAr: string | null;
+    latestRefundStatus: string | null;
   }>;
 }
 
@@ -8553,6 +9286,7 @@ export interface StudentPaymentRow {
   invoiceId: string | null;
   vatBreakdown: StudentVatBreakdown;
   hasInvoice: boolean;
+  latestRefundStatus: string | null;
 }
 
 export interface StudentPaymentsListResponse {
@@ -9396,7 +10130,10 @@ export interface CourseSaleItem {
   price: number;
   effectivePrice: number;
   onSale: boolean;
+  /** Set when the sale is a percentage; null when it's a fixed amount or off. */
   salePercent: number | null;
+  /** Set when the sale is a fixed SAR amount; null when it's a percentage or off. */
+  saleAmount: number | null;
   saleStartsAt: string | null;
   saleEndsAt: string | null;
   saleAllowsCoupon: boolean;
@@ -9512,6 +10249,7 @@ export const discountApi = {
     courseId: string,
     data: {
       salePercent?: number | null;
+      saleAmount?: number | null;
       saleStartsAt?: string | null;
       saleEndsAt?: string | null;
       saleAllowsCoupon?: boolean;
@@ -9520,26 +10258,43 @@ export const discountApi = {
 
   // ─── Public / checkout ────────────────────────────────────────────
 
-  /** Best auto-apply (early-bird) discount for a cart, or null. Public. */
+  /** Best auto-apply (early-bird) discount for a cart, or null. Public.
+   * `code` is `null` when the winning discount is a direct-campaign
+   * discount (no coupon-code row) — the frontend must render a campaign
+   * banner in that case and MUST NOT paste the value into the coupon
+   * input. `isCampaignDirect` flags that shape. */
   autoApply: (courseIds: string[], userId?: string) =>
     api.post<{
-      code: string;
+      code: string | null;
       discountId: string;
       discountAmount: number;
       applicableCourseId: string;
-      campaign: { id: string; name: string } | null;
+      campaign: { id: string; name: string; allowsCoupon?: boolean } | null;
+      isCampaignDirect?: boolean;
     } | null>('/discounts/auto-apply', { courseIds, userId }),
 
-  /** Active site-wide banner campaign (or null). Public, polled by banner. */
-  getActiveBannerCampaign: () =>
+  /** All active site-wide banner campaigns, newest-start first (capped
+   * server-side at 10). Public, polled by the rotating banner strip.
+   * `nameAr` / `descriptionAr` / `bannerCtaAr` are optional Arabic
+   * variants; the banner falls back to the English text when they're
+   * null. `scope` + `scopeCourseIds` let the banner route the CTA button
+   * straight to a single course's detail page when applicable. */
+  getActiveBannerCampaigns: () =>
     api.get<{
-      id: string;
-      name: string;
-      description: string | null;
-      startsAt: string | null;
-      endsAt: string | null;
-      bannerCta: string | null;
-    } | null>('/discounts/active-banner-campaign'),
+      campaigns: Array<{
+        id: string;
+        name: string;
+        nameAr: string | null;
+        description: string | null;
+        descriptionAr: string | null;
+        startsAt: string | null;
+        endsAt: string | null;
+        bannerCta: string | null;
+        bannerCtaAr: string | null;
+        scope: 'code_only' | 'all_paid' | 'by_delivery_type' | 'specific_courses';
+        scopeCourseIds: string[];
+      }>;
+    }>('/discounts/active-banner-campaign'),
 
   // ─── Finance dashboard additions ──────────────────────────────────
 
@@ -9583,18 +10338,22 @@ export const discountApi = {
     search?: string;
     page?: number;
     limit?: number;
+    campaignType?: 'standard' | 'early_bird';
   }) => {
     const sp = new URLSearchParams();
     if (opts?.status) sp.set('status', opts.status);
     if (opts?.search) sp.set('search', opts.search);
     if (opts?.page) sp.set('page', String(opts.page));
     if (opts?.limit) sp.set('limit', String(opts.limit));
+    if (opts?.campaignType) sp.set('campaignType', opts.campaignType);
     const qs = sp.toString();
     return api.get<{
       data: Array<{
         id: string;
         name: string;
+        nameAr: string | null;
         description: string | null;
+        descriptionAr: string | null;
         startsAt: string | null;
         endsAt: string | null;
         budget: string | null;
@@ -9602,9 +10361,17 @@ export const discountApi = {
         isActive: boolean;
         showOnSite: boolean;
         bannerCta: string | null;
+        bannerCtaAr: string | null;
         bulkBatchId: string | null;
         createdAt: string;
         codeCount: number;
+        campaignType?: 'standard' | 'early_bird';
+        discountType?: 'none' | 'percentage' | 'fixed';
+        discountValue?: string | number | null;
+        scope?: 'code_only' | 'all_paid' | 'by_delivery_type' | 'specific_courses';
+        scopeDeliveryTypes?: string[];
+        scopeCourseIds?: string[];
+        allowsCoupon?: boolean;
       }>;
       pagination: { page: number; limit: number; total: number; totalPages: number };
     }>(`/discounts/campaigns${qs ? `?${qs}` : ''}`);
@@ -9612,12 +10379,22 @@ export const discountApi = {
 
   createCampaign: (data: {
     name: string;
+    nameAr?: string | null;
     description?: string;
+    descriptionAr?: string | null;
     startsAt?: string;
     endsAt?: string;
     budget?: number;
     showOnSite?: boolean;
     bannerCta?: string;
+    bannerCtaAr?: string | null;
+    campaignType?: 'standard' | 'early_bird';
+    discountType?: 'none' | 'percentage' | 'fixed';
+    discountValue?: number | null;
+    scope?: 'code_only' | 'all_paid' | 'by_delivery_type' | 'specific_courses';
+    scopeDeliveryTypes?: string[];
+    scopeCourseIds?: string[];
+    allowsCoupon?: boolean;
   }) => api.post<any>('/discounts/campaigns', data),
 
   getCampaign: (id: string) => api.get<any>(`/discounts/campaigns/${id}`),

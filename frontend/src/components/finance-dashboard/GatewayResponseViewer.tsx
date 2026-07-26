@@ -299,7 +299,7 @@ function Row({
       <dt className="text-[var(--color-text-secondary)] font-medium shrink-0">
         {label}
       </dt>
-      <dd className="text-[var(--color-text-primary)] text-right break-all min-w-0">
+      <dd className="text-[var(--color-text-primary)] text-end break-all min-w-0">
         {children}
       </dd>
     </div>

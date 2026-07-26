@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   X,
   Plus,
@@ -21,23 +22,7 @@ type Rule = {
   createdAt: string;
 };
 
-const SCOPES: { value: Rule["matchScope"]; label: string; hint: string }[] = [
-  {
-    value: "both",
-    label: "Subject + description",
-    hint: "Default — match anywhere in the ticket",
-  },
-  {
-    value: "subject",
-    label: "Subject only",
-    hint: "Tighter — won't fire from a tangential keyword in the body",
-  },
-  {
-    value: "description",
-    label: "Description only",
-    hint: "Useful when subjects are template-like",
-  },
-];
+const SCOPE_VALUES: Rule["matchScope"][] = ["both", "subject", "description"];
 
 // Settings → Tags → (per tag) Auto-apply rules.
 //
@@ -56,6 +41,7 @@ export default function TagRulesModal({
   tagColor: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("supportDashboard.tagRules");
   const [rules, setRules] = useState<Rule[] | null>(null);
   const [pattern, setPattern] = useState("");
   const [scope, setScope] = useState<Rule["matchScope"]>("both");
@@ -88,7 +74,7 @@ export default function TagRulesModal({
   async function addRule() {
     const trimmed = pattern.trim();
     if (!trimmed) {
-      toast.error("Enter a phrase to match");
+      toast.error(t("toasts.enterPhrase"));
       return;
     }
     setSaving(true);
@@ -98,10 +84,10 @@ export default function TagRulesModal({
         matchScope: scope,
       });
       setPattern("");
-      toast.success("Rule added");
+      toast.success(t("toasts.ruleAdded"));
       await reload();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to add rule");
+      toast.error(err?.message || t("toasts.ruleAddFailed"));
     } finally {
       setSaving(false);
     }
@@ -113,7 +99,7 @@ export default function TagRulesModal({
       await supportApi.updateTagRule(rule.id, { enabled: !rule.enabled });
       await reload();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to update");
+      toast.error(err?.message || t("toasts.updateFailed"));
     } finally {
       setBusyId(null);
     }
@@ -123,17 +109,16 @@ export default function TagRulesModal({
     setBusyId(rule.id);
     try {
       await supportApi.deleteTagRule(rule.id);
-      toast.success("Rule removed");
+      toast.success(t("toasts.ruleRemoved"));
       await reload();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to delete");
+      toast.error(err?.message || t("toasts.ruleDeleteFailed"));
     } finally {
       setBusyId(null);
     }
   }
 
-  const selectedScopeHint =
-    SCOPES.find((s) => s.value === scope)?.hint ?? SCOPES[0].hint;
+  const selectedScopeHint = t(`scopes.${scope}Hint`);
 
   return (
     <div
@@ -151,7 +136,7 @@ export default function TagRulesModal({
           <div className="flex items-center gap-2 min-w-0">
             <Zap className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-              Auto-apply rules
+              {t("title")}
             </h3>
             <span
               className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full"
@@ -167,7 +152,7 @@ export default function TagRulesModal({
             type="button"
             onClick={onClose}
             className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-            aria-label="Close"
+            aria-label={t("closeAria")}
           >
             <X className="w-5 h-5" />
           </button>
@@ -176,15 +161,13 @@ export default function TagRulesModal({
         {/* Body */}
         <div className="px-5 py-4 overflow-y-auto space-y-4">
           <p className="text-xs text-[var(--color-text-secondary)]">
-            When a new ticket contains any phrase below in the chosen scope,
-            this tag is attached automatically (case-insensitive). Disable a
-            rule to pause without losing it.
+            {t("intro")}
           </p>
 
           {/* Add new rule */}
           <div className="space-y-2">
             <label className="block text-xs font-medium text-[var(--color-text-primary)]">
-              Phrase to match
+              {t("phraseLabel")}
             </label>
             <div className="flex gap-2">
               <input
@@ -192,7 +175,7 @@ export default function TagRulesModal({
                 value={pattern}
                 onChange={(e) => setPattern(e.target.value)}
                 maxLength={200}
-                placeholder="e.g. refund, login error, can't access"
+                placeholder={t("phrasePlaceholder")}
                 className="flex-1 h-10 px-3 bg-white border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") addRule();
@@ -202,7 +185,10 @@ export default function TagRulesModal({
                 <Select
                   value={scope}
                   onChange={(v) => setScope(v as Rule["matchScope"])}
-                  options={SCOPES.map((s) => ({ value: s.value, label: s.label }))}
+                  options={SCOPE_VALUES.map((v) => ({
+                    value: v,
+                    label: t(`scopes.${v}`),
+                  }))}
                 />
               </div>
               <button
@@ -216,7 +202,7 @@ export default function TagRulesModal({
                 ) : (
                   <Plus className="w-4 h-4" />
                 )}
-                Add
+                {t("addButton")}
               </button>
             </div>
             <p className="text-[11px] text-[var(--color-text-secondary)]">
@@ -227,7 +213,7 @@ export default function TagRulesModal({
           {/* List of existing rules */}
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-[var(--color-text-primary)]">
-              Existing rules
+              {t("existingRules")}
             </label>
             {rules === null ? (
               <div className="flex justify-center py-4">
@@ -235,7 +221,7 @@ export default function TagRulesModal({
               </div>
             ) : rules.length === 0 ? (
               <p className="text-xs text-[var(--color-text-secondary)] py-3 text-center">
-                No rules yet — this tag is only ever applied by hand.
+                {t("noRules")}
               </p>
             ) : (
               rules.map((rule) => (
@@ -247,7 +233,7 @@ export default function TagRulesModal({
                     type="button"
                     onClick={() => toggle(rule)}
                     disabled={busyId === rule.id}
-                    aria-label={rule.enabled ? "Disable rule" : "Enable rule"}
+                    aria-label={rule.enabled ? t("disableRuleAria") : t("enableRuleAria")}
                     className={`w-9 h-5 rounded-full relative transition-colors ${
                       rule.enabled
                         ? "bg-[var(--color-primary)]"
@@ -256,7 +242,7 @@ export default function TagRulesModal({
                   >
                     <span
                       className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
-                        rule.enabled ? "left-[18px]" : "left-0.5"
+                        rule.enabled ? "start-[18px]" : "start-0.5"
                       }`}
                     />
                   </button>
@@ -271,18 +257,14 @@ export default function TagRulesModal({
                       “{rule.pattern}”
                     </div>
                     <div className="text-[10px] text-[var(--color-text-secondary)] uppercase">
-                      {rule.matchScope === "both"
-                        ? "Subject + description"
-                        : rule.matchScope === "subject"
-                          ? "Subject only"
-                          : "Description only"}
+                      {t(`scopes.${rule.matchScope}`)}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => remove(rule)}
                     disabled={busyId === rule.id}
-                    aria-label="Delete rule"
+                    aria-label={t("deleteRuleAria")}
                     className="p-1.5 text-[var(--color-text-secondary)] hover:text-[#DC2626] rounded disabled:opacity-50"
                   >
                     {busyId === rule.id ? (
@@ -304,7 +286,7 @@ export default function TagRulesModal({
             onClick={onClose}
             className="px-3 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
           >
-            Done
+            {t("doneButton")}
           </button>
         </div>
       </div>

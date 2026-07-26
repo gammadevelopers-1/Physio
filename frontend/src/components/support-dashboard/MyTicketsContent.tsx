@@ -362,11 +362,21 @@ const MyTicketsContent = () => {
     { key: "overdue", label: t("myTicketsPage.tabs.overdue") },
   ];
 
-  const priorityBorderColors: Record<string, string> = {
-    high: "border-l-[#EF4444]",
-    medium: "border-l-[#F97316]",
-    low: "border-l-[#22C55E]",
-  };
+  // Physical L/R color classes so we can pair with the RTL-flipped
+  // width class below (`border-r-[3px]` in RTL, `border-l-[3px]` in
+  // LTR). Tailwind doesn't ship a logical `border-s-[#hex]` color
+  // utility, so we mirror it manually per direction.
+  const priorityBorderColors: Record<string, string> = isRTL
+    ? {
+        high: "border-r-[#EF4444]",
+        medium: "border-r-[#F97316]",
+        low: "border-r-[#22C55E]",
+      }
+    : {
+        high: "border-l-[#EF4444]",
+        medium: "border-l-[#F97316]",
+        low: "border-l-[#22C55E]",
+      };
 
   const statusStyles: Record<string, string> = {
     new: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { POINT_REASON_I18N_KEYS } from "@/lib/pointsReasonLabels";
 import {
   Award,
+  BookOpen,
   Coins,
   Gift,
   History,
@@ -22,7 +24,10 @@ import { toast } from "sonner";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { TableRowSkeleton } from "./AdminSkeletons";
+import RewardsTab from "./points/RewardsTab";
+import CourseRedemptionsTab from "./points/CourseRedemptionsTab";
 import { useAuth } from "@/contexts";
 import {
   pointsAdminApi,
@@ -33,7 +38,14 @@ import {
   type PointsTransaction,
 } from "@/lib/api";
 
-type Tab = "rules" | "config" | "courses" | "grants" | "history";
+type Tab =
+  | "rules"
+  | "config"
+  | "courses"
+  | "rewards"
+  | "grants"
+  | "courseRedemptions"
+  | "history";
 
 interface AdminProfile {
   name: string;
@@ -73,7 +85,13 @@ const PointsSystemContent = () => {
     { key: "rules", label: t("tabs.rules"), icon: TrendingUp },
     { key: "config", label: t("tabs.config"), icon: Settings },
     { key: "courses", label: t("tabs.courses"), icon: Gift },
+    { key: "rewards", label: t("tabs.rewards"), icon: Sparkles },
     { key: "grants", label: t("tabs.grants"), icon: Plus },
+    {
+      key: "courseRedemptions",
+      label: t("tabs.courseRedemptions"),
+      icon: BookOpen,
+    },
     { key: "history", label: t("tabs.history"), icon: History },
   ];
 
@@ -198,7 +216,9 @@ const PointsSystemContent = () => {
                 />
               )}
               {activeTab === "courses" && <CoursesTab t={t} />}
+              {activeTab === "rewards" && <RewardsTab />}
               {activeTab === "grants" && <GrantsTab t={t} />}
+              {activeTab === "courseRedemptions" && <CourseRedemptionsTab />}
               {activeTab === "history" && <HistoryTab t={t} />}
             </div>
           </div>
@@ -581,176 +601,448 @@ function ConfigField({ label, hint, value, onChange, min, max }: ConfigFieldProp
   );
 }
 
-// ─── Courses Tab ──────────────────────────────────────────────
+// ─── Courses Tab (Eligible Courses) ──────────────────────────
+//
+// Rewritten from the terse table into a searchable card grid. Every card
+// is one course; the admin can set a point cost + toggle enable in the
+// same row and see a 30-day redemption count. Bulk-enable + search + filter
+// chips live in the header. This replaces the sparse legacy table.
+
+type CoursesFilter = "all" | "enabled" | "disabled" | "unconfigured";
 
 function CoursesTab({ t }: TabProps) {
   const [courses, setCourses] = useState<AdminCourseRedemption[] | null>(null);
   const [search, setSearch] = useState("");
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<CoursesFilter>("all");
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [config, setConfig] = useState<PointsConfig | null>(null);
 
   useEffect(() => {
-    const handle = setTimeout(() => {
-      pointsAdminApi.listCourses(search || undefined).then(setCourses);
-    }, 300);
+    pointsAdminApi.getConfig().then(setConfig).catch(() => setConfig(null));
+  }, []);
+
+  const refetch = () => pointsAdminApi.listCourses(search || undefined).then(setCourses);
+
+  useEffect(() => {
+    const handle = setTimeout(refetch, 300);
     return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  const handleToggle = async (course: AdminCourseRedemption) => {
-    setSavingId(course.id);
-    try {
-      const updated = await pointsAdminApi.updateCourseRedemption(course.id, {
-        redeemableForFree: !course.redeemableForFree,
-      });
-      setCourses((prev) =>
-        prev
-          ? prev.map((c) =>
-              c.id === course.id
-                ? { ...c, ...updated, redeemableForFree: updated.redeemableForFree ?? false }
-                : c,
-            )
-          : prev,
-      );
-      toast.success(t("toasts.courseUpdated"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toasts.error"));
-    } finally {
-      setSavingId(null);
-    }
-  };
-
-  const handleCostChange = async (
-    course: AdminCourseRedemption,
-    cost: number | null,
-  ) => {
-    setSavingId(course.id);
-    try {
-      const updated = await pointsAdminApi.updateCourseRedemption(course.id, {
-        freeUnlockCostPoints: cost,
-      });
-      setCourses((prev) =>
-        prev
-          ? prev.map((c) =>
-              c.id === course.id ? { ...c, ...updated, redeemableForFree: updated.redeemableForFree ?? false } : c,
-            )
-          : prev,
-      );
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toasts.error"));
-    } finally {
-      setSavingId(null);
-    }
-  };
+  const filtered = (courses ?? []).filter((c) => {
+    if (filter === "enabled") return c.redeemableForFree;
+    if (filter === "disabled") return c.configured && !c.redeemableForFree;
+    if (filter === "unconfigured") return !c.configured;
+    return true;
+  });
 
   return (
-    <div className="space-y-3">
-      <div className="relative max-w-md">
-        <Search className="absolute top-1/2 -translate-y-1/2 left-3 w-4 h-4 text-[var(--color-text-secondary)]" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("courses.searchPlaceholder")}
-          className="w-full pl-10 pr-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg"
-        />
+    <div className="space-y-4">
+      {/* Header: search + filter chips + bulk action */}
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-3 sm:p-4 flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-[var(--color-text-secondary)]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("courses.searchPlaceholder")}
+              className="w-full ps-10 pe-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)]"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setBulkOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary)]/20 whitespace-nowrap"
+          >
+            <Sparkles className="w-4 h-4" />
+            {t("courses.bulkEnable.button")}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(["all", "enabled", "disabled", "unconfigured"] as CoursesFilter[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFilter(key)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                filter === key
+                  ? "bg-[var(--color-primary)] text-white"
+                  : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+              }`}
+            >
+              {t(`courses.filters.${key}`)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {!courses ? (
         <TabLoader />
+      ) : filtered.length === 0 ? (
+        courses.length === 0 ? (
+          <EmptyEligibleCoursesState t={t} onCTA={() => setBulkOpen(true)} />
+        ) : (
+          <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-12 text-center text-sm text-[var(--color-text-secondary)]">
+            {t("courses.empty")}
+          </div>
+        )
       ) : (
-        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-[var(--color-surface-page)] text-xs text-[var(--color-text-secondary)]">
-              <tr>
-                <th className="text-start px-4 py-3 font-medium">{t("courses.titleColumn")}</th>
-                <th className="text-start px-4 py-3 font-medium">{t("courses.priceColumn")}</th>
-                <th className="text-start px-4 py-3 font-medium">{t("courses.costColumn")}</th>
-                <th className="text-start px-4 py-3 font-medium">{t("courses.redeemableColumn")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--color-border)]">
-              {courses.map((course) => (
-                <CourseRow
-                  key={course.id}
-                  course={course}
-                  saving={savingId === course.id}
-                  onToggle={() => handleToggle(course)}
-                  onCostChange={(cost) => handleCostChange(course, cost)}
-                  t={t}
-                />
-              ))}
-              {courses.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-4 py-8 text-center text-sm text-[var(--color-text-secondary)]"
-                  >
-                    {t("courses.empty")}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((course) => (
+            <EligibleCourseCard
+              key={course.id}
+              course={course}
+              onChange={(updated) =>
+                setCourses((prev) =>
+                  prev
+                    ? prev.map((c) =>
+                        c.id === updated.id
+                          ? {
+                              ...c,
+                              ...updated,
+                              redeemableForFree:
+                                updated.redeemableForFree ?? false,
+                              configured:
+                                updated.configured ??
+                                (updated.freeUnlockCostPoints != null ||
+                                  updated.maxRedemptionPct != null),
+                            }
+                          : c,
+                      )
+                    : prev,
+                )
+              }
+              onRemove={() =>
+                setCourses((prev) =>
+                  prev
+                    ? prev.map((c) =>
+                        c.id === course.id
+                          ? {
+                              ...c,
+                              redeemableForFree: false,
+                              freeUnlockCostPoints: null,
+                              configured: false,
+                            }
+                          : c,
+                      )
+                    : prev,
+                )
+              }
+              t={t}
+            />
+          ))}
         </div>
+      )}
+
+      {bulkOpen && (
+        <BulkEnableModal
+          config={config}
+          onClose={() => setBulkOpen(false)}
+          onApplied={() => {
+            setBulkOpen(false);
+            refetch();
+          }}
+          t={t}
+        />
       )}
     </div>
   );
 }
 
-interface CourseRowProps {
+interface EligibleCourseCardProps {
   course: AdminCourseRedemption;
-  saving: boolean;
-  onToggle: () => void;
-  onCostChange: (cost: number | null) => void;
+  onChange: (row: Partial<AdminCourseRedemption> & { id: string }) => void;
+  onRemove: () => void;
   t: ReturnType<typeof useTranslations>;
 }
 
-function CourseRow({ course, saving, onToggle, onCostChange, t }: CourseRowProps) {
+function EligibleCourseCard({
+  course,
+  onChange,
+  onRemove,
+  t,
+}: EligibleCourseCardProps) {
   const [cost, setCost] = useState<string>(
     course.freeUnlockCostPoints != null ? String(course.freeUnlockCostPoints) : "",
   );
+  const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const dirty =
+    (cost === "" ? course.freeUnlockCostPoints != null : Number(cost) !== course.freeUnlockCostPoints);
+
+  const handleSave = async () => {
+    const parsed = cost === "" ? null : Math.max(1, Math.min(100000, Number(cost)));
+    setSaving(true);
+    try {
+      const updated = await pointsAdminApi.updateCourseRedemption(course.id, {
+        freeUnlockCostPoints: parsed,
+      });
+      onChange({ ...updated, id: course.id });
+      toast.success(t("toasts.courseUpdated"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("toasts.error"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggle = async () => {
+    setSaving(true);
+    try {
+      const updated = await pointsAdminApi.updateCourseRedemption(course.id, {
+        redeemableForFree: !course.redeemableForFree,
+      });
+      onChange({ ...updated, id: course.id });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("toasts.error"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+
+  const handleRemove = () => {
+    setConfirmRemoveOpen(true);
+  };
+
+  const confirmRemove = async () => {
+    setRemoving(true);
+    try {
+      await pointsAdminApi.deleteCourseRedemption(course.id);
+      onRemove();
+      toast.success(t("courses.removedToast"));
+      setConfirmRemoveOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("toasts.error"));
+    } finally {
+      setRemoving(false);
+    }
+  };
+
+  const deliveryChipLabel = t(`courses.delivery.${course.deliveryType}` as `courses.delivery.zoom`);
 
   return (
-    <tr>
-      <td className="px-4 py-3">
-        <p className="font-medium text-[var(--color-text-primary)]">
-          {course.title}
-        </p>
-        {course.titleAr && (
-          <p className="text-xs text-[var(--color-text-secondary)]" dir="rtl">
-            {course.titleAr}
-          </p>
+    <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl overflow-hidden flex flex-col">
+      {/* Thumbnail */}
+      <div className="aspect-video bg-[var(--color-surface-page)] relative overflow-hidden">
+        {course.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={course.thumbnail}
+            alt={course.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Gift className="w-10 h-10 text-[var(--color-text-secondary)] opacity-40" />
+          </div>
         )}
-      </td>
-      <td className="px-4 py-3 text-[var(--color-text-secondary)]">
-        {Number(course.price ?? 0)} SAR
-      </td>
-      <td className="px-4 py-3">
+        {course.configured && (
+          <div className="absolute top-2 end-2">
+            <button
+              type="button"
+              onClick={handleRemove}
+              disabled={removing}
+              className="w-7 h-7 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+              aria-label={t("courses.remove")}
+            >
+              {removing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span className="text-xs leading-none">×</span>}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 flex-1 flex flex-col gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] line-clamp-2">
+            {course.title}
+          </h3>
+          {course.titleAr && (
+            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 line-clamp-1" dir="rtl">
+              {course.titleAr}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap text-xs">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--color-border-subtle)] rounded-full text-[var(--color-text-secondary)]">
+            {deliveryChipLabel}
+          </span>
+          <span className="font-semibold text-[var(--color-primary)]">
+            {Number(course.price ?? 0)} SAR
+          </span>
+        </div>
+
+        <div className="flex items-end gap-2 mt-auto">
+          <div className="flex-1 min-w-0">
+            <label className="block text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)] mb-1">
+              {t("courses.costColumn")}
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={100000}
+              value={cost}
+              onChange={(e) => setCost(e.target.value)}
+              placeholder={t("courses.autoCost")}
+              className="w-full h-9 px-3 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)]"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className="h-9 px-3 text-xs font-medium btn-gold rounded-lg text-white disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t("save")}
+          </button>
+          <button
+            type="button"
+            onClick={handleToggle}
+            disabled={saving}
+            className={`h-9 px-3 text-xs font-medium rounded-lg whitespace-nowrap ${
+              course.redeemableForFree
+                ? "bg-[#DCFCE7] text-[#15803D] hover:bg-[#BBF7D0]"
+                : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+            }`}
+          >
+            {course.redeemableForFree ? t("courses.enabled") : t("courses.disabled")}
+          </button>
+        </div>
+
+        <p className="text-[11px] text-[var(--color-text-secondary)] pt-2 border-t border-[var(--color-border-subtle)]">
+          {t("courses.redemptionsLast30d", { count: course.redemptionsLast30d ?? 0 })}
+        </p>
+      </div>
+      <ConfirmDialog
+        open={confirmRemoveOpen}
+        title={t("courses.removeTitle")}
+        message={t("courses.removeConfirm")}
+        confirmLabel={t("courses.removeConfirmLabel")}
+        cancelLabel={t("courses.cancel")}
+        loading={removing}
+        danger
+        onConfirm={confirmRemove}
+        onClose={() => !removing && setConfirmRemoveOpen(false)}
+      />
+    </div>
+  );
+}
+
+function EmptyEligibleCoursesState({
+  t,
+  onCTA,
+}: {
+  t: ReturnType<typeof useTranslations>;
+  onCTA: () => void;
+}) {
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 text-center">
+      <Sparkles className="w-12 h-12 text-[var(--color-primary)] opacity-50 mx-auto mb-4" />
+      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">
+        {t("courses.emptyState.title")}
+      </h3>
+      <p className="text-sm text-[var(--color-text-secondary)] max-w-md mx-auto mb-5">
+        {t("courses.emptyState.body")}
+      </p>
+      <button
+        type="button"
+        onClick={onCTA}
+        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-gold rounded-lg text-white"
+      >
+        <Sparkles className="w-4 h-4" />
+        {t("courses.emptyState.cta")}
+      </button>
+    </div>
+  );
+}
+
+function BulkEnableModal({
+  config,
+  onClose,
+  onApplied,
+  t,
+}: {
+  config: PointsConfig | null;
+  onClose: () => void;
+  onApplied: () => void;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  // Default to the platform's own conversion rate — an admin who just wants
+  // "the standard cost" doesn't have to think about the multiplier.
+  const defaultMultiplier = config?.conversionRatePointsPerSar ?? 10;
+  const [multiplier, setMultiplier] = useState<string>(String(defaultMultiplier));
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    const num = Number(multiplier);
+    if (!Number.isFinite(num) || num <= 0) {
+      toast.error(t("toasts.error"));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await pointsAdminApi.bulkEnableCourseRedemption(num);
+      toast.success(t("courses.bulkEnable.doneToast", { count: res.inserted }));
+      onApplied();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("toasts.error"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-6 max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+          {t("courses.bulkEnable.title")}
+        </h3>
+        <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+          {t("courses.bulkEnable.body")}
+        </p>
+        <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+          {t("courses.bulkEnable.multiplierLabel")}
+        </label>
         <input
           type="number"
-          min={1}
-          value={cost}
-          onChange={(e) => setCost(e.target.value)}
-          onBlur={() => {
-            const val = cost === "" ? null : Number(cost);
-            if (val !== course.freeUnlockCostPoints) {
-              onCostChange(val);
-            }
-          }}
-          placeholder={t("courses.autoCost")}
-          className="w-24 px-2 py-1 text-xs border border-[var(--color-input-border)] rounded"
+          min={0.1}
+          step={0.1}
+          value={multiplier}
+          onChange={(e) => setMultiplier(e.target.value)}
+          className="w-full h-10 px-3 text-sm border border-[var(--color-input-border)] rounded-lg mb-1"
         />
-      </td>
-      <td className="px-4 py-3">
-        <button
-          type="button"
-          onClick={onToggle}
-          disabled={saving}
-          className={`px-3 py-1 rounded-full text-xs font-medium ${course.redeemableForFree ? "bg-[#16A34A] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}
-        >
-          {saving ? "…" : course.redeemableForFree ? t("courses.enabled") : t("courses.disabled")}
-        </button>
-      </td>
-    </tr>
+        <p className="text-[11px] text-[var(--color-text-secondary)] mb-5">
+          {t("courses.bulkEnable.multiplierHint", { rate: defaultMultiplier })}
+        </p>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className="px-4 py-2 text-sm font-medium rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+          >
+            {t("courses.bulkEnable.cancel")}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="px-4 py-2 text-sm font-medium btn-gold rounded-lg text-white inline-flex items-center gap-2"
+          >
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {t("courses.bulkEnable.confirm")}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -929,6 +1221,11 @@ function GrantsTab({ t }: TabProps) {
 // ─── History Tab ──────────────────────────────────────────────
 
 function HistoryTab({ t }: TabProps) {
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+  const tReasons = useTranslations(
+    "adminDashboard.points.userHistory.reasons",
+  );
   const [search, setSearch] = useState("");
   const [students, setStudents] = useState<AdminUserSearchResult[] | null>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUserSearchResult | null>(null);
@@ -1072,27 +1369,46 @@ function HistoryTab({ t }: TabProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--color-border)]">
-                    {transactions.map((tx) => (
-                      <tr key={tx.id}>
-                        <td className="px-3 py-2 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">
-                          {dateFmt.format(new Date(tx.createdAt))}
-                        </td>
-                        <td className="px-3 py-2">
-                          <p className="text-[var(--color-text-primary)]">
-                            {tx.ruleDescription || tx.reason}
-                          </p>
-                          <p className="text-[10px] text-[var(--color-text-secondary)]">
-                            {tx.reason}
-                          </p>
-                        </td>
-                        <td
-                          className={`px-3 py-2 text-end font-semibold whitespace-nowrap ${tx.delta > 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}
-                        >
-                          {tx.delta > 0 ? "+" : ""}
-                          {tx.delta}
-                        </td>
-                      </tr>
-                    ))}
+                    {transactions.map((tx) => {
+                      // Prefer admin-authored rule description in the
+                      // current locale — usually more specific than the
+                      // generic reason label. Fall back to the reason-map
+                      // i18n key, then to the raw reason string.
+                      const localizedRuleDesc =
+                        (isRTL && tx.ruleDescriptionAr) || tx.ruleDescription;
+                      const mapKey = POINT_REASON_I18N_KEYS[tx.reason];
+                      const displayReason = localizedRuleDesc
+                        ? localizedRuleDesc
+                        : mapKey
+                          ? tReasons(
+                              mapKey as
+                                | "adminGrant"
+                                | "adminDeduct"
+                                | "earnSignup",
+                            )
+                          : tx.reason;
+                      return (
+                        <tr key={tx.id}>
+                          <td className="px-3 py-2 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">
+                            {dateFmt.format(new Date(tx.createdAt))}
+                          </td>
+                          <td className="px-3 py-2">
+                            <p className="text-[var(--color-text-primary)]">
+                              {displayReason}
+                            </p>
+                            <p className="text-[10px] text-[var(--color-text-secondary)]">
+                              {tx.reason}
+                            </p>
+                          </td>
+                          <td
+                            className={`px-3 py-2 text-end font-semibold whitespace-nowrap ${tx.delta > 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}
+                          >
+                            {tx.delta > 0 ? "+" : ""}
+                            {tx.delta}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -29,6 +29,7 @@ import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useContentReview } from "@/hooks/useContentReview";
+import Select from "@/components/admin-dashboard/Select";
 
 
 const TYPE_ICONS: Record<string, { icon: typeof Video; bg: string; color: string }> = {
@@ -421,37 +422,41 @@ const ContentReviewContent = () => {
                     className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent outline-none`}
                   />
                 </div>
-                <select
+                <Select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent outline-none"
-                >
-                  <option value="all">{t("contentReviewPage.filters.allStatus")}</option>
-                  <option value="pending_review">{t("contentReviewPage.filters.pending")}</option>
-                  <option value="changes_requested">{t("contentReviewPage.filters.changesRequested")}</option>
-                  <option value="live">{t("contentReviewPage.filters.approved")}</option>
-                  <option value="rejected">{t("contentReviewPage.filters.rejected")}</option>
-                </select>
-                <select
+                  onChange={setStatusFilter}
+                  options={[
+                    { value: "all", label: t("contentReviewPage.filters.allStatus") },
+                    { value: "pending_review", label: t("contentReviewPage.filters.pending") },
+                    { value: "changes_requested", label: t("contentReviewPage.filters.changesRequested") },
+                    { value: "live", label: t("contentReviewPage.filters.approved") },
+                    { value: "rejected", label: t("contentReviewPage.filters.rejected") },
+                  ]}
+                  className="w-48"
+                  size="sm"
+                />
+                <Select
                   value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent outline-none"
-                >
-                  <option value="all">{t("contentReviewPage.filters.allTypes")}</option>
-                  <option value="video">{t("contentReviewPage.filters.video")}</option>
-                  <option value="pdf">{t("contentReviewPage.filters.pdf")}</option>
-                  <option value="document">{t("contentReviewPage.filters.document")}</option>
-                </select>
-                <select
+                  onChange={setTypeFilter}
+                  options={[
+                    { value: "all", label: t("contentReviewPage.filters.allTypes") },
+                    { value: "video", label: t("contentReviewPage.filters.video") },
+                    { value: "pdf", label: t("contentReviewPage.filters.pdf") },
+                    { value: "document", label: t("contentReviewPage.filters.document") },
+                  ]}
+                  className="w-40"
+                  size="sm"
+                />
+                <Select
                   value={courseFilter}
-                  onChange={(e) => setCourseFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent outline-none"
-                >
-                  <option value="all">{t("contentReviewPage.filters.allCourses")}</option>
-                  {courses.map((course) => (
-                    <option key={course} value={course}>{course}</option>
-                  ))}
-                </select>
+                  onChange={setCourseFilter}
+                  options={[
+                    { value: "all", label: t("contentReviewPage.filters.allCourses") },
+                    ...courses.map((course) => ({ value: course, label: course })),
+                  ]}
+                  className="w-48"
+                  size="sm"
+                />
               </div>
 
               {/* Comment Modal Overlay */}

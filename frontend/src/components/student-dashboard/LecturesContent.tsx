@@ -10,6 +10,7 @@ import StudentDashboardError from "./StudentDashboardError";
 import OfflineBanner from "./OfflineBanner";
 import CalendarGrid from "./CalendarGrid";
 import EventDetailPanel from "./EventDetailPanel";
+import Select from "@/components/ui/Select";
 import LecturesListView from "./widgets/LecturesListView";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCalendar } from "@/hooks/useStudentCalendar";
@@ -159,29 +160,32 @@ const LecturesContent = () => {
 
                   {/* Filters */}
                   <div className="flex flex-wrap items-center gap-2 flex-1">
-                    <select
+                    <Select
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                      className="px-3 py-2 text-xs border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="all">{t("filterAll")}</option>
-                      <option value="upcoming">{t("filterUpcoming")}</option>
-                      <option value="completed">{t("filterCompleted")}</option>
-                      <option value="cancelled">{t("filterCancelled")}</option>
-                    </select>
+                      onChange={(v) => setStatusFilter(v as StatusFilter)}
+                      size="sm"
+                      className="min-w-[140px]"
+                      options={[
+                        { value: "all", label: t("filterAll") },
+                        { value: "upcoming", label: t("filterUpcoming") },
+                        { value: "completed", label: t("filterCompleted") },
+                        { value: "cancelled", label: t("filterCancelled") },
+                      ]}
+                    />
 
-                    <select
+                    <Select
                       value={courseFilter}
-                      onChange={(e) => setCourseFilter(e.target.value)}
-                      className="px-3 py-2 text-xs border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-w-[140px]"
-                    >
-                      <option value="all">{t("allCourses")}</option>
-                      {enrolledCourses.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {isRTL && c.titleAr ? c.titleAr : c.title}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setCourseFilter}
+                      size="sm"
+                      className="min-w-[160px]"
+                      options={[
+                        { value: "all", label: t("allCourses") },
+                        ...enrolledCourses.map((c) => ({
+                          value: c.id,
+                          label: isRTL && c.titleAr ? c.titleAr : c.title,
+                        })),
+                      ]}
+                    />
                   </div>
 
                   {/* Hijri / Gregorian toggle (mirror inst/mng pattern, persists to account) */}

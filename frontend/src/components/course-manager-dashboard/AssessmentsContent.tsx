@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import SkeletonTableRow from "@/components/shared/SkeletonTableRow";
 import DateTimePicker from "@/components/ui/DateTimePicker";
+import Select from "@/components/admin-dashboard/Select";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
@@ -642,17 +643,18 @@ const AssessmentsContent = () => {
           <label className="text-sm text-[var(--color-text-secondary)] block mb-1">
             {t("assessmentsPage.retake.scorePolicy")}
           </label>
-          <select
+          <Select
             value={form.retakeScorePolicy}
-            onChange={(e) =>
-              setForm({ ...form, retakeScorePolicy: e.target.value })
+            onChange={(v) =>
+              setForm({ ...form, retakeScorePolicy: v })
             }
-            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-          >
-            <option value="highest">{t("assessmentsPage.retake.policies.highest")}</option>
-            <option value="latest">{t("assessmentsPage.retake.policies.latest")}</option>
-            <option value="average">{t("assessmentsPage.retake.policies.average")}</option>
-          </select>
+            options={[
+              { value: "highest", label: t("assessmentsPage.retake.policies.highest") },
+              { value: "latest", label: t("assessmentsPage.retake.policies.latest") },
+              { value: "average", label: t("assessmentsPage.retake.policies.average") },
+            ]}
+            className="w-full"
+          />
           {courseHint && (
             <p className="text-xs text-[var(--color-text-secondary)] mt-1">
               {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentRetakeScorePolicy}
@@ -740,16 +742,15 @@ const AssessmentsContent = () => {
                     {t("dashboard.loading") || "Loading..."}
                   </div>
                 ) : (
-                  <select
+                  <Select
                     value={selectedCourseId}
-                    onChange={(e) => setSelectedCourseId(e.target.value)}
-                    className="w-full sm:w-96 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                  >
-                    <option value="">{t("assessmentsPage.allCourses") || "All Courses"}</option>
-                    {courses.map((c) => (
-                      <option key={c.id} value={c.id}>{c.title}</option>
-                    ))}
-                  </select>
+                    onChange={setSelectedCourseId}
+                    options={[
+                      { value: "", label: t("assessmentsPage.allCourses") || "All Courses" },
+                      ...courses.map((c) => ({ value: c.id, label: c.title })),
+                    ]}
+                    className="w-full sm:w-96"
+                  />
                 )}
               </div>
 
@@ -1031,26 +1032,30 @@ const AssessmentsContent = () => {
                             />
                           </div>
                           <div className="flex gap-3">
-                            <select
+                            <Select
                               value={typeFilter}
-                              onChange={(e) => setTypeFilter(e.target.value)}
-                              className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                            >
-                              <option value="all">{t("assessmentsPage.filters.allTypes")}</option>
-                              <option value="quiz">{t("assessmentsPage.filters.quiz")}</option>
-                              <option value="exam">{t("assessmentsPage.filters.exam")}</option>
-                              <option value="assignment">{t("assessmentsPage.filters.assignment")}</option>
-                            </select>
-                            <select
+                              onChange={setTypeFilter}
+                              options={[
+                                { value: "all", label: t("assessmentsPage.filters.allTypes") },
+                                { value: "quiz", label: t("assessmentsPage.filters.quiz") },
+                                { value: "exam", label: t("assessmentsPage.filters.exam") },
+                                { value: "assignment", label: t("assessmentsPage.filters.assignment") },
+                              ]}
+                              className="w-40"
+                              size="sm"
+                            />
+                            <Select
                               value={statusFilter}
-                              onChange={(e) => setStatusFilter(e.target.value)}
-                              className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                            >
-                              <option value="all">{t("assessmentsPage.filters.allStatus")}</option>
-                              <option value="draft">{t("assessmentsPage.filters.draft")}</option>
-                              <option value="published">Published</option>
-                              <option value="closed">Closed</option>
-                            </select>
+                              onChange={setStatusFilter}
+                              options={[
+                                { value: "all", label: t("assessmentsPage.filters.allStatus") },
+                                { value: "draft", label: t("assessmentsPage.filters.draft") },
+                                { value: "published", label: "Published" },
+                                { value: "closed", label: "Closed" },
+                              ]}
+                              className="w-40"
+                              size="sm"
+                            />
                           </div>
                         </div>
                       </div>
@@ -1322,16 +1327,15 @@ const AssessmentsContent = () => {
                         <label className="text-sm font-medium text-[var(--color-text-secondary)] block mb-2">
                           {t("assessmentsPage.submissions.selectAssessment")}
                         </label>
-                        <select
+                        <Select
                           value={selectedSubmissionAssessment}
-                          onChange={(e) => setSelectedSubmissionAssessment(e.target.value)}
-                          className="w-full sm:w-80 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          <option value="">{t("assessmentsPage.submissions.selectPlaceholder")}</option>
-                          {assessments.map((a) => (
-                            <option key={a.id} value={a.id}>{a.title}</option>
-                          ))}
-                        </select>
+                          onChange={setSelectedSubmissionAssessment}
+                          options={[
+                            { value: "", label: t("assessmentsPage.submissions.selectPlaceholder") },
+                            ...assessments.map((a) => ({ value: a.id, label: a.title })),
+                          ]}
+                          className="w-full sm:w-80"
+                        />
                       </div>
 
                       {!selectedSubmissionAssessment && (
@@ -1855,16 +1859,15 @@ const AssessmentsContent = () => {
                 <label className="text-sm font-medium text-[var(--color-text-secondary)] block mb-1">
                   {t("assessmentsPage.override.selectStudent")}
                 </label>
-                <select
+                <Select
                   value={overrideForm.studentId}
-                  onChange={(e) => setOverrideForm({ ...overrideForm, studentId: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                >
-                  <option value="">{t("assessmentsPage.override.selectStudent")}</option>
-                  {overrideStudents.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+                  onChange={(v) => setOverrideForm({ ...overrideForm, studentId: v })}
+                  options={[
+                    { value: "", label: t("assessmentsPage.override.selectStudent") },
+                    ...overrideStudents.map((s) => ({ value: s.id, label: s.name })),
+                  ]}
+                  className="w-full"
+                />
               </div>
               {/* Helper text — extra attempts are handled by Allow Retake now */}
               <p className="text-xs text-[var(--color-text-secondary)]">

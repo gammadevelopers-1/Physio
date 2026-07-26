@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supportApi, uploadFormData } from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { useSupportOnlineStatus } from "@/hooks/useSupportOnlineStatus";
+import { useVisibilityPolling } from "@/hooks/useVisibilityPolling";
 import { AdminSidebar, AdminNavbar } from "@/components/admin-dashboard";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import Select from "./Select";
@@ -206,13 +207,24 @@ export default function AdminTicketDetailContent() {
   useEffect(() => {
     setIsLoading(true);
     void fetchTicket();
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        void fetchTicket();
-      }
-    }, 60_000);
-    return () => clearInterval(interval);
   }, [fetchTicket]);
+
+  // Poll the ticket every 8s so new replies from the requester and
+  // other staff appear without a manual refresh. Silent — a transient
+  // poll failure must not surface a toast or wipe the thread.
+  useVisibilityPolling(
+    async () => {
+      if (!ticketId) return;
+      try {
+        const data = await supportApi.getTicket(ticketId);
+        setTicket(data as TicketDetail);
+      } catch {
+        // ignore transient poll failures
+      }
+    },
+    8000,
+    Boolean(ticketId),
+  );
 
   useEffect(() => {
     supportApi

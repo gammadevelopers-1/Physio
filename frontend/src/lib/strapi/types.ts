@@ -722,6 +722,7 @@ export interface CoursesPage {
   filterPricingLabel: string | null;
   filterFreeLabel: string | null;
   filterPaidLabel: string | null;
+  filterOnSaleLabel: string | null;
   filterAvailabilityLabel: string | null;
   filterAvailOpenLabel: string | null;
   filterAvailStartingSoonLabel: string | null;

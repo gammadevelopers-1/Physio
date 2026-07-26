@@ -31,6 +31,7 @@ import {
   Radio,
 } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
+import Select from "@/components/admin-dashboard/Select";
 
 /* ------------------------------------------------------------------ */
 /*  Modal Overlay                                                      */
@@ -203,22 +204,21 @@ function ExportModal({
                 <span className="text-red-500 ms-0.5">*</span>
               )}
             </label>
-            <select
+            <Select
               value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-            >
-              {reportType.requiresCourse ? (
-                <option value="">{t("reportsPage.chooseCourse")}</option>
-              ) : (
-                <option value="">{t("reportsPage.allCourses")}</option>
-              )}
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedCourse}
+              options={[
+                {
+                  value: "",
+                  label: reportType.requiresCourse
+                    ? t("reportsPage.chooseCourse")
+                    : t("reportsPage.allCourses"),
+                },
+                ...courses.map((c) => ({ value: c.id, label: c.title })),
+              ]}
+              className="w-full"
+              size="default"
+            />
           </div>
 
           {/* Date Range (only for attendance) */}
@@ -487,32 +487,30 @@ const ReportsContent = () => {
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1 flex flex-col md:flex-row gap-3">
                     {/* Course filter */}
-                    <select
+                    <Select
                       value={filterCourse}
-                      onChange={(e) => setFilterCourse(e.target.value)}
+                      onChange={setFilterCourse}
+                      options={[
+                        { value: "", label: t("reportsPage.allCourses") },
+                        ...courses.map((c) => ({ value: c.id, label: c.title })),
+                      ]}
                       disabled={loadingCourses}
-                      className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] disabled:opacity-50"
-                    >
-                      <option value="">{t("reportsPage.allCourses")}</option>
-                      {courses.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.title}
-                        </option>
-                      ))}
-                    </select>
+                      className="flex-1"
+                      size="sm"
+                    />
 
                     {/* Format filter */}
-                    <select
+                    <Select
                       value={filterFormat}
-                      onChange={(e) =>
-                        setFilterFormat(e.target.value as ReportFormat)
-                      }
-                      className="md:w-40 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="pdf">PDF</option>
-                      <option value="csv">CSV</option>
-                      <option value="xlsx">Excel (XLSX)</option>
-                    </select>
+                      onChange={(v) => setFilterFormat(v as ReportFormat)}
+                      options={[
+                        { value: "pdf", label: "PDF" },
+                        { value: "csv", label: "CSV" },
+                        { value: "xlsx", label: "Excel (XLSX)" },
+                      ]}
+                      className="md:w-40"
+                      size="sm"
+                    />
                   </div>
 
                   <button

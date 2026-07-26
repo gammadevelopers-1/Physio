@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { eq, and, gte, lte, desc, count, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import { nelcAuditLogs } from '../../database/schema';
+import { toCsvBuffer, CSV_CONTENT_TYPE } from '../../common/exports/csv.util';
 
 @Injectable()
 export class NelcAuditService {
@@ -126,7 +127,7 @@ export class NelcAuditService {
       .limit(10_000);
 
     const headers = ['ID', 'Event Type', 'Entity Type', 'Entity ID', 'User ID', 'IP Address', 'Metadata', 'Created At'];
-    const csvRows = rows.map((r) => [
+    const csvRows: (string | number | null)[][] = rows.map((r) => [
       r.id,
       r.eventType,
       r.entityType ?? '',
@@ -137,17 +138,11 @@ export class NelcAuditService {
       r.createdAt ? new Date(r.createdAt).toISOString() : '',
     ]);
 
-    const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
-    const csv = [
-      headers.map(escape).join(','),
-      ...csvRows.map((row) => row.map(escape).join(',')),
-    ].join('\n');
-
     const ts = new Date().toISOString().slice(0, 10);
     return {
-      buffer: Buffer.from(csv, 'utf-8'),
+      buffer: toCsvBuffer(csvRows, { headers }),
       filename: `nelc-audit-logs-${ts}.csv`,
-      contentType: 'text/csv',
+      contentType: CSV_CONTENT_TYPE,
     };
   }
 

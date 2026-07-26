@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { paymentApi, invoiceApi } from "@/lib/api";
 import { useCart } from "@/contexts/CartContext";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
+import InvoiceLanguageDialog from "@/components/ui/InvoiceLanguageDialog";
+import { useInvoiceLanguage } from "@/hooks/useInvoiceLanguage";
 
 interface PaymentDetails {
   status: string;
@@ -111,8 +113,12 @@ export default function PaymentSuccessPageClient({
     return () => clearTimeout(timer);
   }, [payment?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const { dialogProps: langDialogProps, promptForLocale } = useInvoiceLanguage();
+
   const handleDownloadInvoice = async () => {
     if (!paymentId) return;
+    const chosen = await promptForLocale();
+    if (!chosen) return;
     setDownloading(true);
     try {
       const myInvoices = await invoiceApi.getMyInvoices(1, 100);
@@ -120,7 +126,7 @@ export default function PaymentSuccessPageClient({
         (inv: { paymentId?: string }) => inv.paymentId === paymentId
       );
       if (invoice) {
-        const result = await invoiceApi.getPdfUrl(invoice.id);
+        const result = await invoiceApi.getPdfUrl(invoice.id, chosen);
         if (result.url) {
           window.open(result.url, "_blank");
         } else {
@@ -151,7 +157,7 @@ export default function PaymentSuccessPageClient({
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
 
   return (
-    <div className="min-h-screen bg-[#EEF3F7] flex flex-col" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-[var(--color-surface-page)] flex flex-col" dir={isRTL ? "rtl" : "ltr"}>
       <Navbar
         siteSettings={siteSettings}
         navLinks={navbarLinks}
@@ -287,6 +293,7 @@ export default function PaymentSuccessPageClient({
         </div>
       </main>
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
+      <InvoiceLanguageDialog {...langDialogProps} />
     </div>
   );
 }

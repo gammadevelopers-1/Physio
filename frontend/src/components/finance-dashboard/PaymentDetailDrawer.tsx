@@ -120,7 +120,17 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
   const gwLabel = (g: string | null | undefined) =>
     !g ? "—" : KNOWN_GATEWAYS.has(g) ? t(`reportsPage.gatewayLabels.${g}`) : g.replace(/_/g, " ");
   const REFUND_STATUSES = new Set(["pending", "approved", "processing", "completed", "rejected", "failed"]);
-  const REFUND_REASONS = new Set(["policy", "cancelled", "course_cancelled", "duplicate", "technical", "other"]);
+  const REFUND_REASONS = new Set([
+    "policy",
+    "cancelled",
+    "course_cancelled",
+    "duplicate",
+    "technical",
+    "other",
+    "description_mismatch",
+    "wrong_course",
+    "access_issue",
+  ]);
   const refundStatusLabel = (s: string | null | undefined) =>
     !s ? "—" : REFUND_STATUSES.has(s) ? t(`refundsPage.statusLabels.${s}`) : s.replace(/_/g, " ");
   const refundReasonLabel = (r: string | null | undefined) =>
@@ -139,13 +149,34 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
     ? `${data.payment.id.slice(0, 13).toUpperCase()} · ${gwLabel(data.payment.gateway)}`
     : "";
 
+  // Same "attached refund wins the chip" rule the student drawer applies —
+  // see student billingHelpers.resolvePaymentStatusChip. When a refund is
+  // attached and hasn't yet completed, we surface its status (e.g. "Refund
+  // requested") instead of leaving the chip on "Paid" (which the backend
+  // deliberately keeps until the completion transaction).
+  const latestRefund = data?.refunds && data.refunds.length > 0 ? data.refunds[0] : null;
+  const refundOverride: { statusKey: string; pillKey: string } | null = latestRefund
+    ? latestRefund.status === "pending"
+      ? { statusKey: "refundPending", pillKey: "processing" }
+      : latestRefund.status === "approved"
+        ? { statusKey: "refundApproved", pillKey: "processing" }
+        : latestRefund.status === "processing"
+          ? { statusKey: "refundProcessing", pillKey: "processing" }
+          : latestRefund.status === "rejected"
+            ? { statusKey: "refundRejected", pillKey: "rejected" }
+            : latestRefund.status === "failed"
+              ? { statusKey: "refundFailed", pillKey: "failed" }
+              : null // completed → fall through to payment.status
+    : null;
   const statusKey =
-    data?.payment.status === "partially_refunded"
+    refundOverride?.statusKey ??
+    (data?.payment.status === "partially_refunded"
       ? "partiallyRefunded"
       : data?.payment.status === "awaiting_approval"
         ? "awaitingApproval"
-        : data?.payment.status || "pending";
-  const statusStyle = STATUS_PILL[data?.payment.status || "pending"] || STATUS_PILL.pending;
+        : data?.payment.status || "pending");
+  const statusPillState = refundOverride?.pillKey || data?.payment.status || "pending";
+  const statusStyle = STATUS_PILL[statusPillState] || STATUS_PILL.pending;
 
   // Tamara cancel is only meaningful before capture — once paid, the refund
   // flow is the correct tool. Restrict to the states where our webhook

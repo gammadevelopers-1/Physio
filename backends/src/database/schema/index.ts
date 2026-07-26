@@ -115,6 +115,8 @@ export * from './point-transactions';
 export * from './point-redemptions';
 export * from './points-config';
 export * from './course-redemption-settings';
+export * from './reward-catalog';
+export * from './reward-redemptions';
 
 // Sidebar alert badges — per-user last-viewed timestamps per tab
 export * from './sidebar-views';

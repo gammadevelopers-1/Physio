@@ -7,6 +7,7 @@ import { supportApi } from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { AdminSidebar, AdminNavbar } from "@/components/admin-dashboard";
 import AdminMobileSidebar from "./AdminMobileSidebar";
+import DatePicker from "@/components/ui/DatePicker";
 import {
   ArrowLeft,
   ArrowRight,
@@ -170,21 +171,11 @@ export default function AdminSupervisorDetailContent() {
                 ))}
                 {range === "custom" && (
                   <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={customFrom}
-                      onChange={(e) => setCustomFrom(e.target.value)}
-                      className="h-8 px-2 border border-[var(--color-input-border)] rounded text-xs"
-                    />
+                    <DatePicker value={customFrom} onChange={setCustomFrom} />
                     <span className="text-xs text-[var(--color-text-secondary)]">
                       →
                     </span>
-                    <input
-                      type="date"
-                      value={customTo}
-                      onChange={(e) => setCustomTo(e.target.value)}
-                      className="h-8 px-2 border border-[var(--color-input-border)] rounded text-xs"
-                    />
+                    <DatePicker value={customTo} onChange={setCustomTo} min={customFrom || undefined} />
                   </div>
                 )}
               </div>

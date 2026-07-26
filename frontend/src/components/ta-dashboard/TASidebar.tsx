@@ -134,7 +134,7 @@ const TASidebar = () => {
             <div ref={avatarMenuRef}>
               <button
                 onClick={() => setAvatarMenuOpen((v) => !v)}
-                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-dark)] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:from-[#8e6d3d] hover:to-[#5a411e] transition-colors`}
+                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 btn-gold rounded-full flex items-center justify-center border-2 border-white cursor-pointer transition-colors`}
                 aria-label={t("sidebar.editProfile")}
                 aria-haspopup="true"
                 aria-expanded={avatarMenuOpen}
@@ -171,9 +171,9 @@ const TASidebar = () => {
           <p className="text-sm text-[var(--color-text-secondary)] mb-2">{email}</p>
 
           {/* Role Badge */}
-          <div className="px-3 py-1 bg-[#FFF8E6] rounded-full">
+          <div className="px-3 py-1 bg-[var(--gold-gold-100)] rounded-full">
             <span className="text-sm font-medium text-[var(--color-primary-dark)]">
-              Teaching Assistant
+              {t("sidebar.roleBadge")}
             </span>
           </div>
         </div>
@@ -201,12 +201,12 @@ const TASidebar = () => {
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
-                    ? "bg-[#FFF8E6] text-[var(--color-primary-dark)]"
+                    ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
                     : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                 }`}
               >
                 <Icon
-                  className={`w-5 h-5 ${active ? "text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)]"}`}
+                  className={`w-5 h-5 ${active ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`}
                 />
                 <span className={`text-sm flex-1 ${active ? "font-medium" : ""}`}>
                   {item.label}

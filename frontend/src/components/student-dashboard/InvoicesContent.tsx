@@ -10,6 +10,8 @@ import DashboardNavbar from "./DashboardNavbar";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { invoiceApi } from "@/lib/api";
 import RefundRequestModal from "./RefundRequestModal";
+import InvoiceLanguageDialog from "@/components/ui/InvoiceLanguageDialog";
+import { useInvoiceLanguage } from "@/hooks/useInvoiceLanguage";
 
 interface Invoice {
   id: string;
@@ -56,9 +58,13 @@ const InvoicesContent = () => {
   }, [locale]);
 
   const getStatusLabel = (invoice: Invoice) => {
-    // Show refund-related status if a refund is in progress
+    // Refund states override the payment status label so the student
+    // sees the outcome of their refund request, not just "Paid".
     if (invoice.refundStatus === "pending" || invoice.refundStatus === "approved" || invoice.refundStatus === "processing") {
       return t("invoices.statusRefundPending");
+    }
+    if (invoice.refundStatus === "rejected") {
+      return t("invoices.statusRefundRejected");
     }
     switch (invoice.status) {
       case "paid":
@@ -78,6 +84,9 @@ const InvoicesContent = () => {
     if (invoice.refundStatus === "pending" || invoice.refundStatus === "approved" || invoice.refundStatus === "processing") {
       return "text-[#D97706]";
     }
+    if (invoice.refundStatus === "rejected") {
+      return "text-[#DC2626]";
+    }
     switch (invoice.status) {
       case "paid":
         return "text-[#16A34A]";
@@ -93,7 +102,10 @@ const InvoicesContent = () => {
   };
 
   const canRequestRefund = (invoice: Invoice) => {
-    // Only allow refund request if invoice is paid and no active refund exists
+    // Paid + no refund yet. Any refundStatus (pending, approved,
+    // processing, rejected, completed) blocks re-request. Once finance
+    // has rejected a request, the student cannot re-open it themselves
+    // — an admin can via /refunds/admin-initiate.
     return invoice.status === "paid" && !invoice.refundStatus;
   };
 
@@ -101,11 +113,15 @@ const InvoicesContent = () => {
     setOpenMenuId(openMenuId === id ? null : id);
   };
 
+  const { dialogProps: langDialogProps, promptForLocale } = useInvoiceLanguage();
+
   const handleDownload = async (invoiceId: string) => {
-    setDownloadingId(invoiceId);
     setOpenMenuId(null);
+    const chosen = await promptForLocale();
+    if (!chosen) return;
+    setDownloadingId(invoiceId);
     try {
-      const result = await invoiceApi.getPdfUrl(invoiceId);
+      const result = await invoiceApi.getPdfUrl(invoiceId, chosen);
       if (result.url) {
         window.open(result.url, "_blank");
       } else {
@@ -139,7 +155,7 @@ const InvoicesContent = () => {
             <div className="flex-1 min-w-0">
               {/* Page Title */}
               <h1
-                className={`text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
+                className={`text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6 text-start`}
               >
                 {t("invoices.title")}
               </h1>
@@ -174,22 +190,22 @@ const InvoicesContent = () => {
                       <thead>
                         <tr className="border-b border-[#E5E7EB]">
                           <th
-                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] text-start`}
                           >
                             {t("invoices.invoiceNo")}
                           </th>
                           <th
-                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] text-start`}
                           >
                             {t("invoices.amount")}
                           </th>
                           <th
-                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] text-start`}
                           >
                             {t("invoices.date")}
                           </th>
                           <th
-                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] text-start`}
                           >
                             {t("invoices.status")}
                           </th>
@@ -203,22 +219,22 @@ const InvoicesContent = () => {
                             className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-[#F9FAFB] transition-colors"
                           >
                             <td
-                              className={`py-4 px-4 text-sm text-[#1F2937] ${isRTL ? "text-right" : "text-left"}`}
+                              className={`py-4 px-4 text-sm text-[#1F2937] text-start`}
                             >
                               {invoice.invoiceNo}
                             </td>
                             <td
-                              className={`py-4 px-4 text-sm text-[#1F2937] ${isRTL ? "text-right" : "text-left"}`}
+                              className={`py-4 px-4 text-sm text-[#1F2937] text-start`}
                             >
                               {invoice.amount.toFixed(2)}
                             </td>
                             <td
-                              className={`py-4 px-4 text-sm text-[#1F2937] ${isRTL ? "text-right" : "text-left"}`}
+                              className={`py-4 px-4 text-sm text-[#1F2937] text-start`}
                             >
                               {invoice.date}
                             </td>
                             <td
-                              className={`py-4 px-4 ${isRTL ? "text-right" : "text-left"}`}
+                              className={`py-4 px-4 text-start`}
                             >
                               <span
                                 className={`inline-flex items-center gap-1.5 text-sm ${getStatusColor(invoice)}`}
@@ -243,17 +259,17 @@ const InvoicesContent = () => {
                               )}
                               {openMenuId === invoice.id && (
                                 <div
-                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                  className={`absolute top-full end-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-start`}
                                     onClick={() => handleDownload(invoice.id)}
                                   >
                                     {t("invoices.downloadInvoice")}
                                   </button>
                                   {canRequestRefund(invoice) && (
                                     <button
-                                      className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEE2E2] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                      className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEE2E2] transition-colors text-start`}
                                       onClick={() => {
                                         setOpenMenuId(null);
                                         setRefundModal({ open: true, invoice });
@@ -298,17 +314,17 @@ const InvoicesContent = () => {
                               )}
                               {openMenuId === invoice.id && (
                                 <div
-                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                  className={`absolute top-full end-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-start`}
                                     onClick={() => handleDownload(invoice.id)}
                                   >
                                     {t("invoices.downloadInvoice")}
                                   </button>
                                   {canRequestRefund(invoice) && (
                                     <button
-                                      className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEE2E2] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                      className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEE2E2] transition-colors text-start`}
                                       onClick={() => {
                                         setOpenMenuId(null);
                                         setRefundModal({ open: true, invoice });
@@ -369,6 +385,7 @@ const InvoicesContent = () => {
           amount={refundModal.invoice.amount}
         />
       )}
+      <InvoiceLanguageDialog {...langDialogProps} />
     </>
   );
 };

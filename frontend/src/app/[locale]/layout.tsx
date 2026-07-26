@@ -7,7 +7,7 @@ import { HtmlAttributesSetter } from "@/components/HtmlAttributesSetter";
 import NavigationProgress from "@/components/NavigationProgress";
 import LocaleSwitchOverlay from "@/components/LocaleSwitchOverlay";
 import WhatsAppChatWidget from "@/components/WhatsAppChatWidget";
-import NelcVerificationBadge from "@/components/NelcVerificationBadge";
+import MobileFooterStrip from "@/components/MobileFooterStrip";
 import { getSiteSettings } from "@/lib/strapi";
 import { getPlatformLocaleSettings } from "@/lib/platform-locale-server";
 import { getPlatformGeneralSettings } from "@/lib/platform-general-server";
@@ -53,6 +53,11 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
+      {/* SSR sets <html lang dir> via the root layout (middleware x-locale
+          header) — that handles first paint. This client patcher covers
+          SOFT navigations between /en/* and /ar/* where the root layout
+          doesn't re-execute, so document.documentElement.dir would stay
+          stale otherwise. Both are needed together. */}
       <HtmlAttributesSetter lang={locale} dir={isRTL ? "rtl" : "ltr"} />
       <ClientProviders platformLocale={platformLocale} platformGeneral={platformGeneral}>
         <a
@@ -65,6 +70,13 @@ export default async function LocaleLayout({
         <LocaleSwitchOverlay />
         <div className={isRTL ? "font-arabic" : ""}>
           {children}
+          {/* Mobile-only "footer" — desktop-parity compliance/branding
+              chrome (logo, description, socials, payment logos, CR/VAT,
+              NELC license, NELC verification badge, copyright). Renders
+              at end of every marketing page, above the fixed BottomNav.
+              Link columns are omitted here — they already live in the
+              BottomNav "More" drawer. */}
+          <MobileFooterStrip settings={settings} />
         </div>
         <WhatsAppChatWidget
           enabled={settings?.showWhatsappButton}
@@ -74,7 +86,6 @@ export default async function LocaleLayout({
           replyTime={platformGeneral.whatsappReplyTime ?? settings?.whatsappReplyTime}
           locale={locale}
         />
-        <NelcVerificationBadge />
       </ClientProviders>
     </NextIntlClientProvider>
   );

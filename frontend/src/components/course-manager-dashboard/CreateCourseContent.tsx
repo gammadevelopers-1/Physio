@@ -33,6 +33,7 @@ import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { normalizeAndValidateUrl } from "@/lib/url-validation";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import Select from "@/components/admin-dashboard/Select";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
@@ -594,32 +595,23 @@ const CreateCourseContent = () => {
                         <label htmlFor="delivery-type" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.deliveryType")}
                         </label>
-                        <select
-                          id="delivery-type"
+                        <Select
                           value={deliveryType}
-                          onChange={(e) =>
+                          onChange={(v) =>
                             setDeliveryType(
-                              e.target.value as "zoom" | "onsite" | "blended" | "self-paced" | "webinar",
+                              v as "zoom" | "onsite" | "blended" | "self-paced" | "webinar",
                             )
                           }
-                          className={selectClass}
-                        >
-                          <option value="zoom">
-                            {t("createCourse.deliveryZoom")}
-                          </option>
-                          <option value="onsite">
-                            {t("createCourse.deliveryOnsite")}
-                          </option>
-                          <option value="blended">
-                            {t("createCourse.deliveryBlended")}
-                          </option>
-                          <option value="self-paced">
-                            {t("createCourse.deliverySelfPaced")}
-                          </option>
-                          <option value="webinar">
-                            {t("createCourse.deliveryWebinar")}
-                          </option>
-                        </select>
+                          options={[
+                            { value: "zoom", label: t("createCourse.deliveryZoom") },
+                            { value: "onsite", label: t("createCourse.deliveryOnsite") },
+                            { value: "blended", label: t("createCourse.deliveryBlended") },
+                            { value: "self-paced", label: t("createCourse.deliverySelfPaced") },
+                            { value: "webinar", label: t("createCourse.deliveryWebinar") },
+                          ]}
+                          className="w-full"
+                          size="default"
+                        />
                         {deliveryType === "webinar" && (
                           <p className="mt-1.5 text-xs text-[var(--color-text-secondary)]">
                             {t("createCourse.deliveryWebinarHint")}
@@ -1232,16 +1224,17 @@ const CreateCourseContent = () => {
                         <label htmlFor="language" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.languageLabel")}
                         </label>
-                        <select
-                          id="language"
+                        <Select
                           value={language}
-                          onChange={(e) => setLanguage(e.target.value)}
-                          className={selectClass}
-                        >
-                          <option value="en">{t("createCourse.languageEn")}</option>
-                          <option value="ar">{t("createCourse.languageAr")}</option>
-                          <option value="both">{t("createCourse.languageBoth")}</option>
-                        </select>
+                          onChange={setLanguage}
+                          options={[
+                            { value: "en", label: t("createCourse.languageEn") },
+                            { value: "ar", label: t("createCourse.languageAr") },
+                            { value: "both", label: t("createCourse.languageBoth") },
+                          ]}
+                          className="w-full"
+                          size="default"
+                        />
                       </div>
                       {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                         <>

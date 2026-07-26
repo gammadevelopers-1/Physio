@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsString,
   IsArray,
+  IsBoolean,
   ArrayMinSize,
   ArrayMaxSize,
 } from 'class-validator';
@@ -24,4 +25,14 @@ export class QuotePaymentDto {
   @IsOptional()
   @IsString()
   discountCode?: string;
+
+  /**
+   * Mirrors InitiatePaymentDto — when true, the quote pipeline also
+   * applies the active direct-campaign discount for this cart (in
+   * addition to any coupon in `discountCode` when the campaign allows
+   * stacking). Silently ignored if no eligible campaign matches.
+   */
+  @IsOptional()
+  @IsBoolean()
+  applyActiveCampaign?: boolean;
 }

@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const cmeAccredited = searchParams.get("cmeAccredited");
     const language = searchParams.get("language");
     const availability = searchParams.get("availability");
+    const onSale = searchParams.get("onSale");
     const scope = searchParams.get("scope");
     const sort = searchParams.get("sort");
     const page = searchParams.get("page");
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
     if (cmeAccredited) params.set("cmeAccredited", cmeAccredited);
     if (language) params.set("language", language);
     if (availability) params.set("availability", availability);
+    if (onSale) params.set("onSale", onSale);
     if (scope) params.set("scope", scope);
     if (sort) params.set("sort", sort);
     if (page) params.set("page", page);

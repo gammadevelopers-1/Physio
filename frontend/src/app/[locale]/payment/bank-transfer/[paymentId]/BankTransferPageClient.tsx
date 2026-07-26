@@ -34,6 +34,8 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
+import InvoiceLanguageDialog from "@/components/ui/InvoiceLanguageDialog";
+import { useInvoiceLanguage } from "@/hooks/useInvoiceLanguage";
 
 interface BankTransferPageClientProps {
   siteSettings: SiteSettings | null;
@@ -91,7 +93,7 @@ export default function BankTransferPageClient({
   const t = useTranslations("bankTransfer");
   const isRTL = locale === "ar";
 
-  // Draft mode = URL is /payment/bank-transfer/draft?courseIds=A,B[&discountCode=X]
+  // Draft mode = URL is /payment/bank-transfer/draft?courseIds=A,B[&discountCode=X][&applyCampaign=1]
   // Nothing exists in the DB yet; the page loads totals from /payments/quote
   // and the submit handler POSTs everything (cart + receipt) to /submit-draft.
   const isDraftMode = paymentId === "draft";
@@ -105,6 +107,10 @@ export default function BankTransferPageClient({
   const draftDiscountCode = isDraftMode
     ? searchParams.get("discountCode") || undefined
     : undefined;
+  // Round-tripped from the checkout page — mirrors the buyer's opt-in
+  // to a direct-campaign discount on the payment page they came from.
+  const draftApplyActiveCampaign =
+    isDraftMode && searchParams.get("applyCampaign") === "1";
 
   const { user } = useAuth();
 
@@ -161,6 +167,7 @@ export default function BankTransferPageClient({
         paymentApi.quote({
           courseIds: draftCourseIds,
           discountCode: draftDiscountCode,
+          applyActiveCampaign: draftApplyActiveCampaign,
         }),
       ])
         .then(([details, quote]) => {
@@ -206,7 +213,7 @@ export default function BankTransferPageClient({
     return () => {
       cancelled = true;
     };
-  }, [paymentId, locale, router, t, isDraftMode, draftCourseIds, draftDiscountCode]);
+  }, [paymentId, locale, router, t, isDraftMode, draftCourseIds, draftDiscountCode, draftApplyActiveCampaign]);
 
   const amountDue = useMemo(() => {
     if (isDraftMode) return draftQuote?.totals.totalAmount ?? null;
@@ -236,8 +243,11 @@ export default function BankTransferPageClient({
   //   - Draft mode: POST /proforma/quote with cart payload (no payment row yet)
   //   - Persisted:  GET  /:paymentId/proforma (existing payment row)
   const [proformaLoading, setProformaLoading] = useState(false);
+  const { dialogProps: langDialogProps, promptForLocale } = useInvoiceLanguage();
   const handleDownloadProforma = useCallback(async () => {
     if (proformaLoading) return;
+    const chosen = await promptForLocale();
+    if (!chosen) return;
     setProformaLoading(true);
     try {
       let blob: Blob;
@@ -249,12 +259,14 @@ export default function BankTransferPageClient({
         blob = await bankTransferApi.downloadProformaFromQuote({
           courseIds: draftCourseIds,
           discountCode: draftDiscountCode,
+          applyActiveCampaign: draftApplyActiveCampaign,
+          locale: chosen,
         });
-        filename = `proforma-${draftCourseIds[0].slice(0, 8)}.pdf`;
+        filename = `proforma-${draftCourseIds[0].slice(0, 8)}-${chosen}.pdf`;
       } else {
         if (!paymentId) return;
-        blob = await bankTransferApi.downloadProforma(paymentId);
-        filename = `proforma-${paymentId.slice(0, 8)}.pdf`;
+        blob = await bankTransferApi.downloadProforma(paymentId, chosen);
+        filename = `proforma-${paymentId.slice(0, 8)}-${chosen}.pdf`;
       }
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -271,7 +283,7 @@ export default function BankTransferPageClient({
     } finally {
       setProformaLoading(false);
     }
-  }, [paymentId, proformaLoading, t, isDraftMode, draftCourseIds, draftDiscountCode]);
+  }, [paymentId, proformaLoading, t, isDraftMode, draftCourseIds, draftDiscountCode, draftApplyActiveCampaign, promptForLocale]);
 
   const handleFileSelect = useCallback(
     (file: File | null) => {
@@ -339,7 +351,10 @@ export default function BankTransferPageClient({
             refundBankName: bankNameForSubmit,
             refundNationalId: refundNationalId.trim() || undefined,
           },
-          { discountCode: draftDiscountCode },
+          {
+            discountCode: draftDiscountCode,
+            applyActiveCampaign: draftApplyActiveCampaign,
+          },
         );
         landingPaymentId = result.paymentId;
       } else {
@@ -421,6 +436,10 @@ export default function BankTransferPageClient({
   let originalPrice: number;
   let saleDiscount: number;
   let discountAmount: number;
+  let couponAmount: number;
+  let couponCode: string | null;
+  let campaignAmount: number;
+  let campaignName: string | null;
   let taxAmount: number;
   let taxRate: number;
   let total: number;
@@ -430,8 +449,12 @@ export default function BankTransferPageClient({
     originalPrice = draftQuote.totals.originalSubtotal;
     saleDiscount = draftQuote.totals.saleDiscount;
     discountAmount = draftQuote.totals.discountAmount;
+    couponAmount = draftQuote.totals.couponAmount;
+    couponCode = draftQuote.totals.couponCode;
+    campaignAmount = draftQuote.totals.campaignAmount;
+    campaignName = draftQuote.totals.campaignName;
     taxAmount = draftQuote.totals.taxAmount;
-    taxRate = (draftQuote.totals as { taxRate?: number }).taxRate ?? 0;
+    taxRate = draftQuote.totals.taxRate ?? 0;
     total = draftQuote.totals.totalAmount;
     currency = draftQuote.totals.currency;
   } else {
@@ -443,17 +466,29 @@ export default function BankTransferPageClient({
           taxAmount?: number;
           taxRate?: number;
           originalPrice?: number;
+          couponAmount?: number;
+          couponCode?: string | null;
+          campaignAmount?: number;
+          campaignName?: string | null;
         }
       | null;
     subtotal = Number(meta?.subtotal ?? amountDue ?? 0);
     originalPrice = Number(meta?.originalPrice ?? subtotal);
     saleDiscount = Number(meta?.saleDiscountAmount ?? 0);
     discountAmount = Number(meta?.discountAmount ?? 0);
+    couponAmount = Number(meta?.couponAmount ?? 0);
+    couponCode = meta?.couponCode ?? null;
+    campaignAmount = Number(meta?.campaignAmount ?? 0);
+    campaignName = meta?.campaignName ?? null;
     taxAmount = Number(meta?.taxAmount ?? 0);
     taxRate = Number(meta?.taxRate ?? 0);
     total = Number(amountDue ?? 0);
     currency = paymentData!.payment.currency;
   }
+  // If neither leg was broken out (pre-stacking payment), attribute the
+  // whole combined amount to the coupon line so the summary still shows
+  // the right total saved.
+  const showSplitDiscount = campaignAmount > 0 || couponAmount > 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
@@ -519,12 +554,37 @@ export default function BankTransferPageClient({
                       tone="green"
                     />
                   )}
-                  {discountAmount > 0 && (
-                    <Row
-                      label={t("summary.discount")}
-                      value={`- ${fmt(discountAmount, currency)}`}
-                      tone="green"
-                    />
+                  {showSplitDiscount ? (
+                    <>
+                      {campaignAmount > 0 && (
+                        <Row
+                          label={t("summary.campaignLine", {
+                            campaign: campaignName || t("summary.campaignFallback"),
+                          })}
+                          value={`- ${fmt(campaignAmount, currency)}`}
+                          tone="green"
+                        />
+                      )}
+                      {couponAmount > 0 && (
+                        <Row
+                          label={
+                            couponCode
+                              ? t("summary.couponLine", { code: couponCode })
+                              : t("summary.discount")
+                          }
+                          value={`- ${fmt(couponAmount, currency)}`}
+                          tone="green"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    discountAmount > 0 && (
+                      <Row
+                        label={t("summary.discount")}
+                        value={`- ${fmt(discountAmount, currency)}`}
+                        tone="green"
+                      />
+                    )
                   )}
                   <Row label={t("summary.beforeTax")} value={fmt(subtotal - discountAmount, currency)} />
                   <Row
@@ -791,6 +851,7 @@ export default function BankTransferPageClient({
       </main>
 
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
+      <InvoiceLanguageDialog {...langDialogProps} />
     </div>
   );
 }

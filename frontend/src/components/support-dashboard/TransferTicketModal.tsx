@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowRightLeft, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
 import Select from "@/components/admin-dashboard/Select";
+import { useSupportAttachmentUpload } from "@/hooks/useSupportAttachmentUpload";
+import AttachmentPickerBar from "@/components/support-shared/AttachmentPickerBar";
 
 interface Category {
   slug: string;
@@ -52,11 +54,14 @@ export default function TransferTicketModal({
 }: Props) {
   const t = useTranslations("supportDashboard.ticketDetail.transfer");
   const tDept = useTranslations("support.departments");
+  const locale = useLocale();
+  const isAr = locale === "ar";
 
   const [toCategory, setToCategory] = useState<string>("");
   const [toDepartment, setToDepartment] = useState<string>("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const upload = useSupportAttachmentUpload();
 
   // Reset on (re)open.
   useEffect(() => {
@@ -64,7 +69,22 @@ export default function TransferTicketModal({
     setToCategory("");
     setToDepartment("");
     setNote("");
+    upload.clear();
+    // upload.clear identity is stable per instance; deliberately not
+    // in deps to avoid re-firing every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const notifyAttachmentRejects = (
+    r: ReturnType<typeof upload.addFiles>,
+  ) => {
+    if (r.rejectedType.length)
+      toast.error(t("attachRejectedType", { names: r.rejectedType.join(", ") }));
+    if (r.rejectedSize.length)
+      toast.error(t("attachRejectedSize", { names: r.rejectedSize.join(", ") }));
+    if (r.rejectedCap.length)
+      toast.error(t("attachRejectedCap"));
+  };
 
   // Auto-pick suggested department when category changes.
   useEffect(() => {
@@ -117,12 +137,18 @@ export default function TransferTicketModal({
       toast.error(t("pickBoth"));
       return;
     }
+    if (upload.isUploading) {
+      toast.error(t("waitForUploads"));
+      return;
+    }
+    const richAtts = upload.getDoneRich();
     setSubmitting(true);
     try {
       await supportApi.transferTicket(ticketId, {
         toCategory,
         toDepartment,
         noteToRequester: note.trim() || undefined,
+        attachments: richAtts.length > 0 ? richAtts : undefined,
       });
       toast.success(t("transferredSuccess"));
       onTransferred();
@@ -188,7 +214,7 @@ export default function TransferTicketModal({
               placeholder={t("selectCategory")}
               options={categoryOptions.map((c) => ({
                 value: c.slug,
-                label: `${c.nameEn}${c.requiresCourse ? " ★" : ""}`,
+                label: `${(isAr && c.nameAr) ? c.nameAr : c.nameEn}${c.requiresCourse ? " ★" : ""}`,
               }))}
             />
           </div>
@@ -230,6 +256,26 @@ export default function TransferTicketModal({
             </div>
           </div>
 
+          {/* Supporting documents — pinned to the transfer system
+              message and visible to the requester too, so they see
+              why the ticket moved (e.g. an invoice image, a screenshot). */}
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] block mb-1.5">
+              {t("attachmentsLabel")}{" "}
+              <span className="font-normal normal-case text-[var(--color-text-secondary)]/60">
+                ({t("noteOptional")})
+              </span>
+            </label>
+            <AttachmentPickerBar
+              pending={upload.pending}
+              onAdd={(files) => notifyAttachmentRejects(upload.addFiles(files))}
+              onRemove={upload.remove}
+              disabled={submitting}
+              maxCount={upload.maxCount}
+              maxBytes={upload.maxBytes}
+            />
+          </div>
+
           {/* Warning panel */}
           <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900">
             {t("brokerNotice")}
@@ -248,7 +294,12 @@ export default function TransferTicketModal({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={submitting || !toCategory || !toDepartment}
+            disabled={
+              submitting ||
+              !toCategory ||
+              !toDepartment ||
+              upload.isUploading
+            }
             className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}

@@ -4,7 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { eq, and, desc, count, sql, ilike, or, gte, lte, isNull, gt, lt, inArray, isNotNull } from 'drizzle-orm';
+import { eq, and, desc, count, sql, ilike, or, gte, lte, isNull, gt, lt, inArray, isNotNull, ne } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
   discountCodes,
@@ -17,8 +17,11 @@ import {
   courses,
   auditLogs,
   enrollments,
+  rewardCatalog,
+  rewardRedemptions,
 } from '../../../database/schema';
 import { parseStartDate, parseEndDate } from '../../../common/date-range';
+import { toCsvString } from '../../../common/exports/csv.util';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { CreateDiscountDto } from '../dto/create-discount.dto';
 import { UpdateDiscountDto } from '../dto/update-discount.dto';
@@ -72,6 +75,7 @@ export class DiscountService {
         status: courses.status,
         price: courses.price,
         salePercent: courses.salePercent,
+        saleAmount: courses.saleAmount,
         saleStartsAt: courses.saleStartsAt,
         saleEndsAt: courses.saleEndsAt,
         saleAllowsCoupon: courses.saleAllowsCoupon,
@@ -100,6 +104,7 @@ export class DiscountService {
           effectivePrice: sale.effectivePrice,
           onSale: sale.onSale,
           salePercent: c.salePercent,
+          saleAmount: c.saleAmount != null ? Number(c.saleAmount) : null,
           saleStartsAt: c.saleStartsAt ? c.saleStartsAt.toISOString() : null,
           saleEndsAt: c.saleEndsAt ? c.saleEndsAt.toISOString() : null,
           saleAllowsCoupon: c.saleAllowsCoupon,
@@ -117,10 +122,58 @@ export class DiscountService {
       throw new NotFoundException('Course not found');
     }
 
-    // Only provided fields change; null clears. (whitelist strips by name, so a
-    // null value still reaches us here.)
+    // A sale on a free course is meaningless. Reject any attempt to SET
+    // (non-null) a sale on a course whose base price is 0. Clearing (all
+    // null) stays allowed so finance can tidy up legacy rows.
+    const isSettingSale =
+      (dto.salePercent !== undefined && dto.salePercent !== null) ||
+      (dto.saleAmount !== undefined && dto.saleAmount !== null) ||
+      (dto.saleStartsAt !== undefined && dto.saleStartsAt !== null) ||
+      (dto.saleEndsAt !== undefined && dto.saleEndsAt !== null) ||
+      dto.saleAllowsCoupon === true;
+    const coursePrice = Number(course.price ?? 0);
+    if (isSettingSale && coursePrice <= 0) {
+      throw new BadRequestException(
+        'This course is free — sales can only be applied to paid courses. Set a base price first.',
+      );
+    }
+
+    // Sale is percentage OR fixed amount — never both. When the caller
+    // sets one, we auto-clear the other so the CHECK constraint is never
+    // tripped (also lets finance switch types in a single request).
+    const settingPercent = dto.salePercent !== undefined && dto.salePercent !== null;
+    const settingAmount = dto.saleAmount !== undefined && dto.saleAmount !== null;
+    if (settingPercent && settingAmount) {
+      throw new BadRequestException(
+        'Pick either a percentage or a fixed amount for the sale, not both.',
+      );
+    }
+
+    // Fixed amount must be strictly less than the course price — a discount
+    // that zeroes or over-discounts the course price is a data error, not a
+    // sale. (100%-off percentage sales stay legal so free-preview windows
+    // still work via the existing percent path.)
+    if (settingAmount && Number(dto.saleAmount) >= coursePrice) {
+      throw new BadRequestException(
+        `Fixed amount (SAR ${Number(dto.saleAmount).toFixed(2)}) must be less than the course price (SAR ${coursePrice.toFixed(2)}).`,
+      );
+    }
+
+    // Only provided fields change; null clears. When switching type, the
+    // OTHER field is force-cleared to satisfy the DB CHECK constraint.
     const updateData: Record<string, any> = { updatedAt: new Date() };
-    if (dto.salePercent !== undefined) updateData.salePercent = dto.salePercent;
+    if (settingPercent) {
+      updateData.salePercent = dto.salePercent;
+      updateData.saleAmount = null;
+    } else if (dto.salePercent === null) {
+      updateData.salePercent = null;
+    }
+    if (settingAmount) {
+      updateData.saleAmount = String(dto.saleAmount);
+      updateData.salePercent = null;
+    } else if (dto.saleAmount === null) {
+      updateData.saleAmount = null;
+    }
     if (dto.saleStartsAt !== undefined)
       updateData.saleStartsAt = dto.saleStartsAt ? new Date(dto.saleStartsAt) : null;
     if (dto.saleEndsAt !== undefined)
@@ -155,6 +208,7 @@ export class DiscountService {
       performedBy: userId,
       metadata: {
         salePercent: updated.salePercent,
+        saleAmount: updated.saleAmount,
         saleStartsAt: updated.saleStartsAt,
         saleEndsAt: updated.saleEndsAt,
         saleAllowsCoupon: updated.saleAllowsCoupon,
@@ -172,6 +226,7 @@ export class DiscountService {
       effectivePrice: sale.effectivePrice,
       onSale: sale.onSale,
       salePercent: updated.salePercent,
+      saleAmount: updated.saleAmount != null ? Number(updated.saleAmount) : null,
       saleStartsAt: updated.saleStartsAt
         ? updated.saleStartsAt.toISOString()
         : null,
@@ -226,6 +281,22 @@ export class DiscountService {
 
     if (!discount) {
       return fail('Discount code not found');
+    }
+
+    // Per-user coupon lock (points redemption rewards mint codes with
+    // target_user_id = the redeeming student). Anyone else pasting the code
+    // gets a clean rejection rather than accidentally consuming a stranger's
+    // reward.
+    if (discount.targetUserId && discount.targetUserId !== userId) {
+      return fail('This coupon is reserved for another account');
+    }
+
+    // Free courses can't take a coupon — % off zero is zero. Reject cleanly
+    // instead of silently returning 0 discount (which reads as "invalid code"
+    // to the buyer). The frontend also hides the coupon field for a free
+    // subtotal; this is the belt-and-braces check.
+    if (coursePrice <= 0) {
+      return fail('This course is free — no coupon needed');
     }
 
     // Check validity period
@@ -356,11 +427,19 @@ export class DiscountService {
     courseIds: string[],
     userId: string | null,
   ): Promise<{
-    code: string;
+    /** The real coupon code that triggered the discount. `null` when the
+     *  winning discount is a direct-campaign discount (no coupon row) —
+     *  the frontend must NOT paste a synthetic sentinel into the coupon
+     *  input in that case; render a campaign banner instead. */
+    code: string | null;
     discountId: string;
     discountAmount: number;
     applicableCourseId: string;
-    campaign: { id: string; name: string } | null;
+    campaign: { id: string; name: string; allowsCoupon: boolean } | null;
+    /** True when the winning discount is a direct campaign discount
+     *  (not a coupon code). Checkout uses this to hide the coupon input
+     *  when `campaign.allowsCoupon` is false. */
+    isCampaignDirect?: boolean;
   } | null> {
     if (courseIds.length === 0) return null;
 
@@ -386,18 +465,22 @@ export class DiscountService {
           )!,
         ),
       );
-    if (codes.length === 0) return null;
+    // NOTE: we DO NOT short-circuit on codes.length === 0 anymore — a cart
+    // can also match a direct campaign discount (no attached codes needed).
 
-    // Fetch cart courses (id, price, maxDiscountPct) in one go.
+    // Fetch cart courses (id, price, maxDiscountPct + delivery type for
+    // scope matching of campaign discounts) in one go.
     const cartCourses = await db
       .select({
         id: courses.id,
         price: courses.price,
         maxDiscountPct: courses.maxDiscountPct,
         salePercent: courses.salePercent,
+        saleAmount: courses.saleAmount,
         saleStartsAt: courses.saleStartsAt,
         saleEndsAt: courses.saleEndsAt,
         saleAllowsCoupon: courses.saleAllowsCoupon,
+        deliveryType: courses.deliveryType,
       })
       .from(courses)
       .where(inArray(courses.id, courseIds));
@@ -416,11 +499,12 @@ export class DiscountService {
     const campaignById = new Map(campaigns.map((c) => [c.id, c]));
 
     let best: {
-      code: string;
+      code: string | null;
       discountId: string;
       discountAmount: number;
       applicableCourseId: string;
-      campaign: { id: string; name: string } | null;
+      campaign: { id: string; name: string; allowsCoupon: boolean } | null;
+      isCampaignDirect?: boolean;
     } | null = null;
 
     for (const code of codes) {
@@ -499,6 +583,7 @@ export class DiscountService {
               ? {
                   id: code.campaignId,
                   name: campaignById.get(code.campaignId)?.name || '',
+                  allowsCoupon: campaignById.get(code.campaignId)?.allowsCoupon ?? true,
                 }
               : null,
           };
@@ -506,7 +591,247 @@ export class DiscountService {
       }
     }
 
+    // ─── Direct-campaign discounts ──────────────────────────────────
+    // Any active campaign whose scope matches at least one cart course.
+    // Wins over the code-based `best` if it yields a bigger saving.
+    const directCampaigns = await db
+      .select()
+      .from(couponCampaigns)
+      .where(
+        and(
+          eq(couponCampaigns.isActive, true),
+          ne(couponCampaigns.discountType, 'none'),
+          or(
+            isNull(couponCampaigns.startsAt),
+            lte(couponCampaigns.startsAt, now),
+          )!,
+          or(
+            isNull(couponCampaigns.endsAt),
+            gte(couponCampaigns.endsAt, now),
+          )!,
+        ),
+      );
+
+    for (const camp of directCampaigns) {
+      if (camp.scope === 'code_only') continue;
+      if (
+        camp.budget !== null &&
+        Number(camp.currentSpend) >= Number(camp.budget)
+      ) {
+        continue;
+      }
+
+      // Determine which cart lines this campaign covers.
+      const eligibleLines = cartCourses.filter((c) => {
+        if (Number(c.price) <= 0) return false; // free courses never eligible
+        if (camp.scope === 'all_paid') return true;
+        if (camp.scope === 'by_delivery_type') {
+          return camp.scopeDeliveryTypes.includes(c.deliveryType || '');
+        }
+        if (camp.scope === 'specific_courses') {
+          return camp.scopeCourseIds.includes(c.id);
+        }
+        return false;
+      });
+      if (eligibleLines.length === 0) continue;
+
+      for (const line of eligibleLines) {
+        const effective = getEffectivePrice(line, now);
+        const linePrice = effective.effectivePrice;
+        if (linePrice <= 0) continue;
+        // Course-sale + campaign-direct don't stack unless the course sale
+        // allows coupons (same rule we apply to codes).
+        if (effective.onSale && !line.saleAllowsCoupon) continue;
+
+        let amount =
+          camp.discountType === 'percentage'
+            ? (linePrice * Number(camp.discountValue)) / 100
+            : Number(camp.discountValue);
+        amount = Math.min(amount, linePrice);
+        const maxPct = Number(line.maxDiscountPct ?? 100);
+        if (maxPct < 100) amount = Math.min(amount, (linePrice * maxPct) / 100);
+        amount = Math.round(amount * 100) / 100;
+        if (amount <= 0) continue;
+
+        // Respect the campaign budget cap — don't apply more than remaining.
+        if (camp.budget !== null) {
+          const remaining = Number(camp.budget) - Number(camp.currentSpend);
+          if (remaining <= 0) continue;
+          amount = Math.min(amount, remaining);
+          amount = Math.round(amount * 100) / 100;
+          if (amount <= 0) continue;
+        }
+
+        if (!best || amount > best.discountAmount) {
+          best = {
+            // Direct-campaign discounts have NO coupon code row. Returning
+            // `null` (never a synthesised `CAMPAIGN:xxx` sentinel) prevents
+            // the frontend from ever putting an internal token into the
+            // buyer's coupon input. The checkout uses `isCampaignDirect` +
+            // `campaign.name` to render a proper banner instead.
+            code: null,
+            discountId: camp.id,
+            discountAmount: amount,
+            applicableCourseId: line.id,
+            campaign: { id: camp.id, name: camp.name, allowsCoupon: camp.allowsCoupon },
+            isCampaignDirect: true,
+          };
+        }
+      }
+    }
+
     return best;
+  }
+
+  /**
+   * Catalog-side helper: for a batch of courses, resolve the BEST currently-
+   * active auto-apply CAMPAIGN discount per course (if any). Excludes
+   * code_only campaigns and any campaign whose scope, dates, budget, or
+   * per-course sale rules disqualify it. Used by the public catalog to tag
+   * campaign-discounted courses with a "Sale" badge and show the effective
+   * final price.
+   *
+   * Note: purely READ-only + idempotent — no usage recording. That happens
+   * at checkout via `recordCampaignDirectUsage` when the buyer pays.
+   */
+  async resolveActiveCampaignDiscountsForCourses(
+    courseRows: Array<{
+      id: string;
+      price: string | number | null;
+      deliveryType: string | null;
+      maxDiscountPct?: string | number | null;
+      salePercent?: number | null;
+      saleAmount?: string | number | null;
+      saleStartsAt?: Date | string | null;
+      saleEndsAt?: Date | string | null;
+      saleAllowsCoupon?: boolean | null;
+    }>,
+  ): Promise<
+    Map<
+      string,
+      {
+        campaignId: string;
+        campaignName: string;
+        campaignNameAr: string | null;
+        campaignType: 'standard' | 'early_bird';
+        discountType: 'percentage' | 'fixed';
+        discountValue: number;
+        /** SAR value taken off the per-course-sale-effective price. */
+        amountOff: number;
+        /** Per-course-sale-effective price the campaign discounts from. */
+        basePrice: number;
+        /** basePrice - amountOff — what a buyer would pay. */
+        finalPrice: number;
+        /** Whether a coupon may stack on top of THIS campaign. Callers
+         * merge this with per-course `saleAllowsCoupon` to decide the
+         * final coupon-input visibility on the frontend. */
+        allowsCoupon: boolean;
+      }
+    >
+  > {
+    if (courseRows.length === 0) return new Map();
+    const now = new Date();
+
+    const activeCampaigns = await db
+      .select()
+      .from(couponCampaigns)
+      .where(
+        and(
+          eq(couponCampaigns.isActive, true),
+          ne(couponCampaigns.discountType, 'none'),
+          ne(couponCampaigns.scope, 'code_only'),
+          or(
+            isNull(couponCampaigns.startsAt),
+            lte(couponCampaigns.startsAt, now),
+          )!,
+          or(
+            isNull(couponCampaigns.endsAt),
+            gte(couponCampaigns.endsAt, now),
+          )!,
+        ),
+      );
+
+    const result = new Map<
+      string,
+      {
+        campaignId: string;
+        campaignName: string;
+        campaignNameAr: string | null;
+        campaignType: 'standard' | 'early_bird';
+        discountType: 'percentage' | 'fixed';
+        discountValue: number;
+        amountOff: number;
+        basePrice: number;
+        finalPrice: number;
+        allowsCoupon: boolean;
+      }
+    >();
+    if (activeCampaigns.length === 0) return result;
+
+    for (const c of courseRows) {
+      const effective = getEffectivePrice(c, now);
+      const basePrice = effective.effectivePrice;
+      if (basePrice <= 0) continue; // Free after sale — nothing to discount.
+      // Per-course sale that forbids coupons blocks campaigns too (same
+      // stacking rule used at checkout).
+      if (effective.onSale && !c.saleAllowsCoupon) continue;
+      const maxPct = Number(c.maxDiscountPct ?? 100);
+
+      for (const camp of activeCampaigns) {
+        // Scope match
+        if (camp.scope === 'all_paid') {
+          // ok — every paid course qualifies
+        } else if (camp.scope === 'by_delivery_type') {
+          if (!camp.scopeDeliveryTypes.includes(c.deliveryType || '')) continue;
+        } else if (camp.scope === 'specific_courses') {
+          if (!camp.scopeCourseIds.includes(c.id)) continue;
+        } else {
+          continue;
+        }
+        // Budget cap gate (same rule as getBestAutoApplyDiscount).
+        if (
+          camp.budget !== null &&
+          Number(camp.currentSpend) >= Number(camp.budget)
+        ) {
+          continue;
+        }
+
+        let amount =
+          camp.discountType === 'percentage'
+            ? (basePrice * Number(camp.discountValue)) / 100
+            : Number(camp.discountValue);
+        amount = Math.min(amount, basePrice);
+        if (maxPct < 100) amount = Math.min(amount, (basePrice * maxPct) / 100);
+        amount = Math.round(amount * 100) / 100;
+        if (amount <= 0) continue;
+
+        // Respect remaining budget when set.
+        if (camp.budget !== null) {
+          const remaining = Number(camp.budget) - Number(camp.currentSpend);
+          if (remaining <= 0) continue;
+          amount = Math.round(Math.min(amount, remaining) * 100) / 100;
+          if (amount <= 0) continue;
+        }
+
+        const prev = result.get(c.id);
+        if (!prev || amount > prev.amountOff) {
+          result.set(c.id, {
+            campaignId: camp.id,
+            campaignName: camp.name,
+            campaignNameAr: camp.nameAr,
+            campaignType: camp.campaignType as 'standard' | 'early_bird',
+            discountType: camp.discountType as 'percentage' | 'fixed',
+            discountValue: Number(camp.discountValue),
+            amountOff: amount,
+            basePrice,
+            finalPrice: Math.round((basePrice - amount) * 100) / 100,
+            allowsCoupon: !!camp.allowsCoupon,
+          });
+        }
+      }
+    }
+
+    return result;
   }
 
   async recordUsage(
@@ -604,6 +929,37 @@ export class DiscountService {
       entityType: 'discount_code',
       entityId: discountId,
       action: 'discount_used',
+      performedBy: userId,
+      metadata: { paymentId, amountSaved },
+    });
+  }
+
+  /**
+   * Track a direct-campaign discount redemption (no coupon code).
+   * Called by the payments flow when the buyer accepted an
+   * auto-applied campaign discount whose `discountType != 'none'`.
+   * Bumps the campaign's currentSpend inside the payment transaction
+   * so budget enforcement stays accurate. Idempotent per payment via
+   * an audit-log dedupe key.
+   */
+  async recordCampaignDirectUsage(
+    campaignId: string,
+    userId: string,
+    paymentId: string,
+    amountSaved: number,
+  ) {
+    await db
+      .update(couponCampaigns)
+      .set({
+        currentSpend: sql`${couponCampaigns.currentSpend} + ${amountSaved.toFixed(2)}::numeric`,
+        updatedAt: new Date(),
+      })
+      .where(eq(couponCampaigns.id, campaignId));
+
+    await this.auditLogService.log({
+      entityType: 'coupon_campaign',
+      entityId: campaignId,
+      action: 'campaign_direct_discount_used',
       performedBy: userId,
       metadata: { paymentId, amountSaved },
     });
@@ -1333,34 +1689,26 @@ export class DiscountService {
       .where(whereClause)
       .orderBy(desc(discountCodes.createdAt));
 
-    const lines: string[] = [];
+    const metaRows: (string | number | null)[][] = [
+      [`# PhysioGuidance Platform - Discount Codes Export`],
+      [`# Generated: ${new Date().toISOString()}`],
+      [`# Filters: status=${status || 'all'}, search=${search || 'none'}, startDate=${startDate || 'none'}, endDate=${endDate || 'none'}`],
+      [`# Platform Version: 1.0.0`],
+      [''],
+    ];
 
-    // NELC metadata header
-    lines.push(`# PhysioGuidance Platform - Discount Codes Export`);
-    lines.push(`# Generated: ${new Date().toISOString()}`);
-    lines.push(`# Filters: status=${status || 'all'}, search=${search || 'none'}, startDate=${startDate || 'none'}, endDate=${endDate || 'none'}`);
-    lines.push(`# Platform Version: 1.0.0`);
-    lines.push('');
-
-    // CSV cell escaper: quote when needed + neutralise spreadsheet formula injection.
-    const esc = (v: unknown) => {
-      let s = v === null || v === undefined ? '' : String(v);
-      if (/^[=+\-@]/.test(s)) s = `'${s}`;
-      if (/[",\n]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
-      return s;
-    };
-
-    // CSV header
-    lines.push('Code,Type,Value,MaxUses,PerUserLimit,CurrentUses,TotalSaved,MinOrder,Campaign,Status,ValidFrom,ValidUntil,CreatedAt');
-
-    for (const d of discounts) {
+    const headerRow: (string | number | null)[] = [
+      'Code', 'Type', 'Value', 'MaxUses', 'PerUserLimit', 'CurrentUses',
+      'TotalSaved', 'MinOrder', 'Campaign', 'Status', 'ValidFrom', 'ValidUntil', 'CreatedAt',
+    ];
+    const dataRows: (string | number | null)[][] = discounts.map((d) => {
       const now = new Date();
       const validUntil = d.validUntil ? new Date(d.validUntil) : null;
       let computedStatus = 'active';
       if (!d.isActive) computedStatus = 'disabled';
       else if (validUntil && validUntil < now) computedStatus = 'expired';
 
-      lines.push([
+      return [
         d.code,
         d.type,
         d.value,
@@ -1374,10 +1722,10 @@ export class DiscountService {
         d.validFrom ? new Date(d.validFrom).toISOString().slice(0, 10) : '-',
         d.validUntil ? new Date(d.validUntil).toISOString().slice(0, 10) : '-',
         new Date(d.createdAt).toISOString().slice(0, 10),
-      ].map(esc).join(','));
-    }
+      ];
+    });
 
-    return lines.join('\n');
+    return toCsvString([...metaRows, headerRow, ...dataRows]);
   }
 
   async getById(discountId: string) {
@@ -1414,9 +1762,16 @@ export class DiscountService {
         createdAt: discountCodes.createdAt,
         updatedAt: discountCodes.updatedAt,
         totalSaved: sql<string>`COALESCE(${savingsSubquery.totalSaved}, '0')`,
+        // ─── Origin trail (populated when the parent campaign was auto-
+        // minted by a points reward — otherwise all NULL) ─────────────
+        sourceType: couponCampaigns.sourceType,
+        sourceRewardId: couponCampaigns.sourceRewardId,
+        sourceRedemptionId: couponCampaigns.sourceRedemptionId,
+        sourceUserId: couponCampaigns.sourceUserId,
       })
       .from(discountCodes)
       .leftJoin(savingsSubquery, eq(discountCodes.id, savingsSubquery.discountId))
+      .leftJoin(couponCampaigns, eq(discountCodes.campaignId, couponCampaigns.id))
       .where(eq(discountCodes.id, discountId))
       .limit(1);
 
@@ -1439,6 +1794,78 @@ export class DiscountService {
       .orderBy(desc(discountUsage.usedAt))
       .limit(20);
 
+    // ─── Enrich the origin trail when this coupon came from the points
+    // system — join reward_catalog + reward_redemptions + users so the
+    // finance drawer can render the "Points Reward" tab without a chain
+    // of follow-up requests. Skip the join entirely for hand-crafted
+    // coupons so we don't pay for a lookup we won't display.
+    let source: {
+      type: string;
+      rewardId: string | null;
+      rewardName: string | null;
+      rewardType: string | null;
+      rewardPointsCost: number | null;
+      redemptionId: string | null;
+      redeemedAt: string | null;
+      user: { id: string; email: string | null; firstName: string | null; lastName: string | null } | null;
+    } | null = null;
+    if (discount.sourceType === 'points_reward') {
+      const rewardId = discount.sourceRewardId;
+      const redemptionId = discount.sourceRedemptionId;
+      const userId = discount.sourceUserId;
+      const [reward] = rewardId
+        ? await db
+            .select({
+              name: rewardCatalog.nameEn,
+              type: rewardCatalog.type,
+              pointsCost: rewardCatalog.pointsCost,
+            })
+            .from(rewardCatalog)
+            .where(eq(rewardCatalog.id, rewardId))
+            .limit(1)
+        : [];
+      const [redemption] = redemptionId
+        ? await db
+            .select({
+              redeemedAt: rewardRedemptions.redeemedAt,
+            })
+            .from(rewardRedemptions)
+            .where(eq(rewardRedemptions.id, redemptionId))
+            .limit(1)
+        : [];
+      const [srcUser] = userId
+        ? await db
+            .select({
+              id: users.id,
+              email: users.email,
+              firstName: users.firstName,
+              lastName: users.lastName,
+            })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1)
+        : [];
+      source = {
+        type: 'points_reward',
+        rewardId: rewardId,
+        rewardName: reward?.name ?? null,
+        rewardType: reward?.type ?? null,
+        rewardPointsCost: reward?.pointsCost ?? null,
+        redemptionId,
+        redeemedAt: redemption?.redeemedAt
+          ? new Date(redemption.redeemedAt).toISOString()
+          : null,
+        user: srcUser
+          ? {
+              id: srcUser.id,
+              email: srcUser.email,
+              firstName: srcUser.firstName,
+              lastName: srcUser.lastName,
+            }
+          : null,
+      };
+    }
+
     return {
       ...discount,
       usageHistory: usageHistory.map((u) => ({
@@ -1448,6 +1875,7 @@ export class DiscountService {
         amountSaved: Number(u.amountSaved),
         usedAt: u.usedAt,
       })),
+      source,
     };
   }
 
@@ -1514,6 +1942,7 @@ export class DiscountService {
     search?: string;
     page?: number;
     limit?: number;
+    campaignType?: 'standard' | 'early_bird';
   } = {}) {
     const status = opts.status || 'all';
     const page = Math.max(1, opts.page || 1);
@@ -1539,7 +1968,15 @@ export class DiscountService {
     }
     if (opts.search?.trim()) {
       const q = `%${opts.search.trim()}%`;
-      conditions.push(ilike(couponCampaigns.name, q));
+      conditions.push(
+        or(
+          ilike(couponCampaigns.name, q),
+          ilike(couponCampaigns.nameAr, q),
+        )!,
+      );
+    }
+    if (opts.campaignType) {
+      conditions.push(eq(couponCampaigns.campaignType, opts.campaignType));
     }
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -1547,7 +1984,9 @@ export class DiscountService {
       .select({
         id: couponCampaigns.id,
         name: couponCampaigns.name,
+        nameAr: couponCampaigns.nameAr,
         description: couponCampaigns.description,
+        descriptionAr: couponCampaigns.descriptionAr,
         startsAt: couponCampaigns.startsAt,
         endsAt: couponCampaigns.endsAt,
         budget: couponCampaigns.budget,
@@ -1555,7 +1994,15 @@ export class DiscountService {
         isActive: couponCampaigns.isActive,
         showOnSite: couponCampaigns.showOnSite,
         bannerCta: couponCampaigns.bannerCta,
+        bannerCtaAr: couponCampaigns.bannerCtaAr,
         bulkBatchId: couponCampaigns.bulkBatchId,
+        campaignType: couponCampaigns.campaignType,
+        discountType: couponCampaigns.discountType,
+        discountValue: couponCampaigns.discountValue,
+        scope: couponCampaigns.scope,
+        scopeDeliveryTypes: couponCampaigns.scopeDeliveryTypes,
+        scopeCourseIds: couponCampaigns.scopeCourseIds,
+        allowsCoupon: couponCampaigns.allowsCoupon,
         createdAt: couponCampaigns.createdAt,
         // Raw SQL with explicit table names — drizzle's template embedding
         // of column references inside a correlated subquery doesn't reliably
@@ -1588,26 +2035,51 @@ export class DiscountService {
   async createCampaign(
     dto: {
       name: string;
+      nameAr?: string | null;
       description?: string;
+      descriptionAr?: string | null;
       startsAt?: string;
       endsAt?: string;
       budget?: number;
       showOnSite?: boolean;
       bannerCta?: string;
+      bannerCtaAr?: string | null;
+      campaignType?: 'standard' | 'early_bird';
+      discountType?: 'none' | 'percentage' | 'fixed';
+      discountValue?: number | null;
+      scope?: 'code_only' | 'all_paid' | 'by_delivery_type' | 'specific_courses';
+      scopeDeliveryTypes?: string[];
+      scopeCourseIds?: string[];
+      allowsCoupon?: boolean;
     },
     userId: string,
     ipAddress?: string,
   ) {
+    await this.validateCampaignShape(dto);
+
     const [created] = await db
       .insert(couponCampaigns)
       .values({
         name: dto.name,
+        nameAr: dto.nameAr?.trim() || null,
         description: dto.description,
+        descriptionAr: dto.descriptionAr?.trim() || null,
         startsAt: dto.startsAt ? new Date(dto.startsAt) : null,
         endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
         budget: dto.budget !== undefined ? dto.budget.toFixed(2) : null,
         showOnSite: dto.showOnSite ?? false,
         bannerCta: dto.bannerCta,
+        bannerCtaAr: dto.bannerCtaAr?.trim() || null,
+        campaignType: dto.campaignType ?? 'standard',
+        discountType: dto.discountType ?? 'none',
+        discountValue:
+          dto.discountValue !== undefined && dto.discountValue !== null
+            ? dto.discountValue.toFixed(2)
+            : null,
+        scope: dto.scope ?? 'code_only',
+        scopeDeliveryTypes: dto.scopeDeliveryTypes ?? [],
+        scopeCourseIds: dto.scopeCourseIds ?? [],
+        allowsCoupon: dto.allowsCoupon ?? false,
         createdBy: userId,
       })
       .returning();
@@ -1618,30 +2090,186 @@ export class DiscountService {
       action: 'campaign_created',
       performedBy: userId,
       ipAddress,
-      metadata: { name: dto.name, budget: dto.budget },
+      metadata: {
+        name: dto.name,
+        budget: dto.budget,
+        campaignType: created.campaignType,
+        discountType: created.discountType,
+        scope: created.scope,
+      },
     });
 
     return created;
+  }
+
+  /**
+   * Cross-field validation for a campaign payload. Enforces:
+   *  - discount_type != 'none' ⇒ discount_value present + positive
+   *  - percentage ⇒ 1..100
+   *  - scope != 'code_only' requires a direct discount to make sense
+   *  - by_delivery_type ⇒ scopeDeliveryTypes non-empty
+   *  - specific_courses ⇒ scopeCourseIds non-empty
+   *  - endsAt > startsAt when both present
+   */
+  private async validateCampaignShape(dto: {
+    startsAt?: string | null;
+    endsAt?: string | null;
+    discountType?: 'none' | 'percentage' | 'fixed';
+    discountValue?: number | null;
+    scope?: 'code_only' | 'all_paid' | 'by_delivery_type' | 'specific_courses';
+    scopeDeliveryTypes?: string[];
+    scopeCourseIds?: string[];
+  }): Promise<void> {
+    if (dto.startsAt && dto.endsAt) {
+      if (new Date(dto.endsAt).getTime() <= new Date(dto.startsAt).getTime()) {
+        throw new BadRequestException('Campaign end must be after the start');
+      }
+    }
+    const discountType = dto.discountType ?? 'none';
+    if (discountType !== 'none') {
+      if (dto.discountValue === undefined || dto.discountValue === null || dto.discountValue <= 0) {
+        throw new BadRequestException(
+          'Discount value must be greater than 0 when a discount type is chosen',
+        );
+      }
+      if (discountType === 'percentage' && (dto.discountValue < 1 || dto.discountValue > 100)) {
+        throw new BadRequestException('Percentage discount must be between 1 and 100');
+      }
+    }
+    const scope = dto.scope ?? 'code_only';
+    if (scope !== 'code_only' && discountType === 'none') {
+      throw new BadRequestException(
+        'A scope other than "code_only" requires a direct discount (percentage or fixed)',
+      );
+    }
+    if (scope === 'by_delivery_type' && (!dto.scopeDeliveryTypes || dto.scopeDeliveryTypes.length === 0)) {
+      throw new BadRequestException('Pick at least one delivery type');
+    }
+    if (scope === 'specific_courses' && (!dto.scopeCourseIds || dto.scopeCourseIds.length === 0)) {
+      throw new BadRequestException('Pick at least one course');
+    }
+
+    // Fixed-amount vs course-price guard. A fixed discount of SAR X can't
+    // exceed the cheapest paid course it applies to — otherwise the effective
+    // price would go negative. Also blocks equality (discount == price)
+    // because "buy a course for free via a discount that happens to match"
+    // is a data smell that should go through the free-enroll flow instead.
+    if (discountType === 'fixed' && scope !== 'code_only' && dto.discountValue) {
+      const value = Number(dto.discountValue);
+      let priceRows: Array<{ id: string; title: string; price: string | null }> = [];
+      if (scope === 'all_paid') {
+        priceRows = await db
+          .select({ id: courses.id, title: courses.title, price: courses.price })
+          .from(courses)
+          .where(and(isNull(courses.deletedAt), gt(courses.price, '0')))
+          .orderBy(courses.price);
+      } else if (scope === 'by_delivery_type') {
+        priceRows = await db
+          .select({ id: courses.id, title: courses.title, price: courses.price })
+          .from(courses)
+          .where(
+            and(
+              isNull(courses.deletedAt),
+              gt(courses.price, '0'),
+              inArray(courses.deliveryType, dto.scopeDeliveryTypes ?? []),
+            ),
+          )
+          .orderBy(courses.price);
+      } else if (scope === 'specific_courses') {
+        priceRows = await db
+          .select({ id: courses.id, title: courses.title, price: courses.price })
+          .from(courses)
+          .where(
+            and(
+              isNull(courses.deletedAt),
+              inArray(courses.id, dto.scopeCourseIds ?? []),
+            ),
+          )
+          .orderBy(courses.price);
+      }
+      const offenders = priceRows.filter(
+        (r) => Number(r.price ?? 0) > 0 && Number(r.price) <= value,
+      );
+      if (offenders.length > 0) {
+        const cheapest = offenders[0];
+        const cheapestPrice = Number(cheapest.price).toFixed(2);
+        const extra =
+          offenders.length > 1
+            ? ` (and ${offenders.length - 1} other course${offenders.length > 2 ? 's' : ''})`
+            : '';
+        throw new BadRequestException(
+          `Fixed discount SAR ${value.toFixed(2)} is not less than "${cheapest.title}" (SAR ${cheapestPrice})${extra}. Lower the discount or narrow the scope.`,
+        );
+      }
+    }
   }
 
   async updateCampaign(
     id: string,
     dto: Partial<{
       name: string;
+      nameAr: string | null;
       description: string | null;
+      descriptionAr: string | null;
       startsAt: string | null;
       endsAt: string | null;
       budget: number | null;
       isActive: boolean;
       showOnSite: boolean;
       bannerCta: string | null;
+      bannerCtaAr: string | null;
+      campaignType: 'standard' | 'early_bird';
+      discountType: 'none' | 'percentage' | 'fixed';
+      discountValue: number | null;
+      scope: 'code_only' | 'all_paid' | 'by_delivery_type' | 'specific_courses';
+      scopeDeliveryTypes: string[];
+      scopeCourseIds: string[];
+      allowsCoupon: boolean;
     }>,
     userId: string,
     ipAddress?: string,
   ) {
+    // Merge incoming with current so cross-field validation sees the final shape.
+    const [current] = await db
+      .select()
+      .from(couponCampaigns)
+      .where(eq(couponCampaigns.id, id))
+      .limit(1);
+    if (!current) {
+      throw new NotFoundException('Campaign not found');
+    }
+    await this.validateCampaignShape({
+      startsAt:
+        dto.startsAt !== undefined
+          ? dto.startsAt
+          : current.startsAt
+            ? current.startsAt.toISOString()
+            : null,
+      endsAt:
+        dto.endsAt !== undefined
+          ? dto.endsAt
+          : current.endsAt
+            ? current.endsAt.toISOString()
+            : null,
+      discountType: (dto.discountType ?? current.discountType) as any,
+      discountValue:
+        dto.discountValue !== undefined
+          ? dto.discountValue
+          : current.discountValue !== null
+            ? Number(current.discountValue)
+            : null,
+      scope: (dto.scope ?? current.scope) as any,
+      scopeDeliveryTypes: dto.scopeDeliveryTypes ?? current.scopeDeliveryTypes,
+      scopeCourseIds: dto.scopeCourseIds ?? current.scopeCourseIds,
+    });
+
     const updates: Record<string, any> = { updatedAt: new Date() };
     if (dto.name !== undefined) updates.name = dto.name;
+    if (dto.nameAr !== undefined)
+      updates.nameAr = dto.nameAr === null ? null : dto.nameAr.trim() || null;
     if (dto.description !== undefined) updates.description = dto.description;
+    if (dto.descriptionAr !== undefined)
+      updates.descriptionAr = dto.descriptionAr === null ? null : dto.descriptionAr.trim() || null;
     if (dto.startsAt !== undefined)
       updates.startsAt = dto.startsAt ? new Date(dto.startsAt) : null;
     if (dto.endsAt !== undefined)
@@ -1651,16 +2279,26 @@ export class DiscountService {
     if (dto.isActive !== undefined) updates.isActive = dto.isActive;
     if (dto.showOnSite !== undefined) updates.showOnSite = dto.showOnSite;
     if (dto.bannerCta !== undefined) updates.bannerCta = dto.bannerCta;
+    if (dto.bannerCtaAr !== undefined)
+      updates.bannerCtaAr = dto.bannerCtaAr === null ? null : dto.bannerCtaAr.trim() || null;
+    if (dto.campaignType !== undefined) updates.campaignType = dto.campaignType;
+    if (dto.discountType !== undefined) updates.discountType = dto.discountType;
+    if (dto.discountValue !== undefined) {
+      updates.discountValue =
+        dto.discountValue === null ? null : dto.discountValue.toFixed(2);
+    }
+    if (dto.scope !== undefined) updates.scope = dto.scope;
+    if (dto.scopeDeliveryTypes !== undefined)
+      updates.scopeDeliveryTypes = dto.scopeDeliveryTypes;
+    if (dto.scopeCourseIds !== undefined)
+      updates.scopeCourseIds = dto.scopeCourseIds;
+    if (dto.allowsCoupon !== undefined) updates.allowsCoupon = dto.allowsCoupon;
 
     const [updated] = await db
       .update(couponCampaigns)
       .set(updates)
       .where(eq(couponCampaigns.id, id))
       .returning();
-
-    if (!updated) {
-      throw new NotFoundException('Campaign not found');
-    }
 
     await this.auditLogService.log({
       entityType: 'coupon_campaign',
@@ -1734,20 +2372,30 @@ export class DiscountService {
   }
 
   /**
-   * Active campaign with `showOnSite=true` for the public banner.
-   * Returns the most recently-started active campaign, or null. Used by
-   * the homepage / courses page banner strip.
+   * All currently-active campaigns with `showOnSite=true`, newest-start
+   * first. The public banner rotates through this list. Capped at 10 to
+   * keep the payload trivial — if finance ever exceeds that we surface
+   * the newest 10, which is still more than any sensible UI can rotate.
    */
-  async getActiveBannerCampaign() {
+  async getActiveBannerCampaigns() {
     const now = new Date();
-    const [campaign] = await db
+    const campaigns = await db
       .select({
         id: couponCampaigns.id,
         name: couponCampaigns.name,
+        nameAr: couponCampaigns.nameAr,
         description: couponCampaigns.description,
+        descriptionAr: couponCampaigns.descriptionAr,
         startsAt: couponCampaigns.startsAt,
         endsAt: couponCampaigns.endsAt,
         bannerCta: couponCampaigns.bannerCta,
+        bannerCtaAr: couponCampaigns.bannerCtaAr,
+        // Scope + course ids drive the CTA link. When the banner is
+        // scoped to exactly one course the frontend routes the button
+        // straight to that course's detail page; otherwise the button
+        // falls back to the /courses catalog.
+        scope: couponCampaigns.scope,
+        scopeCourseIds: couponCampaigns.scopeCourseIds,
       })
       .from(couponCampaigns)
       .where(
@@ -1765,8 +2413,8 @@ export class DiscountService {
         ),
       )
       .orderBy(desc(couponCampaigns.startsAt))
-      .limit(1);
-    return campaign || null;
+      .limit(10);
+    return campaigns;
   }
 
   // ─── Finance dashboard summary + audit ──────────────────────────────

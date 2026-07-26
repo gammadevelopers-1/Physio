@@ -9,10 +9,13 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Info,
 } from "lucide-react";
 import { refundApi } from "@/lib/api";
 import { formatSar, pickCourseTitle } from "./billingHelpers";
+import Select from "@/components/admin-dashboard/Select";
 
 /**
  * Student-initiated refund request. Two screens:
@@ -34,16 +37,26 @@ import { formatSar, pickCourseTitle } from "./billingHelpers";
 
 type Gateway = "moyasar" | "tamara" | "tabby" | "bank_transfer" | "mock";
 
-// Backend's CreateRefundDto accepts exactly these values.
+// Buyer-facing refund reasons. `course_cancelled` is admin-initiated only
+// (never selectable in the modal) and `policy` is a legacy value kept on
+// the backend for archived rows — same story. Order below matches the
+// dropdown ordering agreed with Amna: mismatch-first (most common
+// substantive complaint), then buyer-side voluntary reasons, then
+// platform-issue reasons, ending with "Other" as the escape hatch.
 const REASON_KEYS = [
-  "policy",
+  "description_mismatch",
   "cancelled",
   "technical",
   "duplicate",
+  "wrong_course",
+  "access_issue",
+  "course_cancelled",
   "other",
 ] as const;
 
 type ReasonKey = (typeof REASON_KEYS)[number];
+
+const NOTE_MAX = 500;
 
 type LineItem = {
   paymentItemId: string | null;
@@ -96,6 +109,9 @@ const StudentRefundRequestModal = ({
   const [step, setStep] = useState<Step>("form");
   const [reason, setReason] = useState<ReasonKey | "">("");
   const [note, setNote] = useState("");
+  // Optional-details toggle for non-"other" reasons. When reason === "other"
+  // the note field is always visible (and required) regardless of this flag.
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Multi-select state — default to every refundable line so the modal
@@ -136,6 +152,7 @@ const StudentRefundRequestModal = ({
     setStep("form");
     setReason("");
     setNote("");
+    setDetailsExpanded(false);
     setError(null);
     setSubmitting(false);
     onClose();
@@ -341,60 +358,102 @@ const StudentRefundRequestModal = ({
                     </fieldset>
                   )}
 
-                  <fieldset>
-                    <legend className="block text-sm font-medium text-[#374151] mb-2">
-                      {t("reasonLabel")}
-                    </legend>
-                    <div className="space-y-1.5">
-                      {REASON_KEYS.map((r) => {
-                        const selected = reason === r;
-                        return (
-                          <label
-                            key={r}
-                            className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition ${
-                              selected
-                                ? "border-[var(--color-primary)] bg-[#FFFBF0]"
-                                : "border-[#E5E7EB] hover:bg-[#F9FAFB]"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="refund-reason"
-                              value={r}
-                              checked={selected}
-                              onChange={() => {
-                                setReason(r);
-                                setError(null);
-                              }}
-                              className="mt-0.5 accent-[var(--color-primary)]"
-                            />
-                            <span className="text-sm text-[#374151]">
-                              {t(`reasons.${r}`)}
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
-
                   <div>
                     <label
-                      htmlFor="refund-note"
+                      htmlFor="refund-reason-select"
                       className="block text-sm font-medium text-[#374151] mb-2"
                     >
-                      {reason === "other"
-                        ? t("noteRequiredLabel")
-                        : t("noteLabel")}
+                      {t("reasonLabel")}
                     </label>
-                    <textarea
-                      id="refund-note"
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      rows={3}
-                      placeholder={t("notePlaceholder")}
-                      className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] resize-none"
+                    <Select
+                      options={REASON_KEYS.map((r) => ({
+                        value: r,
+                        label: t(`reasons.${r}`),
+                      }))}
+                      value={reason}
+                      onChange={(val) => {
+                        setReason(val as ReasonKey);
+                        setError(null);
+                      }}
+                      placeholder={t("reasonPlaceholder")}
+                      ariaLabel={t("reasonLabel")}
                     />
                   </div>
+
+                  {/* Note field:
+                      - "other" → always visible, required, min 3 chars,
+                        char counter shown so the student knows the cap.
+                      - non-"other" → hidden behind an "Add details" toggle
+                        as a quality-of-life escape hatch; sending an empty
+                        note is fine for those reasons. */}
+                  {reason === "other" ? (
+                    <div>
+                      <label
+                        htmlFor="refund-note"
+                        className="block text-sm font-medium text-[#374151] mb-2"
+                      >
+                        {t("noteRequiredLabel")}
+                        <span className="text-[#DC2626]"> *</span>
+                      </label>
+                      <textarea
+                        id="refund-note"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
+                        rows={3}
+                        required
+                        minLength={3}
+                        maxLength={NOTE_MAX}
+                        placeholder={t("notePlaceholder")}
+                        className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] resize-none"
+                      />
+                      <div className="mt-1 text-[11px] text-[#6B7280] text-end tabular-nums">
+                        {t("noteCharCounter", { count: note.length })}
+                      </div>
+                    </div>
+                  ) : reason ? (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setDetailsExpanded((v) => !v)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-primary)] hover:underline"
+                        aria-expanded={detailsExpanded}
+                        aria-controls="refund-optional-note"
+                      >
+                        {detailsExpanded ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
+                        {detailsExpanded
+                          ? t("hideDetailsToggle")
+                          : t("addDetailsToggle")}
+                      </button>
+                      {detailsExpanded && (
+                        <div id="refund-optional-note" className="mt-2">
+                          <label
+                            htmlFor="refund-note"
+                            className="block text-sm font-medium text-[#374151] mb-2"
+                          >
+                            {t("noteLabel")}
+                          </label>
+                          <textarea
+                            id="refund-note"
+                            value={note}
+                            onChange={(e) =>
+                              setNote(e.target.value.slice(0, NOTE_MAX))
+                            }
+                            rows={3}
+                            maxLength={NOTE_MAX}
+                            placeholder={t("notePlaceholder")}
+                            className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] resize-none"
+                          />
+                          <div className="mt-1 text-[11px] text-[#6B7280] text-end tabular-nums">
+                            {t("noteCharCounter", { count: note.length })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
                 </>
               ) : (
                 /* Confirm step */
@@ -457,10 +516,12 @@ const StudentRefundRequestModal = ({
                   <p className="text-xs text-[#6B7280] flex items-start gap-1.5">
                     <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                     <span>
-                      {isPartialCart
-                        ? t("partialRefundNote")
-                        : t("fullRefundNote")}
-                      <br />
+                      {isPartialCart && (
+                        <>
+                          {t("partialRefundNote")}
+                          <br />
+                        </>
+                      )}
                       {t(`gatewayHints.${gatewayKey}`)}
                     </span>
                   </p>
@@ -499,7 +560,14 @@ const StudentRefundRequestModal = ({
               <button
                 type="button"
                 onClick={goNext}
-                disabled={!reason}
+                // Reason is always required. When "other" is picked the note
+                // becomes required too (min 3 chars). Backend re-validates
+                // the same rule via CreateRefundDto; this just gives a clean
+                // UX so submit never round-trips a 400.
+                disabled={
+                  !reason ||
+                  (reason === "other" && note.trim().length < 3)
+                }
                 className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-50 hover:opacity-90"
               >
                 {t("next")}

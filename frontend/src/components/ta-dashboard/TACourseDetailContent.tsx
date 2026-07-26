@@ -6,12 +6,14 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import TANavbar from "./TANavbar";
 import TASidebar from "./TASidebar";
+import TASessionJoinButton from "./TASessionJoinButton";
 import { taApi } from "@/lib/api";
 import type { CourseDetailResponse, CourseEnrollment, CourseSession } from "@/types/instructor-dashboard";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDate, formatPlatformDateReadable, formatPlatformTime, type PlatformLocaleSettings } from "@/lib/platform-locale";
 import {
   ArrowLeft,
+  ArrowRight,
   Users,
   Calendar,
   Clock,
@@ -33,23 +35,30 @@ function formatDate(dateStr: string | null, settings: PlatformLocaleSettings, lo
   return formatPlatformDateReadable(dateStr, settings, locale === "ar" ? "ar" : "en");
 }
 
-function formatDuration(start: string | null, end: string | null) {
+function formatDuration(
+  start: string | null,
+  end: string | null,
+  tTA: ReturnType<typeof useTranslations>,
+) {
   if (!start || !end) return "—";
   const days = Math.ceil(
     (new Date(end).getTime() - new Date(start).getTime()) / 86400000
   );
-  if (days <= 0) return "1 day";
-  if (days === 1) return "1 day";
-  return `${days} days`;
+  if (days <= 1) return tTA("durations.oneDay");
+  return tTA("durations.daysCount", { count: days });
 }
 
-function formatSessionDate(dateStr: string, settings: PlatformLocaleSettings) {
+function formatSessionDate(
+  dateStr: string,
+  settings: PlatformLocaleSettings,
+  tTA: ReturnType<typeof useTranslations>,
+) {
   const d = new Date(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const sessionDay = new Date(d);
   sessionDay.setHours(0, 0, 0, 0);
-  if (sessionDay.getTime() === today.getTime()) return "Today";
+  if (sessionDay.getTime() === today.getTime()) return tTA("durations.today");
   return formatPlatformDate(dateStr, settings);
 }
 
@@ -81,7 +90,9 @@ const sessionTypeIcon = (type: string) => {
 
 export default function TACourseDetailContent({ courseId }: TACourseDetailContentProps) {
   const locale = useLocale();
+  const isRTL = locale === "ar";
   const t = useTranslations("instructorDashboard");
+  const tTA = useTranslations("taDashboard");
   const platformLocale = usePlatformLocale();
 
   const [course, setCourse] = useState<CourseDetailResponse | null>(null);
@@ -153,7 +164,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                 href={`/${locale}/dashboard/teaching-assistant/courses`}
                 className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
+                {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                 {t("courseDetail.backToCourses")}
               </Link>
               <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
@@ -163,7 +174,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                   onClick={fetchData}
                   className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm rounded-lg hover:bg-[var(--color-primary-dark)]"
                 >
-                  Retry
+                  {tTA("common.retry")}
                 </button>
               </div>
             </div>
@@ -175,7 +186,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                 href={`/${locale}/dashboard/teaching-assistant/courses`}
                 className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
+                {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                 {t("courseDetail.backToCourses")}
               </Link>
 
@@ -260,7 +271,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                       </div>
                       <div>
                         <p className="text-lg font-bold text-[var(--color-text-secondary)]">
-                          {formatDuration(course.startDate, course.endDate)}
+                          {formatDuration(course.startDate, course.endDate, tTA)}
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.duration")}</p>
                       </div>
@@ -371,16 +382,16 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                           <table className="w-full">
                             <thead>
                               <tr className="border-b border-[var(--color-border)]">
-                                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
+                                <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                                   {t("courseDetail.name")}
                                 </th>
-                                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
+                                <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                                   {t("courseDetail.email")}
                                 </th>
-                                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
+                                <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                                   {t("courseDetail.progress")}
                                 </th>
-                                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
+                                <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                                   {t("courseDetail.status")}
                                 </th>
                               </tr>
@@ -413,7 +424,9 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                           : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                                       }`}
                                     >
-                                      {e.status}
+                                      {tTA.has(`courseStatus.${e.status}`)
+                                        ? tTA(`courseStatus.${e.status}`)
+                                        : e.status}
                                     </span>
                                   </td>
                                 </tr>
@@ -449,17 +462,29 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                   <div className="min-w-0">
                                     <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{session.title}</p>
                                     <p className="text-xs text-[var(--color-text-secondary)]">
-                                      {formatSessionDate(session.scheduledAt, platformLocale)} &bull;{" "}
+                                      {formatSessionDate(session.scheduledAt, platformLocale, tTA)} &bull;{" "}
                                       {formatSessionTime(session.scheduledAt, session.durationMinutes, platformLocale, locale)} &bull;{" "}
-                                      {session.durationMinutes} min
+                                      {session.durationMinutes} {tTA("sessions.minutes")}
                                     </p>
                                   </div>
                                 </div>
-                                <span
-                                  className={`px-2.5 py-1 rounded-md text-xs font-medium flex-shrink-0 ${statusBadge(session.status)}`}
-                                >
-                                  {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                                </span>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  {(session.type === "zoom" || session.type === "hybrid") && (
+                                    <TASessionJoinButton
+                                      sessionId={session.id}
+                                      scheduledAt={session.scheduledAt}
+                                      durationMinutes={session.durationMinutes}
+                                      status={session.status}
+                                    />
+                                  )}
+                                  <span
+                                    className={`px-2.5 py-1 rounded-md text-xs font-medium ${statusBadge(session.status)}`}
+                                  >
+                                    {tTA.has(`sessions.${session.status}`)
+                                      ? tTA(`sessions.${session.status}`)
+                                      : session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                                  </span>
+                                </div>
                               </div>
                             ))}
                         </div>

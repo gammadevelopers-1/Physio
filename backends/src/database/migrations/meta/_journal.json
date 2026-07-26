@@ -610,6 +610,83 @@
       "when": 1784016000000,
       "tag": "0101_refund_reason_course_cancelled",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1784102400000,
+      "tag": "0102_enrollment_admin_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1784188800000,
+      "tag": "0103_campaign_first_class_discount",
+      "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1784275200000,
+      "tag": "0104_sale_fixed_amount",
+      "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1784361600000,
+      "tag": "0105_campaign_bilingual",
+      "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1784448000000,
+      "tag": "0106_banner_cta_ar",
+      "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1784534400000,
+      "tag": "0107_reward_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1784620800000,
+      "tag": "0108_reward_polish",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1784707200000,
+      "tag": "0109_reward_history_artifacts",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1784793600000,
+      "tag": "0110_enrollment_source",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1784880000000,
+      "tag": "0111_refund_reasons_expanded",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1784966400000,
+      "tag": "0112_ta_panelist_join_url",
+      "breakpoints": true
     }
   ]
 }

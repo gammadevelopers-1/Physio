@@ -18,6 +18,7 @@ import {
 import TicketDetailSkeleton from "./TicketDetailSkeleton";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useTicketDetail } from "@/hooks/useStudentTickets";
+import { useVisibilityPolling } from "@/hooks/useVisibilityPolling";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import { FmtDate } from "@/components/ui/Fmt";
@@ -264,8 +265,14 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
   const isAr = locale === "ar";
   const userData = useStudentProfile();
 
-  const { data: ticket, loading, refetch } = useTicketDetail(ticketId);
+  const { data: ticket, loading, refetch, refetchQuiet } =
+    useTicketDetail(ticketId);
   const platformLocale = usePlatformLocale();
+
+  // Poll the ticket every 8s so new staff replies land in the thread
+  // without the student having to reload the page. Silent — no
+  // spinner, no error banner on transient failures.
+  useVisibilityPolling(refetchQuiet, 8000, Boolean(ticketId));
 
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);

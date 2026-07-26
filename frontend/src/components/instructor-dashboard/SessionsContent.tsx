@@ -12,6 +12,7 @@ import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import DatePicker from "@/components/ui/DatePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
+import Select from "@/components/ui/Select";
 import { instructorApi, zoomAttendanceApi, courseAssistantsApi, courseManagerApi, type ThresholdStatus } from "@/lib/api";
 import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
 import { openWebinarWhatsAppShare, openCoursePageWhatsAppShare } from "@/lib/webinar-share";
@@ -703,26 +704,25 @@ function AttendanceModal({
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ps-8">
-                      <select
+                      <Select
                         value={manualAssignments[p.zoomUserEmail] || ""}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           setManualAssignments((prev) => ({
                             ...prev,
-                            [p.zoomUserEmail]: e.target.value,
+                            [p.zoomUserEmail]: v,
                           }))
                         }
                         disabled={attendanceLocked}
-                        className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] disabled:opacity-50"
-                      >
-                        <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
-                        {enrollments
+                        size="sm"
+                        className="flex-1"
+                        placeholder={locale === "ar" ? "اختر طالب" : "Select student"}
+                        options={enrollments
                           .filter((e) => !markedStudentIds.has(e.studentId))
-                          .map((e) => (
-                            <option key={e.studentId} value={e.studentId}>
-                              {e.studentFirstName} {e.studentLastName}
-                            </option>
-                          ))}
-                      </select>
+                          .map((e) => ({
+                            value: e.studentId,
+                            label: `${e.studentFirstName} ${e.studentLastName}`,
+                          }))}
+                      />
                       <button
                         onClick={() => handleManualAssign(p.zoomUserEmail)}
                         disabled={!manualAssignments[p.zoomUserEmail] || assigningEmail === p.zoomUserEmail || attendanceLocked}
@@ -1277,16 +1277,15 @@ function ScheduleSessionModal({
           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.course")} *
           </label>
-          <select
+          <Select
             value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
-          >
-            <option value="">{t("sessionsPage.form.selectCourse")}</option>
-            {courses.filter((c) => c.status !== "completed" && c.status !== "archived" && c.deliveryType !== "self-paced" && c.deliveryType !== "webinar").map((c) => (
-              <option key={c.id} value={c.id}>{c.title}</option>
-            ))}
-          </select>
+            onChange={setCourseId}
+            className="w-full"
+            placeholder={t("sessionsPage.form.selectCourse")}
+            options={courses
+              .filter((c) => c.status !== "completed" && c.status !== "archived" && c.deliveryType !== "self-paced" && c.deliveryType !== "webinar")
+              .map((c) => ({ value: c.id, label: c.title }))}
+          />
         </div>
 
         {/* Title */}
@@ -2628,27 +2627,29 @@ const SessionsContent = () => {
                   <Filter className="w-4 h-4" />
                   {t("sessionsPage.filters")}:
                 </div>
-                <select
+                <Select
                   value={filterCourse}
-                  onChange={(e) => setFilterCourse(e.target.value)}
-                  className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-                >
-                  <option value="all">{t("sessionsPage.allCourses")}</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.title}</option>
-                  ))}
-                </select>
-                <select
+                  onChange={setFilterCourse}
+                  size="sm"
+                  className="min-w-[180px]"
+                  options={[
+                    { value: "all", label: t("sessionsPage.allCourses") },
+                    ...courses.map((c) => ({ value: c.id, label: c.title })),
+                  ]}
+                />
+                <Select
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-                >
-                  <option value="all">{t("sessionsPage.allStatuses")}</option>
-                  <option value="scheduled">{t("sessionsPage.statusUpcoming")}</option>
-                  <option value="live">{t("sessionsPage.statusLive")}</option>
-                  <option value="completed">{t("sessionsPage.statusCompleted")}</option>
-                  <option value="cancelled">{t("sessionsPage.statusCancelled")}</option>
-                </select>
+                  onChange={setFilterStatus}
+                  size="sm"
+                  className="min-w-[160px]"
+                  options={[
+                    { value: "all", label: t("sessionsPage.allStatuses") },
+                    { value: "scheduled", label: t("sessionsPage.statusUpcoming") },
+                    { value: "live", label: t("sessionsPage.statusLive") },
+                    { value: "completed", label: t("sessionsPage.statusCompleted") },
+                    { value: "cancelled", label: t("sessionsPage.statusCancelled") },
+                  ]}
+                />
                 <DatePicker
                   value={filterDateFrom}
                   onChange={setFilterDateFrom}

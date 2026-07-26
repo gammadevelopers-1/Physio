@@ -12,16 +12,17 @@ import {
   FileText,
   Search,
   List,
-  ChevronLeft,
-  ChevronRight,
   Filter,
   X,
   Loader2,
   AlertTriangle,
   Radio,
 } from "lucide-react";
-import api from "@/lib/api";
 import { taApi } from "@/lib/api";
+import DatePicker from "@/components/ui/DatePicker";
+import Select from "@/components/admin-dashboard/Select";
+import SessionsCalendarWidget from "../instructor-dashboard/SessionsCalendarWidget";
+import TASessionJoinButton from "./TASessionJoinButton";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDate, formatPlatformTime, type PlatformLocaleSettings } from "@/lib/platform-locale";
 
@@ -85,9 +86,6 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
   // Data
   const [sessions, setSessions] = useState<AssignedSession[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Calendar
-  const [calendarDate, setCalendarDate] = useState(new Date());
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -180,33 +178,36 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
     return <Monitor className="w-4 h-4" />;
   };
 
-  // Calendar helpers
-  const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
-  const monthNames =
-    locale === "ar"
-      ? ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
-      : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  const dayNames =
-    locale === "ar"
-      ? ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"]
-      : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  const getSessionsForDate = (day: number) => {
-    const dateStr = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return filteredSessions.filter((s) => getDateStr(s.scheduledAt) === dateStr);
-  };
-
-  const getCalendarDotColor = (status: string) => {
-    switch (status) {
-      case "scheduled": return "bg-[var(--color-primary)]";
-      case "live": return "bg-[#EF4444]";
-      case "ended": return "bg-[#D97706]";
-      case "completed": return "bg-[#22C55E]";
-      case "cancelled": return "bg-[var(--color-text-secondary)]";
-      default: return "bg-[var(--color-primary)]";
-    }
-  };
+  // Map filteredSessions → shape expected by the shared SessionsCalendarWidget.
+  const widgetSessions = useMemo(() => {
+    return filteredSessions.map((s) => {
+      const scheduledDate = new Date(s.scheduledAt);
+      const endDate = new Date(scheduledDate.getTime() + s.durationMinutes * 60 * 1000);
+      const fmt = (d: Date) =>
+        d.toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+      const known = new Set(["zoom", "onsite", "hybrid"]);
+      const type = (known.has(s.type) ? s.type : "onsite") as "zoom" | "onsite" | "hybrid";
+      const knownStatus = new Set(["scheduled", "live", "ended", "completed", "cancelled"]);
+      const status = (knownStatus.has(s.status) ? s.status : "scheduled") as
+        | "scheduled" | "live" | "ended" | "completed" | "cancelled";
+      return {
+        id: s.id,
+        title: s.title,
+        time: `${fmt(scheduledDate)} - ${fmt(endDate)}`,
+        duration: `${s.durationMinutes} mins`,
+        type,
+        status,
+        venue: s.roomName || s.venueAddress || undefined,
+        enrolled: 0,
+        dayIndex: scheduledDate.getDay(),
+        date: scheduledDate.toLocaleDateString("en-CA"),
+      };
+    });
+  }, [filteredSessions, locale]);
 
   // Session card renderer
   const renderSessionCard = (session: AssignedSession) => {
@@ -221,12 +222,12 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
             {session.isWebinar && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded-full uppercase tracking-wide flex-shrink-0">
                 <Radio className="w-2.5 h-2.5" />
-                {locale === "ar" ? "ندوة" : "Webinar"}
+                {t("sessionTypes.webinar")}
               </span>
             )}
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${getStatusBadge(session.status)}`}>
               {session.status === "live" && (
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse mr-1" />
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse me-1" />
               )}
               {t(`sessions.${session.status}`)}
             </span>
@@ -235,7 +236,9 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-secondary)]">
             <span className="flex items-center gap-1">
               {getTypeIcon(session.type)}
-              {session.type}
+              {t.has(`sessionTypes.${session.type}`)
+                ? t(`sessionTypes.${session.type}`)
+                : session.type}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
@@ -249,21 +252,13 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {session.status === "live" && session.zoomLink && (
-            <button
-              onClick={async () => {
-                try {
-                  const { joinUrl } = await api.get<{ joinUrl: string }>(`/sessions/${session.id}/ta-join`);
-                  window.open(joinUrl, "_blank");
-                } catch {
-                  window.open(session.zoomLink!, "_blank");
-                }
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 btn-gold text-[var(--color-button-text)] rounded-lg text-xs font-medium transition-colors"
-            >
-              <Video className="w-3.5 h-3.5" />
-              {t("sessions.joinZoom")}
-            </button>
+          {(session.type === "zoom" || session.type === "hybrid") && (
+            <TASessionJoinButton
+              sessionId={session.id}
+              scheduledAt={session.scheduledAt}
+              durationMinutes={session.durationMinutes}
+              status={session.status}
+            />
           )}
           {(session.status === "live" || session.status === "ended" || session.status === "completed") && (
             <button
@@ -294,7 +289,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
       <div className="p-4 border-b border-[var(--color-border)]">
         <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
           {groupTitle}
-          <span className="ml-2 text-xs font-normal text-[var(--color-text-secondary)]">({groupSessions.length})</span>
+          <span className="ms-2 text-xs font-normal text-[var(--color-text-secondary)]">({groupSessions.length})</span>
         </h2>
       </div>
       {groupSessions.length === 0 ? (
@@ -352,39 +347,33 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           <Filter className="w-4 h-4" />
           {t("sessions.filters") || "Filter"}:
         </div>
-        <select
+        <Select
+          size="sm"
+          className="min-w-[180px]"
           value={courseFilter}
-          onChange={(e) => setCourseFilter(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-        >
-          <option value="all">{t("sessions.allCourses")}</option>
-          {uniqueCourses.map(([id, name]) => (
-            <option key={id} value={id}>{name}</option>
-          ))}
-        </select>
-        <select
+          onChange={setCourseFilter}
+          ariaLabel={t("sessions.allCourses")}
+          options={[
+            { value: "all", label: t("sessions.allCourses") },
+            ...uniqueCourses.map(([id, name]) => ({ value: id, label: name })),
+          ]}
+        />
+        <Select
+          size="sm"
+          className="min-w-[160px]"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-        >
-          <option value="all">{t("sessions.allStatuses")}</option>
-          <option value="scheduled">{t("sessions.scheduled")}</option>
-          <option value="live">{t("sessions.live")}</option>
-          <option value="completed">{t("sessions.completed")}</option>
-          <option value="cancelled">{t("sessions.cancelled") || "Cancelled"}</option>
-        </select>
-        <input
-          type="date"
-          value={filterDateFrom}
-          onChange={(e) => setFilterDateFrom(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+          onChange={setStatusFilter}
+          ariaLabel={t("sessions.allStatuses")}
+          options={[
+            { value: "all", label: t("sessions.allStatuses") },
+            { value: "scheduled", label: t("sessions.scheduled") },
+            { value: "live", label: t("sessions.live") },
+            { value: "completed", label: t("sessions.completed") },
+            { value: "cancelled", label: t("sessions.cancelled") || "Cancelled" },
+          ]}
         />
-        <input
-          type="date"
-          value={filterDateTo}
-          onChange={(e) => setFilterDateTo(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-        />
+        <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} />
+        <DatePicker value={filterDateTo} onChange={setFilterDateTo} min={filterDateFrom || undefined} />
         {(filterDateFrom || filterDateTo) && (
           <button
             onClick={() => { setFilterDateFrom(""); setFilterDateTo(""); }}
@@ -417,103 +406,27 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
         </div>
       )}
 
-      {/* Calendar View */}
+      {/* Calendar View — uses the shared SessionsCalendarWidget (Hijri-aware,
+          RTL-safe chevrons, year+month picker, Today button). Read-only from
+          the TA's perspective; taps open the attendance drawer through the
+          onAttendance callback. */}
       {!loading && viewMode === "calendar" && (
-        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
-          {/* Calendar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-            <button
-              onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
-              className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
-            </button>
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-              {monthNames[calendarDate.getMonth()]} {calendarDate.getFullYear()}
-            </h2>
-            <button
-              onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}
-              className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
-            >
-              <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />
-            </button>
-          </div>
-
-          {/* Legend */}
-          <div className="flex items-center gap-4 px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
-            <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
-              <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />
-              {t("sessions.scheduled")}
-            </span>
-            <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
-              {t("sessions.live")}
-            </span>
-            <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
-              {t("sessions.completed")}
-            </span>
-            <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
-              <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-text-secondary)]" />
-              {t("sessions.cancelled") || "Cancelled"}
-            </span>
-          </div>
-
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7">
-            {/* Day Headers */}
-            {dayNames.map((day) => (
-              <div key={day} className="p-3 text-center text-xs font-medium text-[var(--color-text-secondary)] border-b border-[var(--color-border)]">
-                {day}
-              </div>
-            ))}
-
-            {/* Empty cells */}
-            {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-              <div key={`empty-${i}`} className="min-h-[100px] p-2 border-b border-r border-[var(--color-border)] bg-[var(--color-surface-page)]" />
-            ))}
-
-            {/* Days */}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1;
-              const daySessions = getSessionsForDate(day);
-              const now = new Date();
-              const isToday = now.getDate() === day && now.getMonth() === calendarDate.getMonth() && now.getFullYear() === calendarDate.getFullYear();
-
-              return (
-                <div
-                  key={day}
-                  className={`min-h-[100px] p-2 border-b border-r border-[var(--color-border)] ${isToday ? "bg-[var(--color-border-subtle)]" : ""}`}
-                >
-                  <span
-                    className={`inline-flex items-center justify-center w-7 h-7 text-sm ${
-                      isToday ? "bg-[var(--color-primary)] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"
-                    }`}
-                  >
-                    {day}
-                  </span>
-                  <div className="mt-1 space-y-1">
-                    {daySessions.slice(0, 2).map((session) => (
-                      <div
-                        key={session.id}
-                        className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate cursor-pointer hover:opacity-80"
-                        title={`${session.title} - ${formatSessionTime(session.scheduledAt, platformLocale, locale)}`}
-                      >
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getCalendarDotColor(session.status)}`} />
-                        <span className="truncate text-[var(--color-text-secondary)]">{session.title}</span>
-                      </div>
-                    ))}
-                    {daySessions.length > 2 && (
-                      <div className="text-[10px] text-[var(--color-text-secondary)] px-1.5">
-                        +{daySessions.length - 2} {t("sessions.more") || "more"}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <SessionsCalendarWidget
+          sessions={widgetSessions}
+          onAttendance={(sessionId) => {
+            const s = filteredSessions.find((x) => x.id === sessionId);
+            if (!s) return;
+            onViewAttendance(sessionId, {
+              scheduledAt: s.scheduledAt,
+              durationMinutes: s.durationMinutes,
+              title: s.title,
+              type: s.type,
+              status: s.status,
+              courseId: s.courseId,
+              zoomLink: s.zoomLink,
+            });
+          }}
+        />
       )}
 
       {/* Empty state when no sessions at all */}

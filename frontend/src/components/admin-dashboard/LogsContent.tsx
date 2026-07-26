@@ -9,6 +9,7 @@ import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
 import Select from "./Select";
 import { TableRowSkeleton } from "./AdminSkeletons";
+import DatePicker from "@/components/ui/DatePicker";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { tOrFallback } from "@/lib/notification-i18n";
 import {
@@ -343,19 +344,19 @@ function AuditTab() {
           <table className="w-full">
             <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
               <tr>
-                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("audit.col.timestamp")}
                 </th>
-                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("audit.col.performer")}
                 </th>
-                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("audit.col.entity")}
                 </th>
-                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("audit.col.action")}
                 </th>
-                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("audit.col.ip")}
                 </th>
                 <th className="px-4 py-3 w-10" />
@@ -581,16 +582,16 @@ function ViolationsTab() {
           <table className="w-full">
             <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
               <tr>
-                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("audit.col.timestamp")}
                 </th>
-                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("violations.col.eventType")}
                 </th>
-                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("violations.col.entity")}
                 </th>
-                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("audit.col.ip")}
                 </th>
                 <th className="px-4 py-3 w-10" />
@@ -1021,14 +1022,14 @@ function FilterBar(props: FilterBarProps) {
           {!props.hideSearch && (
             <div className="relative flex-1 min-w-[200px]">
               <Search
-                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${props.isRTL ? "right-3" : "left-3"}`}
+                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] start-3`}
               />
               <input
                 type="text"
                 placeholder={props.searchPlaceholder}
                 value={props.searchInput}
                 onChange={(e) => props.setSearchInput(e.target.value)}
-                className={`w-full h-9 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] ${props.isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} focus:outline-none focus:border-[var(--color-primary)]`}
+                className={`w-full h-9 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] ps-9 pe-3 focus:outline-none focus:border-[var(--color-primary)]`}
               />
             </div>
           )}
@@ -1090,14 +1091,7 @@ function FilterBar(props: FilterBarProps) {
 }
 
 function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <input
-      type="date"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-9 px-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)]"
-    />
-  );
+  return <DatePicker value={value} onChange={onChange} />;
 }
 
 function ActionBadge({ action }: { action: string }) {

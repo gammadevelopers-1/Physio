@@ -69,12 +69,8 @@ export class SessionsService {
     conditions: any[],
     user: AuthenticatedUser,
   ): void {
-    if (isGlobalAdmin(user)) {
-      // No filter
-    } else if (isManager(user)) {
-      conditions.push(
-        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
-      );
+    if (isGlobalAdmin(user) || isManager(user)) {
+      // Managers and admins can access all sessions (platform-wide oversight)
     } else if (isTA(user)) {
       // TAs see sessions for courses they're actively assigned to
       conditions.push(
@@ -572,14 +568,36 @@ export class SessionsService {
   }
 
   /**
-   * Generate a Zoom join URL for a TA with their name pre-filled as
-   * "Full Name | TA-xxxxxxxx" (platform ID = first 8 chars of user UUID).
-   * This allows Zoom sync to identify and skip TAs automatically.
+   * TA session-join. Returns a shape the frontend uses to render the
+   * "Join session" CTA:
+   *   - joinable=false when outside the join window (not_yet | ended)
+   *     or when the caller isn't a TA on this session (not_authorized).
+   *   - joinable=true with `joinUrl` and `displayName` otherwise.
+   *
+   * Webinar sessions return a personal PANELIST join URL (mic, cam,
+   * screen-share, Q&A rights). We store one per (session, TA) on
+   * session_assistants.zoomPanelistJoinUrl when the TA is assigned;
+   * if the row is missing (TA added late, Zoom was down at assignment
+   * time), we register just-in-time here and persist it back.
+   *
+   * Meeting sessions return the meeting's join URL with a "| TA-xxxx"
+   * display-name suffix so the participant matcher can identify them
+   * (and the zoom-webhook `promoteIfTA` will co-host them on join).
+   *
+   * Time gate: joinable only within [scheduledAt - 15min,
+   * scheduledAt + durationMinutes + 30min grace]. Outside that window
+   * we return joinable=false with `reason` + `startsAt`/`endsAt` so the
+   * client can render "Starts in {rel}" or "Ended".
    */
   async getTAJoinUrl(userId: string, sessionId: string) {
-    // Verify TA is assigned to this session
-    const [assignment] = await db
-      .select({ id: sessionAssistants.id })
+    // Access check: TA must be on session_assistants OR on the parent
+    // course's course_assistants (approved). Either grants access —
+    // covers TAs added at course level whose session-level row hasn't
+    // propagated yet.
+    const [sessionAssignment] = await db
+      .select({
+        zoomPanelistJoinUrl: sessionAssistants.zoomPanelistJoinUrl,
+      })
       .from(sessionAssistants)
       .where(
         and(
@@ -589,36 +607,180 @@ export class SessionsService {
       )
       .limit(1);
 
-    if (!assignment) {
-      throw new BadRequestException('You are not assigned to this lecture');
-    }
-
     const [session] = await db
-      .select({ zoomLink: sessions.zoomLink, status: sessions.status })
+      .select({
+        id: sessions.id,
+        courseId: sessions.courseId,
+        zoomLink: sessions.zoomLink,
+        status: sessions.status,
+        isWebinar: sessions.isWebinar,
+        zoomWebinarId: sessions.zoomWebinarId,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+      })
       .from(sessions)
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
     if (!session) throw new NotFoundException('Lecture not found');
-    if (!session.zoomLink) {
-      throw new BadRequestException('This lecture has no Zoom link');
+
+    if (!sessionAssignment) {
+      const [courseAssignment] = await db
+        .select({ status: courseAssistants.status })
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, session.courseId),
+            eq(courseAssistants.userId, userId),
+            eq(courseAssistants.status, 'approved'),
+          ),
+        )
+        .limit(1);
+      if (!courseAssignment) {
+        return {
+          joinable: false as const,
+          reason: 'not_authorized' as const,
+        };
+      }
+    }
+
+    // Time-gate: opens 15 min before start, closes 30 min after
+    // scheduled end. Cancelled/ended sessions short-circuit "ended".
+    const startsAt = new Date(session.scheduledAt);
+    const endsAt = new Date(
+      startsAt.getTime() + (session.durationMinutes || 60) * 60_000 + 30 * 60_000,
+    );
+    const now = new Date();
+
+    if (
+      session.status === SESSION_STATUS.CANCELLED ||
+      session.status === SESSION_STATUS.ENDED ||
+      session.status === SESSION_STATUS.COMPLETED ||
+      session.status === SESSION_STATUS.MISSED ||
+      now >= endsAt
+    ) {
+      return {
+        joinable: false as const,
+        reason: 'ended' as const,
+        startsAt: startsAt.toISOString(),
+        endsAt: endsAt.toISOString(),
+      };
+    }
+
+    const opensAt = new Date(startsAt.getTime() - 15 * 60_000);
+    if (now < opensAt) {
+      return {
+        joinable: false as const,
+        reason: 'not_yet' as const,
+        startsAt: startsAt.toISOString(),
+        endsAt: endsAt.toISOString(),
+      };
     }
 
     const [user] = await db
-      .select({ firstName: users.firstName, lastName: users.lastName })
+      .select({
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
-
     const fullName =
-      [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Teaching Assistant';
+      [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+      'Teaching Assistant';
+    const displayName = `${fullName} (TA)`;
+
+    // Webinar path — return the personal panelist join URL.
+    if (session.isWebinar && session.zoomWebinarId) {
+      let joinUrl = sessionAssignment?.zoomPanelistJoinUrl || null;
+
+      if (!joinUrl && user?.email) {
+        try {
+          const result = await this.zoomService.registerPanelist(
+            session.zoomWebinarId,
+            {
+              email: user.email,
+              firstName: user.firstName || user.email.split('@')[0],
+              lastName: `${user.lastName || ''} (TA)`.trim(),
+            },
+          );
+          joinUrl = result.joinUrl || null;
+          if (joinUrl) {
+            // Persist so subsequent joins skip the Zoom round-trip.
+            // Only writes if there IS a session-level row — TAs joining
+            // via course-level scope get a fresh URL every time.
+            await db
+              .update(sessionAssistants)
+              .set({ zoomPanelistJoinUrl: joinUrl })
+              .where(
+                and(
+                  eq(sessionAssistants.sessionId, sessionId),
+                  eq(sessionAssistants.userId, userId),
+                ),
+              );
+          }
+        } catch (err) {
+          this.logger.warn(
+            `JIT panelist register failed session=${sessionId} ta=${userId}: ${(err as Error).message}`,
+          );
+        }
+      }
+
+      if (!joinUrl) {
+        throw new BadRequestException(
+          'Could not obtain a panelist join link. Please contact the course manager.',
+        );
+      }
+
+      this.auditService
+        .log({
+          eventType: NELC_EVENT_TYPE.ZOOM_JOIN_LINK_GENERATED,
+          entityType: 'session',
+          entityId: sessionId,
+          userId,
+          metadata: { sessionId, mode: 'ta_panelist' },
+        })
+        .catch(() => {});
+
+      return {
+        joinable: true as const,
+        joinType: 'panelist' as const,
+        joinUrl,
+        displayName,
+      };
+    }
+
+    // Meeting path — return the shared join URL with a ?uname= suffix.
+    // The zoom-webhook `promoteIfTA` fires on participant_joined and
+    // co-hosts the TA automatically for meetings marked as co_host.
+    // TODO(SDK): once we swap to the Zoom Meeting SDK, use
+    // renameParticipant so the "(TA)" suffix survives Zoom's own display
+    // name (Zoom currently ignores ?uname= when the guest is signed in).
+    if (!session.zoomLink) {
+      throw new BadRequestException('This lecture has no Zoom link');
+    }
     const platformId = `TA-${userId.substring(0, 8)}`;
-    const displayName = `${fullName} | ${platformId}`;
-
+    const suffixed = `${fullName} | ${platformId}`;
     const separator = session.zoomLink.includes('?') ? '&' : '?';
-    const joinUrl = `${session.zoomLink}${separator}uname=${encodeURIComponent(displayName)}`;
+    const joinUrl = `${session.zoomLink}${separator}uname=${encodeURIComponent(suffixed)}`;
 
-    return { joinUrl, displayName };
+    this.auditService
+      .log({
+        eventType: NELC_EVENT_TYPE.ZOOM_JOIN_LINK_GENERATED,
+        entityType: 'session',
+        entityId: sessionId,
+        userId,
+        metadata: { sessionId, mode: 'ta_meeting' },
+      })
+      .catch(() => {});
+
+    return {
+      joinable: true as const,
+      joinType: 'meeting-attendee' as const,
+      joinUrl,
+      displayName: suffixed,
+    };
   }
 
   /**

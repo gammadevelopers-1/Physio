@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -76,6 +77,7 @@ function nowAsDateTimeLocal(): string {
 }
 
 export default function ScheduledMaintenanceSection() {
+  const t = useTranslations("adminDashboard.settingsPage.scheduledMaintenance");
   const [windows, setWindows] = useState<ScheduledMaintenanceWindow[]>([]);
   const [components, setComponents] = useState<ServiceStatusComponent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,7 @@ export default function ScheduledMaintenanceSection() {
       setWindows(w);
       setComponents(c);
     } catch {
-      toast.error("Couldn't load scheduled maintenance windows");
+      toast.error(t("toasts.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -110,7 +112,7 @@ export default function ScheduledMaintenanceSection() {
     setCancellingId(id);
     try {
       await scheduledMaintenanceApi.cancel(id);
-      toast.success("Window cancelled");
+      toast.success(t("toasts.windowCancelled"));
       await load();
     } catch (e: any) {
       toast.error(e?.message || "Could not cancel");
@@ -328,6 +330,7 @@ function UpsertWindowModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations("adminDashboard.settingsPage.scheduledMaintenance");
   const [titleEn, setTitleEn] = useState(existing?.titleEn ?? "");
   const [titleAr, setTitleAr] = useState(existing?.titleAr ?? "");
   const [descriptionEn, setDescriptionEn] = useState(
@@ -394,10 +397,10 @@ function UpsertWindowModal({
       };
       if (mode === "edit" && existing) {
         await scheduledMaintenanceApi.update(existing.id, payload);
-        toast.success("Window updated");
+        toast.success(t("toasts.windowUpdated"));
       } else {
         await scheduledMaintenanceApi.create(payload);
-        toast.success("Maintenance window scheduled");
+        toast.success(t("toasts.windowScheduled"));
       }
       onSaved();
     } catch (e: any) {
@@ -426,7 +429,7 @@ function UpsertWindowModal({
 
         <div className="p-4 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Title (EN)" required>
+            <Field label={t("fields.titleEn")} required>
               <input
                 value={titleEn}
                 onChange={(e) => setTitleEn(e.target.value)}
@@ -435,7 +438,7 @@ function UpsertWindowModal({
                 className="w-full h-9 px-3 border border-[var(--color-border)] rounded-lg text-sm"
               />
             </Field>
-            <Field label="Title (AR)">
+            <Field label={t("fields.titleAr")}>
               <input
                 value={titleAr}
                 onChange={(e) => setTitleAr(e.target.value)}
@@ -453,7 +456,7 @@ function UpsertWindowModal({
                 onChange={(e) => setDescriptionEn(e.target.value)}
                 rows={3}
                 maxLength={2000}
-                placeholder="What's happening, what to expect…"
+                placeholder={t("fields.descriptionPlaceholder")}
                 className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm"
               />
             </Field>

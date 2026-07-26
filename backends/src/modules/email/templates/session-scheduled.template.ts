@@ -2,7 +2,16 @@
  * Session scheduled email template for PhysioGuidance
  * Sent when an instructor schedules a new session
  */
-import { EmailLocale, getEmailStrings, t, htmlAttrs, textAlign } from '../email-i18n';
+import {
+  EmailLocale,
+  getEmailStrings,
+  t,
+  htmlAttrs,
+  textAlign,
+  bodyAttrs,
+  infoTable,
+  bidi,
+} from '../email-i18n';
 
 export function getSessionScheduledHtml(params: {
   recipientName: string;
@@ -33,7 +42,7 @@ export function getSessionScheduledHtml(params: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title} - PhysioGuidance</title>
 </head>
-<body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
+<body ${bodyAttrs(locale)} style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
     <tr>
       <td align="center" style="padding:40px 16px;">
@@ -81,25 +90,13 @@ export function getSessionScheduledHtml(params: {
                 <tr>
                   <td style="padding:20px;">
                     <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${s.lectureLabel}</p>
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">${s.lectureLabel}</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${sessionTitle}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.courseLabel}</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${courseName}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.dateTimeLabel}</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${scheduledDate}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.typeLabel}</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${typeValue}</td>
-                      </tr>
+                    ${infoTable(locale, [
+                      { label: s.lectureLabel, value: `<strong>${bidi(sessionTitle)}</strong>` },
+                      { label: s.courseLabel, value: `<strong>${bidi(courseName)}</strong>` },
+                      { label: s.dateTimeLabel, value: `<strong>${bidi(scheduledDate)}</strong>` },
+                      { label: s.typeLabel, value: `<strong>${typeValue}</strong>` },
+                    ])}
 ${zoomBlock}
-                    </table>
                   </td>
                 </tr>
               </table>

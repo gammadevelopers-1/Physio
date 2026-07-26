@@ -136,16 +136,33 @@ function ChatUniformChip({
 }) {
   const t = useTranslations("supportDashboard.attachmentChip");
   const label = (() => {
-    if (isImage) return "IMAGE";
-    if (isPdf) return "PDF";
+    if (isImage) return t("fileType.image");
+    if (isPdf) return t("fileType.pdf");
     const ext = (attachment.filename ?? attachment.url).split(".").pop();
-    return ext ? ext.toUpperCase() : "FILE";
+    return ext ? ext.toUpperCase() : t("fileType.file");
+  })();
+  const scanLabel = (() => {
+    try {
+      const key = `scanStatus.${scan}`;
+      const val = t(key);
+      if (val && val !== key) return val;
+    } catch {
+      // ignore
+    }
+    return scan;
   })();
 
   return (
     <div className="inline-block relative group align-top">
-      <button
-        type="button"
+      {/* Anchor (not button) so that when the parent's handleClick
+          does NOT call preventDefault — i.e. the file is not
+          preview-able and only an audit hook fires — the browser
+          still opens the file. Preview-able files: handleClick
+          preventDefaults and opens the modal instead. */}
+      <a
+        href={attachment.url}
+        target="_blank"
+        rel="noopener noreferrer"
         onClick={(e) => onClick(e)}
         className="inline-flex items-center gap-3 w-[240px] h-[56px] px-2.5 py-2 border border-[var(--color-border)] bg-white rounded-lg hover:border-[var(--color-primary)] hover:shadow-sm transition-all text-start"
       >
@@ -186,12 +203,12 @@ function ChatUniformChip({
             )}
           </div>
         </div>
-      </button>
+      </a>
 
       {/* Scan status badge (only when not clean/unknown) */}
       {scan !== "clean" && scan !== "unknown" && (
-        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-white/95 border border-[var(--color-border)]">
-          {scan}
+        <span className="absolute top-1 start-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-white/95 border border-[var(--color-border)]">
+          {scanLabel}
         </span>
       )}
 

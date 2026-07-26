@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
+import Select from "@/components/ui/Select";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
@@ -739,40 +740,40 @@ const CertificatesContent = () => {
                         <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
                       </button>
                       <div className="hidden md:flex gap-3">
-                        <select
+                        <Select
                           value={selectedCourse}
-                          onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          <option value="all">{t("certificates.allCourses")}</option>
-                          {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                        </select>
-                        <select
+                          onChange={(v) => { setSelectedCourse(v); setCurrentPage(1); setSelectedIds(new Set()); }}
+                          className="min-w-[180px]"
+                          options={[
+                            { value: "all", label: t("certificates.allCourses") },
+                            ...courses.map((c) => ({ value: c.id, label: c.title })),
+                          ]}
+                        />
+                        <Select
                           value={selectedStatus}
-                          onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-                        </select>
+                          onChange={(v) => { setSelectedStatus(v); setCurrentPage(1); setSelectedIds(new Set()); }}
+                          className="min-w-[160px]"
+                          options={statusOptions.map((o) => ({ value: o.id, label: o.name }))}
+                        />
                       </div>
                     </div>
                     {showFilters && (
                       <div className="md:hidden mt-4 pt-4 border-t border-[var(--color-border)] grid grid-cols-2 gap-3">
-                        <select
+                        <Select
                           value={selectedCourse}
-                          onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          <option value="all">{t("certificates.allCourses")}</option>
-                          {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                        </select>
-                        <select
+                          onChange={(v) => { setSelectedCourse(v); setCurrentPage(1); }}
+                          className="w-full"
+                          options={[
+                            { value: "all", label: t("certificates.allCourses") },
+                            ...courses.map((c) => ({ value: c.id, label: c.title })),
+                          ]}
+                        />
+                        <Select
                           value={selectedStatus}
-                          onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-                        </select>
+                          onChange={(v) => { setSelectedStatus(v); setCurrentPage(1); }}
+                          className="w-full"
+                          options={statusOptions.map((o) => ({ value: o.id, label: o.name }))}
+                        />
                       </div>
                     )}
                   </div>

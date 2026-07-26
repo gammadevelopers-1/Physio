@@ -99,6 +99,11 @@ function buildCsp(nonce: string): string {
 // Build a render response that (a) forwards the nonce to the React render so
 // Next can tag its own scripts, and (b) carries the CSP for the browser. Used
 // only on non-redirect paths.
+function localeFromPathname(pathname: string): 'en' | 'ar' {
+  const seg = pathname.split('/').filter(Boolean)[0];
+  return seg === 'ar' ? 'ar' : 'en';
+}
+
 function renderWithCsp(
   request: NextRequest,
   nonce: string,
@@ -106,6 +111,11 @@ function renderWithCsp(
 ): NextResponse {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  // Locale header — read by the root layout so <html lang dir> is rendered
+  // at SSR (not patched via a client effect). This fixes initial-paint
+  // direction for Radix portals, Sonner toasts, and every custom dialog
+  // that relies on inherited document.dir.
+  requestHeaders.set('x-locale', localeFromPathname(request.nextUrl.pathname));
   // Next reads the nonce from the request CSP header to tag its scripts. This
   // header never reaches the browser; the browser only sees the response one.
   requestHeaders.set('content-security-policy', csp);
@@ -141,6 +151,7 @@ function intlWithCsp(
     }
   }
   merged.set('x-nonce', nonce);
+  merged.set('x-locale', localeFromPathname(request.nextUrl.pathname));
   merged.set('content-security-policy', csp);
 
   const rewrite = intlResponse.headers.get('x-middleware-rewrite');

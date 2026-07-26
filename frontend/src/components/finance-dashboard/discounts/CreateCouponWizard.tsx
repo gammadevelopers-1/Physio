@@ -565,18 +565,31 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                       ) : (
                         filteredCourses.map((c) => {
                           const checked = courseIds.includes(c.id);
+                          // Free courses can't take a coupon — % off zero is
+                          // zero, fixed amount over price is a nonsense value.
+                          // Show them greyed with a "Free" pill so finance
+                          // understands why they're not pickable, matching the
+                          // campaign form's behaviour.
+                          const isFree = (c.price ?? 0) <= 0;
                           return (
                             <button
                               key={c.id}
                               type="button"
-                              onClick={() =>
+                              disabled={isFree}
+                              title={isFree ? t("step2.freeCourseCannotBeAdded") : undefined}
+                              onClick={() => {
+                                if (isFree) return;
                                 setCourseIds((prev) =>
                                   checked
                                     ? prev.filter((id) => id !== c.id)
                                     : [...prev, c.id],
-                                )
-                              }
-                              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--color-surface-page)] text-start border-b border-[var(--color-border-subtle)] last:border-b-0"
+                                );
+                              }}
+                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-start border-b border-[var(--color-border-subtle)] last:border-b-0 ${
+                                isFree
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : "hover:bg-[var(--color-surface-page)]"
+                              }`}
                             >
                               <span
                                 className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
@@ -602,7 +615,12 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                                   <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                                     {c.title}
                                   </p>
-                                  {c.onSale && (
+                                  {isFree && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#DCFCE7] text-[#166534] uppercase tracking-wide flex-shrink-0">
+                                      {t("step2.freeBadge")}
+                                    </span>
+                                  )}
+                                  {c.onSale && !isFree && (
                                     <span
                                       className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FEE2E2] text-[#B91C1C] uppercase tracking-wide flex-shrink-0"
                                       title={
@@ -616,7 +634,7 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                                         : t("step2.saleBadge")}
                                     </span>
                                   )}
-                                  {c.onSale && !c.saleAllowsCoupon && (
+                                  {c.onSale && !c.saleAllowsCoupon && !isFree && (
                                     <span
                                       className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FEF3C7] text-[#92400E] uppercase tracking-wide flex-shrink-0"
                                       title={t("step2.noStackTooltip")}

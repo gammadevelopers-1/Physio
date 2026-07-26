@@ -6,15 +6,19 @@ import {
   Delete,
   Body,
   Param,
+  Req,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { EnrollmentsService } from './enrollments.service';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
+import { ManualEnrollDto } from './dto/manual-enroll.dto';
+import { RemoveEnrollmentDto } from './dto/remove-enrollment.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -51,6 +55,53 @@ export class EnrollmentsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.enrollmentsService.getCourseEnrollments(courseId, user);
+  }
+
+  /**
+   * POST /courses/:id/manual-enroll — admin/manager force-enrols a
+   * student with a mandatory reason. Bypasses capacity + waitlist.
+   * Every action is written to audit_logs + nelc_audit_logs.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post('courses/:id/manual-enroll')
+  @HttpCode(HttpStatus.CREATED)
+  async manualEnrollStudent(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ManualEnrollDto,
+    @Req() req: Request,
+  ) {
+    return this.enrollmentsService.manualEnroll(
+      courseId,
+      dto.studentId,
+      dto.reason,
+      user,
+      req.ip,
+    );
+  }
+
+  /**
+   * DELETE /courses/:id/enrollments/:studentId — admin/manager removes
+   * a student. Reason is mandatory; finance reads it to decide refund.
+   * Does NOT auto-refund by design (Amna: finance owns that decision).
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Delete('courses/:id/enrollments/:studentId')
+  @HttpCode(HttpStatus.OK)
+  async removeEnrolledStudent(
+    @Param('id') courseId: string,
+    @Param('studentId') studentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: RemoveEnrollmentDto,
+    @Req() req: Request,
+  ) {
+    return this.enrollmentsService.removeEnrollment(
+      courseId,
+      studentId,
+      dto.reason,
+      user,
+      req.ip,
+    );
   }
 
   // ─── Session Attendance Endpoints ─────────────────────────

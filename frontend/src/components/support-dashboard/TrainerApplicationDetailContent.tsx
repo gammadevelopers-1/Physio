@@ -61,6 +61,7 @@ export default function TrainerApplicationDetailContent({
 }: Props) {
   const t = useTranslations("supportDashboard.trainerApplication");
   const locale = useLocale();
+  const isRTL = locale === "ar";
   const { user } = useAuth();
   const profile = useSupportProfile();
 
@@ -122,7 +123,7 @@ export default function TrainerApplicationDetailContent({
                 href={`/${locale}/dashboard/support/trainer-applications`}
                 className="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
                 {t("detail.back")}
               </Link>
 

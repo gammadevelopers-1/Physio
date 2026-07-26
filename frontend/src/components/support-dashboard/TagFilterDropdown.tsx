@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Tag as TagIcon, ChevronDown, Check, X, Loader2 } from "lucide-react";
 import { supportApi } from "@/lib/api";
 
@@ -36,6 +37,7 @@ export default function TagFilterDropdown({
   onChange: (ids: string[]) => void;
   className?: string;
 }) {
+  const tr = useTranslations("supportDashboard.tagFilter");
   const [tags, setTags] = useState<Tag[] | null>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -99,11 +101,11 @@ export default function TagFilterDropdown({
             <TagIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />
             {selectedIds.length === 0 ? (
               <span className="text-[var(--color-text-secondary)]">
-                Filter by tag
+                {tr("filterByTag")}
               </span>
             ) : (
               <span>
-                {selectedIds.length} tag{selectedIds.length === 1 ? "" : "s"}
+                {tr("tagCount", { count: selectedIds.length })}
               </span>
             )}
           </span>
@@ -113,13 +115,13 @@ export default function TagFilterDropdown({
         </button>
 
         {open && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-20 overflow-hidden">
+          <div className="absolute top-full start-0 end-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-20 overflow-hidden">
             <div className="px-2 py-1.5 border-b border-[var(--color-border-subtle)]">
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search tags…"
+                placeholder={tr("searchPlaceholder")}
                 className="w-full h-8 px-2 text-sm border border-[var(--color-input-border)] rounded focus:outline-none focus:border-[var(--color-primary)]"
                 autoFocus
               />
@@ -131,7 +133,7 @@ export default function TagFilterDropdown({
                 </div>
               ) : filtered.length === 0 ? (
                 <p className="px-3 py-3 text-xs text-[var(--color-text-secondary)] text-center">
-                  {query ? "No matches." : "No tags available."}
+                  {query ? tr("noMatches") : tr("noTags")}
                 </p>
               ) : (
                 filtered.map((tag) => {
@@ -173,7 +175,7 @@ export default function TagFilterDropdown({
                   onClick={() => onChange([])}
                   className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 >
-                  Clear all
+                  {tr("clearAll")}
                 </button>
                 <button
                   type="button"
@@ -183,7 +185,7 @@ export default function TagFilterDropdown({
                   }}
                   className="text-xs text-[var(--color-primary)] font-medium"
                 >
-                  Done
+                  {tr("done")}
                 </button>
               </div>
             )}
@@ -194,20 +196,20 @@ export default function TagFilterDropdown({
       {/* Selected chip strip — visible below the button for context */}
       {(selectedTags.length > 0 || stubIds.length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5">
-          {selectedTags.map((t) => (
+          {selectedTags.map((tag) => (
             <span
-              key={t.id}
+              key={tag.id}
               className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full"
               style={{
-                backgroundColor: t.color,
-                color: textForBg(t.color),
+                backgroundColor: tag.color,
+                color: textForBg(tag.color),
               }}
             >
-              {t.name}
+              {tag.name}
               <button
                 type="button"
-                onClick={() => toggle(t.id)}
-                aria-label={`Remove ${t.name}`}
+                onClick={() => toggle(tag.id)}
+                aria-label={tr("removeTag", { name: tag.name })}
                 className="hover:opacity-70"
               >
                 <X className="w-3 h-3" />
@@ -218,9 +220,9 @@ export default function TagFilterDropdown({
             <span
               key={id}
               className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-[var(--color-border)] text-[var(--color-text-secondary)] italic"
-              title="Archived or missing tag"
+              title={tr("archivedTitle")}
             >
-              archived
+              {tr("archivedLabel")}
               <button
                 type="button"
                 onClick={() => toggle(id)}

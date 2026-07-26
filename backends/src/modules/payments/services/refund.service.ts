@@ -38,6 +38,7 @@ import {
   CERTIFICATE_STATUS,
 } from '../../../database/schema';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
+import { toCsvString } from '../../../common/exports/csv.util';
 import { GatewayFactory } from '../gateways/gateway.factory';
 import { EmailService } from '../../email/email.service';
 import { CreateRefundDto } from '../dto/create-refund.dto';
@@ -499,6 +500,30 @@ export class RefundService {
     if (existingRefund) {
       throw new BadRequestException(
         'A refund is already in progress for this payment',
+      );
+    }
+
+    // Block if ANY prior refund for this payment was rejected. Students
+    // can't self-serve a re-request once finance has said no — otherwise
+    // the same case gets re-reviewed forever. Admin re-opens by calling
+    // /refunds/admin-initiate directly (which does not run this check).
+    // The UI already hides the button once refundability.canRequest is
+    // false; this is the server-side belt-and-suspenders so a direct
+    // POST from a spoofed client can't slip through.
+    const [rejectedRefund] = await db
+      .select({ id: refunds.id })
+      .from(refunds)
+      .where(
+        and(
+          eq(refunds.paymentId, dto.paymentId),
+          eq(refunds.status, 'rejected'),
+        ),
+      )
+      .limit(1);
+
+    if (rejectedRefund) {
+      throw new BadRequestException(
+        'A previous refund request for this payment was rejected. Please contact support if you believe this decision should be reconsidered.',
       );
     }
 
@@ -2258,53 +2283,38 @@ export class RefundService {
       .where(whereClause)
       .orderBy(desc(refunds.createdAt));
 
-    const lines: string[] = [];
-
-    // NELC metadata header
-    lines.push('# PhysioGuidance Refund Export | NELC Compliant');
-    lines.push(`# Generated: ${new Date().toISOString()}`);
+    const metaRows: (string | number | null)[][] = [
+      ['# PhysioGuidance Refund Export | NELC Compliant'],
+      [`# Generated: ${new Date().toISOString()}`],
+    ];
     if (startDate || endDate) {
-      lines.push(`# Date Range: ${startDate || 'beginning'} to ${endDate || 'now'}`);
+      metaRows.push([`# Date Range: ${startDate || 'beginning'} to ${endDate || 'now'}`]);
     }
-    if (status) {
-      lines.push(`# Status Filter: ${status}`);
-    }
-    lines.push('');
+    if (status) metaRows.push([`# Status Filter: ${status}`]);
+    metaRows.push(['']);
 
-    // CSV header
-    lines.push(
-      'RefundID,Requester,Email,Course,Reason,OriginalAmount,DeductionAmount,RefundAmount,Gateway,Status,RequestDate,ApprovedAt,CompletedAt',
-    );
+    const headerRow: (string | number | null)[] = [
+      'RefundID', 'Requester', 'Email', 'Course', 'Reason',
+      'OriginalAmount', 'DeductionAmount', 'RefundAmount', 'Gateway', 'Status',
+      'RequestDate', 'ApprovedAt', 'CompletedAt',
+    ];
+    const dataRows: (string | number | null)[][] = rows.map((row) => [
+      row.id,
+      row.requesterName,
+      row.requesterEmail,
+      row.courseTitle,
+      row.reason,
+      row.originalAmount,
+      row.deductionAmount,
+      row.refundAmount,
+      row.gateway,
+      row.status,
+      row.createdAt ? new Date(row.createdAt).toISOString() : '',
+      row.approvedAt ? new Date(row.approvedAt).toISOString() : '',
+      row.completedAt ? new Date(row.completedAt).toISOString() : '',
+    ]);
 
-    const escapeCsv = (val: any) => {
-      if (val == null) return '';
-      const str = String(val);
-      return str.includes(',') || str.includes('"') || str.includes('\n')
-        ? `"${str.replace(/"/g, '""')}"`
-        : str;
-    };
-
-    for (const row of rows) {
-      lines.push(
-        [
-          escapeCsv(row.id),
-          escapeCsv(row.requesterName),
-          escapeCsv(row.requesterEmail),
-          escapeCsv(row.courseTitle),
-          escapeCsv(row.reason),
-          escapeCsv(row.originalAmount),
-          escapeCsv(row.deductionAmount),
-          escapeCsv(row.refundAmount),
-          escapeCsv(row.gateway),
-          escapeCsv(row.status),
-          escapeCsv(row.createdAt ? new Date(row.createdAt).toISOString() : ''),
-          escapeCsv(row.approvedAt ? new Date(row.approvedAt).toISOString() : ''),
-          escapeCsv(row.completedAt ? new Date(row.completedAt).toISOString() : ''),
-        ].join(','),
-      );
-    }
-
-    return lines.join('\n');
+    return toCsvString([...metaRows, headerRow, ...dataRows]);
   }
 }
 

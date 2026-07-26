@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
-  ArrowLeft, Clock, Search, Loader2, Lock,
+  ArrowLeft, ArrowRight, Clock, Search, Loader2, Lock,
   RefreshCw, Video, CheckCircle, X, XCircle, AlertTriangle, Users,
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import Select from "@/components/admin-dashboard/Select";
 
 type AttendanceStatus = "present" | "absent" | "late" | "excused" | "unmarked";
 
@@ -72,6 +73,7 @@ const TAAttendanceView = ({
   const t = useTranslations("taDashboard");
   const tToasts = useTranslations("toasts");
   const locale = useLocale();
+  const isRTL = locale === "ar";
   const timeLocale = locale === "ar" ? "ar-SA" : "en-US";
 
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -270,13 +272,13 @@ const TAAttendanceView = ({
           }
           return updated;
         });
-        toast.success(locale === "ar" ? "تم حفظ وقفل الحضور نهائياً" : "Attendance saved & locked");
+        toast.success(t("attendance.savedAndLocked"));
         setAttendanceLocked(true);
         setUnmatchedParticipants([]);
         setSaving(false);
         return;
       }
-      toast.success(locale === "ar" ? "تم الحفظ" : "Attendance saved");
+      toast.success(t("attendance.saved"));
     } catch {
       toast.error(tToasts("failedSaveAttendance"));
     } finally {
@@ -308,7 +310,11 @@ const TAAttendanceView = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="p-2 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors">
-            <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
+            {isRTL ? (
+              <ArrowRight className="w-5 h-5 text-[var(--color-text-secondary)]" />
+            ) : (
+              <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
+            )}
           </button>
           <div>
             <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t("attendance.title")}</h1>
@@ -328,7 +334,7 @@ const TAAttendanceView = ({
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)] bg-[var(--color-border-subtle)]">
               <div className="flex items-center gap-2 text-xs text-[var(--color-primary)]">
                 <Video className="w-3.5 h-3.5" />
-                <span>Zoom Lecture</span>
+                <span>{t("attendance.zoomSession")}</span>
               </div>
               <button
                 onClick={handleSyncZoom}
@@ -336,7 +342,7 @@ const TAAttendanceView = ({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-colors disabled:opacity-50"
               >
                 {syncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                {syncing ? "Syncing..." : "Sync from Zoom"}
+                {syncing ? t("common.syncing") : t("attendance.syncFromZoom")}
               </button>
             </div>
           )}
@@ -348,7 +354,7 @@ const TAAttendanceView = ({
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-[#16A34A]" />
                   <span className="text-xs font-medium text-[#15803D]">
-                    Zoom Sync Complete: {syncResult.synced} synced, {syncResult.skipped} skipped
+                    {t("attendance.syncComplete", { synced: syncResult.synced, skipped: syncResult.skipped })}
                   </span>
                 </div>
                 <button onClick={() => setSyncResult(null)} className="p-1 hover:bg-[#DCFCE7] rounded transition-colors">
@@ -388,15 +394,15 @@ const TAAttendanceView = ({
               <Lock className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
               <span className="text-xs text-[var(--color-text-secondary)]">
                 {attendanceLocked
-                  ? (locale === "ar" ? "تم قفل الحضور نهائياً" : "Attendance is finalized & locked")
+                  ? t("attendance.lockedFinal")
                   : isPostSession && isZoomSession && hasUnmatched
-                    ? "Verified attendance is locked — assign unmatched participants below"
-                    : "Attendance is locked. It can only be edited during a live lecture."}
+                    ? t("attendance.lockedUnmatched")
+                    : t("attendance.lockedInactive")}
               </span>
             </div>
           ) : (
             <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--color-border)]">
-              <span className="text-xs font-medium text-[var(--color-text-secondary)]">Mark All:</span>
+              <span className="text-xs font-medium text-[var(--color-text-secondary)]">{t("attendance.markAllLabel")}:</span>
               {statusOptions.map((status) => (
                 <button
                   key={status}
@@ -413,13 +419,13 @@ const TAAttendanceView = ({
           {records.length > 0 && (
             <div className="px-4 py-2 border-b border-[var(--color-border)]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("attendance.searchPlaceholder")}
-                  className="w-full pl-10 pr-4 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
+                  className="w-full ps-10 pe-4 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 />
               </div>
             </div>
@@ -429,11 +435,17 @@ const TAAttendanceView = ({
           {(() => {
             const marker = records.find((r) => r.markedByName);
             if (!marker) return null;
+            const roleKey = marker.markedByRole === "TEACHING_ASSISTANT" || marker.markedByRole === "INSTRUCTOR"
+              ? marker.markedByRole
+              : "system";
+            const roleLabel = t.has(`attendance.markedByRoles.${roleKey}`)
+              ? t(`attendance.markedByRoles.${roleKey}`)
+              : marker.markedByRole || "";
             return (
               <div className="flex items-center gap-3 px-4 py-2 border-b border-[var(--color-border)] bg-[#FAFAFA] text-[10px] text-[var(--color-text-secondary)]">
-                <span>Marked by: <span className="font-medium text-[var(--color-text-secondary)]">{marker.markedByName}</span> ({marker.markedByRole === "TEACHING_ASSISTANT" ? "TA" : marker.markedByRole === "INSTRUCTOR" ? "Instructor" : marker.markedByRole || "System"})</span>
+                <span>{t("attendance.markedBy")}: <span className="font-medium text-[var(--color-text-secondary)]">{marker.markedByName}</span> ({roleLabel})</span>
                 {marker.updatedAt && (
-                  <span>Last updated: {new Date(marker.updatedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span>{t("attendance.lastUpdated")}: {new Date(marker.updatedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</span>
                 )}
               </div>
             );
@@ -478,7 +490,7 @@ const TAAttendanceView = ({
 
                     {/* Notes */}
                     {record.note && attendanceLocked && (
-                      <p className="text-xs text-[var(--color-text-secondary)] italic">Note: {record.note}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)] italic">{t("attendance.note")}: {record.note}</p>
                     )}
 
                     {/* Zoom timing data */}
@@ -497,7 +509,7 @@ const TAAttendanceView = ({
                           </span>
                         )}
                         {record.durationMinutes && record.durationMinutes > 0 && (
-                          <span>({record.durationMinutes} min)</span>
+                          <span>({record.durationMinutes} {t("sessions.minutes")})</span>
                         )}
                       </div>
                     )}
@@ -510,7 +522,7 @@ const TAAttendanceView = ({
                         <div className="flex items-center gap-2">
                           <div className="flex-1 relative h-2 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                             <div
-                              className={`absolute top-0 left-0 h-full rounded-full ${presPercent >= 70 ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}
+                              className={`absolute top-0 start-0 h-full rounded-full ${presPercent >= 70 ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}
                               style={{ width: `${Math.max(2, presPercent)}%` }}
                             />
                           </div>
@@ -530,7 +542,7 @@ const TAAttendanceView = ({
               <div className="flex items-center gap-2 px-4 py-2.5 bg-[#FEF3C7]">
                 <AlertTriangle className="w-3.5 h-3.5 text-[#D97706]" />
                 <span className="text-xs font-medium text-[#92400E]">
-                  {unmatchedParticipants.length} unmatched Zoom participant{unmatchedParticipants.length !== 1 ? "s" : ""}
+                  {t("attendance.unmatchedParticipants", { count: unmatchedParticipants.length })}
                 </span>
               </div>
               <div className="max-h-[200px] overflow-y-auto divide-y divide-[var(--color-border)]">
@@ -549,7 +561,7 @@ const TAAttendanceView = ({
                             {p.zoomUserEmail}
                             {selectedStudent && (
                               <span className="text-[#16A34A] font-medium">
-                                {" → "}{selectedStudent.studentFirstName} {selectedStudent.studentLastName}
+                                {isRTL ? " ← " : " → "}{selectedStudent.studentFirstName} {selectedStudent.studentLastName}
                               </span>
                             )}
                           </span>
@@ -557,25 +569,27 @@ const TAAttendanceView = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ps-8">
-                        <select
+                        <Select
+                          size="sm"
+                          className="flex-1"
                           value={manualAssignments[p.zoomUserEmail] || ""}
-                          onChange={(e) => setManualAssignments((prev) => ({ ...prev, [p.zoomUserEmail]: e.target.value }))}
+                          onChange={(v) => setManualAssignments((prev) => ({ ...prev, [p.zoomUserEmail]: v }))}
                           disabled={attendanceLocked}
-                          className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] disabled:opacity-50"
-                        >
-                          <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
-                          {records.filter((r) => !markedStudentIds.has(r.studentId)).map((r) => (
-                            <option key={r.studentId} value={r.studentId}>
-                              {r.studentFirstName} {r.studentLastName}
-                            </option>
-                          ))}
-                        </select>
+                          placeholder={t("attendance.selectStudent")}
+                          ariaLabel={t("attendance.selectStudent")}
+                          options={records
+                            .filter((r) => !markedStudentIds.has(r.studentId))
+                            .map((r) => ({
+                              value: r.studentId,
+                              label: `${r.studentFirstName || ""} ${r.studentLastName || ""}`.trim() || r.studentEmail,
+                            }))}
+                        />
                         <button
                           onClick={() => handleManualAssign(p.zoomUserEmail)}
                           disabled={!manualAssignments[p.zoomUserEmail] || assigningEmail === p.zoomUserEmail || attendanceLocked}
                           className="px-3 py-1.5 text-xs font-medium bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-40 hover:bg-[var(--color-primary-dark)] transition-colors shrink-0"
                         >
-                          {assigningEmail === p.zoomUserEmail ? "..." : locale === "ar" ? "تعيين" : "Assign"}
+                          {assigningEmail === p.zoomUserEmail ? "..." : t("common.assign")}
                         </button>
                       </div>
                     </div>
@@ -590,7 +604,7 @@ const TAAttendanceView = ({
             <div />
             <div className="flex items-center gap-3">
               <button onClick={onBack} className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
-                {attendanceLocked ? "Close" : "Back"}
+                {attendanceLocked ? t("common.close") : t("common.back")}
               </button>
               {/* Save (live sessions) */}
               {!isReadOnly && !isPostSession && (
@@ -600,7 +614,7 @@ const TAAttendanceView = ({
                   className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg disabled:opacity-50"
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Save
+                  {t("common.save")}
                 </button>
               )}
               {/* Lock (post-session) */}
@@ -611,7 +625,7 @@ const TAAttendanceView = ({
                   className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-medium rounded-lg disabled:opacity-50 transition-colors whitespace-nowrap"
                 >
                   {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
-                  {locale === "ar" ? "قفل" : "Lock"}
+                  {t("common.lock")}
                 </button>
               )}
             </div>

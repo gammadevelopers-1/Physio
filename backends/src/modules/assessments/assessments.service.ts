@@ -285,7 +285,19 @@ export class AssessmentsService {
       .where(eq(questions.assessmentId, assessmentId))
       .orderBy(asc(questions.createdAt));
 
-    return { ...assessment, questions: assessmentQuestions };
+    // Count DISTINCT students who have submitted so the drawer's
+    // Submissions KPI is accurate. Historically the list endpoint
+    // computed this but findOne skipped it, so the preview always
+    // said "0" even when submissions existed.
+    const [subCountRow] = await db
+      .select({
+        cnt: sql<number>`COUNT(DISTINCT ${submissions.studentId})`,
+      })
+      .from(submissions)
+      .where(eq(submissions.assessmentId, assessmentId));
+    const submissionCount = Number(subCountRow?.cnt || 0);
+
+    return { ...assessment, questions: assessmentQuestions, submissionCount };
   }
 
   /**

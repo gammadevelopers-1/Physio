@@ -1,11 +1,12 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, inArray, count, sql, max } from 'drizzle-orm';
+import { eq, and, inArray, count, sql, max, gte, notInArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courseAssistants,
@@ -24,6 +25,7 @@ import { EmailService } from '../email/email.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { ThresholdEvaluationService, ASSISTANT_THRESHOLDS } from './threshold-evaluation.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 
 @Injectable()
 export class CourseAssistantsService {
@@ -35,6 +37,7 @@ export class CourseAssistantsService {
     private readonly notificationsService: UserNotificationsService,
     private readonly thresholdService: ThresholdEvaluationService,
     private readonly adminSettings: AdminSettingsService,
+    @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
   ) {}
 
   /**
@@ -233,17 +236,25 @@ export class CourseAssistantsService {
       const taUser = await this.getUser(userId);
       const taName = `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim();
       if (recipientIds.length > 0) {
-        // Send per-recipient in their language
+        // Localized keys let the FE render in the viewer's current UI
+        // locale; raw title/message remain as an English fallback for
+        // legacy readers and DB inspection.
+        const titleParams = {} as Record<string, string | number>;
+        const messageParams = {
+          taName,
+          courseName: course.title,
+          count: otherCourseCount,
+        };
         for (const recipientId of recipientIds) {
-          const recipient = await this.getUser(recipientId);
-          const isAr = recipient?.language === 'ar';
           await this.notificationsService.create({
             recipientId,
             type: 'ta_workload_warning',
-            title: isAr ? 'إشعار عبء عمل المساعد' : 'TA Workload Notice',
-            message: isAr
-              ? `المساعد ${taName} المعين في "${course.title}" معين أيضاً في ${otherCourseCount} دورة أخرى`
-              : `TA ${taName} assigned to "${course.title}" is also assigned to ${otherCourseCount} other course(s)`,
+            title: 'TA Workload Notice',
+            message: `TA ${taName} assigned to "${course.title}" is also assigned to ${otherCourseCount} other course(s)`,
+            titleKey: 'notifications.ta.workloadWarning.title',
+            titleParams,
+            messageKey: 'notifications.ta.workloadWarning.body',
+            messageParams,
             link: `/dashboard/manager/courses/${courseId}`,
             entityType: 'course',
             entityId: courseId,
@@ -276,15 +287,15 @@ export class CourseAssistantsService {
     const taUser2 = await this.getUser(userId);
     const taName = `${taUser2?.firstName || ''} ${taUser2?.lastName || ''}`.trim();
     if (course.instructorId) {
-      const instructor = await this.getUser(course.instructorId);
-      const isAr = instructor?.language === 'ar';
       await this.notificationsService.create({
         recipientId: course.instructorId,
         type: 'ta_assigned',
-        title: isAr ? 'تم تعيين مساعد تدريس' : 'Teaching Assistant Assigned',
-        message: isAr
-          ? `تم تعيين المساعد ${taName} لدورتك "${course.title}"`
-          : `TA ${taName} has been assigned to your course "${course.title}"`,
+        title: 'Teaching Assistant Assigned',
+        message: `TA ${taName} has been assigned to your course "${course.title}"`,
+        titleKey: 'notifications.ta.assignedInstructor.title',
+        titleParams: {},
+        messageKey: 'notifications.ta.assignedInstructor.body',
+        messageParams: { taName, courseName: course.title },
         link: `/dashboard/instructor/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
@@ -292,14 +303,15 @@ export class CourseAssistantsService {
     }
 
     // Notify the TA themselves
-    const taLang = taUser2?.language === 'ar';
     await this.notificationsService.create({
       recipientId: userId,
       type: 'ta_assigned',
-      title: taLang ? 'تم تعيينك كمساعد تدريس' : 'Assigned as Teaching Assistant',
-      message: taLang
-        ? `تم تعيينك كمساعد تدريس للدورة "${course.title}"`
-        : `You have been assigned as a Teaching Assistant for "${course.title}"`,
+      title: 'Assigned as Teaching Assistant',
+      message: `You have been assigned as a Teaching Assistant for "${course.title}"`,
+      titleKey: 'notifications.assignedAsTA.title',
+      titleParams: {},
+      messageKey: 'notifications.assignedAsTA.body',
+      messageParams: { courseName: course.title },
       link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,
@@ -389,19 +401,33 @@ export class CourseAssistantsService {
     const taSugName = `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim();
 
     if (recipientIds.length > 0) {
+      const hasWorkload = otherCourseCount > 0;
+      const workloadNoteEn = hasWorkload
+        ? ` (Note: This TA is currently assigned to ${otherCourseCount} other course(s))`
+        : '';
       for (const recipientId of recipientIds) {
-        const recipient = await this.getUser(recipientId);
-        const isAr = recipient?.language === 'ar';
-        const workloadNote = otherCourseCount > 0
-          ? (isAr ? ` (ملاحظة: هذا المساعد معين حالياً في ${otherCourseCount} دورة أخرى)` : ` (Note: This TA is currently assigned to ${otherCourseCount} other course(s))`)
-          : '';
         await this.notificationsService.create({
           recipientId,
           type: 'ta_suggestion',
-          title: isAr ? 'اقتراح مساعد تدريس' : 'TA Suggestion',
-          message: isAr
-            ? `${suggesterName} اقترح المساعد ${taSugName} للدورة "${course.title}"${workloadNote}`
-            : `${suggesterName} suggested TA ${taSugName} for Course "${course.title}"${workloadNote}`,
+          title: 'TA Suggestion',
+          message: `${suggesterName} suggested TA ${taSugName} for Course "${course.title}"${workloadNoteEn}`,
+          titleKey: 'notifications.ta.suggestionManager.title',
+          titleParams: {},
+          messageKey: hasWorkload
+            ? 'notifications.ta.suggestionManager.bodyWithWorkload'
+            : 'notifications.ta.suggestionManager.body',
+          messageParams: hasWorkload
+            ? {
+                suggesterName,
+                taName: taSugName,
+                courseName: course.title,
+                count: otherCourseCount,
+              }
+            : {
+                suggesterName,
+                taName: taSugName,
+                courseName: course.title,
+              },
           link: `/dashboard/manager/courses/${courseId}`,
           entityType: 'course',
           entityId: courseId,
@@ -410,14 +436,15 @@ export class CourseAssistantsService {
     }
 
     // Notify the TA that they have been suggested
-    const taIsAr = taUser?.language === 'ar';
     await this.notificationsService.create({
       recipientId: userId,
       type: 'ta_suggestion',
-      title: taIsAr ? 'تم اقتراحك كمساعد تدريس' : 'Suggested as Teaching Assistant',
-      message: taIsAr
-        ? `تم اقتراحك كمساعد تدريس للدورة "${course.title}". بانتظار موافقة المدير.`
-        : `You have been suggested as a Teaching Assistant for "${course.title}". Awaiting manager approval.`,
+      title: 'Suggested as Teaching Assistant',
+      message: `You have been suggested as a Teaching Assistant for "${course.title}". Awaiting manager approval.`,
+      titleKey: 'notifications.ta.suggestedAsTA.title',
+      titleParams: {},
+      messageKey: 'notifications.ta.suggestedAsTA.body',
+      messageParams: { courseName: course.title },
       link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,
@@ -505,15 +532,15 @@ export class CourseAssistantsService {
     const taUser = await this.getUser(userId);
     const taApName = `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim();
     if (existing.suggestedBy) {
-      const suggesterUser = await this.getUser(existing.suggestedBy);
-      const sIsAr = suggesterUser?.language === 'ar';
       await this.notificationsService.create({
         recipientId: existing.suggestedBy,
         type: 'ta_suggestion_approved',
-        title: sIsAr ? 'تمت الموافقة على اقتراح المساعد' : 'TA Suggestion Approved',
-        message: sIsAr
-          ? `تمت الموافقة على اقتراحك للمساعد ${taApName} في الدورة "${course.title}" وتم تفعيله`
-          : `Your TA suggestion for ${taApName} on "${course.title}" was approved and activated`,
+        title: 'TA Suggestion Approved',
+        message: `Your TA suggestion for ${taApName} on "${course.title}" was approved and activated`,
+        titleKey: 'notifications.ta.suggestionApprovedInstructor.title',
+        titleParams: {},
+        messageKey: 'notifications.ta.suggestionApprovedInstructor.body',
+        messageParams: { taName: taApName, courseName: course.title },
         link: `/dashboard/instructor/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
@@ -521,14 +548,15 @@ export class CourseAssistantsService {
     }
 
     // Notify the TA
-    const taIsAr = taUser?.language === 'ar';
     await this.notificationsService.create({
       recipientId: userId,
       type: 'ta_suggestion_approved',
-      title: taIsAr ? 'تمت الموافقة على تعيينك كمساعد' : 'TA Assignment Approved',
-      message: taIsAr
-        ? `تمت الموافقة على تعيينك كمساعد تدريس للدورة "${course.title}". أنت الآن نشط.`
-        : `Your TA assignment for "${course.title}" has been approved. You are now active.`,
+      title: 'TA Assignment Approved',
+      message: `Your TA assignment for "${course.title}" has been approved. You are now active.`,
+      titleKey: 'notifications.ta.assignmentApprovedTA.title',
+      titleParams: {},
+      messageKey: 'notifications.ta.assignmentApprovedTA.body',
+      messageParams: { courseName: course.title },
       link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,
@@ -590,15 +618,15 @@ export class CourseAssistantsService {
     const taUser = await this.getUser(userId);
     const taRejName = `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim();
     if (existing.suggestedBy) {
-      const suggesterUser = await this.getUser(existing.suggestedBy);
-      const sIsAr = suggesterUser?.language === 'ar';
       await this.notificationsService.create({
         recipientId: existing.suggestedBy,
         type: 'ta_suggestion_rejected',
-        title: sIsAr ? 'تم رفض اقتراح المساعد' : 'TA Suggestion Rejected',
-        message: sIsAr
-          ? `تم رفض اقتراحك للمساعد ${taRejName} في الدورة "${course.title}". السبب: ${reason}`
-          : `Your TA suggestion for ${taRejName} on "${course.title}" was rejected. Reason: ${reason}`,
+        title: 'TA Suggestion Rejected',
+        message: `Your TA suggestion for ${taRejName} on "${course.title}" was rejected. Reason: ${reason}`,
+        titleKey: 'notifications.ta.suggestionRejectedInstructor.title',
+        titleParams: {},
+        messageKey: 'notifications.ta.suggestionRejectedInstructor.body',
+        messageParams: { taName: taRejName, courseName: course.title, reason },
         link: `/dashboard/instructor/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
@@ -622,15 +650,15 @@ export class CourseAssistantsService {
     }
 
     // Notify the TA that their suggestion was not approved
-    const taUserForNotif = await this.getUser(userId);
-    const taIsAr = taUserForNotif?.language === 'ar';
     await this.notificationsService.create({
       recipientId: userId,
       type: 'ta_suggestion_rejected',
-      title: taIsAr ? 'لم تتم الموافقة على اقتراح المساعد' : 'TA Suggestion Not Approved',
-      message: taIsAr
-        ? `لم تتم الموافقة على اقتراحك كمساعد في "${course.title}". السبب: ${reason}`
-        : `Your TA suggestion for "${course.title}" was not approved. Reason: ${reason}`,
+      title: 'TA Suggestion Not Approved',
+      message: `Your TA suggestion for "${course.title}" was not approved. Reason: ${reason}`,
+      titleKey: 'notifications.ta.suggestionRejectedTA.title',
+      titleParams: {},
+      messageKey: 'notifications.ta.suggestionRejectedTA.body',
+      messageParams: { courseName: course.title, reason },
       link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,
@@ -801,6 +829,10 @@ export class CourseAssistantsService {
             type: 'ta_account_deactivated',
             title: 'TA Account Deactivated',
             message: `TA ${taName}'s account has been deactivated. They have been removed from "${course.title}". A replacement may be needed.`,
+            titleKey: 'notifications.ta.accountDeactivatedManager.title',
+            titleParams: {},
+            messageKey: 'notifications.ta.accountDeactivatedManager.body',
+            messageParams: { taName, courseName: course.title },
             link: `/dashboard/manager/courses/${assignment.courseId}`,
             entityType: 'course',
             entityId: assignment.courseId,
@@ -966,7 +998,10 @@ export class CourseAssistantsService {
 
   /**
    * Propagate all approved course TAs to a specific session.
-   * Called when a new session is created for a course.
+   * Called when a new session is created for a course. Also lazily
+   * registers each TA as a Zoom webinar panelist (when the session is
+   * a webinar), storing the personal panelist join URL back on the
+   * session_assistants row.
    */
   async propagateToSession(courseId: string, sessionId: string) {
     const approvedTAs = await db
@@ -999,6 +1034,17 @@ export class CourseAssistantsService {
         );
       }
     }
+
+    // Fire-and-forget: register every course TA as a Zoom panelist on this
+    // new session (if it's a webinar). We intentionally do NOT block session
+    // creation on Zoom availability — the join endpoint has a JIT fallback.
+    this.registerCourseTAsAsPanelistsForSession(courseId, sessionId).catch(
+      (err) => {
+        this.logger.warn(
+          `Panelist registration failed for session ${sessionId}: ${(err as Error).message}`,
+        );
+      },
+    );
   }
 
   /**
@@ -1032,6 +1078,164 @@ export class CourseAssistantsService {
         this.logger.warn(
           `Failed to propagate TA ${userId} to session ${session.id}`,
           err,
+        );
+      }
+    }
+
+    // Fire-and-forget: register this TA as a Zoom panelist on every
+    // upcoming webinar session of the course. JIT registration in the
+    // /ta-join endpoint covers any that fail here.
+    this.autoRegisterTAAsPanelist(userId, courseId).catch((err) => {
+      this.logger.warn(
+        `Panelist auto-register failed for TA ${userId} on course ${courseId}: ${(err as Error).message}`,
+      );
+    });
+  }
+
+  /**
+   * Register a TA as a Zoom webinar panelist across every upcoming
+   * webinar session in the course. Mirror of
+   * EnrollmentsService.autoRegisterStudentForWebinarCourse but for TAs
+   * — with the crucial difference that TAs are added as PANELISTS (mic,
+   * cam, screen-share, Q&A rights) rather than registrants.
+   *
+   * The panelist join URL is cached on the session_assistants row so
+   * the /ta-join endpoint can return it without re-hitting Zoom. Never
+   * throws — Zoom downtime must not break TA approval flow.
+   *
+   * NOTE: Some Zoom accounts require the panelist's email to correspond
+   * to an existing Zoom user. Others permit "guest panelists" via
+   * email-only. If a specific TA can't be registered, we log and skip
+   * — the /ta-join endpoint will retry lazily when the TA hits Join.
+   */
+  async autoRegisterTAAsPanelist(
+    taUserId: string,
+    courseId: string,
+  ): Promise<void> {
+    const [taUser] = await db
+      .select({
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(users)
+      .where(eq(users.id, taUserId))
+      .limit(1);
+    if (!taUser?.email) return;
+
+    const now = new Date();
+    const webinarSessions = await db
+      .select({
+        id: sessions.id,
+        zoomWebinarId: sessions.zoomWebinarId,
+      })
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.courseId, courseId),
+          eq(sessions.isWebinar, true),
+          notInArray(sessions.status, [
+            'cancelled',
+            'ended',
+            'completed',
+            'missed',
+          ]),
+          gte(sessions.scheduledAt, now),
+        ),
+      );
+
+    for (const ws of webinarSessions) {
+      if (!ws.zoomWebinarId) continue;
+      try {
+        const result = await this.zoomService.registerPanelist(
+          ws.zoomWebinarId,
+          {
+            email: taUser.email,
+            firstName: taUser.firstName || taUser.email.split('@')[0],
+            // Append "(TA)" so the display name surfaces the role during
+            // the live webinar. Zoom composes name from lastName after
+            // firstName, so the suffix rides through unchanged.
+            lastName: `${taUser.lastName || ''} (TA)`.trim(),
+          },
+        );
+        if (result.joinUrl) {
+          await db
+            .update(sessionAssistants)
+            .set({ zoomPanelistJoinUrl: result.joinUrl })
+            .where(
+              and(
+                eq(sessionAssistants.sessionId, ws.id),
+                eq(sessionAssistants.userId, taUserId),
+              ),
+            );
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Panelist auto-register failed: session=${ws.id} ta=${taUserId} — ${(err as Error).message}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Reverse companion of {@link autoRegisterTAAsPanelist}: for a newly
+   * created (webinar) session, walk every approved course TA and add
+   * them as a Zoom panelist. Skips non-webinar sessions immediately.
+   */
+  private async registerCourseTAsAsPanelistsForSession(
+    courseId: string,
+    sessionId: string,
+  ): Promise<void> {
+    const [session] = await db
+      .select({
+        isWebinar: sessions.isWebinar,
+        zoomWebinarId: sessions.zoomWebinarId,
+      })
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+
+    if (!session?.isWebinar || !session.zoomWebinarId) return;
+    const webinarId = session.zoomWebinarId;
+
+    const approvedTAs = await db
+      .select({
+        userId: courseAssistants.userId,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(courseAssistants)
+      .innerJoin(users, eq(users.id, courseAssistants.userId))
+      .where(
+        and(
+          eq(courseAssistants.courseId, courseId),
+          eq(courseAssistants.status, 'approved'),
+        ),
+      );
+
+    for (const ta of approvedTAs) {
+      if (!ta.email) continue;
+      try {
+        const result = await this.zoomService.registerPanelist(webinarId, {
+          email: ta.email,
+          firstName: ta.firstName || ta.email.split('@')[0],
+          lastName: `${ta.lastName || ''} (TA)`.trim(),
+        });
+        if (result.joinUrl) {
+          await db
+            .update(sessionAssistants)
+            .set({ zoomPanelistJoinUrl: result.joinUrl })
+            .where(
+              and(
+                eq(sessionAssistants.sessionId, sessionId),
+                eq(sessionAssistants.userId, ta.userId),
+              ),
+            );
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Panelist auto-register failed for TA ${ta.userId} on new session ${sessionId}: ${(err as Error).message}`,
         );
       }
     }

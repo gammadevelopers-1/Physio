@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, X, FolderPlus } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
+import Select from "@/components/ui/Select";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -105,17 +106,13 @@ const SelectField = ({
     <label className="text-sm font-medium text-[var(--color-text-primary)]">
       {label} {required && <span className="text-[#dc2626]">*</span>}
     </label>
-    <select
+    <Select
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={onChange}
       disabled={disabled}
-      className={`${inputCls(isRTL)} bg-white disabled:opacity-50 disabled:cursor-not-allowed`}
-    >
-      <option value="">{placeholder || ""}</option>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
+      placeholder={placeholder || ""}
+      options={options.map((o) => ({ value: o.value, label: o.label }))}
+    />
   </div>
 );
 
@@ -357,18 +354,31 @@ const TrainingExperienceModal = ({
 
 // ─── Section shell ────────────────────────────────────────────────────────
 
-const SectionHeader = ({ title, onAdd, isRTL }: { title: string; onAdd: () => void; isRTL: boolean }) => (
+// Section-header Add button was removed intentionally — trainer
+// signups complained about the duplicate "Add" button appearing at
+// the top of every section AND inside the empty-state card. Only ONE
+// add affordance per section now: the EmptyState's Add when the
+// section is empty, or the AddMoreButton below the entry list once
+// there's at least one entry. See AddMoreButton below.
+const SectionHeader = ({ title }: { title: string }) => (
   <div className="flex items-center justify-between mb-3">
     <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{title}</h3>
-    <button
-      type="button"
-      onClick={onAdd}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-primary)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
-    >
-      <Plus className="w-4 h-4" />
-      {isRTL ? "إضافة" : "Add"}
-    </button>
   </div>
+);
+
+// Add-another affordance for populated sections. Styled as a dashed
+// pill so it reads as "extend the list", not "commit an action".
+// Mirrors the EmptyState visual language so users don't hunt for a
+// primary-color button that used to sit in the section header.
+const AddMoreButton = ({ onAdd, isRTL }: { onAdd: () => void; isRTL: boolean }) => (
+  <button
+    type="button"
+    onClick={onAdd}
+    className="w-full mt-2 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-[var(--color-border)] text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-colors"
+  >
+    <Plus className="w-4 h-4" />
+    {isRTL ? "إضافة عنصر آخر" : "Add another"}
+  </button>
 );
 
 const EmptyState = ({ message, onAdd, isRTL }: { message: string; onAdd: () => void; isRTL: boolean }) => (
@@ -496,74 +506,86 @@ export default function ResumeBuilder({
     <div className="flex flex-col gap-6" dir={isRTL ? "rtl" : "ltr"}>
       {/* Education */}
       <section>
-        <SectionHeader title={isRTL ? "التعليم" : "Education"} onAdd={() => setModal({ kind: "education", index: null })} isRTL={isRTL} />
+        <SectionHeader title={isRTL ? "التعليم" : "Education"} />
         {value.education.length === 0 ? (
           <EmptyState message={isRTL ? "أضف معلومات التعليم إلى ملفك." : "Add Education to your profile."} onAdd={() => setModal({ kind: "education", index: null })} isRTL={isRTL} />
         ) : (
-          value.education.map((e, i) => {
-            const isFuture = e.graduationYear > todayIso;
-            return (
-              <Card key={i} onEdit={() => setModal({ kind: "education", index: i })} onDelete={() => deleteEducation(i)}>
-                <p className="font-semibold text-[var(--color-text-primary)] truncate">{e.university}</p>
-                <p className={`text-sm ${isFuture ? "text-red-500" : "text-[var(--color-primary)]"}`}>
-                  {findLabel(qualificationOptions, e.qualification)} — {formatMonthYear(e.graduationYear)}
-                </p>
-                <p className="text-xs text-[var(--color-text-secondary)] truncate">
-                  {findLabel(professionOptions, e.profession)} · {findLabel(allSpecialtyOptions, e.specialty)}
-                </p>
-              </Card>
-            );
-          })
+          <>
+            {value.education.map((e, i) => {
+              const isFuture = e.graduationYear > todayIso;
+              return (
+                <Card key={i} onEdit={() => setModal({ kind: "education", index: i })} onDelete={() => deleteEducation(i)}>
+                  <p className="font-semibold text-[var(--color-text-primary)] truncate">{e.university}</p>
+                  <p className={`text-sm ${isFuture ? "text-red-500" : "text-[var(--color-primary)]"}`}>
+                    {findLabel(qualificationOptions, e.qualification)} — {formatMonthYear(e.graduationYear)}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)] truncate">
+                    {findLabel(professionOptions, e.profession)} · {findLabel(allSpecialtyOptions, e.specialty)}
+                  </p>
+                </Card>
+              );
+            })}
+            <AddMoreButton onAdd={() => setModal({ kind: "education", index: null })} isRTL={isRTL} />
+          </>
         )}
       </section>
 
       {/* Professional Skills */}
       <section>
-        <SectionHeader title={isRTL ? "المهارات المهنية" : "Professional Skills"} onAdd={() => setModal({ kind: "skill", index: null })} isRTL={isRTL} />
+        <SectionHeader title={isRTL ? "المهارات المهنية" : "Professional Skills"} />
         {value.professionalSkills.length === 0 ? (
           <EmptyState message={isRTL ? "أضف مهاراتك المهنية." : "Add Professional Skills to your profile."} onAdd={() => setModal({ kind: "skill", index: null })} isRTL={isRTL} />
         ) : (
-          value.professionalSkills.map((s, i) => (
-            <Card key={i} onEdit={() => setModal({ kind: "skill", index: i })} onDelete={() => deleteSkill(i)}>
-              <p className="font-semibold text-[var(--color-text-primary)] truncate">{s.placeOfWork}</p>
-              <p className="text-sm text-[var(--color-primary)]">
-                {s.type}{s.type === "Academic" && s.academicRank ? ` — ${findLabel(rankOptions, s.academicRank)}` : s.type === "Practical Experience" && s.natureOfWork ? ` — ${s.natureOfWork}` : ""}
-              </p>
-              <p className="text-xs text-[var(--color-text-secondary)]">
-                {s.yearsOfExperience} {isRTL ? "سنوات خبرة" : `Year${s.yearsOfExperience === 1 ? "" : "s"} of Experience`}
-              </p>
-            </Card>
-          ))
+          <>
+            {value.professionalSkills.map((s, i) => (
+              <Card key={i} onEdit={() => setModal({ kind: "skill", index: i })} onDelete={() => deleteSkill(i)}>
+                <p className="font-semibold text-[var(--color-text-primary)] truncate">{s.placeOfWork}</p>
+                <p className="text-sm text-[var(--color-primary)]">
+                  {s.type}{s.type === "Academic" && s.academicRank ? ` — ${findLabel(rankOptions, s.academicRank)}` : s.type === "Practical Experience" && s.natureOfWork ? ` — ${s.natureOfWork}` : ""}
+                </p>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  {s.yearsOfExperience} {isRTL ? "سنوات خبرة" : `Year${s.yearsOfExperience === 1 ? "" : "s"} of Experience`}
+                </p>
+              </Card>
+            ))}
+            <AddMoreButton onAdd={() => setModal({ kind: "skill", index: null })} isRTL={isRTL} />
+          </>
         )}
       </section>
 
       {/* Scientific Researches */}
       <section>
-        <SectionHeader title={isRTL ? "الأبحاث العلمية" : "Scientific Researches"} onAdd={() => setModal({ kind: "research", index: null })} isRTL={isRTL} />
+        <SectionHeader title={isRTL ? "الأبحاث العلمية" : "Scientific Researches"} />
         {value.scientificResearches.length === 0 ? (
           <EmptyState message={isRTL ? "أضف أبحاثك العلمية." : "Add Scientific Researches to your profile."} onAdd={() => setModal({ kind: "research", index: null })} isRTL={isRTL} />
         ) : (
-          value.scientificResearches.map((r, i) => (
-            <Card key={i} onEdit={() => setModal({ kind: "research", index: i })} onDelete={() => deleteResearch(i)}>
-              <p className="font-semibold text-[var(--color-text-primary)] truncate">{r.description}</p>
-              <p className="text-sm text-[var(--color-primary)]">{r.type} · {r.role}</p>
-            </Card>
-          ))
+          <>
+            {value.scientificResearches.map((r, i) => (
+              <Card key={i} onEdit={() => setModal({ kind: "research", index: i })} onDelete={() => deleteResearch(i)}>
+                <p className="font-semibold text-[var(--color-text-primary)] truncate">{r.description}</p>
+                <p className="text-sm text-[var(--color-primary)]">{r.type} · {r.role}</p>
+              </Card>
+            ))}
+            <AddMoreButton onAdd={() => setModal({ kind: "research", index: null })} isRTL={isRTL} />
+          </>
         )}
       </section>
 
       {/* Training Experience */}
       <section>
-        <SectionHeader title={isRTL ? "الخبرة التدريبية" : "Training Experience"} onAdd={() => setModal({ kind: "training", index: null })} isRTL={isRTL} />
+        <SectionHeader title={isRTL ? "الخبرة التدريبية" : "Training Experience"} />
         {value.trainingExperiences.length === 0 ? (
           <EmptyState message={isRTL ? "أضف خبراتك التدريبية." : "Add Training Experience to your profile."} onAdd={() => setModal({ kind: "training", index: null })} isRTL={isRTL} />
         ) : (
-          value.trainingExperiences.map((t, i) => (
-            <Card key={i} onEdit={() => setModal({ kind: "training", index: i })} onDelete={() => deleteTraining(i)}>
-              <p className="font-semibold text-[var(--color-text-primary)] truncate">{t.eventName}</p>
-              <p className="text-sm text-[var(--color-text-secondary)]">{t.executingAgency}</p>
-            </Card>
-          ))
+          <>
+            {value.trainingExperiences.map((t, i) => (
+              <Card key={i} onEdit={() => setModal({ kind: "training", index: i })} onDelete={() => deleteTraining(i)}>
+                <p className="font-semibold text-[var(--color-text-primary)] truncate">{t.eventName}</p>
+                <p className="text-sm text-[var(--color-text-secondary)]">{t.executingAgency}</p>
+              </Card>
+            ))}
+            <AddMoreButton onAdd={() => setModal({ kind: "training", index: null })} isRTL={isRTL} />
+          </>
         )}
       </section>
 

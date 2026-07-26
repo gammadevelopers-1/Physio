@@ -582,7 +582,9 @@ const AgentDashboardContent = () => {
                                     statusStyles[ticket.status] || ""
                                   }`}
                                 >
-                                  {ticket.status?.replace("_", " ")}
+                                  {ticket.status
+                                    ? t(`activeIncidents.ticketStatus.${ticket.status}`)
+                                    : ""}
                                 </span>
                               </td>
                             </tr>

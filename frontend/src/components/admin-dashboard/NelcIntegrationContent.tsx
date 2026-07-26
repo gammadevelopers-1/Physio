@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -245,10 +246,11 @@ const NelcIntegrationContent = () => {
     }
   };
 
-  const handleTrigger = async (kind: "joined" | "left") => {
-    if (kind === "left" && !window.confirm(t("confirmLeft"))) {
-      return;
-    }
+  // "left" trigger goes through a confirm dialog because it signals
+  // offboarding to NELC and shouldn't be a one-click accident.
+  const [confirmLeftOpen, setConfirmLeftOpen] = useState(false);
+
+  const runTrigger = async (kind: "joined" | "left") => {
     setTriggering(kind);
     try {
       const res =
@@ -268,6 +270,19 @@ const NelcIntegrationContent = () => {
     } finally {
       setTriggering(null);
     }
+  };
+
+  const handleTrigger = (kind: "joined" | "left") => {
+    if (kind === "left") {
+      setConfirmLeftOpen(true);
+      return;
+    }
+    void runTrigger("joined");
+  };
+
+  const confirmLeftTrigger = async () => {
+    setConfirmLeftOpen(false);
+    await runTrigger("left");
   };
 
   const confirmModeSwitch = async () => {
@@ -1088,6 +1103,17 @@ const NelcIntegrationContent = () => {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={confirmLeftOpen}
+        title={t("confirmLeftTitle")}
+        message={t("confirmLeft")}
+        confirmLabel={t("confirmLeftLabel")}
+        cancelLabel={t("cancel")}
+        loading={triggering === "left"}
+        danger
+        onConfirm={confirmLeftTrigger}
+        onClose={() => triggering !== "left" && setConfirmLeftOpen(false)}
+      />
     </>
   );
 };

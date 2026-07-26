@@ -6,6 +6,11 @@ import { Loader2, MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
 import { roleLabelForComment } from "@/components/support-shared/CollaboratorTicketView";
+import AttachmentPickerBar from "@/components/support-shared/AttachmentPickerBar";
+import AttachmentChip, {
+  type Attachment as ChipAttachment,
+} from "@/components/support-dashboard/AttachmentChip";
+import { useSupportAttachmentUpload } from "@/hooks/useSupportAttachmentUpload";
 
 /**
  * Support-side chat panel for talking to looped-in collaborators
@@ -39,6 +44,7 @@ type Comment = {
    *  (e.g. an agent looped-in as Course Manager shows "Course Manager"
    *  not "Support"). */
   collabDepartment?: string | null;
+  attachments?: ChipAttachment[];
 };
 
 interface Props {
@@ -67,6 +73,18 @@ export default function CollaboratorChatPanel({
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const upload = useSupportAttachmentUpload();
+
+  const notifyAttachmentRejects = (
+    r: ReturnType<typeof upload.addFiles>,
+  ) => {
+    if (r.rejectedType.length)
+      toast.error(t("attachRejectedType", { names: r.rejectedType.join(", ") }));
+    if (r.rejectedSize.length)
+      toast.error(t("attachRejectedSize", { names: r.rejectedSize.join(", ") }));
+    if (r.rejectedCap.length)
+      toast.error(t("attachRejectedCap"));
+  };
 
   // Just the internal channel — supports the focused-surface model.
   // System messages stay (e.g. "looped in Finance") so the panel
@@ -78,14 +96,24 @@ export default function CollaboratorChatPanel({
   }, [internalComments.length]);
 
   const handleSend = async () => {
-    if (!reply.trim() || sending) return;
+    const richAtts = upload.getDoneRich();
+    // Allow an attachment-only send (no message) — collaborators
+    // often just need to drop a file into the internal channel.
+    if (!reply.trim() && richAtts.length === 0) return;
+    if (sending) return;
+    if (upload.isUploading) {
+      toast.error(t("waitForUploads"));
+      return;
+    }
     setSending(true);
     try {
       await supportApi.addComment(ticketId, {
         message: reply.trim(),
         isInternal: true,
+        attachments: richAtts.length > 0 ? richAtts : undefined,
       });
       setReply("");
+      upload.clear();
       onSent();
     } catch (e: any) {
       toast.error(e?.message || t("sendFailed"));
@@ -140,7 +168,7 @@ export default function CollaboratorChatPanel({
       </div>
 
       {/* Composer */}
-      <div className="border-t border-[var(--color-border-subtle)] px-3 py-2.5">
+      <div className="border-t border-[var(--color-border-subtle)] px-3 py-2.5 space-y-2">
         <div className="relative">
           <textarea
             value={reply}
@@ -163,7 +191,12 @@ export default function CollaboratorChatPanel({
           <button
             type="button"
             onClick={handleSend}
-            disabled={!composerEnabled || !reply.trim() || sending}
+            disabled={
+              !composerEnabled ||
+              sending ||
+              upload.isUploading ||
+              (!reply.trim() && upload.pending.length === 0)
+            }
             className="absolute end-2 bottom-2 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label={t("sendReply")}
           >
@@ -174,7 +207,18 @@ export default function CollaboratorChatPanel({
             )}
           </button>
         </div>
-        <p className="text-[10px] text-[var(--color-text-secondary)] mt-1.5">
+        {composerEnabled && (
+          <AttachmentPickerBar
+            pending={upload.pending}
+            onAdd={(files) => notifyAttachmentRejects(upload.addFiles(files))}
+            onRemove={upload.remove}
+            disabled={sending}
+            maxCount={upload.maxCount}
+            maxBytes={upload.maxBytes}
+            compact
+          />
+        )}
+        <p className="text-[10px] text-[var(--color-text-secondary)]">
           {t("composerHint")}
         </p>
       </div>
@@ -242,15 +286,24 @@ function Bubble({
             {fmt.format(new Date(comment.createdAt))}
           </span>
         </div>
-        <div
-          className={`px-3 py-2 rounded-2xl text-xs whitespace-pre-wrap leading-relaxed ${
-            isSelf
-              ? "bg-[var(--color-primary)] text-white rounded-tr-sm"
-              : "bg-[#FFFBEB] text-[#78350F] border border-[#FDE68A] rounded-tl-sm"
-          }`}
-        >
-          {comment.message}
-        </div>
+        {comment.message.trim().length > 0 && (
+          <div
+            className={`px-3 py-2 rounded-2xl text-xs whitespace-pre-wrap leading-relaxed ${
+              isSelf
+                ? "bg-[var(--color-primary)] text-white rounded-tr-sm"
+                : "bg-[#FFFBEB] text-[#78350F] border border-[#FDE68A] rounded-tl-sm"
+            }`}
+          >
+            {comment.message}
+          </div>
+        )}
+        {comment.attachments && comment.attachments.length > 0 && (
+          <div className={`mt-1.5 flex flex-wrap gap-1.5 ${isSelf ? "justify-end" : ""}`}>
+            {comment.attachments.map((a) => (
+              <AttachmentChip key={a.id ?? a.url} attachment={a} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

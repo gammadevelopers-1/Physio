@@ -18,6 +18,7 @@ import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import AdminNavbar from "@/components/admin-dashboard/AdminNavbar";
 import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
 import AdminMobileSidebar from "@/components/admin-dashboard/AdminMobileSidebar";
+import Select from "@/components/admin-dashboard/Select";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { courseManagerApi } from "@/lib/api";
@@ -226,16 +227,18 @@ export default function CourseReviewsContent({
                   {/* Sort */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "الترتيب:" : "Sort:"}</span>
-                    <select
+                    <Select
                       value={sort}
-                      onChange={(e) => setSort(e.target.value as SortOption)}
-                      className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-card)]"
-                    >
-                      <option value="newest">{isRTL ? "الأحدث" : "Newest"}</option>
-                      <option value="oldest">{isRTL ? "الأقدم" : "Oldest"}</option>
-                      <option value="highest">{isRTL ? "الأعلى تقييماً" : "Highest rated"}</option>
-                      <option value="lowest">{isRTL ? "الأقل تقييماً" : "Lowest rated"}</option>
-                    </select>
+                      onChange={(v) => setSort(v as SortOption)}
+                      options={[
+                        { value: "newest", label: isRTL ? "الأحدث" : "Newest" },
+                        { value: "oldest", label: isRTL ? "الأقدم" : "Oldest" },
+                        { value: "highest", label: isRTL ? "الأعلى تقييماً" : "Highest rated" },
+                        { value: "lowest", label: isRTL ? "الأقل تقييماً" : "Lowest rated" },
+                      ]}
+                      className="w-40"
+                      size="sm"
+                    />
                   </div>
                 </div>
 

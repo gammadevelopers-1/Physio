@@ -389,7 +389,7 @@ const BankTransferDetailDrawer = ({ receiptId, onClose, onChanged }: Props) => {
                   icon={<UserIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />}
                   label={t("bankTransferQueue.drawer.overview.student")}
                   value={
-                    <div className="text-right">
+                    <div className="text-end">
                       <p className="text-sm text-[var(--color-text-primary)] font-medium">
                         {data.student.name}
                       </p>
@@ -421,7 +421,7 @@ const BankTransferDetailDrawer = ({ receiptId, onClose, onChanged }: Props) => {
                   icon={<CreditCard className="w-4 h-4 text-[var(--color-text-secondary)]" />}
                   label={t("bankTransferQueue.drawer.overview.paymentId")}
                   value={
-                    <span className="text-[11px] font-mono text-[var(--color-text-primary)] break-all max-w-[260px] text-right">
+                    <span className="text-[11px] font-mono text-[var(--color-text-primary)] break-all max-w-[260px] text-end">
                       {data.payment.id}
                     </span>
                   }
@@ -445,7 +445,7 @@ const BankTransferDetailDrawer = ({ receiptId, onClose, onChanged }: Props) => {
                   <Row
                     label={t("bankTransferQueue.drawer.overview.iban")}
                     value={
-                      <span className="text-[12px] font-mono text-[var(--color-text-primary)] break-all max-w-[260px] text-right">
+                      <span className="text-[12px] font-mono text-[var(--color-text-primary)] break-all max-w-[260px] text-end">
                         {data.receipt.refundInfo.iban}
                       </span>
                     }
@@ -784,7 +784,7 @@ function Row({
         {icon}
         <span>{label}</span>
       </div>
-      <div className="text-right">{value}</div>
+      <div className="text-end">{value}</div>
     </div>
   );
 }

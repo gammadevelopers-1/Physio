@@ -3,11 +3,14 @@
 import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { Variable, Info, Eye, Loader2 } from "lucide-react";
+import { Variable, Info, Eye, Loader2, Send, Sparkles } from "lucide-react";
 import type { EditorRef, EmailEditorProps } from "react-email-editor";
+import { toast } from "sonner";
 import { ActionBar } from "./TemplateEditorContent";
 import EmailPreviewModal from "./EmailPreviewModal";
-import type { TemplateDetail } from "@/lib/api";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { templatesApi, type TemplateDetail } from "@/lib/api";
+import { SEED_DESIGNS, designFromBlocks } from "./seedDesigns";
 
 // Unlayer is iframe-based and SSR-incompatible — dynamic import strips
 // it from the server bundle.
@@ -43,6 +46,54 @@ export default function EmailTemplateEditor({
   const [editorReady, setEditorReady] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  /**
+   * Wipe the canvas back to a blank Unlayer body so the admin can
+   * build a template from scratch using drag-and-drop visual blocks
+   * (text, image, button, divider, etc.) instead of editing the
+   * legacy HTML block the default template ships as.
+   *
+   * The Unlayer editor's block palette on the right side becomes the
+   * primary tool once the canvas is clear. This is the escape hatch
+   * for non-technical admins who don't want to touch HTML.
+   */
+  const [startFreshOpen, setStartFreshOpen] = useState(false);
+
+  const handleStartFresh = () => {
+    setStartFreshOpen(true);
+  };
+
+  const confirmStartFresh = () => {
+    const unlayer = editorRef.current?.editor;
+    if (!unlayer) return;
+    unlayer.loadBlank({ backgroundColor: "#ffffff" });
+    setStartFreshOpen(false);
+  };
+
+  const handleTestSend = async () => {
+    setTesting(true);
+    try {
+      const res = await templatesApi.testSend(
+        detail.meta.eventKey,
+        detail.locale,
+      );
+      // usedOverride=false means the admin's edits weren't the source
+      // of the send — either they haven't saved a row yet or the row
+      // is disabled. Callers should nudge them to save first.
+      if (res.usedOverride) {
+        toast.success(t("testSend.sentOverride", { email: res.to }));
+      } else {
+        toast.success(t("testSend.sentDefault", { email: res.to }));
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("testSend.failed"),
+      );
+    } finally {
+      setTesting(false);
+    }
+  };
 
   // Build Unlayer merge tags from the registry variables. Tags use
   // `{{variableKey}}` so the substitution model matches what the
@@ -60,8 +111,14 @@ export default function EmailTemplateEditor({
 
   const onEditorReady: EmailEditorProps["onReady"] = (unlayer) => {
     setEditorReady(true);
-    // Preferred: load the previously-saved Unlayer design verbatim so
-    // every block stays editable in its native form.
+    // Load order, best-to-worst editability:
+    //   1. Admin's own saved design → verbatim (block-editable).
+    //   2. Pre-authored seed design in seedDesigns.ts for this eventKey
+    //      → block-editable text/heading/button/divider/html blocks.
+    //   3. Legacy fallback: shipped HTML wrapped in ONE html block.
+    //      Admin can only edit the HTML source of that single block —
+    //      no block-by-block controls. Every template listed in
+    //      SEED_DESIGNS graduates from (3) to (2).
     if (detail.designJson && typeof detail.designJson === "object") {
       try {
         unlayer.loadDesign(
@@ -69,14 +126,26 @@ export default function EmailTemplateEditor({
         );
         return;
       } catch {
+        // fall through to seed / HTML pre-fill
+      }
+    }
+
+    const seed = SEED_DESIGNS[detail.meta.eventKey]?.[detail.locale];
+    if (seed && seed.length > 0) {
+      try {
+        unlayer.loadDesign(
+          designFromBlocks(seed) as unknown as Parameters<typeof unlayer.loadDesign>[0],
+        );
+        return;
+      } catch {
         // fall through to HTML pre-fill
       }
     }
 
-    // Fallback: this template has no saved design yet (admin hasn't
-    // edited it before). Pre-fill the canvas with the default body
-    // HTML wrapped in a single HTML block, so the admin sees the
-    // existing content to tweak instead of a blank slate.
+    // Legacy fallback: this template has no saved design and no seed
+    // yet. Wrap the shipped default HTML in a single HTML block so
+    // admin sees the existing content to tweak instead of a blank
+    // slate — but they can only edit the raw HTML of that one block.
     if (detail.body && detail.body.trim().length > 0) {
       try {
         unlayer.loadDesign(
@@ -206,22 +275,62 @@ export default function EmailTemplateEditor({
         </div>
       )}
 
-      {/* Action row — Preview lives next to Save/Reset so it's
-          always visible without scrolling. */}
+      {/* Non-technical-admin hint: shipped templates load as one HTML
+          block that can't be split into visual sections. The "Start
+          Fresh" button clears the canvas so admin can drag in text /
+          image / button blocks from the right-side palette instead of
+          editing HTML. Only shown when the editor is up, there's no
+          admin override yet, AND we don't already have a seed design
+          for this template (seeded templates already give block-level
+          editing without needing the escape hatch). */}
+      {editorReady && !detail.hasOverride && !SEED_DESIGNS[detail.meta.eventKey]?.[detail.locale] && (
+        <div className="flex items-start gap-2 px-5 py-3 border-t border-[var(--color-border)] bg-[#EFF6FF]">
+          <Sparkles className="w-4 h-4 text-[#2563EB] flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-[#1E40AF]">{t("startFresh.hint")}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleStartFresh}
+            className="text-xs font-semibold text-[#2563EB] hover:underline flex-shrink-0"
+          >
+            {t("startFresh.button")}
+          </button>
+        </div>
+      )}
+
+      {/* Action row — Preview + Test-send live next to Save/Reset so
+          they're always visible without scrolling. */}
       <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-[var(--color-border)] bg-[var(--color-surface-page)]">
-        <button
-          type="button"
-          onClick={handlePreview}
-          disabled={previewing || !editorReady}
-          className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
-        >
-          {previewing ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Eye className="w-3.5 h-3.5" />
-          )}
-          {t("previewEmail")}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={previewing || !editorReady}
+            className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+          >
+            {previewing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Eye className="w-3.5 h-3.5" />
+            )}
+            {t("previewEmail")}
+          </button>
+          <button
+            type="button"
+            onClick={handleTestSend}
+            disabled={testing}
+            className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+            title={t("testSend.tooltip")}
+          >
+            {testing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+            {t("testSend.button")}
+          </button>
+        </div>
         <ActionBar
           saving={saving}
           resetting={resetting}
@@ -238,6 +347,16 @@ export default function EmailTemplateEditor({
         preheader={preheader}
         bodyHtml={previewHtml ?? ""}
         variables={detail.meta.variables}
+      />
+      <ConfirmDialog
+        open={startFreshOpen}
+        title={t("startFresh.title")}
+        message={t("startFresh.confirm")}
+        confirmLabel={t("startFresh.confirmLabel")}
+        cancelLabel={t("startFresh.cancel")}
+        danger
+        onConfirm={confirmStartFresh}
+        onClose={() => setStartFreshOpen(false)}
       />
     </div>
   );

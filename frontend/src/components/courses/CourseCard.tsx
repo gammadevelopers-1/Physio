@@ -10,6 +10,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Heart,
+  Sparkles,
 } from "lucide-react";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
@@ -22,6 +23,13 @@ import DiscountBadge from "./DiscountBadge";
 interface CourseCardProps {
   course: PublicCourse;
   isRTL?: boolean;
+  /**
+   * Current user's point balance. Passed down from the list page (which
+   * already fetches user context). When undefined, the "or X points" pill
+   * still renders but muted with a sign-in tooltip. Not fetched inside the
+   * card — that would fan out one balance request per course.
+   */
+  userPointsBalance?: number;
 }
 
 const DELIVERY_ICON: Record<string, typeof Video> = {
@@ -31,8 +39,9 @@ const DELIVERY_ICON: Record<string, typeof Video> = {
   "self-paced": Monitor,
 };
 
-const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
+const CourseCard = ({ course, isRTL = false, userPointsBalance }: CourseCardProps) => {
   const t = useTranslations("coursesPage");
+  const tRedeem = useTranslations("coursesPage.card.redeemWithPoints");
   const tFav = useTranslations("studentDashboard.favourites");
   const router = useRouter();
   const pathname = usePathname();
@@ -66,10 +75,17 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
         : null;
 
   const price = course.price ?? 0;
-  const onSale = course.onSale ?? false;
   const salePercent = course.salePercent ?? null;
-  const effectivePrice = course.effectivePrice ?? price;
+  const saleAmount = course.saleAmount ?? null;
+  const perCourseSalePrice = course.effectivePrice ?? price;
+  // Campaign auto-apply discount (percentage or fixed, standard or early
+  // bird). Applies on top of any per-course sale, so its `finalPrice` is
+  // the true "you pay" number the card should headline.
+  const campaign = course.campaignDiscount ?? null;
+  const effectivePrice = campaign?.finalPrice ?? perCourseSalePrice;
+  const onSale = (course.onSale ?? false) || !!campaign;
   const isFree = effectivePrice === 0;
+  const isEarlyBirdCampaign = campaign?.campaignType === "early_bird";
 
   const isEnded = course.availabilityStatus === "completed";
   const isFull = course.availabilityStatus === "full";
@@ -243,18 +259,45 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
                     {price} SAR
                   </span>
                 </div>
-                <DiscountBadge
-                  variant="sale"
-                  percent={salePercent}
-                  amountSaved={Math.max(0, price - effectivePrice)}
-                  size="sm"
-                />
+                {/* Which badge fires — priority (top down):
+                    1. Early Bird campaign: yellow "Early Bird" badge with savings
+                    2. Any active auto-apply campaign: red "Sale" badge with savings
+                    3. Per-course sale: red "Sale" badge with % or SAR off
+                   Campaigns take precedence over per-course-sale visuals when
+                   both apply so students see the campaign name/branding. */}
+                {campaign && isEarlyBirdCampaign ? (
+                  <DiscountBadge
+                    variant="earlyBird"
+                    amountSaved={Math.max(0, price - effectivePrice)}
+                    size="sm"
+                  />
+                ) : campaign ? (
+                  <DiscountBadge
+                    variant="sale"
+                    percent={campaign.discountType === "percentage" ? campaign.discountValue : null}
+                    amountSaved={Math.max(0, price - effectivePrice)}
+                    size="sm"
+                  />
+                ) : (
+                  <DiscountBadge
+                    variant="sale"
+                    percent={salePercent}
+                    amountSaved={saleAmount ?? Math.max(0, price - effectivePrice)}
+                    size="sm"
+                  />
+                )}
               </>
             ) : (
               <span className="text-[var(--color-primary)] font-bold text-[15px] whitespace-nowrap">
                 {isFree ? t("card.free") : `${effectivePrice} SAR`}
               </span>
             )}
+            <RedeemWithPointsPill
+              redemption={course.redemption}
+              userPointsBalance={userPointsBalance}
+              isAuthenticated={isAuthenticated}
+              tRedeem={tRedeem}
+            />
           </div>
           <span className="flex-shrink-0 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors whitespace-nowrap self-center">
             {t("card.viewDetails")}
@@ -269,5 +312,57 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
     </Link>
   );
 };
+
+interface RedeemWithPointsPillProps {
+  redemption: PublicCourse["redemption"];
+  userPointsBalance?: number;
+  isAuthenticated: boolean;
+  tRedeem: ReturnType<typeof useTranslations>;
+}
+
+/**
+ * Small pill under the SAR price on a course card. Renders only when the
+ * course is opted-in for points redemption. Three visual states:
+ *   • Authed + affordable → violet-tinted, enabled-looking
+ *   • Authed + insufficient → muted gray, tooltip with deficit
+ *   • Unauthed → muted, sign-in tooltip
+ * The pill is a badge, not a link. The actual "Redeem" CTA lives on the
+ * course detail page — cards are for browsing, not committing spend.
+ */
+function RedeemWithPointsPill({
+  redemption,
+  userPointsBalance,
+  isAuthenticated,
+  tRedeem,
+}: RedeemWithPointsPillProps) {
+  if (!redemption?.enabled || !redemption.pointsCost || redemption.pointsCost <= 0) {
+    return null;
+  }
+  const cost = redemption.pointsCost;
+  const hasBalance = typeof userPointsBalance === "number";
+  const affordable = hasBalance && userPointsBalance! >= cost;
+  const deficit = hasBalance ? Math.max(0, cost - userPointsBalance!) : cost;
+
+  const tooltip = !isAuthenticated
+    ? tRedeem("tooltipSignIn")
+    : !affordable
+      ? tRedeem("tooltipNotEnough", { deficit })
+      : "";
+
+  return (
+    <span
+      title={tooltip}
+      aria-label={tooltip || undefined}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${
+        affordable
+          ? "bg-[#EDE9FE] text-[#7C3AED]"
+          : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+      }`}
+    >
+      <Sparkles className="w-3 h-3" strokeWidth={2} />
+      {tRedeem("pill", { points: cost })}
+    </span>
+  );
+}
 
 export default CourseCard;

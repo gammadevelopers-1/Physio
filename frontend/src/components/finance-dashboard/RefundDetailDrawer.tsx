@@ -465,7 +465,7 @@ const RefundDetailDrawer = ({
                   icon={<User className="w-4 h-4 text-[var(--color-text-secondary)]" />}
                   label={t("refundsPage.drawer.overview.requester")}
                   value={
-                    <div className="text-right">
+                    <div className="text-end">
                       <p className="text-sm text-[var(--color-text-primary)] font-medium">
                         {data.requesterName || "—"}
                       </p>
@@ -480,7 +480,7 @@ const RefundDetailDrawer = ({
                   label={t("refundsPage.drawer.overview.course")}
                   value={
                     data.refundedItems && data.refundedItems.length > 0 ? (
-                      <div className="text-right">
+                      <div className="text-end">
                         {data.refundedItems.map((ri) => {
                           const title =
                             (locale === "ar" && ri.courseTitleAr) ||
@@ -529,7 +529,7 @@ const RefundDetailDrawer = ({
                   icon={<ShieldCheck className="w-4 h-4 text-[var(--color-text-secondary)]" />}
                   label={t("refundsPage.drawer.overview.reason")}
                   value={
-                    <div className="text-right">
+                    <div className="text-end">
                       <p className="text-sm text-[var(--color-text-primary)]">
                         {t(`refundsPage.reasonLabels.${data.reason}` as any) || data.reason}
                       </p>
@@ -652,7 +652,7 @@ const RefundDetailDrawer = ({
                 <Row
                   label={t("refundsPage.drawer.overview.gatewayRefundId")}
                   value={
-                    <span className="text-[12px] font-mono text-[var(--color-text-primary)] break-all max-w-[280px] text-right">
+                    <span className="text-[12px] font-mono text-[var(--color-text-primary)] break-all max-w-[280px] text-end">
                       {data.gatewayRefundId || "—"}
                     </span>
                   }
@@ -661,7 +661,7 @@ const RefundDetailDrawer = ({
                   <Row
                     label={t("refundsPage.drawer.overview.gatewayChargeId")}
                     value={
-                      <span className="text-[12px] font-mono text-[var(--color-text-primary)] break-all max-w-[280px] text-right">
+                      <span className="text-[12px] font-mono text-[var(--color-text-primary)] break-all max-w-[280px] text-end">
                         {data.gatewayChargeId}
                       </span>
                     }
@@ -1068,7 +1068,7 @@ function Row({
         {icon}
         <span>{label}</span>
       </div>
-      <div className="text-right">{value}</div>
+      <div className="text-end">{value}</div>
     </div>
   );
 }

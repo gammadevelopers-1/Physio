@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
-import { getHijriParts, hijriMonthNames, hijriMonthNamesEn, gregorianMonthNames, gregorianMonthNamesAr } from "@/lib/hijri";
+import {
+  getHijriParts,
+  hijriMonthNames,
+  hijriMonthNamesEn,
+  gregorianMonthNames,
+  gregorianMonthNamesAr,
+} from "@/lib/hijri";
 import {
   ChevronLeft,
   ChevronRight,
@@ -42,6 +48,41 @@ interface SessionsCalendarWidgetProps {
   readOnly?: boolean;
 }
 
+/**
+ * Compute the Sunday-anchored start of the week that contains `d`.
+ */
+function startOfWeekSunday(d: Date): Date {
+  const day = d.getDay(); // 0 = Sunday
+  const s = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  s.setDate(s.getDate() - day);
+  return s;
+}
+
+/**
+ * Jump a Gregorian Date so the resulting Hijri (year, month=1..12) matches
+ * target. Iterative refinement — same coarse-then-fine walk as the shared
+ * DatePicker uses. Kept local to avoid growing hijri.ts's public surface.
+ */
+function hijriYearMonthToGregorian(year: number, month: number, ref: Date): Date {
+  const d = new Date(ref);
+  const curr = getHijriParts(d);
+  const yearDelta = year - curr.year;
+  const monthDelta = month - curr.month;
+  d.setDate(d.getDate() + Math.round(yearDelta * 354 + monthDelta * 29.5));
+  let guard = 0;
+  while (getHijriParts(d).year > year && guard++ < 400) d.setDate(d.getDate() - 15);
+  guard = 0;
+  while (getHijriParts(d).year < year && guard++ < 400) d.setDate(d.getDate() + 15);
+  guard = 0;
+  while (guard++ < 60) {
+    const p = getHijriParts(d);
+    if (p.year === year && p.month === month) break;
+    if (p.year > year || (p.year === year && p.month > month)) d.setDate(d.getDate() - 1);
+    else d.setDate(d.getDate() + 1);
+  }
+  return d;
+}
+
 const SessionsCalendarWidget = ({
   sessions,
   onStartSession,
@@ -53,33 +94,104 @@ const SessionsCalendarWidget = ({
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const { calendarFormat } = useCalendarPreference();
-  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
+  const { calendarFormat, setCalendarFormat } = useCalendarPreference();
   const [hoveredSession, setHoveredSession] = useState<string | null>(null);
 
-  // Get week days based on current offset
+  // The Sunday of the currently-displayed week. Prev/Next chevrons jump
+  // by ±7 days; the year+month picker jumps to the first-Sunday-of-the-
+  // selected-month; Today snaps back to the week that contains "now".
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekSunday(new Date()));
+
+  // Year+month picker state
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  // Popover viewport coords — position:fixed so it escapes any parent
+  // overflow and cannot push body-level x-scroll if the trigger sits near
+  // a viewport edge. Same pattern as the shared DatePicker.
+  const [pickerPos, setPickerPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  // Close picker on outside click / Escape
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const handleMouse = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPickerOpen(false);
+    };
+    document.addEventListener("mousedown", handleMouse);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleMouse);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [pickerOpen]);
+
+  // Compute picker coords when open + on scroll/resize
+  useEffect(() => {
+    if (!pickerOpen) {
+      setPickerPos(null);
+      return;
+    }
+    const POPOVER_W = 260;
+    const POPOVER_H_APPROX = 240;
+    const MARGIN = 8;
+    const compute = () => {
+      if (!pickerRef.current) return;
+      const rect = pickerRef.current.getBoundingClientRect();
+      const width = Math.min(POPOVER_W, window.innerWidth - MARGIN * 2);
+      let top = rect.bottom + 4;
+      if (top + POPOVER_H_APPROX > window.innerHeight - MARGIN) {
+        top = Math.max(MARGIN, rect.top - POPOVER_H_APPROX - 4);
+      }
+      let left: number;
+      if (isRTL) {
+        left = rect.right - width;
+        if (left < MARGIN) left = Math.min(rect.left, window.innerWidth - width - MARGIN);
+      } else {
+        left = rect.left;
+        if (left + width > window.innerWidth - MARGIN) {
+          left = Math.max(MARGIN, rect.right - width);
+        }
+      }
+      setPickerPos({ top, left, width });
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
+    };
+  }, [pickerOpen, isRTL]);
+
+  // Get week days based on the current anchor
   const weekDays = useMemo(() => {
     const today = new Date();
-    const currentDay = today.getDay(); // 0 = Sunday
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - currentDay + currentWeekOffset * 7);
-
+    const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     const days = [];
     for (let i = 0; i < 7; i++) {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + i);
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
+      const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       days.push({
         date,
         dayName: date.toLocaleDateString("en-US", { weekday: "short" }),
         dayNumber: date.getDate(),
-        isToday:
-          date.toDateString() === today.toDateString() &&
-          currentWeekOffset === 0,
+        isToday: iso === todayISO,
         dayIndex: i,
       });
     }
     return days;
-  }, [currentWeekOffset]);
+  }, [weekStart]);
+
+  // True when the week currently shown includes today's date.
+  const showingCurrentWeek = useMemo(
+    () => weekDays.some((d) => d.isToday),
+    [weekDays],
+  );
 
   // Day names for translation
   const dayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
@@ -117,13 +229,32 @@ const SessionsCalendarWidget = ({
   }, [sessions, weekDateSet]);
 
   const navigateWeek = (direction: "prev" | "next") => {
-    setCurrentWeekOffset((prev) =>
-      direction === "prev" ? prev - 1 : prev + 1
-    );
+    setWeekStart((prev) => {
+      const next = new Date(prev);
+      next.setDate(prev.getDate() + (direction === "prev" ? -7 : 7));
+      return next;
+    });
   };
 
   const goToToday = () => {
-    setCurrentWeekOffset(0);
+    setWeekStart(startOfWeekSunday(new Date()));
+    setPickerOpen(false);
+  };
+
+  // Jump to the first week that contains any day of the target month.
+  // For Gregorian: anchor to the 1st of the given (year, month0). For
+  // Hijri: convert the Hijri year+month to a Gregorian anchor date, then
+  // snap to the Sunday of that week.
+  const jumpToMonth = (year: number, month0: number) => {
+    let anchor: Date;
+    if (calendarFormat === "hijri") {
+      // hijriYearMonthToGregorian expects month as 1-based
+      anchor = hijriYearMonthToGregorian(year, month0 + 1, weekStart);
+    } else {
+      anchor = new Date(year, month0, 1);
+    }
+    setWeekStart(startOfWeekSunday(anchor));
+    setPickerOpen(false);
   };
 
   // Get month and year for header
@@ -153,6 +284,34 @@ const SessionsCalendarWidget = ({
     }
     return `${firstMonth} - ${lastMonth} ${year}`;
   }, [weekDays, calendarFormat, locale]);
+
+  // Year+month grid for the picker. The "current" year+month drives
+  // which cell/row appears highlighted. Year list is current ± 3.
+  const pickerData = useMemo(() => {
+    const firstDay = weekDays[0]?.date ?? new Date();
+    let currentYear: number;
+    let currentMonth0: number;
+    let monthNames: readonly string[];
+
+    if (calendarFormat === "hijri") {
+      const parts = getHijriParts(firstDay);
+      currentYear = parts.year;
+      currentMonth0 = parts.month - 1;
+      monthNames = locale === "ar" ? hijriMonthNames : hijriMonthNamesEn;
+    } else {
+      currentYear = firstDay.getFullYear();
+      currentMonth0 = firstDay.getMonth();
+      monthNames = locale === "ar" ? gregorianMonthNamesAr : gregorianMonthNames;
+    }
+    const years = Array.from({ length: 7 }, (_, i) => currentYear - 3 + i);
+    return { currentYear, currentMonth0, monthNames, years };
+  }, [weekDays, calendarFormat, locale]);
+
+  const [pickerYear, setPickerYear] = useState<number>(pickerData.currentYear);
+  // Keep pickerYear in sync when the visible week changes without an explicit pick.
+  useEffect(() => {
+    setPickerYear(pickerData.currentYear);
+  }, [pickerData.currentYear]);
 
   const getSessionStyle = (session: CalendarSession) => {
     if (session.status === "completed") {
@@ -298,9 +457,114 @@ const SessionsCalendarWidget = ({
           >
             {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
-          <span className="text-sm font-medium text-[var(--color-text-secondary)] min-w-[120px] text-center">
-            {headerDate}
-          </span>
+
+          {/* Month/year label — clicking opens the year+month picker */}
+          <div className="relative" ref={pickerRef}>
+            <button
+              type="button"
+              onClick={() => setPickerOpen((v) => !v)}
+              aria-haspopup="dialog"
+              aria-expanded={pickerOpen}
+              className="text-sm font-medium text-[var(--color-text-secondary)] min-w-[140px] text-center px-2 py-1 rounded hover:bg-[var(--color-border-subtle)] transition-colors"
+            >
+              {headerDate}
+            </button>
+
+            {pickerOpen && pickerPos && (
+              <div
+                className="fixed z-50 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl shadow-lg p-3"
+                style={{
+                  position: "fixed",
+                  top: pickerPos.top,
+                  left: pickerPos.left,
+                  width: pickerPos.width,
+                }}
+                role="dialog"
+              >
+                {/* Hijri / Gregorian toggle */}
+                <div className="flex items-center gap-1 mb-3 bg-[var(--color-border-subtle)] rounded-lg p-1">
+                  <button
+                    type="button"
+                    onClick={() => setCalendarFormat("gregorian")}
+                    className={`flex-1 text-xs py-1.5 rounded transition-colors ${
+                      calendarFormat === "gregorian"
+                        ? "bg-[var(--color-surface-card)] text-[var(--color-primary)] font-semibold shadow-sm"
+                        : "text-[var(--color-text-secondary)]"
+                    }`}
+                  >
+                    {locale === "ar" ? "ميلادي" : "Gregorian"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCalendarFormat("hijri")}
+                    className={`flex-1 text-xs py-1.5 rounded transition-colors ${
+                      calendarFormat === "hijri"
+                        ? "bg-[var(--color-surface-card)] text-[var(--color-primary)] font-semibold shadow-sm"
+                        : "text-[var(--color-text-secondary)]"
+                    }`}
+                  >
+                    {locale === "ar" ? "هجري" : "Hijri"}
+                  </button>
+                </div>
+
+                {/* Year navigator — single year with prev/next */}
+                <div className="flex items-center justify-between gap-1 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setPickerYear((y) => y - 1)}
+                    className="p-1.5 rounded hover:bg-[var(--color-border-subtle)] transition-colors"
+                    aria-label={isRTL ? "السنة السابقة" : "Previous year"}
+                  >
+                    {isRTL ? (
+                      <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                    ) : (
+                      <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                    )}
+                  </button>
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)] tabular-nums">
+                    {pickerYear}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPickerYear((y) => y + 1)}
+                    className="p-1.5 rounded hover:bg-[var(--color-border-subtle)] transition-colors"
+                    aria-label={isRTL ? "السنة التالية" : "Next year"}
+                  >
+                    {isRTL ? (
+                      <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Month grid — 3×4 */}
+                <div className="grid grid-cols-3 gap-1">
+                  {pickerData.monthNames.map((name, i) => {
+                    const isCurrent =
+                      pickerYear === pickerData.currentYear &&
+                      i === pickerData.currentMonth0;
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => jumpToMonth(pickerYear, i)}
+                        className={`text-xs py-2 rounded transition-colors truncate ${
+                          isCurrent
+                            ? "bg-[var(--color-primary)] text-white font-semibold"
+                            : "text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
+                        }`}
+                        title={name}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => navigateWeek("next")}
             className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
@@ -308,7 +572,7 @@ const SessionsCalendarWidget = ({
           >
             {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
-          {currentWeekOffset !== 0 && (
+          {!showingCurrentWeek && (
             <button
               onClick={goToToday}
               className="px-3 py-1.5 text-xs sm:text-sm font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"

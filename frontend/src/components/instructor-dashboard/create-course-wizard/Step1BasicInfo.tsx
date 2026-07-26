@@ -5,6 +5,7 @@ import { Loader2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { instructorApi } from "@/lib/api";
 import DatePicker from "@/components/ui/DatePicker";
+import Select from "@/components/ui/Select";
 import type { WizardState, WizardAction } from "./CreateCourseWizard";
 
 interface Step1Props {
@@ -99,20 +100,20 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
           <label htmlFor="delivery-type" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
             {t("deliveryType")} *
           </label>
-          <select
-            id="delivery-type"
+          <Select
             value={state.deliveryType}
-            onChange={(e) =>
-              dispatch({ type: "SET_FIELD", field: "deliveryType", value: e.target.value })
+            onChange={(v) =>
+              dispatch({ type: "SET_FIELD", field: "deliveryType", value: v })
             }
-            className="w-full max-w-xs px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-[var(--color-input-focus)] outline-none bg-[var(--color-surface-card)]"
-          >
-            <option value="zoom">Zoom</option>
-            <option value="onsite">On-site</option>
-            <option value="blended">Blended</option>
-            <option value="self-paced">{t("deliverySelfPaced")}</option>
-            <option value="webinar">{t("deliveryWebinar")}</option>
-          </select>
+            className="w-full max-w-xs"
+            options={[
+              { value: "zoom", label: "Zoom" },
+              { value: "onsite", label: "On-site" },
+              { value: "blended", label: "Blended" },
+              { value: "self-paced", label: t("deliverySelfPaced") },
+              { value: "webinar", label: t("deliveryWebinar") },
+            ]}
+          />
           {state.deliveryType === "webinar" && (
             <p className="mt-1.5 text-xs text-[var(--color-text-secondary)] max-w-xl">
               {t("deliveryWebinarHint")}

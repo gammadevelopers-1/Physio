@@ -23,6 +23,7 @@ import {
   type ServiceStatusIncidentStatus,
 } from "@/lib/api";
 import Select from "@/components/admin-dashboard/Select";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import StatusAnalyticsSection from "./StatusAnalyticsSection";
 
 const AFFECTED_ROLE_OPTIONS: { value: IncidentAffectedRole; label: string }[] = [
@@ -133,14 +134,25 @@ export default function ServiceStatusTab() {
     }
   };
 
-  const handleDeleteIncident = async (id: string) => {
-    if (!confirm(t("toasts.confirmDelete"))) return;
+  const [deleteIncidentId, setDeleteIncidentId] = useState<string | null>(null);
+  const [deletingIncident, setDeletingIncident] = useState(false);
+
+  const handleDeleteIncident = (id: string) => {
+    setDeleteIncidentId(id);
+  };
+
+  const confirmDeleteIncident = async () => {
+    if (!deleteIncidentId) return;
+    setDeletingIncident(true);
     try {
-      await serviceStatusApi.deleteIncident(id);
+      await serviceStatusApi.deleteIncident(deleteIncidentId);
       toast.success(t("toasts.incidentDeleted"));
       await loadAll();
+      setDeleteIncidentId(null);
     } catch {
       toast.error(t("toasts.deleteFailed"));
+    } finally {
+      setDeletingIncident(false);
     }
   };
 
@@ -399,6 +411,17 @@ export default function ServiceStatusTab() {
           t={t}
         />
       )}
+      <ConfirmDialog
+        open={!!deleteIncidentId}
+        title={t("toasts.deleteTitle")}
+        message={t("toasts.confirmDelete")}
+        confirmLabel={t("toasts.deleteConfirmLabel")}
+        cancelLabel={t("toasts.cancel")}
+        loading={deletingIncident}
+        danger
+        onConfirm={confirmDeleteIncident}
+        onClose={() => !deletingIncident && setDeleteIncidentId(null)}
+      />
     </div>
   );
 }
@@ -562,7 +585,7 @@ function IncidentRow({
             onClick={() => setReportOpen((v) => !v)}
             className="px-2 py-1 text-[11px] font-medium border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
           >
-            {reportOpen ? "Hide report" : "Report"}
+            {reportOpen ? t("incidents.hideReport") : t("incidents.report")}
           </button>
           <button
             onClick={onDelete}
@@ -994,6 +1017,7 @@ function IncidentReportPanel({
   open: boolean;
   onClose: () => void;
 }) {
+  const t = useTranslations("adminDashboard.settingsPage.serviceStatusTab");
   const [report, setReport] = useState<IncidentReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [rootCause, setRootCause] = useState("");
@@ -1021,9 +1045,9 @@ function IncidentReportPanel({
         rootCause: rootCause.trim() || undefined,
         correctiveActions: correctiveActions.trim() || undefined,
       });
-      toast.success("Report saved");
+      toast.success(t("incidents.toasts.reportSaved"));
     } catch {
-      toast.error("Could not save report");
+      toast.error(t("incidents.toasts.reportSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -1041,7 +1065,7 @@ function IncidentReportPanel({
   if (!report) {
     return (
       <div className="mt-2 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-text-secondary)]">
-        Couldn't load report.{" "}
+        {t("incidents.reportLoadError")}{" "}
         <button onClick={onClose} className="text-[var(--color-primary)] hover:underline">
           Close
         </button>
@@ -1112,7 +1136,7 @@ function IncidentReportPanel({
           Close
         </button>
         <button
-          onClick={() => exportIncidentReportPdf(report)}
+          onClick={() => exportIncidentReportPdf(report, t("incidents.toasts.allowPopups"))}
           className="px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
         >
           Export PDF
@@ -1169,11 +1193,11 @@ function LinkedTicketRow({ t }: { t: LinkedTicketSummary }) {
  * tab and triggers the browser's print-to-PDF. Avoids a server
  * round-trip for what is essentially an admin convenience.
  */
-function exportIncidentReportPdf(report: IncidentReport) {
+function exportIncidentReportPdf(report: IncidentReport, popupBlockedMessage: string) {
   const i = report.incident;
   const win = window.open("", "_blank");
   if (!win) {
-    toast.error("Allow pop-ups to export PDF");
+    toast.error(popupBlockedMessage);
     return;
   }
   const linkedRows = report.linkedTickets

@@ -6,6 +6,8 @@ import { useTranslations, useLocale } from "next-intl";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
 import { Loader2, Users, ArrowRight, Star, Clock, AlertTriangle, X, UserCheck } from "lucide-react";
+import DatePicker from "@/components/ui/DatePicker";
+import Select from "@/components/ui/Select";
 
 // Admin Supervisors tab — list every supervisor with team-aggregate
 // performance metrics. Date-range picker lets admin toggle between
@@ -72,21 +74,11 @@ export default function AdminSupervisorsTab() {
         ))}
         {range === "custom" && (
           <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={customFrom}
-              onChange={(e) => setCustomFrom(e.target.value)}
-              className="h-8 px-2 border border-[var(--color-input-border)] rounded text-xs"
-            />
+            <DatePicker value={customFrom} onChange={setCustomFrom} />
             <span className="text-xs text-[var(--color-text-secondary)]">
               →
             </span>
-            <input
-              type="date"
-              value={customTo}
-              onChange={(e) => setCustomTo(e.target.value)}
-              className="h-8 px-2 border border-[var(--color-input-border)] rounded text-xs"
-            />
+            <DatePicker value={customTo} onChange={setCustomTo} min={customFrom || undefined} />
           </div>
         )}
       </div>
@@ -339,20 +331,16 @@ function OrphanAgentsBanner() {
                   {t("noSupervisors")}
                 </div>
               ) : (
-                <select
+                <Select
                   value={targetSupervisorId}
-                  onChange={(e) => setTargetSupervisorId(e.target.value)}
-                  className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm"
-                >
-                  <option value="">{t("pickSupervisor")}</option>
-                  {supervisors.map((s) => (
-                    <option key={s.userId} value={s.userId}>
-                      {[s.firstName, s.lastName].filter(Boolean).join(" ") ||
-                        s.email}{" "}
-                      · {t("teamCount", { count: s.teamSize })}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setTargetSupervisorId}
+                  className="w-full"
+                  placeholder={t("pickSupervisor")}
+                  options={supervisors.map((s) => ({
+                    value: s.userId,
+                    label: `${[s.firstName, s.lastName].filter(Boolean).join(" ") || s.email} · ${t("teamCount", { count: s.teamSize })}`,
+                  }))}
+                />
               )}
 
               <p className="text-xs font-medium text-[var(--color-text-secondary)] mt-4 mb-2">

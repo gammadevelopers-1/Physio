@@ -91,7 +91,13 @@ export default async function RootLayout({
   // Per-request CSP nonce from middleware. Next auto-applies it to scripts it
   // controls, but we pass it explicitly to next/script so the inline tracking
   // bootstraps (GTM / GA4 / Meta Pixel) are accepted under the strict script-src.
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const h = await headers();
+  const nonce = h.get("x-nonce") ?? undefined;
+  // Locale from middleware (x-locale header) — drives <html lang dir> at SSR.
+  // Falling back to "en" is safe because middleware always sets this header
+  // for any route that reaches this layout.
+  const locale = h.get("x-locale") === "ar" ? "ar" : "en";
+  const dir = locale === "ar" ? "rtl" : "ltr";
 
   const settings = await getSiteSettings().catch(() => null);
   const theme = {
@@ -122,7 +128,18 @@ export default async function RootLayout({
     starBorder: settings?.themeStarBorder || THEME_DEFAULTS.starBorder,
   };
 
-  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-input-border:${theme.inputBorder};--color-input-focus:${theme.inputFocus};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};--color-footer-heading:${theme.footerHeading};--color-footer-text:${theme.footerText};--color-star:${theme.starColor};--color-star-border:${theme.starBorder};}`;
+  // Selector is `html:root` (not just `:root`) so this SSR-injected style
+  // beats the fallback declarations in globals.css regardless of DOM load
+  // order. Next 15 auto-hoists imported CSS `<link>` tags into <head>,
+  // sometimes placing them AFTER JSX-rendered <style> children — same
+  // specificity means globals.css was overriding the Strapi values for
+  // any var that also has a fallback in globals.css (e.g.
+  // --color-surface-page). Chaining `html:root` bumps specificity from
+  // (0,0,1,0) to (0,0,1,1), which cascades over the globals fallbacks.
+  // Body bg also set inline as a hard belt-and-suspenders — the body is
+  // painted directly with the Strapi surfacePage regardless of any var
+  // resolution issue on the client.
+  const themeStyle = `html:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-input-border:${theme.inputBorder};--color-input-focus:${theme.inputFocus};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};--color-footer-heading:${theme.footerHeading};--color-footer-text:${theme.footerText};--color-star:${theme.starColor};--color-star-border:${theme.starBorder};}html:root body{background:${theme.surfacePage};}`;
 
   // Site-wide Organization LD — emitted once, at the document root, so
   // search engines associate every page back to the same publisher.
@@ -140,7 +157,7 @@ export default async function RootLayout({
   });
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
         <style dangerouslySetInnerHTML={{ __html: themeStyle }} />
         <JsonLd id="ld-organization" data={orgLd} />

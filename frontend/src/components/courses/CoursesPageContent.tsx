@@ -14,6 +14,8 @@ import type { CourseFiltersLabels } from "@/components/courses/CourseFilters";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useLocale } from "next-intl";
 import { Archive, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts";
+import { pointsApi } from "@/lib/api";
 
 const DELIVERY_TYPES = ["zoom", "onsite", "blended", "self-paced", "webinar"];
 
@@ -41,9 +43,32 @@ const CoursesPageContent = ({
 }: CoursesPageContentProps = {}) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { isAuthenticated } = useAuth();
 
   const [courses, setCourses] = useState<PublicCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  // Fetched once at mount when authed — the card's "or X points" pill
+  // needs it to decide the enabled vs muted state. Guests skip the fetch;
+  // the card falls through to the "sign in" tooltip.
+  const [pointsBalance, setPointsBalance] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setPointsBalance(undefined);
+      return;
+    }
+    let cancelled = false;
+    pointsApi
+      .getBalance()
+      .then((res) => {
+        if (!cancelled) setPointsBalance(res.balance);
+      })
+      .catch(() => {
+        // Non-fatal — pill just stays muted.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -62,7 +87,13 @@ const CoursesPageContent = ({
     try {
       const params = new URLSearchParams();
       if (searchQuery) params.set("search", searchQuery);
-      if (selectedPricing) params.set("pricing", selectedPricing);
+      // "on_sale" is a status filter, not a pricing filter — route it
+      // separately so the backend keeps pricing (free/paid) clean.
+      if (selectedPricing === "on_sale") {
+        params.set("onSale", "true");
+      } else if (selectedPricing) {
+        params.set("pricing", selectedPricing);
+      }
       if (availability) params.set("availability", availability);
       if (language) params.set("language", language);
       if (sortBy) params.set("sort", sortBy);
@@ -224,7 +255,7 @@ const CoursesPageContent = ({
                   <>
                     <div className="grid grid-cols-3 gap-8">
                       {paginatedCourses.map((course) => (
-                        <CourseCard key={course.id} course={course} isRTL={isRTL} />
+                        <CourseCard key={course.id} course={course} isRTL={isRTL} userPointsBalance={pointsBalance} />
                       ))}
                     </div>
 

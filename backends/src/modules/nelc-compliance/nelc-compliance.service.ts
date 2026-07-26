@@ -183,11 +183,9 @@ export class NelcComplianceService {
     user: AuthenticatedUser,
   ): Promise<ComplianceSummary> {
     // Get courses scoped by role
-    const conditions: any[] = isGlobalAdmin(user)
+    const conditions: any[] = isGlobalAdmin(user) || isManager(user)
       ? []
-      : isManager(user)
-        ? [or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!]
-        : [eq(courses.instructorId, user.id)];
+      : [eq(courses.instructorId, user.id)];
     const userCourses = await db
       .select({ id: courses.id })
       .from(courses)
@@ -233,11 +231,9 @@ export class NelcComplianceService {
       summary: { passed: number; review: number; failed: number; total: number };
     }>
   > {
-    const conditions: any[] = isGlobalAdmin(user)
+    const conditions: any[] = isGlobalAdmin(user) || isManager(user)
       ? []
-      : isManager(user)
-        ? [or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!]
-        : [eq(courses.instructorId, user.id)];
+      : [eq(courses.instructorId, user.id)];
 
     const allCourses = await db
       .select({
@@ -1237,12 +1233,8 @@ export class NelcComplianceService {
     const conditions: any[] = [
       sql`${sessions.type} IN ('zoom', 'hybrid')`,
     ];
-    if (isGlobalAdmin(user)) {
-      // No filter
-    } else if (isManager(user)) {
-      conditions.push(
-        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
-      );
+    if (isGlobalAdmin(user) || isManager(user)) {
+      // Managers and admins see all sessions (platform-wide compliance)
     } else {
       conditions.push(eq(sessions.instructorId, user.id));
     }

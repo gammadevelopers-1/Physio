@@ -29,9 +29,35 @@ interface DatePickerProps {
   disabled?: boolean;
 }
 
+type ViewMode = "days" | "months" | "years";
+
 /** Convert a Date to YYYY-MM-DD string. */
 function toISO(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Jump a Gregorian Date so the Hijri (year, month=1..12) matches target. */
+function hijriYearMonthToGregorian(year: number, month: number, ref: Date): Date {
+  const d = new Date(ref);
+  const curr = getHijriParts(d);
+  // Coarse day jump: ~354.37 days/year, ~29.53 days/month
+  const yearDelta = year - curr.year;
+  const monthDelta = month - curr.month;
+  d.setDate(d.getDate() + Math.round(yearDelta * 354 + monthDelta * 29.5));
+  // Correct year
+  let guard = 0;
+  while (getHijriParts(d).year > year && guard++ < 400) d.setDate(d.getDate() - 15);
+  guard = 0;
+  while (getHijriParts(d).year < year && guard++ < 400) d.setDate(d.getDate() + 15);
+  // Correct month within year (walk 1 day at a time)
+  guard = 0;
+  while (guard++ < 60) {
+    const p = getHijriParts(d);
+    if (p.year === year && p.month === month) break;
+    if (p.year > year || (p.year === year && p.month > month)) d.setDate(d.getDate() - 1);
+    else d.setDate(d.getDate() + 1);
+  }
+  return d;
 }
 
 /**
@@ -40,6 +66,7 @@ function toISO(d: Date): string {
  * - Reads the user's calendar preference from CalendarContext
  * - Internally stores/returns Gregorian ISO dates
  * - Displays dates according to the user's calendar preference
+ * - Header is clickable: day view → month grid → year grid for fast jumps
  */
 export default function DatePicker({
   value,
@@ -71,26 +98,86 @@ export default function DatePicker({
   const useHijri = localFormat === "hijri";
 
   const [open, setOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("days");
   const [viewDate, setViewDate] = useState(() =>
     value ? new Date(value) : new Date()
   );
+  // Anchor for the year grid page (12 years per page)
+  const [yearPageStart, setYearPageStart] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Popover viewport coords — position:fixed so the popover escapes any
+  // parent overflow (dialogs, drawers, tables) and can flip when there's
+  // not enough room on the natural side.
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
 
   // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
+        setViewMode("days");
       }
     };
     if (open) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  // Compute popover coords whenever open changes, plus on scroll/resize.
+  useEffect(() => {
+    if (!open) {
+      setPopoverPos(null);
+      return;
+    }
+    const POPOVER_W = 300;
+    const POPOVER_H_APPROX = 420;
+    const MARGIN = 8;
+    const compute = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      // Vertical: below trigger by default; flip up if it would overflow.
+      let top = rect.bottom + 4;
+      if (top + POPOVER_H_APPROX > window.innerHeight - MARGIN) {
+        top = Math.max(MARGIN, rect.top - POPOVER_H_APPROX - 4);
+      }
+      // Horizontal: default aligns popover's inline-start to the trigger's
+      // inline-start; if that overflows the far edge, anchor to inline-end.
+      let left: number;
+      if (isRTL) {
+        // Align popover's RIGHT edge to trigger's RIGHT edge (popover extends left).
+        left = rect.right - POPOVER_W;
+        // Flip if that goes off the LEFT edge of the viewport.
+        if (left < MARGIN) left = Math.min(rect.left, window.innerWidth - POPOVER_W - MARGIN);
+      } else {
+        // Align popover's LEFT edge to trigger's LEFT edge (popover extends right).
+        left = rect.left;
+        // Flip if that goes off the RIGHT edge of the viewport.
+        if (left + POPOVER_W > window.innerWidth - MARGIN) {
+          left = Math.max(MARGIN, rect.right - POPOVER_W);
+        }
+      }
+      setPopoverPos({ top, left });
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
+    };
+  }, [open, isRTL]);
+
   // Sync viewDate when value changes
   useEffect(() => {
     if (value) setViewDate(new Date(value));
   }, [value]);
+
+  // ── Current view year/month (in the active calendar) ──
+  const viewYear = useHijri ? getHijriParts(viewDate).year : viewDate.getFullYear();
+  const viewMonth = useHijri ? getHijriParts(viewDate).month : viewDate.getMonth() + 1; // 1..12
+
+  const monthNames = useHijri
+    ? (isRTL ? hijriMonthNames : hijriMonthNamesEn)
+    : (isRTL ? gregorianMonthNamesAr : gregorianMonthNames);
 
   // ── Calendar data ──
   const calData = (() => {
@@ -102,7 +189,8 @@ export default function DatePicker({
       return {
         daysInMonth: hijriDays.length,
         firstDayOfWeek: firstDay.getDay(),
-        headerLabel: `${monthName} ${year}`,
+        monthName,
+        year,
         getGregorianDate: (dayIndex: number) => hijriDays[dayIndex - 1],
       };
     }
@@ -114,7 +202,8 @@ export default function DatePicker({
     return {
       daysInMonth,
       firstDayOfWeek,
-      headerLabel: `${monthName} ${y}`,
+      monthName,
+      year: y,
       getGregorianDate: (dayIndex: number) => new Date(y, m, dayIndex),
     };
   })();
@@ -143,13 +232,37 @@ export default function DatePicker({
     }
   };
 
+  const openYearsView = () => {
+    setYearPageStart(viewYear - 6); // centre current year in the 12-cell grid
+    setViewMode("years");
+  };
+  const openMonthsView = () => setViewMode("months");
+
+  const selectYear = (year: number) => {
+    if (useHijri) {
+      const next = hijriYearMonthToGregorian(year, viewMonth, viewDate);
+      setViewDate(next);
+    } else {
+      setViewDate(new Date(year, viewDate.getMonth(), 1));
+    }
+    setViewMode("months");
+  };
+  const selectMonth = (monthOneBased: number) => {
+    if (useHijri) {
+      const next = hijriYearMonthToGregorian(viewYear, monthOneBased, viewDate);
+      setViewDate(next);
+    } else {
+      setViewDate(new Date(viewDate.getFullYear(), monthOneBased - 1, 1));
+    }
+    setViewMode("days");
+  };
+
   // ── Selection helpers ──
   const selectedISO = value || "";
   // Parse YYYY-MM-DD as LOCAL midnight to match gDate (which is built via
   // `new Date(y, m, d)` — also local midnight). `new Date("2026-05-10")`
   // would parse as UTC midnight, which in UTC+3 zones makes the same
-  // calendar day appear "before" min and disables it. That was making
-  // it impossible to pick the same day as start for end (single-day course).
+  // calendar day appear "before" min and disables it.
   const parseLocalISO = (iso: string): Date | null => {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
     if (!m) return null;
@@ -171,11 +284,20 @@ export default function DatePicker({
     ? formatDate(value, localFormat, { locale, platformSettings: platformLocale })
     : "";
 
+  // Year grid page bounds
+  const pageStart = yearPageStart ?? viewYear - 6;
+  const yearsInPage = Array.from({ length: 12 }, (_, i) => pageStart + i);
+  const shiftYearPage = (delta: number) => setYearPageStart(pageStart + delta);
+
   return (
     <div ref={containerRef} className="relative">
       {/* Input trigger */}
       <div
-        onClick={() => !disabled && setOpen(!open)}
+        onClick={() => {
+          if (disabled) return;
+          setOpen(!open);
+          setViewMode("days");
+        }}
         className={`flex items-center gap-2 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm cursor-pointer bg-white hover:border-[var(--color-text-secondary)] transition-colors ${
           disabled ? "opacity-60 cursor-not-allowed bg-[var(--color-surface-page)]" : ""
         } ${open ? "ring-2 ring-[#3B82F6] border-[#3B82F6]" : ""} ${className}`}
@@ -187,46 +309,103 @@ export default function DatePicker({
         <input type="hidden" id={id} name={id} value={value} />
       </div>
 
-      {/* Dropdown calendar — anchored so the popover always extends toward
-          the viewport CENTER, never past the trailing edge:
-            • LTR: `start-0` (= left:0) anchors the LEFT edge of the popover
-              to the trigger's LEFT edge → extends rightward.
-            • RTL: `end-0` (= left:0 physically, because in RTL the inline
-              END is the LEFT edge) anchors the LEFT edge of the popover
-              to the trigger's LEFT edge → extends rightward.
-          Wave-2 used `start-0` in both directions, which in RTL resolved to
-          `right:0` and pushed the 300px popover LEFT of the trigger. On
-          the reconciliation "to date" filter the trigger sits near the
-          LEFT edge of the viewport in RTL, so the popover clipped past x=0
-          and caused horizontal page scroll. `max-w-[calc(100vw-1rem)]` is
-          kept as a belt-and-braces cap for very narrow viewports. */}
-      {open && (
+      {/* Popover — position:fixed so it escapes any dialog/drawer overflow
+          and can flip horizontally/vertically when there isn't room. Coords
+          computed in the effect above based on the trigger's viewport rect. */}
+      {open && popoverPos && (
         <div
-          className={`absolute z-50 mt-1 bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[300px] max-w-[calc(100vw-1rem)] ${
-            isRTL ? "end-0" : "start-0"
-          }`}
+          style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left }}
+          className="z-[100] bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[300px] max-w-[calc(100vw-1rem)]"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)]">
-            <button
-              type="button"
-              onClick={goToPrevMonth}
-              className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
-            >
-              {isRTL ? <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />}
-            </button>
-            <span className="text-sm font-semibold text-[var(--color-text-primary)]">{calData.headerLabel}</span>
-            <button
-              type="button"
-              onClick={goToNextMonth}
-              className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
-            >
-              {isRTL ? <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" />}
-            </button>
+            {viewMode === "days" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={goToPrevMonth}
+                  className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                  aria-label={isRTL ? "الشهر السابق" : "Previous month"}
+                >
+                  {isRTL ? <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />}
+                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={openMonthsView}
+                    className="text-sm font-semibold text-[var(--color-text-primary)] px-2 py-0.5 rounded hover:bg-[#F3F4F6] transition-colors"
+                  >
+                    {calData.monthName}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openYearsView}
+                    className="text-sm font-semibold text-[var(--color-text-primary)] px-2 py-0.5 rounded hover:bg-[#F3F4F6] transition-colors"
+                  >
+                    {calData.year}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={goToNextMonth}
+                  className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                  aria-label={isRTL ? "الشهر التالي" : "Next month"}
+                >
+                  {isRTL ? <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" />}
+                </button>
+              </>
+            ) : viewMode === "months" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => selectYear(viewYear - 1)}
+                  className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                  aria-label={isRTL ? "السنة السابقة" : "Previous year"}
+                >
+                  {isRTL ? <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={openYearsView}
+                  className="text-sm font-semibold text-[var(--color-text-primary)] px-2 py-0.5 rounded hover:bg-[#F3F4F6] transition-colors"
+                >
+                  {viewYear}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => selectYear(viewYear + 1)}
+                  className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                  aria-label={isRTL ? "السنة التالية" : "Next year"}
+                >
+                  {isRTL ? <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" />}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => shiftYearPage(-12)}
+                  className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                  aria-label={isRTL ? "السنوات السابقة" : "Previous years"}
+                >
+                  {isRTL ? <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />}
+                </button>
+                <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {pageStart}–{pageStart + 11}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => shiftYearPage(12)}
+                  className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                  aria-label={isRTL ? "السنوات التالية" : "Next years"}
+                >
+                  {isRTL ? <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" />}
+                </button>
+              </>
+            )}
           </div>
 
-          {/* Per-picker calendar toggle — local to this instance. Flipping
-              does not mutate the global preference nor any other picker. */}
+          {/* Per-picker calendar toggle — local to this instance. */}
           <div className="flex justify-center px-3 py-2 border-b border-[var(--color-border)]">
             <div className="inline-flex bg-[var(--color-border-subtle)] rounded-md p-0.5">
               {(["gregorian", "hijri"] as const).map((opt) => (
@@ -236,6 +415,7 @@ export default function DatePicker({
                   onClick={() => {
                     setTouched(true);
                     setLocalFormat(opt);
+                    setViewMode("days");
                   }}
                   className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
                     localFormat === opt
@@ -251,55 +431,101 @@ export default function DatePicker({
             </div>
           </div>
 
-          {/* Day headers */}
-          <div className="grid grid-cols-7 border-b border-[var(--color-border)]">
-            {dayLabels.map((d) => (
-              <div key={d} className="py-1.5 text-center text-[10px] font-medium text-[var(--color-text-secondary)]">
-                {d}
+          {/* View: Days */}
+          {viewMode === "days" && (
+            <>
+              <div className="grid grid-cols-7 border-b border-[var(--color-border)]">
+                {dayLabels.map((d) => (
+                  <div key={d} className="py-1.5 text-center text-[10px] font-medium text-[var(--color-text-secondary)]">
+                    {d}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+              <div className="grid grid-cols-7 p-1">
+                {Array.from({ length: calData.firstDayOfWeek }).map((_, i) => (
+                  <div key={`e-${i}`} className="w-full aspect-square" />
+                ))}
+                {Array.from({ length: calData.daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const gDate = calData.getGregorianDate(day);
+                  const iso = toISO(gDate);
+                  const isSelected = iso === selectedISO;
+                  const isToday = iso === todayISO;
+                  const isDis = isDisabledDay(gDate);
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      disabled={isDis}
+                      onClick={() => {
+                        onChange(iso);
+                        setOpen(false);
+                        setViewMode("days");
+                      }}
+                      className={`w-full aspect-square flex items-center justify-center text-xs rounded-lg transition-colors ${
+                        isSelected
+                          ? "bg-[#3B82F6] text-white font-semibold"
+                          : isToday
+                            ? "bg-[#EFF6FF] text-[#3B82F6] font-semibold"
+                            : isDis
+                              ? "text-[var(--color-border)] cursor-not-allowed"
+                              : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
-          {/* Day grid */}
-          <div className="grid grid-cols-7 p-1">
-            {/* Empty leading cells */}
-            {Array.from({ length: calData.firstDayOfWeek }).map((_, i) => (
-              <div key={`e-${i}`} className="w-full aspect-square" />
-            ))}
+          {/* View: Months (3×4 grid) */}
+          {viewMode === "months" && (
+            <div className="grid grid-cols-3 gap-1.5 p-3">
+              {monthNames.map((name, i) => {
+                const monthOneBased = i + 1;
+                const isCurrent = monthOneBased === viewMonth;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => selectMonth(monthOneBased)}
+                    className={`py-3 text-xs rounded-lg transition-colors truncate ${
+                      isCurrent
+                        ? "bg-[#3B82F6] text-white font-semibold"
+                        : "text-[var(--color-text-primary)] hover:bg-[#F3F4F6]"
+                    }`}
+                  >
+                    {name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-            {/* Day cells */}
-            {Array.from({ length: calData.daysInMonth }).map((_, i) => {
-              const day = i + 1;
-              const gDate = calData.getGregorianDate(day);
-              const iso = toISO(gDate);
-              const isSelected = iso === selectedISO;
-              const isToday = iso === todayISO;
-              const isDis = isDisabledDay(gDate);
-
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  disabled={isDis}
-                  onClick={() => {
-                    onChange(iso);
-                    setOpen(false);
-                  }}
-                  className={`w-full aspect-square flex items-center justify-center text-xs rounded-lg transition-colors ${
-                    isSelected
-                      ? "bg-[#3B82F6] text-white font-semibold"
-                      : isToday
-                        ? "bg-[#EFF6FF] text-[#3B82F6] font-semibold"
-                        : isDis
-                          ? "text-[var(--color-border)] cursor-not-allowed"
-                          : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
-                  }`}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
+          {/* View: Years (3×4 grid, ±6 around current view) */}
+          {viewMode === "years" && (
+            <div className="grid grid-cols-3 gap-1.5 p-3">
+              {yearsInPage.map((yr) => {
+                const isCurrent = yr === viewYear;
+                return (
+                  <button
+                    key={yr}
+                    type="button"
+                    onClick={() => selectYear(yr)}
+                    className={`py-3 text-xs rounded-lg transition-colors ${
+                      isCurrent
+                        ? "bg-[#3B82F6] text-white font-semibold"
+                        : "text-[var(--color-text-primary)] hover:bg-[#F3F4F6]"
+                    }`}
+                  >
+                    {yr}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Footer — calendar type indicator */}
           <div className="flex items-center justify-center px-3 py-1.5 border-t border-[var(--color-border)] text-[10px] text-[var(--color-text-secondary)]">

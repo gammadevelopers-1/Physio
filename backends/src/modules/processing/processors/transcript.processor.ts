@@ -9,9 +9,24 @@ import { courseMaterials } from '../../../database/schema';
 import { QUEUE_NAMES, JOB_NAMES, PROCESSING_STEPS } from '../constants';
 import { ProcessingService } from '../processing.service';
 import { StorageService } from '../../storage/storage.service';
-import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import type { TranscriptJobData, WcagJobData } from '../interfaces';
 
+/**
+ * Legacy BullMQ path for transcript upload. Kept in place ONLY as a
+ * catch-net during the Cloud Run Jobs migration — the producer (the
+ * old CaptionsProcessor) no longer pushes to this queue because the
+ * merged CaptionsRunner now uploads the transcript inline in the same
+ * process as the captions VTT.
+ *
+ * Pre-migration transcript jobs already carry `captionsText` in their
+ * job payload, so this drain path uploads it directly rather than
+ * routing through the runner (which starts from a video URL and would
+ * re-do the whole Whisper pipeline). Inline logic keeps the drain
+ * cheap and side-effect-identical to the pre-migration behavior.
+ *
+ * Safe to delete this file entirely once no stray transcript jobs sit
+ * in Redis for > 24h post-migration.
+ */
 @Processor(QUEUE_NAMES.TRANSCRIPT, { concurrency: 2 })
 export class TranscriptProcessor extends WorkerHost {
   private readonly logger = new Logger(TranscriptProcessor.name);
@@ -19,7 +34,6 @@ export class TranscriptProcessor extends WorkerHost {
   constructor(
     private processingService: ProcessingService,
     private storageService: StorageService,
-    private auditLogService: AuditLogService,
     @InjectQueue(QUEUE_NAMES.WCAG) private wcagQueue: Queue,
   ) {
     super();
@@ -27,18 +41,11 @@ export class TranscriptProcessor extends WorkerHost {
 
   async process(job: Job<TranscriptJobData>): Promise<void> {
     const { materialId, captionsText, courseId } = job.data;
-    this.logger.log(`Generating transcript for material ${materialId}`);
-
-    // Look up the material's uploadedBy for audit logging
-    const [materialInfo] = await db
-      .select({ uploadedBy: courseMaterials.uploadedBy })
-      .from(courseMaterials)
-      .where(eq(courseMaterials.id, materialId))
-      .limit(1);
-    const performedBy = materialInfo?.uploadedBy || materialId;
+    this.logger.warn(
+      `[legacy-path] Draining a pre-migration transcript job for material ${materialId}. New uploads should not reach this queue.`,
+    );
 
     try {
-      // 1. Upload plain text transcript to storage
       const transcriptBuffer = Buffer.from(captionsText, 'utf-8');
       const transcriptPath = `materials/${courseId}/transcripts/${materialId}.txt`;
       const transcriptUrl = await this.storageService.uploadPublic(
@@ -47,26 +54,11 @@ export class TranscriptProcessor extends WorkerHost {
         'text/plain',
       );
 
-      // 2. Update transcriptUrl in DB
       await db
         .update(courseMaterials)
         .set({ transcriptUrl, updatedAt: new Date() })
         .where(eq(courseMaterials.id, materialId));
 
-      this.logger.log(`Transcript uploaded: ${transcriptUrl}`);
-
-      // Audit: transcript text completed
-      await this.auditLogService.log({
-        entityType: 'material',
-        entityId: materialId,
-        action: 'transcript.text_completed',
-        performedBy,
-        metadata: { courseId, transcriptUrl, textLength: captionsText.length },
-        ipAddress: 'system',
-      });
-
-      // 3. Chain to WCAG check
-      // Get the material to check current state
       const [material] = await db
         .select({
           fileUrl: courseMaterials.fileUrl,
@@ -99,18 +91,7 @@ export class TranscriptProcessor extends WorkerHost {
         },
       );
     } catch (error) {
-      this.logger.error(`Transcript generation failed for ${materialId}`, error);
-
-      // Audit: transcript text failed
-      await this.auditLogService.log({
-        entityType: 'material',
-        entityId: materialId,
-        action: 'transcript.text_failed',
-        performedBy,
-        metadata: { courseId, error: (error as Error).message },
-        ipAddress: 'system',
-      });
-
+      this.logger.error(`[legacy-path] Transcript drain failed for ${materialId}`, error);
       await this.processingService.markFailed(materialId, `Transcript generation failed: ${(error as Error).message}`);
       throw error;
     }

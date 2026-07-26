@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Plus, Check, X, Loader2, Tag as TagIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
@@ -34,10 +35,19 @@ export default function TicketTagPanel({
   onChange,
   disabled,
 }: Props) {
+  const t = useTranslations("supportDashboard.ticketTagPanel");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const [applied, setApplied] = useState<Tag[]>(initialTags);
   const [registry, setRegistry] = useState<Tag[] | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Trigger + popover refs so we can position the popover in the
+  // viewport (position: fixed) and escape any parent overflow that
+  // would otherwise clip half the list off-screen — same pattern as
+  // the SessionsCalendarWidget picker.
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
 
   // Resync if the parent re-fetches the ticket and feeds new initials.
   useEffect(() => {
@@ -63,6 +73,70 @@ export default function TicketTagPanel({
     [applied],
   );
 
+  // Compute the popover's absolute viewport coords whenever it opens
+  // or the trigger moves (scroll/resize). Popover is 224px (w-56).
+  // Prefer aligning to the trigger's inline-start edge; flip to end if
+  // that would overflow the viewport.
+  useLayoutEffect(() => {
+    if (!open) {
+      setPopoverPos(null);
+      return;
+    }
+    const POPOVER_W = 224;
+    const POPOVER_H_APPROX = 264;
+    const MARGIN = 8;
+    const compute = () => {
+      const el = triggerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      let top = rect.bottom + 4;
+      if (top + POPOVER_H_APPROX > window.innerHeight - MARGIN) {
+        // Not enough room below — flip above
+        top = Math.max(MARGIN, rect.top - POPOVER_H_APPROX - 4);
+      }
+      let left: number;
+      if (isRTL) {
+        // Align popover's RIGHT edge to trigger's RIGHT edge, growing left.
+        left = rect.right - POPOVER_W;
+        if (left < MARGIN) {
+          // Overflowed on the left — align to trigger's left instead.
+          left = Math.min(rect.left, window.innerWidth - POPOVER_W - MARGIN);
+        }
+      } else {
+        // LTR — align popover's LEFT edge to trigger's LEFT edge, growing right.
+        left = rect.left;
+        if (left + POPOVER_W > window.innerWidth - MARGIN) {
+          left = Math.max(MARGIN, rect.right - POPOVER_W);
+        }
+      }
+      setPopoverPos({ top, left });
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
+    };
+  }, [open, isRTL]);
+
+  // Tags are admin-authored free-text (no name_ar column), so we can't
+  // fully translate them. Best-effort: normalize the name to a slug
+  // (lowercase, whitespace/dashes/underscores collapsed) and look it
+  // up in a dictionary of common English tag names. Falls back to the
+  // original name so admin-specific tags keep working.
+  const displayTagName = (name: string): string => {
+    const slug = name.toLowerCase().replace(/[\s_-]+/g, "");
+    const key = `commonNames.${slug}`;
+    try {
+      const v = t(key);
+      if (v && v !== key) return v;
+    } catch {
+      // ignore
+    }
+    return name;
+  };
+
   async function toggle(tag: Tag) {
     const next = appliedIds.has(tag.id)
       ? applied.filter((t) => t.id !== tag.id)
@@ -76,7 +150,7 @@ export default function TicketTagPanel({
       setApplied(server);
       onChange?.(server);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to update tags");
+      toast.error(err?.message || t("updateFailed"));
     } finally {
       setSaving(false);
     }
@@ -94,13 +168,14 @@ export default function TicketTagPanel({
           }}
         >
           <TagIcon className="w-3 h-3" />
-          {tag.name}
+          {displayTagName(tag.name)}
         </span>
       ))}
 
       {!disabled && (
-        <div className="relative">
+        <>
           <button
+            ref={triggerRef}
             type="button"
             onClick={() => setOpen((v) => !v)}
             className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full border border-dashed border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
@@ -111,23 +186,26 @@ export default function TicketTagPanel({
             ) : (
               <Plus className="w-3 h-3" />
             )}
-            Tag
+            {t("addTag")}
           </button>
 
-          {open && (
+          {open && popoverPos && (
             <>
               <div
-                className="fixed inset-0 z-10"
+                className="fixed inset-0 z-40"
                 onClick={() => setOpen(false)}
               />
-              <div className="absolute top-full left-0 mt-1 z-20 w-56 max-h-64 overflow-y-auto bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg p-1">
+              <div
+                className="fixed z-50 w-56 max-h-64 overflow-y-auto bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg p-1"
+                style={{ top: popoverPos.top, left: popoverPos.left }}
+              >
                 {registry === null ? (
                   <div className="flex items-center justify-center py-4 text-[var(--color-text-secondary)]">
                     <Loader2 className="w-4 h-4 animate-spin" />
                   </div>
                 ) : registry.length === 0 ? (
                   <div className="px-2 py-3 text-[11px] text-[var(--color-text-secondary)] text-center">
-                    No tags defined yet — add some under Settings.
+                    {t("noTagsDefined")}
                   </div>
                 ) : (
                   registry.map((tag) => {
@@ -138,7 +216,7 @@ export default function TicketTagPanel({
                         type="button"
                         onClick={() => toggle(tag)}
                         disabled={saving}
-                        className="w-full flex items-center justify-between gap-2 px-2 py-1.5 text-left text-[12px] rounded hover:bg-[var(--color-border-subtle)]"
+                        className="w-full flex items-center justify-between gap-2 px-2 py-1.5 text-start text-[12px] rounded hover:bg-[var(--color-border-subtle)]"
                       >
                         <span
                           className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full"
@@ -147,7 +225,7 @@ export default function TicketTagPanel({
                             color: textForBg(tag.color),
                           }}
                         >
-                          {tag.name}
+                          {displayTagName(tag.name)}
                         </span>
                         {isOn ? (
                           <Check className="w-3.5 h-3.5 text-[var(--color-primary)]" />
@@ -168,7 +246,7 @@ export default function TicketTagPanel({
                         setApplied([]);
                         onChange?.([]);
                       } catch (err: any) {
-                        toast.error(err?.message || "Failed to clear tags");
+                        toast.error(err?.message || t("clearFailed"));
                       } finally {
                         setSaving(false);
                       }
@@ -176,13 +254,13 @@ export default function TicketTagPanel({
                     className="w-full mt-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] text-[var(--color-text-secondary)] hover:text-[#DC2626] border-t border-[var(--color-border-subtle)]"
                   >
                     <X className="w-3 h-3" />
-                    Clear all
+                    {t("clearAll")}
                   </button>
                 )}
               </div>
             </>
           )}
-        </div>
+        </>
       )}
     </div>
   );

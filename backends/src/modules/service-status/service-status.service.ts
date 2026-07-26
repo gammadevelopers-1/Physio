@@ -43,6 +43,7 @@ import type {
   UpdateIncidentReportDto,
 } from './dto';
 import { EmailService } from '../email/email.service';
+import { toCsvString } from '../../common/exports/csv.util';
 
 @Injectable()
 export class ServiceStatusService {
@@ -1188,7 +1189,7 @@ export class ServiceStatusService {
       );
     }
 
-    const header = [
+    const headers = [
       'id',
       'title',
       'severity',
@@ -1204,37 +1205,29 @@ export class ServiceStatusService {
       'corrective_actions',
     ];
 
-    const escape = (v: unknown): string => {
-      if (v === null || v === undefined) return '';
-      const s = String(v).replace(/"/g, '""');
-      return /[",\n]/.test(s) ? `"${s}"` : s;
-    };
-
-    const lines = [header.join(',')];
-    for (const r of rows) {
+    const dataRows: (string | number | null)[][] = rows.map((r) => {
       const durationMin =
         r.resolvedAt && r.startedAt
           ? Math.round((r.resolvedAt.getTime() - r.startedAt.getTime()) / 60_000)
           : '';
-      lines.push(
-        [
-          escape(r.id),
-          escape(r.titleEn),
-          escape(r.severity),
-          escape(r.currentStatus),
-          escape(r.audience),
-          escape(r.startedAt.toISOString()),
-          escape(r.resolvedAt ? r.resolvedAt.toISOString() : ''),
-          escape(durationMin),
-          escape(r.affectedComponents.join('|')),
-          escape((r.affectedRoles || []).join('|')),
-          escape(linkedCounts.get(r.id) ?? 0),
-          escape(r.rootCause),
-          escape(r.correctiveActions),
-        ].join(','),
-      );
-    }
-    return lines.join('\n');
+      return [
+        r.id,
+        r.titleEn,
+        r.severity,
+        r.currentStatus,
+        r.audience,
+        r.startedAt.toISOString(),
+        r.resolvedAt ? r.resolvedAt.toISOString() : '',
+        durationMin,
+        r.affectedComponents.join('|'),
+        (r.affectedRoles || []).join('|'),
+        linkedCounts.get(r.id) ?? 0,
+        r.rootCause,
+        r.correctiveActions,
+      ];
+    });
+
+    return toCsvString(dataRows, { headers });
   }
 
   /**

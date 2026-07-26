@@ -115,6 +115,26 @@ export interface WebinarRegistrantResult {
   joinUrl: string;
 }
 
+/**
+ * Input for registering a TA as a webinar PANELIST. A panelist gets full
+ * presenter rights on Zoom (mic, cam, screen-share, Q&A moderation) via
+ * a dedicated join URL — no separate registration form to fill out. The
+ * `name` field Zoom accepts here is a single string, so we compose it
+ * from firstName + lastName upstream.
+ */
+export interface PanelistInput {
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface PanelistResult {
+  /** Zoom's opaque panelist id, when returned. */
+  panelistId: string | null;
+  /** The panelist-only join URL (grants panelist rights on click). */
+  joinUrl: string;
+}
+
 export interface WebinarLicenseCheckResult {
   /** Zoom user exists for this email. */
   userExists: boolean;
@@ -209,6 +229,27 @@ export interface IZoomService {
     webinarId: string,
     registrant: WebinarRegistrantInput,
   ): Promise<WebinarRegistrantResult>;
+  /**
+   * Add a user as a panelist on a webinar. Panelists join with mic/cam
+   * and presenter rights via a dedicated join URL — no registration
+   * form. Idempotent: Zoom dedupes by email and returns the existing
+   * panelist. Returns the panelist join URL.
+   */
+  registerPanelist(
+    webinarId: string,
+    panelist: PanelistInput,
+  ): Promise<PanelistResult>;
+  /**
+   * Rename a live meeting participant. Zoom's REST API does NOT currently
+   * expose a per-participant rename on live meetings — the SDK client
+   * handles that. Implementations should log a warning and no-op rather
+   * than throw so callers can proceed without the display-name suffix.
+   */
+  renameParticipant(
+    meetingId: string,
+    participantId: string,
+    newDisplayName: string,
+  ): Promise<void>;
   /**
    * Cancel a registrant's registration on Zoom's side so their join URL
    * stops working. Best-effort — returns ok=false on failure rather than

@@ -177,18 +177,17 @@ export class DiscountsController {
   /**
    * Public: returns the active site-wide campaign for the public banner.
    *
-   * Always returns a JSON object — `{ noBanner: true }` when there's no
-   * active campaign, otherwise the campaign row. Avoids bare `null`
-   * because NestJS+Express collapses that to a 0-byte text/html body,
-   * which the frontend fetch wrapper coerces to `{}` — and the banner
-   * component then renders a ghost banner with empty fields after the
-   * user deletes the last active campaign.
+   * Returns all currently-active `showOnSite=true` campaigns as an array
+   * under `{ campaigns }` so the banner strip can rotate through them.
+   * Wrapped in an object (never a bare array or null) so an empty result
+   * doesn't get coerced to `{}` by the frontend fetch wrapper and render
+   * a ghost banner.
    */
   @Get('active-banner-campaign')
   @Public()
-  async getActiveBannerCampaign() {
-    const campaign = await this.discountService.getActiveBannerCampaign();
-    return campaign ?? ({ noBanner: true } as const);
+  async getActiveBannerCampaigns() {
+    const campaigns = await this.discountService.getActiveBannerCampaigns();
+    return { campaigns };
   }
 
   // ─── Campaigns CRUD (finance) ───────────────────────────────────────
@@ -211,8 +210,9 @@ export class DiscountsController {
     @Query('search') search?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit = 20,
+    @Query('campaignType') campaignType?: 'standard' | 'early_bird',
   ) {
-    return this.discountService.listCampaigns({ status, search, page, limit });
+    return this.discountService.listCampaigns({ status, search, page, limit, campaignType });
   }
 
   @Post('campaigns')
@@ -222,12 +222,22 @@ export class DiscountsController {
     @Body()
     dto: {
       name: string;
+      nameAr?: string | null;
       description?: string;
+      descriptionAr?: string | null;
       startsAt?: string;
       endsAt?: string;
       budget?: number;
       showOnSite?: boolean;
       bannerCta?: string;
+      bannerCtaAr?: string | null;
+      campaignType?: 'standard' | 'early_bird';
+      discountType?: 'none' | 'percentage' | 'fixed';
+      discountValue?: number | null;
+      scope?: 'code_only' | 'all_paid' | 'by_delivery_type' | 'specific_courses';
+      scopeDeliveryTypes?: string[];
+      scopeCourseIds?: string[];
+      allowsCoupon?: boolean;
     },
     @Req() req: Request,
   ) {

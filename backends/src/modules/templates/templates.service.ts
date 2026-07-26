@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../database';
 import { notificationTemplates } from '../../database/schema';
 import { findTemplateMeta, TEMPLATE_REGISTRY, type TemplateMeta } from './template-registry';
 import { TemplateResolverService } from './template-resolver.service';
 import { renderDefaultEmailBody } from './template-defaults';
+import { EmailService } from '../email/email.service';
 
 export interface TemplateListItem extends TemplateMeta {
   /** Has an admin-edited row in DB for either locale? */
@@ -33,7 +34,10 @@ export interface TemplateDetail {
 
 @Injectable()
 export class TemplatesService {
-  constructor(private readonly resolver: TemplateResolverService) {}
+  constructor(
+    private readonly resolver: TemplateResolverService,
+    private readonly emailService: EmailService,
+  ) {}
 
   /** List every registered template with a per-event "edited?" flag. */
   async list(): Promise<TemplateListItem[]> {
@@ -184,5 +188,73 @@ export class TemplatesService {
         ),
       );
     this.resolver.invalidate(eventKey, locale);
+  }
+
+  /**
+   * Send a test rendering of one template to `toEmail` using the
+   * variable examples from the registry as substitution values.
+   *
+   * The rendered output ALWAYS goes through the same resolver +
+   * dispatcher path as production email, so what the admin sees in
+   * their inbox is byte-identical to what a real recipient would
+   * receive (aside from a `[TEST]` subject prefix). This closes the
+   * "am I actually editing the real template?" trust gap.
+   *
+   * WhatsApp templates are not testable this way (would need a real
+   * phone integration); the endpoint throws BadRequest for them.
+   */
+  async sendTest(
+    eventKey: string,
+    locale: 'en' | 'ar',
+    toEmail: string,
+  ): Promise<{ ok: true; to: string; usedOverride: boolean }> {
+    const meta = findTemplateMeta(eventKey);
+    if (!meta) throw new NotFoundException(`Unknown template: ${eventKey}`);
+    if (meta.channel !== 'email') {
+      throw new BadRequestException(
+        'Test send is only supported for email templates',
+      );
+    }
+    if (!toEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
+      throw new BadRequestException('Invalid recipient email');
+    }
+
+    // Substitution params come from the registry's declared example
+    // values — one per variable. Admin sees a realistic-looking
+    // rendering instead of raw `{{studentName}}` tokens.
+    const params: Record<string, string> = {};
+    for (const v of meta.variables) params[v.key] = v.example;
+
+    const fallbackSubject =
+      (locale === 'ar' ? meta.defaultSubjectAr : meta.defaultSubjectEn) ||
+      meta.nameEn;
+
+    const resolved = await this.resolver.resolveEmail(
+      eventKey,
+      locale,
+      params,
+      fallbackSubject,
+    );
+
+    // No admin override yet — render the built-in default body so the
+    // test still reflects the CURRENT production output for this event.
+    // renderDefaultEmailBody returns "" for events that don't yet have
+    // a shared default renderer registered; in that case we surface a
+    // clear message rather than an empty inbox so admin isn't confused.
+    let html = resolved?.html || renderDefaultEmailBody(eventKey, locale);
+    if (!html) {
+      html = `<!doctype html><html ${locale === 'ar' ? 'lang="ar" dir="rtl"' : 'lang="en" dir="ltr"'}><body style="font-family:Arial,sans-serif;padding:24px;color:#111;"><h2>${meta.nameEn}</h2><p><em>No shared default renderer is registered for this event. Save an override in the editor first, then click Send test again to preview it.</em></p></body></html>`;
+    }
+    const subject = resolved?.subject || fallbackSubject;
+    const preheader = resolved?.preheader ?? '';
+
+    await this.emailService.sendTestRendering({
+      to: toEmail,
+      subject: `[TEST] ${subject}`,
+      html,
+      text: `${preheader ? preheader + '\n\n' : ''}This is a TEST rendering of the "${meta.nameEn}" template. Real recipients receive the fully-styled HTML version.`,
+    });
+
+    return { ok: true, to: toEmail, usedOverride: !!resolved };
   }
 }

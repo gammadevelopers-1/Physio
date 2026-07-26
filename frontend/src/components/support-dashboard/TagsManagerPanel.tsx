@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Plus,
   Edit3,
@@ -81,6 +82,7 @@ type Section = "active" | "archived" | "analytics";
 // Archive as the safer path. Hard delete still cascades, per the
 // owner's call.
 export default function TagsManagerPanel() {
+  const t = useTranslations("supportDashboard.tagsManager");
   const [section, setSection] = useState<Section>("active");
   const [tags, setTags] = useState<Tag[] | null>(null);
   const [editing, setEditing] = useState<Tag | null>(null);
@@ -142,7 +144,7 @@ export default function TagsManagerPanel() {
 
   async function save() {
     if (!name.trim()) {
-      toast.error("Name is required");
+      toast.error(t("toasts.nameRequired"));
       return;
     }
     setSaving(true);
@@ -153,19 +155,19 @@ export default function TagsManagerPanel() {
           color,
           description: description.trim() || undefined,
         });
-        toast.success("Tag updated");
+        toast.success(t("toasts.tagUpdated"));
       } else {
         await supportApi.createTicketTag({
           name: name.trim(),
           color,
           description: description.trim() || undefined,
         });
-        toast.success("Tag created");
+        toast.success(t("toasts.tagCreated"));
       }
       await reload();
       closeDialog();
     } catch (err: any) {
-      toast.error(err?.message || "Save failed");
+      toast.error(err?.message || t("toasts.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -175,10 +177,10 @@ export default function TagsManagerPanel() {
     setBusyTagId(tag.id);
     try {
       await supportApi.archiveTicketTag(tag.id);
-      toast.success(`Archived "${tag.name}"`);
+      toast.success(t("toasts.tagArchived", { name: tag.name }));
       await reload();
     } catch (err: any) {
-      toast.error(err?.message || "Archive failed");
+      toast.error(err?.message || t("toasts.archiveFailed"));
     } finally {
       setBusyTagId(null);
     }
@@ -188,10 +190,10 @@ export default function TagsManagerPanel() {
     setBusyTagId(tag.id);
     try {
       await supportApi.unarchiveTicketTag(tag.id);
-      toast.success(`Restored "${tag.name}"`);
+      toast.success(t("toasts.tagRestored", { name: tag.name }));
       await reload();
     } catch (err: any) {
-      toast.error(err?.message || "Restore failed");
+      toast.error(err?.message || t("toasts.restoreFailed"));
     } finally {
       setBusyTagId(null);
     }
@@ -202,11 +204,11 @@ export default function TagsManagerPanel() {
     setDeleteBusy(true);
     try {
       await supportApi.deleteTicketTag(deleting.id);
-      toast.success("Tag deleted");
+      toast.success(t("toasts.tagDeleted"));
       await reload();
       setDeleting(null);
     } catch (err: any) {
-      toast.error(err?.message || "Delete failed");
+      toast.error(err?.message || t("toasts.deleteFailed"));
     } finally {
       setDeleteBusy(false);
     }
@@ -218,7 +220,7 @@ export default function TagsManagerPanel() {
         <div className="flex items-center gap-2">
           <TagIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-            Ticket Tags
+            {t("panelTitle")}
           </h3>
         </div>
         {section !== "analytics" && (
@@ -228,7 +230,7 @@ export default function TagsManagerPanel() {
             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[#001d5e]"
           >
             <Plus className="w-3.5 h-3.5" />
-            New tag
+            {t("newTag")}
           </button>
         )}
       </div>
@@ -236,17 +238,17 @@ export default function TagsManagerPanel() {
       {/* Sub-tabs */}
       <div className="flex items-center gap-1 mb-4 border-b border-[var(--color-border-subtle)]">
         <SubTab
-          label={`Active${tags ? ` · ${active.length}` : ""}`}
+          label={tags ? `${t("tabs.active")} · ${active.length}` : t("tabs.active")}
           active={section === "active"}
           onClick={() => setSection("active")}
         />
         <SubTab
-          label={`Archived${tags ? ` · ${archived.length}` : ""}`}
+          label={tags ? `${t("tabs.archived")} · ${archived.length}` : t("tabs.archived")}
           active={section === "archived"}
           onClick={() => setSection("archived")}
         />
         <SubTab
-          label="Analytics"
+          label={t("tabs.analytics")}
           icon={<BarChart3 className="w-3.5 h-3.5" />}
           active={section === "analytics"}
           onClick={() => setSection("analytics")}
@@ -260,7 +262,9 @@ export default function TagsManagerPanel() {
           <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary)]" />
         </div>
       ) : (section === "active" ? active : archived).length === 0 ? (
-        <EmptyState section={section} />
+        <div className="text-xs text-[var(--color-text-secondary)] py-6 text-center">
+          {section === "active" ? t("emptyActive") : t("emptyArchived")}
+        </div>
       ) : (
         <div className="space-y-1.5">
           {(section === "active" ? active : archived).map((tag) => (
@@ -287,9 +291,9 @@ export default function TagsManagerPanel() {
                     {tag.description}
                   </span>
                 )}
-                <span className="text-[10px] text-[var(--color-text-secondary)] ml-auto flex items-center gap-2">
+                <span className="text-[10px] text-[var(--color-text-secondary)] ms-auto flex items-center gap-2">
                   <span>
-                    {tag.usageCount} ticket{tag.usageCount === 1 ? "" : "s"}
+                    {t("ticketCount", { count: tag.usageCount })}
                   </span>
                   {tag.ruleCount > 0 && (
                     <span className="inline-flex items-center gap-0.5 text-[#15803D] bg-[#DCFCE7] border border-[#86EFAC] px-1.5 py-0.5 rounded">
@@ -303,21 +307,21 @@ export default function TagsManagerPanel() {
                 {!tag.archivedAt && (
                   <>
                     <IconButton
-                      title="Auto-apply rules"
+                      title={t("autoApplyRules")}
                       onClick={() => setRulesFor(tag)}
                       hover="text-[var(--color-primary)]"
                     >
                       <Zap className="w-3.5 h-3.5" />
                     </IconButton>
                     <IconButton
-                      title="Edit"
+                      title={t("actions.edit")}
                       onClick={() => openEdit(tag)}
                       hover="text-[var(--color-primary)]"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                     </IconButton>
                     <IconButton
-                      title="Archive (hide from picker, keep history)"
+                      title={t("actions.archive")}
                       onClick={() => archive(tag)}
                       disabled={busyTagId === tag.id}
                       hover="text-[#F59E0B]"
@@ -332,7 +336,7 @@ export default function TagsManagerPanel() {
                 )}
                 {tag.archivedAt && (
                   <IconButton
-                    title="Restore tag"
+                    title={t("actions.restore")}
                     onClick={() => unarchive(tag)}
                     disabled={busyTagId === tag.id}
                     hover="text-[var(--color-primary)]"
@@ -345,7 +349,7 @@ export default function TagsManagerPanel() {
                   </IconButton>
                 )}
                 <IconButton
-                  title="Delete (cascades — removes from all tickets)"
+                  title={t("actions.delete")}
                   onClick={() => setDeleting(tag)}
                   hover="text-[#DC2626]"
                 >
@@ -367,11 +371,11 @@ export default function TagsManagerPanel() {
         >
           <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 w-full max-w-md">
             <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
-              {editing ? "Edit tag" : "New tag"}
+              {editing ? t("dialog.editTitle") : t("dialog.newTitle")}
             </h4>
 
             <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1">
-              Name
+              {t("dialog.nameLabel")}
             </label>
             <input
               type="text"
@@ -379,11 +383,11 @@ export default function TagsManagerPanel() {
               onChange={(e) => setName(e.target.value)}
               maxLength={50}
               className="w-full h-9 px-3 mb-3 text-sm border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--color-input-focus)]"
-              placeholder="e.g. Refund"
+              placeholder={t("dialog.namePlaceholder")}
             />
 
             <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1.5">
-              Color
+              {t("dialog.colorLabel")}
             </label>
             <div className="grid grid-cols-9 gap-1.5 mb-2">
               {PRESET_COLORS.map((c) => {
@@ -399,7 +403,7 @@ export default function TagsManagerPanel() {
                         : "ring-1 ring-inset ring-black/10"
                     }`}
                     style={{ backgroundColor: c }}
-                    aria-label={`Pick ${c}`}
+                    aria-label={t("dialog.pickColor", { color: c })}
                     title={c}
                   >
                     {isSelected && (
@@ -421,12 +425,12 @@ export default function TagsManagerPanel() {
                 placeholder="#hex"
               />
               <span className="text-[10px] text-[var(--color-text-secondary)]">
-                or paste a hex value
+                {t("dialog.hexHint")}
               </span>
             </div>
 
             <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1">
-              Description (optional)
+              {t("dialog.descriptionLabel")}
             </label>
             <input
               type="text"
@@ -434,7 +438,7 @@ export default function TagsManagerPanel() {
               onChange={(e) => setDescription(e.target.value)}
               maxLength={200}
               className="w-full h-9 px-3 mb-4 text-sm border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--color-input-focus)]"
-              placeholder="When to use this tag"
+              placeholder={t("dialog.descriptionPlaceholder")}
             />
 
             <div className="flex items-center justify-between gap-2">
@@ -445,7 +449,7 @@ export default function TagsManagerPanel() {
                   color: textForBg(color),
                 }}
               >
-                {name || "Preview"}
+                {name || t("dialog.previewFallback")}
               </span>
               <div className="flex gap-2">
                 <button
@@ -453,7 +457,7 @@ export default function TagsManagerPanel() {
                   onClick={closeDialog}
                   className="px-3 h-9 text-sm rounded-lg border border-[var(--color-border)]"
                 >
-                  Cancel
+                  {t("dialog.cancel")}
                 </button>
                 <button
                   type="button"
@@ -462,7 +466,7 @@ export default function TagsManagerPanel() {
                   className="px-4 h-9 text-sm bg-[var(--color-primary)] text-white rounded-lg hover:bg-[#001d5e] disabled:opacity-50 inline-flex items-center gap-1"
                 >
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  {editing ? "Save" : "Create"}
+                  {editing ? t("dialog.save") : t("dialog.create")}
                 </button>
               </div>
             </div>
@@ -495,45 +499,44 @@ export default function TagsManagerPanel() {
             <div className="px-5 py-4 border-b border-[var(--color-border-subtle)] flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-[#DC2626]" />
               <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
-                Delete tag “{deleting.name}”?
+                {t("delete.title", { name: deleting.name })}
               </h4>
             </div>
             <div className="px-5 py-4 text-sm text-[var(--color-text-primary)] space-y-2">
               {deleting.usageCount > 0 ? (
                 <>
                   <p>
-                    This tag is currently applied to{" "}
-                    <span className="font-semibold text-[#DC2626]">
-                      {deleting.usageCount}{" "}
-                      ticket{deleting.usageCount === 1 ? "" : "s"}
-                    </span>
-                    . Deleting cascades — the tag will be removed from all of
-                    them and lost from filters and reports.
+                    {t.rich("delete.appliedTo", {
+                      count: deleting.usageCount,
+                      strong: (chunks) => (
+                        <span className="font-semibold text-[#DC2626]">{chunks}</span>
+                      ),
+                    })}
                   </p>
                   <p className="text-xs text-[var(--color-text-secondary)]">
-                    Consider{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const target = deleting;
-                        setDeleting(null);
-                        archive(target);
-                      }}
-                      className="text-[var(--color-primary)] underline"
-                    >
-                      archiving
-                    </button>{" "}
-                    instead — that hides the tag from the picker but keeps
-                    history searchable.
+                    {t.rich("delete.considerArchive", {
+                      link: (chunks) => (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const target = deleting;
+                            setDeleting(null);
+                            archive(target);
+                          }}
+                          className="text-[var(--color-primary)] underline"
+                        >
+                          {chunks}
+                        </button>
+                      ),
+                    })}
                   </p>
                 </>
               ) : (
-                <p>This tag isn’t on any tickets. Safe to remove.</p>
+                <p>{t("delete.safeToRemove")}</p>
               )}
               {deleting.ruleCount > 0 && (
                 <p className="text-xs text-[#92400E] bg-[#FEF3C7] border border-[#FDE68A] rounded px-2 py-1.5">
-                  {deleting.ruleCount} auto-apply rule
-                  {deleting.ruleCount === 1 ? "" : "s"} will also be deleted.
+                  {t("delete.rulesWarning", { count: deleting.ruleCount })}
                 </p>
               )}
             </div>
@@ -544,7 +547,7 @@ export default function TagsManagerPanel() {
                 disabled={deleteBusy}
                 className="px-3 h-9 text-sm rounded-lg border border-[var(--color-border)] disabled:opacity-50"
               >
-                Cancel
+                {t("dialog.cancel")}
               </button>
               <button
                 type="button"
@@ -553,7 +556,7 @@ export default function TagsManagerPanel() {
                 className="px-4 h-9 text-sm bg-[#DC2626] text-white rounded-lg hover:bg-[#B91C1C] disabled:opacity-50 inline-flex items-center gap-1"
               >
                 {deleteBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Delete tag
+                {t("delete.confirmButton")}
               </button>
             </div>
           </div>
@@ -616,12 +619,3 @@ function IconButton({
   );
 }
 
-function EmptyState({ section }: { section: Section }) {
-  return (
-    <div className="text-xs text-[var(--color-text-secondary)] py-6 text-center">
-      {section === "active"
-        ? "No active tags yet. Create one to start tagging tickets."
-        : "No archived tags. Archived tags show up here so you can restore them."}
-    </div>
-  );
-}

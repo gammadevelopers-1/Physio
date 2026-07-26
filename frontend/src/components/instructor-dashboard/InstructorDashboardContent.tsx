@@ -19,6 +19,7 @@ import RecentFeedbackWidget from "./RecentFeedbackWidget";
 import AssessmentsNeedingAttention from "./AssessmentsNeedingAttention";
 import DashboardSkeleton from "./DashboardSkeleton";
 import DashboardError from "./DashboardError";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useInstructorDashboard } from "@/hooks/useInstructorDashboard";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -74,10 +75,18 @@ const InstructorDashboardContent = () => {
     }
   };
 
-  const handleEndSession = async (sessionId: string) => {
-    if (!window.confirm(t("sessions.endSessionConfirm"))) return;
+  const [endSessionTarget, setEndSessionTarget] = useState<string | null>(null);
+  const [endingSession, setEndingSession] = useState(false);
+
+  const handleEndSession = (sessionId: string) => {
+    setEndSessionTarget(sessionId);
+  };
+
+  const confirmEndSession = async () => {
+    if (!endSessionTarget) return;
+    setEndingSession(true);
     try {
-      const result = await instructorApi.endSession(sessionId);
+      const result = await instructorApi.endSession(endSessionTarget);
       toast.success(t("sessions.sessionEnded"));
       if ((result as any).zoomEndedSuccessfully === false) {
         const errorDetail = (result as any).zoomErrorMessage;
@@ -89,8 +98,11 @@ const InstructorDashboardContent = () => {
         );
       }
       refetch();
+      setEndSessionTarget(null);
     } catch {
       toast.error(t("sessions.endSessionError"));
+    } finally {
+      setEndingSession(false);
     }
   };
 
@@ -266,6 +278,17 @@ const InstructorDashboardContent = () => {
           t={t}
         />
       )}
+      <ConfirmDialog
+        open={!!endSessionTarget}
+        title={t("sessions.endSessionTitle")}
+        message={t("sessions.endSessionConfirm")}
+        confirmLabel={t("sessions.endSessionConfirmLabel")}
+        cancelLabel={t("sessions.cancel")}
+        loading={endingSession}
+        danger
+        onConfirm={confirmEndSession}
+        onClose={() => !endingSession && setEndSessionTarget(null)}
+      />
     </>
   );
 };

@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
-  Calendar as CalendarIcon,
   LayoutDashboard,
   BookOpen,
   Heart,
@@ -19,9 +18,10 @@ import {
   Upload,
   Trash2,
   Headphones,
+  Gift,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { profileApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
+import { pointsApi, profileApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
 import SidebarBadge from "@/components/SidebarBadge";
 import SaudiRiyalIcon from "@/components/shared/SaudiRiyalIcon";
 import type { StudentProfile } from "@/hooks/useStudentProfile";
@@ -41,6 +41,25 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
   const avatarMenuRef = useRef<HTMLDivElement>(null);
 
   const closeAvatarMenu = useCallback(() => setAvatarMenuOpen(false), []);
+
+  // Red-dot indicator on the "My Rewards" nav item. Refetched on mount only —
+  // stale-while-navigate is fine here (the destination page shows the real
+  // list and reset the count feel).
+  const [unusedCouponCount, setUnusedCouponCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const page = await pointsApi.getMyRewardHistory({ page: 1, limit: 1 });
+        if (!cancelled) setUnusedCouponCount(page.unusedCouponCount ?? 0);
+      } catch {
+        /* silent — sidebar shouldn't hard-fail if points API is down */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!avatarMenuOpen) return;
@@ -86,11 +105,12 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
       href: `/${locale}/dashboard/student/courses`,
       icon: BookOpen,
     },
-    {
-      label: t("sidebar.calendar"),
-      href: `/${locale}/dashboard/student/calendar`,
-      icon: CalendarIcon,
-    },
+    // Lectures/Calendar entry removed per Amna 2026-07-22: students
+    // already reach every scheduled lecture/webinar through their
+    // enrolled courses (StudentCourseDetailContent → Live Sessions),
+    // and a separate top-level entry was surfacing the same content
+    // twice + confusing users. The /calendar route itself still
+    // exists for now — this only unlists it from the navigation.
     {
       label: t("sidebar.certifications"),
       href: `/${locale}/dashboard/student/certifications`,
@@ -105,6 +125,11 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
       label: t("sidebar.inviteFriends"),
       href: `/${locale}/dashboard/student/invite-friends`,
       icon: Users,
+    },
+    {
+      label: t("sidebar.myRewards"),
+      href: `/${locale}/dashboard/student/my-rewards`,
+      icon: Gift,
     },
     {
       label: t("sidebar.support"),
@@ -256,6 +281,12 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
                 </span>
                 {item.href.endsWith("/support") && (
                   <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_SUPPORT} />
+                )}
+                {item.href.endsWith("/my-rewards") && unusedCouponCount > 0 && (
+                  <span
+                    className="w-2 h-2 rounded-full bg-red-500"
+                    aria-label={t("sidebar.myRewardsUnreadDot")}
+                  />
                 )}
               </Link>
             );

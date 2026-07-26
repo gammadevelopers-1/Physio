@@ -75,7 +75,7 @@ export default function VerifyInvoicePathPage({ params }: Props) {
 
   return (
     <div
-      className="min-h-screen bg-[#EEF3F7] flex flex-col"
+      className="min-h-screen bg-[var(--color-surface-page)] flex flex-col"
       dir={isRTL ? "rtl" : "ltr"}
     >
       <Navbar />

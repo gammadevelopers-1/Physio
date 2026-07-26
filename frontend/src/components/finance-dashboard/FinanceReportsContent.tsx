@@ -508,14 +508,36 @@ const FinanceReportsContent = ({ embedded = false }: FinanceReportsContentProps)
   const renderSummary = () => {
     if (loading || !lastGeneratedAt) return null;
     if (selectedReport === "revenue" && revenueData) {
+      // Point-redemptions is a separate concept from paid revenue — different
+      // channel, no SAR gross. Render it as a single dedicated line under the
+      // primary revenue stat grid instead of squeezing it into that grid.
+      const pr = (revenueData as RevenueData & {
+        pointRedemptions?: { count: number; pointsSpent: number; equivalentValueSar: number };
+      }).pointRedemptions;
       return (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-          <StatCard label={t("reportsPage.summary.gross")} value={money(revenueData.totals.gross)} accent="#16A34A" />
-          <StatCard label={t("reportsPage.summary.refunds")} value={money(revenueData.totals.refunds)} accent="#DC2626" />
-          <StatCard label={t("reportsPage.summary.net")} value={money(revenueData.totals.net)} accent="var(--color-text-primary)" />
-          <StatCard label={t("reportsPage.summary.vat")} value={money(revenueData.totals.vat)} accent="#9333EA" />
-          <StatCard label={t("reportsPage.summary.payments")} value={formatInt(revenueData.totals.count)} accent="#2563EB" />
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
+            <StatCard label={t("reportsPage.summary.gross")} value={money(revenueData.totals.gross)} accent="#16A34A" />
+            <StatCard label={t("reportsPage.summary.refunds")} value={money(revenueData.totals.refunds)} accent="#DC2626" />
+            <StatCard label={t("reportsPage.summary.net")} value={money(revenueData.totals.net)} accent="var(--color-text-primary)" />
+            <StatCard label={t("reportsPage.summary.vat")} value={money(revenueData.totals.vat)} accent="#9333EA" />
+            <StatCard label={t("reportsPage.summary.payments")} value={formatInt(revenueData.totals.count)} accent="#2563EB" />
+          </div>
+          {pr && (pr.count > 0 || pr.pointsSpent > 0) && (
+            <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="text-xs font-semibold text-[#7C3AED] uppercase tracking-wider">
+                {t("reportsPage.pointRedemptionsSummary.label")}
+              </div>
+              <div className="text-sm text-[var(--color-text-primary)]">
+                {t("reportsPage.pointRedemptionsSummary.detail", {
+                  count: pr.count,
+                  points: formatInt(pr.pointsSpent),
+                  sar: formatInt(Math.round(pr.equivalentValueSar)),
+                })}
+              </div>
+            </div>
+          )}
+        </>
       );
     }
     if (selectedReport === "vat" && vatData) {

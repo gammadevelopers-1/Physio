@@ -351,7 +351,7 @@ export class AdminFinanceController {
   @HttpCode(HttpStatus.OK)
   async resendInvoiceEmail(
     @Param('id') invoiceId: string,
-    @Body() body: { reason: string },
+    @Body() body: { reason: string; locale?: string },
     @CurrentUser() user: AuthenticatedUser,
   ) {
     this.requireReason(body?.reason);
@@ -360,9 +360,14 @@ export class AdminFinanceController {
       throw new NotFoundException(`Invoice ${invoiceId} not found`);
     }
 
+    const locale: 'en' | 'ar' = body?.locale === 'ar' ? 'ar' : 'en';
+
     let pdfAttachment: { buffer: Buffer; filename: string } | undefined;
     try {
-      const pdf = await this.invoiceService.getInvoicePdfBuffer(invoice.paymentId);
+      const pdf = await this.invoiceService.getInvoicePdfBuffer(
+        invoice.paymentId,
+        locale,
+      );
       if (pdf) pdfAttachment = pdf;
     } catch {
       // PDF generation can fail (rare) — still send the plain email so the
@@ -383,6 +388,7 @@ export class AdminFinanceController {
         invoiceNumber: invoice.invoiceNumber,
         recipientUserId: invoice.userId,
         attachedPdf: !!pdfAttachment,
+        locale,
         reason: body.reason,
       },
     });
@@ -400,17 +406,22 @@ export class AdminFinanceController {
   @HttpCode(HttpStatus.OK)
   async regenerateInvoicePdf(
     @Param('id') invoiceId: string,
-    @Body() body: { reason: string },
+    @Body() body: { reason: string; locale?: string },
     @CurrentUser() user: AuthenticatedUser,
   ) {
     this.requireReason(body?.reason);
-    const result = await this.invoiceService.regeneratePdf(invoiceId, user.id);
+    const locale: 'en' | 'ar' = body?.locale === 'ar' ? 'ar' : 'en';
+    const result = await this.invoiceService.regeneratePdf(
+      invoiceId,
+      user.id,
+      locale,
+    );
     await this.auditLog.log({
       entityType: 'invoice',
       entityId: invoiceId,
       action: 'invoice_pdf_admin_regenerate',
       performedBy: user.id,
-      metadata: { reason: body.reason },
+      metadata: { reason: body.reason, locale },
     });
     return result;
   }

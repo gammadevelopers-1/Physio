@@ -10,6 +10,7 @@ import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
 import SearchableSelect, { SearchableOption } from "./SearchableSelect";
 import Select from "./Select";
+import DatePicker from "@/components/ui/DatePicker";
 import { CardGridItemSkeleton } from "./AdminSkeletons";
 import {
   BookOpen,
@@ -866,14 +867,14 @@ const AdminCoursesContent = () => {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1 relative">
                     <Search
-                      className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
+                      className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] start-3`}
                     />
                     <input
                       type="text"
                       placeholder={t("coursesPage.searchPlaceholder")}
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
-                      className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
+                      className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm ps-10 pe-4 focus:outline-none focus:border-[#002D87]`}
                     />
                   </div>
                   <div className="flex items-center gap-1 border border-[var(--color-border)] rounded-lg p-1 self-stretch sm:self-auto">
@@ -1023,12 +1024,12 @@ const AdminCoursesContent = () => {
                                 </div>
                               )}
                               <span
-                                className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm ${getStatusBadgeStyle(course.status)}`}
+                                className={`absolute top-3 start-3 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm ${getStatusBadgeStyle(course.status)}`}
                               >
                                 {t(`coursesPage.filters.${statusKey(course.status)}`)}
                               </span>
                               <div
-                                className={`absolute bottom-3 ${isRTL ? "right-3" : "left-3"} inline-flex items-center gap-1.5 bg-[var(--color-primary)] rounded-full px-2.5 py-1 shadow-sm`}
+                                className={`absolute bottom-3 start-3 inline-flex items-center gap-1.5 bg-[var(--color-primary)] rounded-full px-2.5 py-1 shadow-sm`}
                               >
                                 <span className="text-white">{getDeliveryIcon(course.deliveryType)}</span>
                                 <span className="text-white text-[11px] font-semibold">
@@ -1040,7 +1041,7 @@ const AdminCoursesContent = () => {
                             {/* Action dropdown — pulled OUT of the thumbnail
                                 so it doesn't get clipped, anchored to the
                                 outer card via its `relative` root. */}
-                            <div className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-30`}>
+                            <div className={`absolute top-3 end-3 z-30`}>
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -1064,7 +1065,7 @@ const AdminCoursesContent = () => {
                               {openDropdownId === course.id && (
                                 <div
                                   onClick={(e) => e.stopPropagation()}
-                                  className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[200px] z-30 ${isRTL ? "left-0" : "right-0"}`}
+                                  className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[200px] z-30 end-0`}
                                   role="menu"
                                 >
                                   {renderActionsMenu(course)}
@@ -1203,28 +1204,28 @@ const AdminCoursesContent = () => {
                         <table className="w-full">
                           <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                             <tr>
-                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                                 {t("coursesPage.table.course")}
                               </th>
-                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                                 {t("coursesPage.table.instructor")}
                               </th>
-                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                                 {t("coursesPage.table.manager")}
                               </th>
-                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                                 {t("coursesPage.table.status")}
                               </th>
-                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                                 {t("coursesPage.table.enrolled")}
                               </th>
-                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                                 {t("coursesPage.table.completion")}
                               </th>
-                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                                 {t("coursesPage.table.price")}
                               </th>
-                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-start`}>
                                 {t("coursesPage.table.actions")}
                               </th>
                             </tr>
@@ -1292,7 +1293,7 @@ const AdminCoursesContent = () => {
                                     {openDropdownId === course.id && (
                                       <div
                                         onClick={(e) => e.stopPropagation()}
-                                        className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[180px] z-10 ${isRTL ? "left-0" : "right-0"}`}
+                                        className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[180px] z-10 end-0`}
                                       >
                                         {renderActionsMenu(course)}
                                       </div>
@@ -1739,13 +1740,13 @@ const AdminCoursesContent = () => {
                 <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
                   {t("coursesPage.confirmReschedule.newStartDateLabel")}
                 </label>
-                <input
-                  type="date"
-                  value={rescheduleNewStartDate}
-                  onChange={(e) => setRescheduleNewStartDate(e.target.value)}
-                  disabled={confirmBusy}
-                  className="w-full px-3 h-10 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-1 disabled:opacity-50"
-                />
+                <div className="mb-1">
+                  <DatePicker
+                    value={rescheduleNewStartDate}
+                    onChange={setRescheduleNewStartDate}
+                    disabled={confirmBusy}
+                  />
+                </div>
                 {rescheduleNewStartDate && !rescheduleStartOk && (
                   <p className="text-xs text-[#DC2626] mb-3">
                     {t("coursesPage.confirmReschedule.startInPast")}
@@ -1757,13 +1758,14 @@ const AdminCoursesContent = () => {
                 <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
                   {t("coursesPage.confirmReschedule.newEndDateLabel")}
                 </label>
-                <input
-                  type="date"
-                  value={rescheduleNewEndDate}
-                  onChange={(e) => setRescheduleNewEndDate(e.target.value)}
-                  disabled={confirmBusy}
-                  className="w-full px-3 h-10 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-1 disabled:opacity-50"
-                />
+                <div className="mb-1">
+                  <DatePicker
+                    value={rescheduleNewEndDate}
+                    onChange={setRescheduleNewEndDate}
+                    disabled={confirmBusy}
+                    min={rescheduleNewStartDate || undefined}
+                  />
+                </div>
                 {!rescheduleEndOk && (
                   <p className="text-xs text-[#DC2626] mb-3">
                     {t("coursesPage.confirmReschedule.endBeforeStart")}
@@ -1856,13 +1858,13 @@ const AdminCoursesContent = () => {
             </div>
 
             <div className="relative mb-3">
-              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
+              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] start-3`} />
               <input
                 type="text"
                 value={studentsSearch}
                 onChange={(e) => setStudentsSearch(e.target.value)}
                 placeholder={t("coursesPage.studentsModal.searchPlaceholder")}
-                className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[var(--color-primary)]`}
+                className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm ps-10 pe-4 focus:outline-none focus:border-[var(--color-primary)]`}
               />
             </div>
 

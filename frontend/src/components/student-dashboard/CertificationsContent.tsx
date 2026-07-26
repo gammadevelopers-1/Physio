@@ -24,6 +24,7 @@ import StudentDashboardError from "./StudentDashboardError";
 import OfflineBanner from "./OfflineBanner";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCertificates } from "@/hooks/useStudentCertificates";
+import Select from "@/components/ui/Select";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import { studentApi } from "@/lib/api";
@@ -467,18 +468,20 @@ const CertificationsContent = () => {
               {certificates.length > 0 && (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-3 sm:p-4">
                   <div className={`flex flex-col sm:flex-row sm:items-center gap-3 ${isRTL ? "sm:flex-row-reverse" : ""}`}>
-                    <select
+                    <Select
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value as CertStatusFilter)}
-                      className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="all">{t("certifications.filterAll")}</option>
-                      <option value="approved">{t("certifications.filterApproved")}</option>
-                      <option value="pending">{t("certifications.filterPending")}</option>
-                      <option value="held">{t("certifications.filterHeld")}</option>
-                      <option value="rejected">{t("certifications.filterRejected")}</option>
-                      <option value="revoked">{t("certifications.filterRevoked")}</option>
-                    </select>
+                      onChange={(v) => setStatusFilter(v as CertStatusFilter)}
+                      size="sm"
+                      className="w-full sm:w-auto sm:min-w-[180px]"
+                      options={[
+                        { value: "all", label: t("certifications.filterAll") },
+                        { value: "approved", label: t("certifications.filterApproved") },
+                        { value: "pending", label: t("certifications.filterPending") },
+                        { value: "held", label: t("certifications.filterHeld") },
+                        { value: "rejected", label: t("certifications.filterRejected") },
+                        { value: "revoked", label: t("certifications.filterRevoked") },
+                      ]}
+                    />
                     {statusFilter !== "all" && (
                       <button
                         type="button"

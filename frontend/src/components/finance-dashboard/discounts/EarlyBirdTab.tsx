@@ -235,6 +235,11 @@ const EarlyBirdTab = ({ onOpenCoupon, refreshKey = 0 }: Props) => {
         </button>
       </div>
 
+      {/* Cross-link — new-style early birds are managed as campaigns. */}
+      <div className="border border-[var(--color-border)] rounded-xl p-3 bg-[var(--color-surface-page)] text-xs text-[var(--color-text-secondary)]">
+        {t("campaignBasedHint")}
+      </div>
+
       {rows.length === 0 ? (
         <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-12 text-center">
           <Clock className="w-12 h-12 mx-auto text-[var(--color-text-secondary)]/40 mb-3" />

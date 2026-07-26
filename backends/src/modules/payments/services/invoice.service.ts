@@ -15,6 +15,7 @@ import { StorageService } from '../../storage/storage.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { TaxComputationService } from './tax-computation.service';
 import { parseStartDate, parseEndDate } from '../../../common/date-range';
+import { toCsvString } from '../../../common/exports/csv.util';
 import { decryptPII } from '../../../common/crypto';
 import {
   SiteSettingsService,
@@ -23,6 +24,194 @@ import {
 import * as PDFDocument from 'pdfkit';
 import * as QRCode from 'qrcode';
 import * as path from 'path';
+import * as fs from 'fs';
+
+// Lazy-cached brand logo — read once from disk, reused for every
+// invoice/proforma. Falls back to null if the asset is missing so PDF
+// generation never breaks on a bad deploy.
+let cachedLogo: Buffer | null | undefined = undefined;
+function getBrandLogo(): Buffer | null {
+  if (cachedLogo !== undefined) return cachedLogo;
+  try {
+    cachedLogo = fs.readFileSync(
+      path.join(process.cwd(), 'src', 'assets', 'logo.png'),
+    );
+  } catch {
+    cachedLogo = null;
+  }
+  return cachedLogo;
+}
+
+export type InvoiceLocale = 'en' | 'ar';
+
+// Every user-visible label in both invoice and proforma templates. The
+// EN dict is authoritative; AR mirrors it 1:1 so a missing key surfaces
+// as a TS error, not a rendered "undefined" on a customer-facing PDF.
+const INVOICE_LABELS = {
+  en: {
+    invoiceTitle: 'INVOICE',
+    proformaTitle: 'PROFORMA INVOICE',
+    statusPaid: 'PAID',
+    statusRefunded: 'REFUNDED',
+    statusCancelled: 'CANCELLED',
+    statusIssued: 'ISSUED',
+    statusAwaiting: 'AWAITING PAYMENT',
+    invoiceNumber: 'Invoice #',
+    issuedDate: 'Issued',
+    paidDate: 'Paid',
+    dueDate: 'Due',
+    validUntil: 'Valid until',
+    billTo: 'BILL TO',
+    paymentDetails: 'PAYMENT DETAILS',
+    gateway: 'Gateway',
+    method: 'Method',
+    reference: 'Reference',
+    bankName: 'Bank',
+    accountName: 'Account',
+    iban: 'IBAN',
+    description: 'DESCRIPTION',
+    qty: 'QTY',
+    unit: 'UNIT',
+    amount: 'AMOUNT',
+    subtotal: 'Subtotal',
+    discount: 'Discount',
+    zeroRated: 'Zero-rated (0%)',
+    total: 'TOTAL',
+    scanToVerify: 'Scan to verify',
+    verifyLine: 'Authenticate this invoice via QR or:',
+    footerThankYou:
+      'Thank you for your purchase. This invoice serves as your official tax receipt.',
+    footerProforma:
+      'Pay via bank transfer to activate your enrollment. Once received, a tax invoice will be emailed automatically.',
+    proformaNumber: 'Proforma #',
+    paymentIntent: 'PAYMENT INTENT',
+    statusLabel: 'Status',
+    awaitingTransfer: 'Awaiting transfer',
+    amountDue: 'AMOUNT DUE',
+    noticeTitle: 'Notice',
+    noticeBody:
+      'This is a PROFORMA invoice issued before payment. It is NOT a tax invoice. A final tax invoice (with QR-verifiable invoice number) will be issued once your bank transfer is received and approved by our finance team.',
+    pageOf: (n: number, total: number) => `Page ${n} of ${total}`,
+    vatNo: (n: string) => `VAT No: ${n}`,
+    vatRow: (rate: number) => `VAT (${rate}%)`,
+    gatewayName: (g: string) =>
+      g === 'bank_transfer'
+        ? 'Bank Transfer'
+        : g.charAt(0).toUpperCase() + g.slice(1),
+    methodName: (m: string) => m.replace(/_/g, ' ').toUpperCase(),
+    deliveryType: (d: string) => d.toUpperCase(),
+    currency: (n: number) => `SAR ${n.toFixed(2)}`,
+    currencyNeg: (n: number) => `- SAR ${n.toFixed(2)}`,
+    dash: '—',
+  },
+  ar: {
+    invoiceTitle: 'فاتورة',
+    proformaTitle: 'فاتورة مبدئية',
+    statusPaid: 'مدفوعة',
+    statusRefunded: 'مستردة',
+    statusCancelled: 'ملغاة',
+    statusIssued: 'صادرة',
+    statusAwaiting: 'بانتظار الدفع',
+    invoiceNumber: 'رقم الفاتورة',
+    issuedDate: 'تاريخ الإصدار',
+    paidDate: 'تاريخ الدفع',
+    dueDate: 'تاريخ الاستحقاق',
+    validUntil: 'صالحة حتى',
+    billTo: 'الفاتورة إلى',
+    paymentDetails: 'تفاصيل الدفع',
+    gateway: 'بوابة الدفع',
+    method: 'طريقة الدفع',
+    reference: 'المرجع',
+    bankName: 'البنك',
+    accountName: 'الحساب',
+    iban: 'رقم الآيبان',
+    description: 'الوصف',
+    qty: 'الكمية',
+    unit: 'السعر',
+    amount: 'الإجمالي',
+    subtotal: 'المجموع الفرعي',
+    discount: 'الخصم',
+    zeroRated: 'صفر ضريبي 0٪',
+    total: 'الإجمالي الكلي',
+    scanToVerify: 'امسح للتحقق',
+    verifyLine: 'تحقق من صحة هذه الفاتورة بالرمز أو:',
+    footerThankYou:
+      'شكراً لك على الشراء. تُعد هذه الفاتورة إيصالاً ضريبياً رسمياً.',
+    footerProforma:
+      'يرجى الدفع عبر التحويل البنكي لتفعيل التسجيل. سيتم إرسال فاتورة ضريبية عبر البريد الإلكتروني تلقائياً عند استلام الدفعة.',
+    proformaNumber: 'رقم الفاتورة المبدئية',
+    paymentIntent: 'طريقة الدفع المتوقعة',
+    statusLabel: 'الحالة',
+    awaitingTransfer: 'بانتظار التحويل',
+    amountDue: 'المبلغ المستحق',
+    noticeTitle: 'تنبيه',
+    noticeBody:
+      'هذه فاتورة مبدئية صادرة قبل الدفع، وليست فاتورة ضريبية. سيتم إصدار فاتورة ضريبية نهائية (برقم قابل للتحقق عبر رمز QR) عند استلام التحويل البنكي واعتماده من قِبل فريق المالية.',
+    pageOf: (n: number, total: number) => `صفحة ${n} من ${total}`,
+    vatNo: (n: string) => `الرقم الضريبي: ${n}`,
+    // Use the Arabic percent sign U+066A and drop parens — a Latin
+    // "(3%)" fragment inside an Arabic sentence flips awkwardly in bidi
+    // rendering, whereas "3٪" reads naturally right-to-left.
+    vatRow: (rate: number) => `ضريبة القيمة المضافة ${rate}٪`,
+    gatewayName: (g: string) => {
+      switch (g) {
+        case 'bank_transfer':
+          return 'حوالة بنكية';
+        case 'moyasar':
+          return 'ميسر';
+        case 'tamara':
+          return 'تمارا';
+        case 'tabby':
+          return 'تابي';
+        default:
+          return g.charAt(0).toUpperCase() + g.slice(1);
+      }
+    },
+    methodName: (m: string) => {
+      const up = m.toLowerCase();
+      switch (up) {
+        case 'card':
+          return 'بطاقة';
+        case 'mada':
+          return 'مدى';
+        case 'apple_pay':
+        case 'applepay':
+          return 'أبل باي';
+        case 'stcpay':
+        case 'stc_pay':
+          return 'STC Pay';
+        default:
+          return m.replace(/_/g, ' ').toUpperCase();
+      }
+    },
+    deliveryType: (d: string) => {
+      const key = d.toLowerCase();
+      switch (key) {
+        case 'self_paced':
+        case 'self-paced':
+          return 'ذاتي المسار';
+        case 'live':
+          return 'مباشر';
+        case 'hybrid':
+          return 'مختلط';
+        case 'webinar':
+          return 'ندوة';
+        case 'instructor_led':
+        case 'instructor-led':
+          return 'بإشراف مدرب';
+        default:
+          return d.toUpperCase();
+      }
+    },
+    // Currency stays "SAR 200.00" in Latin. Rendering "ر.س" in the same
+    // Helvetica run as digits produces broken glyphs (Helvetica has no
+    // Arabic coverage), and mixing NotoArabic mid-cell breaks alignment.
+    // ZATCA accepts either symbol; Latin is universally legible.
+    currency: (n: number) => `SAR ${n.toFixed(2)}`,
+    currencyNeg: (n: number) => `- SAR ${n.toFixed(2)}`,
+    dash: '—',
+  },
+} as const;
 
 /**
  * Reverse word order for Arabic multi-word strings so PDFKit's L→R
@@ -33,6 +222,92 @@ import * as path from 'path';
  */
 function arRtl(text: string): string {
   return text.split(/\s+/).filter(Boolean).reverse().join(' ');
+}
+
+/**
+ * True if the string contains any Arabic-script character. Used at PDF
+ * render sites to decide whether to swap to NotoArabic (which has Arabic
+ * glyphs) rather than Helvetica (which renders Arabic codepoints as
+ * garbage Latin-ish characters — the visible "dV-dV/ b6(d..." mojibake).
+ */
+function hasArabicChars(text: string | null | undefined): boolean {
+  if (!text) return false;
+  return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(text);
+}
+
+/**
+ * Pick the pdfkit font that can render this text. Both NotoArabic and
+ * NotoArabicBold are registered at the top of every generate/render PDF
+ * method — see registerFont calls. Latin defaults keep Helvetica so we
+ * don't disturb existing character metrics for tables that were tuned
+ * for it.
+ */
+function fontFor(text: string, bold = false): string {
+  if (hasArabicChars(text)) return bold ? 'NotoArabicBold' : 'NotoArabic';
+  return bold ? 'Helvetica-Bold' : 'Helvetica';
+}
+
+/**
+ * Pick the best-looking display name for a customer, preferring whichever
+ * field actually holds a real value:
+ *   1. Latin name (firstName + lastName)
+ *   2. Arabic name (firstNameAr + lastNameAr) — used when Latin is empty
+ *   3. Sanitized fallback (see sanitizeCustomerName) — for junk / email
+ *
+ * The Latin name is preferred even if it happens to contain Arabic script,
+ * because some users type Arabic into the "first name" field directly and
+ * expect their invoice to show that spelling.
+ */
+function pickCustomerName(
+  userData: {
+    firstName?: string | null;
+    lastName?: string | null;
+    firstNameAr?: string | null;
+    lastNameAr?: string | null;
+    email?: string | null;
+  },
+): string {
+  const latin = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+  if (latin.length >= 2) return sanitizeCustomerName(latin, userData.email);
+  const arabic = `${userData.firstNameAr || ''} ${userData.lastNameAr || ''}`.trim();
+  if (arabic.length >= 2) return sanitizeCustomerName(arabic, userData.email);
+  return sanitizeCustomerName('', userData.email);
+}
+
+/**
+ * Best-effort clean-up of the buyer name for display on the invoice PDF.
+ * Real names contain letters (any script — Latin, Arabic, CJK, etc.), spaces,
+ * and joiner punctuation (hyphens, apostrophes, periods). If the raw input
+ * contains anything else — digits, parens, `@`, symbols — it is data-entry
+ * garbage and we don't try to salvage the letter fragments (they read as
+ * nonsense too). We use the email's local-part as a friendlier fallback.
+ *
+ * This is display sanitation only; the underlying user record is untouched.
+ */
+function sanitizeCustomerName(
+  raw: string | null | undefined,
+  emailFallback?: string | null,
+): string {
+  const source = (raw || '').trim();
+  // Signal that the name is bogus: anything that never appears in a real name.
+  const hasJunkChars = /[0-9()@#$%^*+={}\[\]<>\/\\|~`!?:;"]/.test(source);
+  if (!hasJunkChars) {
+    const cleaned = source
+      .replace(/[^\p{L}\p{M}\s'\-\.]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (cleaned.length >= 2) return cleaned;
+  }
+  // Fall through to email-derived fallback.
+  const email = (emailFallback || '').trim();
+  if (!email) return 'Customer';
+  const local = (email.split('@')[0] || '')
+    .replace(/[._-]+/g, ' ')
+    .replace(/\d+/g, '')       // strip trailing digits like "mianabubaka007"
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (local.length < 2) return 'Customer';
+  return local.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
 }
 
 @Injectable()
@@ -46,7 +321,21 @@ export class InvoiceService {
     private readonly taxComputationService: TaxComputationService,
   ) {}
 
-  async generateInvoice(paymentId: string) {
+  /**
+   * Storage-key naming for per-locale invoice PDFs.
+   *  - `invoices/{invoiceNumber}-{locale}.pdf` for anything generated post-locale-split
+   *  - `invoices/{invoiceNumber}.pdf` is the LEGACY EN-only path (kept for reads only)
+   * Reads check the locale-suffixed key first; if missing, callers regenerate
+   * from the persisted snapshot and upload to the locale key.
+   */
+  private storageKeyFor(invoiceNumber: string, locale: InvoiceLocale): string {
+    return `invoices/${invoiceNumber}-${locale}.pdf`;
+  }
+  private legacyStorageKey(invoiceNumber: string): string {
+    return `invoices/${invoiceNumber}.pdf`;
+  }
+
+  async generateInvoice(paymentId: string, locale: InvoiceLocale = 'en') {
     // Idempotency guard. generateInvoice is called from BOTH the webhook
     // path AND the verify path (self-heal); without this check a payment
     // that gets settled inline by verify and then receives a delayed
@@ -154,7 +443,7 @@ export class InvoiceService {
 
     const invoiceMetadata = {
       buyer: {
-        name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+        name: pickCustomerName(userData),
         email: userData.email,
         // nationalId is AES-GCM encrypted at rest via encryptPII; decrypt
         // so invoice readers (and the snapshot we persist on the invoice
@@ -231,7 +520,7 @@ export class InvoiceService {
       throw new Error('Failed to generate unique invoice number after 3 attempts');
     }
 
-    // Generate PDF
+    // Generate PDF at requested locale.
     try {
       const branding = await this.siteSettings.getBranding();
       const pdfBuffer = await this.generatePdf(
@@ -241,26 +530,28 @@ export class InvoiceService {
         primaryCourse,
         lineItemsSnapshot,
         branding,
+        locale,
       );
 
-      // Upload to storage (path used as key for signed URL generation)
-      const filename = `invoices/${invoice.invoiceNumber}.pdf`;
+      const filename = this.storageKeyFor(invoice.invoiceNumber, locale);
       await this.storageService.uploadPrivate(
         pdfBuffer,
         filename,
         'application/pdf',
       );
 
-      // Update invoice with PDF URL
+      // pdfUrl on the invoice row remains a "first-generation succeeded"
+      // marker + convenience field for legacy readers. Locale-specific
+      // URLs are always resolved via storageKeyFor() at read time.
       await db
         .update(invoices)
         .set({ pdfUrl: filename, updatedAt: new Date() })
         .where(eq(invoices.id, invoice.id));
 
-      this.logger.log(`Invoice ${invoice.invoiceNumber} generated for payment ${paymentId}`);
+      this.logger.log(`Invoice ${invoice.invoiceNumber} (${locale}) generated for payment ${paymentId}`);
     } catch (err) {
       this.logger.error(
-        `Failed to generate PDF for invoice ${invoice.invoiceNumber}: ${err.message}`,
+        `Failed to generate PDF for invoice ${invoice.invoiceNumber} (${locale}): ${err.message}`,
       );
     }
 
@@ -287,7 +578,20 @@ export class InvoiceService {
       amount: number;
     }> | undefined,
     branding: SiteBranding,
+    locale: InvoiceLocale = 'en',
   ): Promise<Buffer> {
+    const L = INVOICE_LABELS[locale];
+    const rtl = locale === 'ar';
+    const startAlign: 'left' | 'right' = rtl ? 'right' : 'left';
+    const endAlign: 'left' | 'right' = rtl ? 'left' : 'right';
+    const PAGE_W = 595;
+    // Mirror an LTR x-coordinate for a block of `w` width against page width,
+    // so a card that lives on the left in EN slides to the right in AR at
+    // the same visual inset from the outer edge.
+    const mirror = (x: number, w: number) => (rtl ? PAGE_W - x - w : x);
+    // Font selector for user-provided free-text (name, item descriptions)
+    // stays behavior-preserving — pdfkit's rtla feature already handles
+    // the Arabic-in-EN and Latin-in-AR mixed-content cases correctly.
     // Pull current tax settings for tax number + company name on the PDF.
     // The VAT rate label uses the snapshot stored on the invoice/payment
     // metadata so historical invoices keep their original rate.
@@ -329,25 +633,12 @@ export class InvoiceService {
         const status = (invoice.status as string) || 'issued';
         const statusBadge =
           status === 'paid'
-            ? { bg: '#DCFCE7', fg: SUCCESS, label: 'PAID', ar: 'مدفوعة' }
+            ? { bg: '#DCFCE7', fg: SUCCESS, label: L.statusPaid }
             : status === 'refunded'
-              ? { bg: '#EDE9FE', fg: VIOLET, label: 'REFUNDED', ar: 'مستردة' }
+              ? { bg: '#EDE9FE', fg: VIOLET, label: L.statusRefunded }
               : status === 'cancelled'
-                ? { bg: '#FEE2E2', fg: DANGER, label: 'CANCELLED', ar: 'ملغاة' }
-                : { bg: '#DBEAFE', fg: '#1D4ED8', label: 'ISSUED', ar: 'صادرة' };
-
-        // Site-name fallback. NotoSansArabic has no Latin glyphs, so if the
-        // admin entered Latin chars in the Arabic field (or Strapi returned
-        // an empty / whitespace-only value), we use the hard-coded Arabic
-        // brand name instead of letting Latin chars render as boxes.
-        const safeAr = (s: string | null | undefined): string => {
-          const stripped = (s || '')
-            .replace(/[​-‏‪-‮﻿]/g, '')
-            .trim();
-          if (!stripped) return 'فيزيو جايدنس';
-          return /[؀-ۿ]/.test(stripped) ? stripped : 'فيزيو جايدنس';
-        };
-        const siteNameArSafe = safeAr(branding.siteNameAr);
+                ? { bg: '#FEE2E2', fg: DANGER, label: L.statusCancelled }
+                : { bg: '#DBEAFE', fg: '#1D4ED8', label: L.statusIssued };
 
         // Date+time formatter — always en-US Latin digits, 24h time so the
         // invoice reads identically for any locale viewer.
@@ -368,190 +659,290 @@ export class InvoiceService {
         };
 
         // ── Header band ──
-        doc.rect(0, 0, 595, 100).fill(BRAND);
+        doc.rect(0, 0, PAGE_W, 100).fill(BRAND);
+        const logoBuf = getBrandLogo();
+        const logoW = 50;
+        // Logo hugs the outer edge of the reading direction.
+        const logoX = rtl ? PAGE_W - 40 - logoW : 40;
+        if (logoBuf) {
+          doc.image(logoBuf, logoX, 25, { width: logoW, height: logoW });
+        }
+        // Brand text column: 320 wide, sits next to the logo on its inner side.
+        const brandBlockW = 320 - (logoBuf ? logoW + 10 : 0);
+        const brandTextX = rtl
+          ? PAGE_W - 40 - (logoBuf ? logoW + 10 : 0) - brandBlockW
+          : logoBuf
+            ? 40 + logoW + 10
+            : 40;
         doc
           .fillColor('#FFFFFF')
           .font('Helvetica-Bold')
           .fontSize(22)
-          .text(branding.siteNameEn, 40, 26, { width: 320 });
-        doc
-          .font('NotoArabic')
-          .fontSize(12)
-          .fillColor('#FFFFFF')
-          .text(arRtl(siteNameArSafe), 40, 54, { width: 320, ...ws });
+          .text(branding.siteNameEn, brandTextX, 32, {
+            width: brandBlockW,
+            align: startAlign,
+          });
         doc
           .font('Helvetica')
           .fontSize(9)
           .fillColor('#CBD5E1')
-          .text('nelc@physioguidance.org · physioguidance.org', 40, 76);
+          .text('physioguidance.org', brandTextX, 62, {
+            width: brandBlockW,
+            align: startAlign,
+          });
         if (taxSettings.taxNumber) {
-          // ZATCA-compliant header line: shows the seller's tax
-          // registration number so buyers can verify the invoice is a
-          // valid tax invoice.
+          // ZATCA-compliant header line.
           doc
-            .font('Helvetica')
+            .font(rtl ? 'NotoArabic' : 'Helvetica')
             .fontSize(9)
             .fillColor('#CBD5E1')
-            .text(`VAT No: ${taxSettings.taxNumber}`, 40, 90);
+            .text(L.vatNo(taxSettings.taxNumber), brandTextX, 78, {
+              width: brandBlockW,
+              align: startAlign,
+              features: rtl ? ['rtla'] : undefined,
+            });
         }
 
+        // "INVOICE" title sits opposite the brand block.
+        const titleW = 195;
+        const titleX = rtl ? 40 : PAGE_W - 40 - titleW;
         doc
           .fillColor('#FFFFFF')
-          .font('Helvetica-Bold')
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
           .fontSize(26)
-          .text('INVOICE', 360, 26, { width: 195, align: 'right' });
-        doc
-          .font('NotoArabicBold')
-          .fontSize(13)
-          .fillColor('#CBD5E1')
-          .text(arRtl('فاتورة ضريبية'), 360, 58, {
-            width: 195,
-            align: 'right',
-            ...ws,
+          .text(L.invoiceTitle, titleX, 26, {
+            width: titleW,
+            align: endAlign,
+            features: rtl ? ['rtla'] : undefined,
           });
+        // Arabic "فاتورة ضريبية" subtitle removed per client request. Note:
+        // ZATCA (Saudi VAT authority) technically requires tax invoices to
+        // include the phrase in Arabic. If a Saudi auditor rejects an invoice
+        // for this reason, restore the block above.
         doc.rect(0, 100, 595, 4).fill(ACCENT);
         doc.fillColor('#000000');
 
         // ── Status badge + meta strip ──
         const metaTop = 124;
         const badgeWidth = 110;
-        doc.roundedRect(40, metaTop, badgeWidth, 24, 4).fill(statusBadge.bg);
+        const badgeHeight = 24;
+        // Badge slides to the opposite edge from the meta lines.
+        const badgeX = mirror(40, badgeWidth);
+        doc.roundedRect(badgeX, metaTop, badgeWidth, badgeHeight, 4).fill(statusBadge.bg);
+        // NotoArabic has a larger ascender / higher line-box than Helvetica,
+        // so the same top-y makes AR text drift to the bottom of the pill.
+        // Nudge AR up by 3px.
+        const badgeTextY = metaTop + (rtl ? 4 : 7);
         doc
           .fillColor(statusBadge.fg)
-          .font('Helvetica-Bold')
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
           .fontSize(10)
-          .text(statusBadge.label, 40, metaTop + 7, {
+          .text(statusBadge.label, badgeX, badgeTextY, {
             width: badgeWidth,
             align: 'center',
+            features: rtl ? (['rtla'] as any) : undefined,
           });
         doc.fillColor('#000000');
 
-        // Meta lines (right) — date + time on each
+        // Meta lines: dates always render Latin — invoice numbers and
+        // timestamps stay legible for any auditor.
         const metaLines: Array<[string, string]> = [
-          ['Invoice #', invoice.invoiceNumber],
-          ['Issued', fmtDT(invoice.issuedAt)],
+          [L.invoiceNumber, invoice.invoiceNumber],
+          [L.issuedDate, fmtDT(invoice.issuedAt)],
         ];
         if (invoice.paidAt) {
-          metaLines.push(['Paid', fmtDT(invoice.paidAt)]);
+          metaLines.push([L.paidDate, fmtDT(invoice.paidAt)]);
         }
         if (invoice.dueDate) {
-          metaLines.push(['Due', fmtDT(invoice.dueDate)]);
+          metaLines.push([L.dueDate, fmtDT(invoice.dueDate)]);
         }
+        // The meta section is a 255-wide block placed on the OPPOSITE edge
+        // from the badge. In LTR: right of page (300..555). In RTL: left of
+        // page (40..295) — mirrored.
+        const metaLabelW = 100;
+        const metaValueW = 150;
+        const metaGap = 5;
+        const metaBlockW = metaLabelW + metaGap + metaValueW;
+        const metaBlockLeft = rtl ? 40 : PAGE_W - 40 - metaBlockW;
+        const metaBlockRight = metaBlockLeft + metaBlockW;
+        // Within the block: label on reading-start edge, value on the opposite.
+        const metaLabelX = rtl ? metaBlockRight - metaLabelW : metaBlockLeft;
+        const metaValueX = rtl ? metaBlockLeft : metaBlockRight - metaValueW;
         let mY = metaTop;
         for (const [label, value] of metaLines) {
+          // Both texts share a common typographic baseline. Passing baseline:
+          // 'alphabetic' makes pdfkit interpret y as the baseline position,
+          // so Latin and Arabic fonts of different sizes align perfectly
+          // instead of drifting apart at their tops.
+          const baselineY = mY + 10;
           doc
-            .font('Helvetica')
+            .font(rtl ? 'NotoArabic' : 'Helvetica')
             .fontSize(9)
             .fillColor(MUTED)
-            .text(label, 320, mY, { width: 80, align: 'right' });
+            .text(label, metaLabelX, baselineY, {
+              width: metaLabelW,
+              align: startAlign,
+              features: rtl ? (['rtla'] as any) : undefined,
+              baseline: 'alphabetic' as any,
+              lineBreak: false,
+            });
           doc
             .font('Helvetica-Bold')
             .fontSize(10)
             .fillColor('#111827')
-            .text(value, 405, mY - 1, { width: 150, align: 'right' });
-          mY += 13;
+            .text(value, metaValueX, baselineY, {
+              width: metaValueW,
+              align: endAlign,
+              baseline: 'alphabetic' as any,
+              lineBreak: false,
+            });
+          mY += 14;
         }
 
         // ── Bill-To / Payment-Details two-column block in soft cards ──
         const sectionTop = Math.max(metaTop + 40, mY + 12);
         const cardW = 252;
         const cardH = 92;
-        // Left card — Bill To
+        // In LTR: BillTo left, PaymentDetails right. In RTL: swap.
+        const billToX = mirror(40, cardW);
+        const payDetailsX = mirror(303, cardW);
         doc
-          .roundedRect(40, sectionTop, cardW, cardH, 6)
+          .roundedRect(billToX, sectionTop, cardW, cardH, 6)
           .lineWidth(1)
           .strokeColor('#E5E7EB')
           .stroke();
         doc
-          .font('Helvetica-Bold')
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
           .fontSize(9)
           .fillColor(MUTED)
-          .text('BILL TO', 52, sectionTop + 10);
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(12)
-          .fillColor('#111827')
-          .text(
-            `${userData.firstName || ''} ${userData.lastName || ''}`.trim() ||
-              userData.email,
-            52,
-            sectionTop + 26,
-            { width: cardW - 24 },
-          );
-        doc
-          .font('Helvetica')
-          .fontSize(9)
-          .fillColor(MUTED)
-          .text(userData.email, 52, sectionTop + 44, { width: cardW - 24 });
-        const plainNationalId = decryptPII((userData as any).nationalId);
-        if (plainNationalId) {
-          doc.text(
-            `National ID · ${plainNationalId}`,
-            52,
-            sectionTop + 58,
-            { width: cardW - 24 },
-          );
-        }
-
-        // Right card — Payment Details
-        const rightX = 303;
-        doc
-          .roundedRect(rightX, sectionTop, cardW, cardH, 6)
-          .lineWidth(1)
-          .strokeColor('#E5E7EB')
-          .stroke();
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(9)
-          .fillColor(MUTED)
-          .text('PAYMENT DETAILS', rightX + 12, sectionTop + 10);
-        const gatewayLabel =
-          payment.gateway === 'bank_transfer'
-            ? 'Bank Transfer'
-            : payment.gateway.charAt(0).toUpperCase() + payment.gateway.slice(1);
-        const methodLabel = payment.paymentMethod
-          ? payment.paymentMethod.replace(/_/g, ' ').toUpperCase()
-          : '—';
-        const referenceShort = payment.gatewayChargeId
-          ? payment.gatewayChargeId.length > 30
-            ? `${payment.gatewayChargeId.slice(0, 14)}…${payment.gatewayChargeId.slice(-12)}`
-            : payment.gatewayChargeId
-          : '—';
-        const payRows: Array<[string, string]> = [
-          ['Gateway', gatewayLabel],
-          ['Method', methodLabel],
-          ['Reference', referenceShort],
-        ];
-        let pY = sectionTop + 28;
-        for (const [k, v] of payRows) {
+          .text(L.billTo, billToX + 12, sectionTop + 10, {
+            width: cardW - 24,
+            align: startAlign,
+            features: rtl ? ['rtla'] : undefined,
+          });
+        {
+          const displayName = pickCustomerName(userData);
+          const isNameArabic = hasArabicChars(displayName);
+          // Alignment follows the PDF locale, NOT the name's script.
+          // An Arabic name on an EN invoice still left-aligns (reads
+          // right-to-left within the field but the field itself hugs
+          // the LTR reading edge). Keeps name+email as one visual column.
+          const bodyAlign = rtl ? 'right' : 'left';
+          // rtla features only ever needed for actual Arabic strings so
+          // pdfkit shapes them right-to-left. Set independently of align.
+          const nameFeatures = isNameArabic ? (['rtla'] as any) : undefined;
+          doc
+            .font(fontFor(displayName, true))
+            .fontSize(12)
+            .fillColor('#111827')
+            .text(displayName, billToX + 12, sectionTop + 26, {
+              width: cardW - 24,
+              features: nameFeatures,
+              align: bodyAlign,
+            });
           doc
             .font('Helvetica')
             .fontSize(9)
             .fillColor(MUTED)
-            .text(k, rightX + 12, pY, { width: 80 });
-          doc
-            .font(k === 'Reference' ? 'Helvetica' : 'Helvetica-Bold')
-            .fontSize(k === 'Reference' ? 8 : 10)
-            .fillColor('#111827')
-            .text(v, rightX + 90, pY, {
-              width: cardW - 102,
-              align: 'right',
-              lineBreak: false,
+            // +24px baseline gives ~10px of visible whitespace between
+            // 12pt name and 9pt email (12pt line-box is ~15px tall).
+            .text(userData.email, billToX + 12, sectionTop + 50, {
+              width: cardW - 24,
+              align: bodyAlign,
             });
+        }
+
+        doc
+          .roundedRect(payDetailsX, sectionTop, cardW, cardH, 6)
+          .lineWidth(1)
+          .strokeColor('#E5E7EB')
+          .stroke();
+        doc
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
+          .fontSize(9)
+          .fillColor(MUTED)
+          .text(L.paymentDetails, payDetailsX + 12, sectionTop + 10, {
+            width: cardW - 24,
+            align: startAlign,
+            features: rtl ? ['rtla'] : undefined,
+          });
+        const gatewayLabel = L.gatewayName(payment.gateway);
+        const methodLabel = payment.paymentMethod
+          ? L.methodName(payment.paymentMethod)
+          : L.dash;
+        const referenceShort = payment.gatewayChargeId
+          ? payment.gatewayChargeId.length > 30
+            ? `${payment.gatewayChargeId.slice(0, 14)}…${payment.gatewayChargeId.slice(-12)}`
+            : payment.gatewayChargeId
+          : L.dash;
+        const payRows: Array<[string, string, boolean]> = [
+          [L.gateway, gatewayLabel, false],
+          [L.method, methodLabel, false],
+          [L.reference, referenceShort, true],
+        ];
+        let pY = sectionTop + 28;
+        // widthOfString for x + baseline:'alphabetic' for y. Same baseline
+        // y for both label + value → typographic baselines match regardless
+        // of font/size.
+        const payInteriorLeft = payDetailsX + 12;
+        const payInteriorRight = payDetailsX + cardW - 12;
+        for (const [k, v, isRef] of payRows) {
+          const rowBaseline = pY + 10;
+          // Label
+          doc
+            .font(rtl ? 'NotoArabic' : 'Helvetica')
+            .fontSize(9)
+            .fillColor(MUTED);
+          const labelW = doc.widthOfString(k);
+          const labelX = rtl ? payInteriorRight - labelW : payInteriorLeft;
+          doc.text(k, labelX, rowBaseline, {
+            lineBreak: false,
+            features: rtl ? (['rtla'] as any) : undefined,
+            baseline: 'alphabetic' as any,
+          });
+          // Value
+          const valueFont = isRef
+            ? 'Helvetica'
+            : rtl
+              ? 'NotoArabicBold'
+              : 'Helvetica-Bold';
+          doc
+            .font(valueFont)
+            .fontSize(isRef ? 8 : 10)
+            .fillColor('#111827');
+          const valueW = doc.widthOfString(v);
+          const valueX = rtl ? payInteriorLeft : payInteriorRight - valueW;
+          doc.text(v, valueX, rowBaseline, {
+            lineBreak: false,
+            features: rtl && !isRef ? (['rtla'] as any) : undefined,
+            baseline: 'alphabetic' as any,
+          });
           pY += 18;
         }
 
         // ── Line items table ──
+        // Column geometry (LTR): DESC 50→350 (w300), QTY 360 (w40 center),
+        // UNIT 400 (w75 right), AMOUNT 475 (w75 right). In RTL we swap the
+        // horizontal order end-to-end while keeping each column's width.
         const tableTop = sectionTop + cardH + 22;
         doc.rect(40, tableTop, 515, 24).fill(SOFT);
-        doc
-          .fillColor(MUTED)
-          .font('Helvetica-Bold')
-          .fontSize(9)
-          .text('DESCRIPTION', 50, tableTop + 8, { width: 300 });
-        doc.text('QTY', 360, tableTop + 8, { width: 40, align: 'center' });
-        doc.text('UNIT', 400, tableTop + 8, { width: 75, align: 'right' });
-        doc.text('AMOUNT', 475, tableTop + 8, { width: 75, align: 'right' });
+        const colDescW = 300;
+        const colQtyW = 40;
+        const colUnitW = 75;
+        const colAmtW = 75;
+        const colDescX = rtl ? PAGE_W - 50 - colDescW : 50;
+        const colQtyX = rtl ? PAGE_W - 360 - colQtyW : 360;
+        const colUnitX = rtl ? PAGE_W - 400 - colUnitW : 400;
+        const colAmtX = rtl ? PAGE_W - 475 - colAmtW : 475;
+        doc.fillColor(MUTED).font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold').fontSize(9);
+        doc.text(L.description, colDescX, tableTop + 8, {
+          width: colDescW,
+          align: startAlign,
+          features: rtl ? ['rtla'] : undefined,
+        });
+        doc.text(L.qty, colQtyX, tableTop + 8, { width: colQtyW, align: 'center', features: rtl ? ['rtla'] : undefined });
+        doc.text(L.unit, colUnitX, tableTop + 8, { width: colUnitW, align: endAlign, features: rtl ? ['rtla'] : undefined });
+        doc.text(L.amount, colAmtX, tableTop + 8, { width: colAmtW, align: endAlign, features: rtl ? ['rtla'] : undefined });
         doc.fillColor('#000000');
 
         const itemsToRender =
@@ -574,34 +965,49 @@ export class InvoiceService {
             doc.rect(40, rowTop - 4, 515, 26).fill('#FAFAFA');
             doc.fillColor('#000000');
           }
-          doc
-            .font('Helvetica')
-            .fontSize(10)
-            .fillColor('#111827')
-            .text(item.description, 50, y, { width: 300 });
+          {
+            // In AR mode, prefer the Arabic description when the snapshot has one.
+            const desc =
+              (rtl && item.descriptionAr) || item.description || '';
+            const isDescArabic = hasArabicChars(desc);
+            const descAlign = isDescArabic || rtl ? 'right' : 'left';
+            doc
+              .font(fontFor(desc))
+              .fontSize(10)
+              .fillColor('#111827')
+              .text(desc, colDescX, y, {
+                width: colDescW,
+                features: isDescArabic || rtl ? ['rtla'] : undefined,
+                align: descAlign,
+              });
+          }
           let rowExtra = 0;
           if (item.deliveryType) {
             doc
-              .font('Helvetica')
+              .font(rtl ? 'NotoArabic' : 'Helvetica')
               .fontSize(8)
               .fillColor(MUTED)
-              .text(item.deliveryType.toUpperCase(), 50, y + 14, { width: 300 });
+              .text(L.deliveryType(item.deliveryType), colDescX, y + 14, {
+                width: colDescW,
+                align: rtl ? 'right' : 'left',
+                features: rtl ? ['rtla'] : undefined,
+              });
             rowExtra += 12;
           }
           doc
             .font('Helvetica')
             .fontSize(10)
             .fillColor('#111827')
-            .text('1', 360, rowTop + 1, { width: 40, align: 'center' });
-          doc.text(`SAR ${Number(item.amount).toFixed(2)}`, 400, rowTop + 1, {
-            width: 75,
-            align: 'right',
+            .text('1', colQtyX, rowTop + 1, { width: colQtyW, align: 'center' });
+          doc.text(L.currency(Number(item.amount)), colUnitX, rowTop + 1, {
+            width: colUnitW,
+            align: endAlign,
           });
           doc
             .font('Helvetica-Bold')
-            .text(`SAR ${Number(item.amount).toFixed(2)}`, 475, rowTop + 1, {
-              width: 75,
-              align: 'right',
+            .text(L.currency(Number(item.amount)), colAmtX, rowTop + 1, {
+              width: colAmtW,
+              align: endAlign,
             });
           y += Math.max(24, 16 + rowExtra);
           rowIdx += 1;
@@ -609,37 +1015,51 @@ export class InvoiceService {
 
         // ── Totals block ──
         let tY = y + 12;
-        const totalsLeft = 320;
         const totalsWidth = 235;
+        const totalsLeft = mirror(320, totalsWidth);
+        const totalsRight = totalsLeft + totalsWidth;
+        // Explicit-x positioning (same pattern as the payment card fix).
         const totalsRow = (label: string, value: string, bold = false) => {
+          const rowBaseline = tY + 10;
+          const labelFont = bold
+            ? rtl ? 'NotoArabicBold' : 'Helvetica-Bold'
+            : rtl ? 'NotoArabic' : 'Helvetica';
+          doc
+            .font(labelFont)
+            .fontSize(bold ? 11 : 10)
+            .fillColor(bold ? '#111827' : MUTED);
+          const labelW = doc.widthOfString(label);
+          const labelX = rtl ? totalsRight - labelW : totalsLeft;
+          doc.text(label, labelX, rowBaseline, {
+            lineBreak: false,
+            features: rtl ? (['rtla'] as any) : undefined,
+            baseline: 'alphabetic' as any,
+          });
           doc
             .font(bold ? 'Helvetica-Bold' : 'Helvetica')
             .fontSize(bold ? 11 : 10)
-            .fillColor(bold ? '#111827' : MUTED)
-            .text(label, totalsLeft, tY, { width: 120 });
-          doc
-            .font(bold ? 'Helvetica-Bold' : 'Helvetica')
-            .fontSize(bold ? 11 : 10)
-            .fillColor('#111827')
-            .text(value, totalsLeft, tY, { width: totalsWidth, align: 'right' });
+            .fillColor('#111827');
+          const valueW = doc.widthOfString(value);
+          const valueX = rtl ? totalsLeft : totalsRight - valueW;
+          doc.text(value, valueX, rowBaseline, {
+            lineBreak: false,
+            baseline: 'alphabetic' as any,
+          });
           tY += 16;
         };
 
-        totalsRow('Subtotal', `SAR ${Number(invoice.subtotal).toFixed(2)}`);
+        totalsRow(L.subtotal, L.currency(Number(invoice.subtotal)));
         if (Number(invoice.discountAmount) > 0) {
-          totalsRow(
-            'Discount',
-            `- SAR ${Number(invoice.discountAmount).toFixed(2)}`,
-          );
+          totalsRow(L.discount, L.currencyNeg(Number(invoice.discountAmount)));
         }
         if (Number(invoice.taxAmount) > 0) {
           totalsRow(
-            `VAT (${invoiceVatRate}%)`,
-            `SAR ${Number(invoice.taxAmount).toFixed(2)}`,
+            L.vatRow(invoiceVatRate),
+            L.currency(Number(invoice.taxAmount)),
           );
         } else if (invoiceVatTreatment === 'zero_rated') {
           // ZATCA reporting line — show the row even though value is 0.
-          totalsRow('Zero-rated (0%)', 'SAR 0.00');
+          totalsRow(L.zeroRated, L.currency(0));
         }
         doc
           .moveTo(totalsLeft, tY + 2)
@@ -649,29 +1069,47 @@ export class InvoiceService {
           .strokeColor('#000000');
         tY += 8;
 
-        // Highlighted total box
-        doc.rect(totalsLeft, tY, totalsWidth, 30).fill(BRAND);
+        // Highlighted total box — 30px tall. baseline:'alphabetic' + a shared
+        // baselineY places both label + value bottoms on the same visual line
+        // at the box's vertical center regardless of font/size.
+        const totalBoxH = 30;
+        doc.rect(totalsLeft, tY, totalsWidth, totalBoxH).fill(BRAND);
+        const totalBaseline = tY + 20; // ~= center-baseline for 12-14pt text
+        // Label
         doc
           .fillColor('#FFFFFF')
-          .font('Helvetica-Bold')
-          .fontSize(12)
-          .text('TOTAL', totalsLeft + 12, tY + 9);
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(14)
-          .text(
-            `SAR ${Number(invoice.totalAmount).toFixed(2)}`,
-            totalsLeft,
-            tY + 8,
-            { width: totalsWidth - 12, align: 'right' },
-          );
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
+          .fontSize(12);
+        const totalLabelW = doc.widthOfString(L.total);
+        const totalLabelX = rtl
+          ? totalsRight - 12 - totalLabelW
+          : totalsLeft + 12;
+        doc.text(L.total, totalLabelX, totalBaseline, {
+          lineBreak: false,
+          features: rtl ? (['rtla'] as any) : undefined,
+          baseline: 'alphabetic' as any,
+        });
+        // Value (always Latin — SAR + digits)
+        doc.font('Helvetica-Bold').fontSize(14);
+        const totalValueStr = L.currency(Number(invoice.totalAmount));
+        const totalValueW = doc.widthOfString(totalValueStr);
+        const totalValueX = rtl
+          ? totalsLeft + 12
+          : totalsRight - 12 - totalValueW;
+        doc.text(totalValueStr, totalValueX, totalBaseline, {
+          lineBreak: false,
+          baseline: 'alphabetic' as any,
+        });
         doc.fillColor('#000000');
         tY += 44;
 
-        // ── QR + verify panel (left-aligned, fixed row) ──
+        // ── QR + verify panel — text hugs the QR side, vertically centered
+        //    against the QR image (72×72). Text uses a fixed-width block that
+        //    sits immediately next to the QR (12px gap), right-aligned in RTL
+        //    so it hugs the QR, left-aligned in LTR for the same reason.
         const qrTop = Math.min(Math.max(tY, 600), 660);
         try {
-          const verifyUrl = `https://physioguidance.org/en/verify-invoice/${invoice.invoiceNumber}`;
+          const verifyUrl = `https://physioguidance.org/${locale}/verify-invoice/${invoice.invoiceNumber}`;
           const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
             width: 80,
             margin: 0,
@@ -681,58 +1119,96 @@ export class InvoiceService {
             qrDataUrl.replace('data:image/png;base64,', ''),
             'base64',
           );
-          doc.image(qrBuffer, 40, qrTop, { width: 72, height: 72 });
+          const qrW = 72;
+          const qrH = 72;
+          const qrX = rtl ? PAGE_W - 40 - qrW : 40;
+          const textBlockW = 320;
+          const textBlockX = rtl
+            ? qrX - 12 - textBlockW
+            : qrX + qrW + 12;
+          const textAlign = rtl ? 'right' : 'left';
+          doc.image(qrBuffer, qrX, qrTop, { width: qrW, height: qrH });
+          // Three lines: heading, subhead, url. Center the group against the
+          // QR image so the block feels visually paired instead of drifting up.
+          const lineHeights = { heading: 12, sub: 11, url: 11 };
+          const gap = 2;
+          const blockH = lineHeights.heading + gap + lineHeights.sub + gap + lineHeights.url;
+          const firstLineBaseline = qrTop + (qrH - blockH) / 2 + lineHeights.heading;
+          const secondLineBaseline = firstLineBaseline + gap + lineHeights.sub;
+          const thirdLineBaseline = secondLineBaseline + gap + lineHeights.url;
           doc
-            .font('Helvetica-Bold')
+            .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
             .fontSize(9)
             .fillColor('#111827')
-            .text('Scan to verify', 124, qrTop + 6);
+            .text(L.scanToVerify, textBlockX, firstLineBaseline, {
+              width: textBlockW,
+              align: textAlign,
+              features: rtl ? (['rtla'] as any) : undefined,
+              baseline: 'alphabetic' as any,
+              lineBreak: false,
+            });
           doc
-            .font('Helvetica')
+            .font(rtl ? 'NotoArabic' : 'Helvetica')
             .fontSize(8)
             .fillColor(MUTED)
-            .text(
-              'Authenticate this invoice via QR or:',
-              124,
-              qrTop + 22,
-              { width: 240 },
-            );
+            .text(L.verifyLine, textBlockX, secondLineBaseline, {
+              width: textBlockW,
+              align: textAlign,
+              features: rtl ? (['rtla'] as any) : undefined,
+              baseline: 'alphabetic' as any,
+              lineBreak: false,
+            });
           doc
             .font('Helvetica')
             .fontSize(8)
             .fillColor(ACCENT)
             .text(
               `physioguidance.org/verify-invoice/${invoice.invoiceNumber}`,
-              124,
-              qrTop + 36,
-              { width: 280, lineBreak: false },
+              textBlockX,
+              thirdLineBaseline,
+              {
+                width: textBlockW,
+                align: textAlign,
+                lineBreak: false,
+                baseline: 'alphabetic' as any,
+              },
             );
         } catch {
           this.logger.warn('Failed to generate QR code for invoice');
         }
 
         // ── Footer band ──
-        doc.rect(0, 770, 595, 72).fill('#F9FAFB');
+        doc.rect(0, 770, PAGE_W, 72).fill('#F9FAFB');
+        const footerBrandX = rtl ? PAGE_W - 40 - 200 : 40;
+        const footerBrandW = 200;
         doc
           .fillColor(BRAND)
           .font('Helvetica-Bold')
           .fontSize(9)
-          .text(branding.siteNameEn, 40, 786);
+          .text(branding.siteNameEn, footerBrandX, 786, {
+            width: footerBrandW,
+            align: startAlign,
+          });
+        const footerMsgX = rtl ? PAGE_W - 40 - 360 : 40;
         doc
-          .font('Helvetica')
+          .font(rtl ? 'NotoArabic' : 'Helvetica')
           .fontSize(8)
           .fillColor(MUTED)
-          .text(
-            'Thank you for your purchase. This invoice serves as your official tax receipt.',
-            40,
-            802,
-            { width: 360 },
-          );
+          .text(L.footerThankYou, footerMsgX, 802, {
+            width: 360,
+            align: startAlign,
+            features: rtl ? ['rtla'] : undefined,
+          });
+        const pageOfX = rtl ? 40 : PAGE_W - 40 - 115;
         doc
-          .font('Helvetica')
+          .font(rtl ? 'NotoArabic' : 'Helvetica')
           .fontSize(8)
           .fillColor(MUTED)
-          .text('Page 1 of 1', 440, 802, { width: 115, align: 'right' });
+          .text(L.pageOf(1, 1), pageOfX, 802, {
+            width: 115,
+            align: endAlign,
+            features: rtl ? ['rtla'] : undefined,
+          });
         doc.fillColor('#000000');
 
         // ── Force single page ──
@@ -765,7 +1241,10 @@ export class InvoiceService {
    * but tagged PROFORMA and explicitly NOT a tax invoice. Nothing is
    * persisted — the buffer is returned for direct download.
    */
-  async generateProformaPdfBuffer(paymentId: string): Promise<Buffer> {
+  async generateProformaPdfBuffer(
+    paymentId: string,
+    locale: InvoiceLocale = 'en',
+  ): Promise<Buffer> {
     const [payment] = await db
       .select()
       .from(payments)
@@ -835,7 +1314,7 @@ export class InvoiceService {
       proformaNumber: `PRO-${paymentId.slice(0, 8).toUpperCase()}`,
       issuedAt: new Date(),
       buyer: {
-        name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+        name: pickCustomerName(userData),
         email: userData.email,
         nationalId: decryptPII((userData as any).nationalId) || null,
       },
@@ -849,6 +1328,7 @@ export class InvoiceService {
       taxAmount,
       totalAmount,
       branding,
+      locale,
     });
   }
 
@@ -875,6 +1355,7 @@ export class InvoiceService {
     discountAmount: number;
     taxAmount: number;
     totalAmount: number;
+    locale?: InvoiceLocale;
   }): Promise<{ buffer: Buffer; proformaNumber: string }> {
     const branding = await this.siteSettings.getBranding();
 
@@ -893,6 +1374,7 @@ export class InvoiceService {
       taxAmount: args.taxAmount,
       totalAmount: args.totalAmount,
       branding,
+      locale: args.locale || 'en',
     });
     return { buffer, proformaNumber };
   }
@@ -922,7 +1404,15 @@ export class InvoiceService {
     taxAmount: number;
     totalAmount: number;
     branding: SiteBranding;
+    locale?: InvoiceLocale;
   }): Promise<Buffer> {
+    const locale: InvoiceLocale = args.locale || 'en';
+    const L = INVOICE_LABELS[locale];
+    const rtl = locale === 'ar';
+    const startAlign: 'left' | 'right' = rtl ? 'right' : 'left';
+    const endAlign: 'left' | 'right' = rtl ? 'left' : 'right';
+    const PAGE_W = 595;
+    const mirror = (x: number, w: number) => (rtl ? PAGE_W - x - w : x);
     // Proforma uses current global settings — it's a pre-payment preview,
     // not a tax record. Once paid, the final invoice locks in its own rate.
     const taxSettings = await this.taxComputationService.getSettings();
@@ -955,18 +1445,8 @@ export class InvoiceService {
         const statusBadge = {
           bg: '#FEF3C7',
           fg: '#92400E',
-          label: 'AWAITING PAYMENT',
-          ar: 'في انتظار الدفع',
+          label: L.statusAwaiting,
         };
-
-        const safeAr = (s: string | null | undefined): string => {
-          const stripped = (s || '')
-            .replace(/[​-‏‪-‮﻿]/g, '')
-            .trim();
-          if (!stripped) return 'فيزيو جايدنس';
-          return /[؀-ۿ]/.test(stripped) ? stripped : 'فيزيو جايدنس';
-        };
-        const siteNameArSafe = safeAr(args.branding.siteNameAr);
 
         const fmtDT = (d: Date | string | null | undefined) => {
           if (!d) return '';
@@ -985,166 +1465,234 @@ export class InvoiceService {
         };
 
         // ── Header band ──
-        doc.rect(0, 0, 595, 100).fill(BRAND);
+        doc.rect(0, 0, PAGE_W, 100).fill(BRAND);
+        const logoBuf = getBrandLogo();
+        const logoW = 50;
+        const logoX = rtl ? PAGE_W - 40 - logoW : 40;
+        if (logoBuf) {
+          doc.image(logoBuf, logoX, 25, { width: logoW, height: logoW });
+        }
+        const brandBlockW = 320 - (logoBuf ? logoW + 10 : 0);
+        const brandTextX = rtl
+          ? PAGE_W - 40 - (logoBuf ? logoW + 10 : 0) - brandBlockW
+          : logoBuf
+            ? 40 + logoW + 10
+            : 40;
         doc
           .fillColor('#FFFFFF')
           .font('Helvetica-Bold')
           .fontSize(22)
-          .text(args.branding.siteNameEn, 40, 26, { width: 320 });
-        doc
-          .font('NotoArabic')
-          .fontSize(12)
-          .fillColor('#FFFFFF')
-          .text(arRtl(siteNameArSafe), 40, 54, { width: 320, ...ws });
+          .text(args.branding.siteNameEn, brandTextX, 32, {
+            width: brandBlockW,
+            align: startAlign,
+          });
         doc
           .font('Helvetica')
           .fontSize(9)
           .fillColor('#CBD5E1')
-          .text('nelc@physioguidance.org · physioguidance.org', 40, 76);
+          .text('physioguidance.org', brandTextX, 62, {
+            width: brandBlockW,
+            align: startAlign,
+          });
         if (taxSettings.taxNumber) {
           doc
-            .font('Helvetica')
+            .font(rtl ? 'NotoArabic' : 'Helvetica')
             .fontSize(9)
             .fillColor('#CBD5E1')
-            .text(`VAT No: ${taxSettings.taxNumber}`, 40, 90);
+            .text(L.vatNo(taxSettings.taxNumber), brandTextX, 78, {
+              width: brandBlockW,
+              align: startAlign,
+              features: rtl ? ['rtla'] : undefined,
+            });
         }
 
+        const titleW = 235;
+        const titleX = rtl ? 40 : PAGE_W - 40 - titleW;
         doc
           .fillColor('#FFFFFF')
-          .font('Helvetica-Bold')
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
           .fontSize(22)
-          .text('PROFORMA INVOICE', 320, 26, { width: 235, align: 'right' });
-        doc
-          .font('NotoArabicBold')
-          .fontSize(12)
-          .fillColor('#CBD5E1')
-          .text(arRtl('فاتورة مبدئية'), 320, 58, {
-            width: 235,
-            align: 'right',
-            ...ws,
+          .text(L.proformaTitle, titleX, 26, {
+            width: titleW,
+            align: endAlign,
+            features: rtl ? ['rtla'] : undefined,
           });
-        doc.rect(0, 100, 595, 4).fill(ACCENT);
+        doc.rect(0, 100, PAGE_W, 4).fill(ACCENT);
         doc.fillColor('#000000');
 
-        // ── Status badge + meta strip ──
+        // ── Status badge + meta strip ── (same layout logic as paid invoice)
         const metaTop = 124;
         const badgeWidth = 140;
-        doc.roundedRect(40, metaTop, badgeWidth, 24, 4).fill(statusBadge.bg);
+        const badgeX = mirror(40, badgeWidth);
+        doc.roundedRect(badgeX, metaTop, badgeWidth, 24, 4).fill(statusBadge.bg);
+        const badgeTextY = metaTop + (rtl ? 4 : 7);
         doc
           .fillColor(statusBadge.fg)
-          .font('Helvetica-Bold')
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
           .fontSize(10)
-          .text(statusBadge.label, 40, metaTop + 7, {
+          .text(statusBadge.label, badgeX, badgeTextY, {
             width: badgeWidth,
             align: 'center',
+            features: rtl ? (['rtla'] as any) : undefined,
           });
         doc.fillColor('#000000');
 
         const metaLines: Array<[string, string]> = [
-          ['Proforma #', args.proformaNumber],
-          ['Issued', fmtDT(args.issuedAt)],
+          [L.proformaNumber, args.proformaNumber],
+          [L.issuedDate, fmtDT(args.issuedAt)],
         ];
+        const metaLabelW = 100;
+        const metaValueW = 150;
+        const metaGap = 5;
+        const metaBlockW = metaLabelW + metaGap + metaValueW;
+        const metaBlockLeft = rtl ? 40 : PAGE_W - 40 - metaBlockW;
+        const metaBlockRight = metaBlockLeft + metaBlockW;
+        const metaLabelX = rtl ? metaBlockRight - metaLabelW : metaBlockLeft;
+        const metaValueX = rtl ? metaBlockLeft : metaBlockRight - metaValueW;
         let mY = metaTop;
         for (const [label, value] of metaLines) {
+          const baselineY = mY + 10;
           doc
-            .font('Helvetica')
+            .font(rtl ? 'NotoArabic' : 'Helvetica')
             .fontSize(9)
             .fillColor(MUTED)
-            .text(label, 320, mY, { width: 80, align: 'right' });
+            .text(label, metaLabelX, baselineY, {
+              width: metaLabelW,
+              align: startAlign,
+              features: rtl ? (['rtla'] as any) : undefined,
+              baseline: 'alphabetic' as any,
+              lineBreak: false,
+            });
           doc
             .font('Helvetica-Bold')
             .fontSize(10)
             .fillColor('#111827')
-            .text(value, 405, mY - 1, { width: 150, align: 'right' });
-          mY += 13;
+            .text(value, metaValueX, baselineY, {
+              width: metaValueW,
+              align: endAlign,
+              baseline: 'alphabetic' as any,
+              lineBreak: false,
+            });
+          mY += 14;
         }
 
         // ── Bill-To / Payment-Details two-column block ──
         const sectionTop = Math.max(metaTop + 40, mY + 12);
         const cardW = 252;
         const cardH = 92;
+        const billToX = mirror(40, cardW);
+        const payDetailsX = mirror(303, cardW);
 
         doc
-          .roundedRect(40, sectionTop, cardW, cardH, 6)
+          .roundedRect(billToX, sectionTop, cardW, cardH, 6)
           .lineWidth(1)
           .strokeColor('#E5E7EB')
           .stroke();
         doc
-          .font('Helvetica-Bold')
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
           .fontSize(9)
           .fillColor(MUTED)
-          .text('BILL TO', 52, sectionTop + 10);
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(12)
-          .fillColor('#111827')
-          .text(args.buyer.name || args.buyer.email, 52, sectionTop + 26, {
+          .text(L.billTo, billToX + 12, sectionTop + 10, {
             width: cardW - 24,
+            align: startAlign,
+            features: rtl ? ['rtla'] : undefined,
           });
-        doc
-          .font('Helvetica')
-          .fontSize(9)
-          .fillColor(MUTED)
-          .text(args.buyer.email, 52, sectionTop + 44, { width: cardW - 24 });
-        if (args.buyer.nationalId) {
-          doc.text(
-            `National ID · ${args.buyer.nationalId}`,
-            52,
-            sectionTop + 58,
-            { width: cardW - 24 },
-          );
-        }
-
-        const rightX = 303;
-        doc
-          .roundedRect(rightX, sectionTop, cardW, cardH, 6)
-          .lineWidth(1)
-          .strokeColor('#E5E7EB')
-          .stroke();
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(9)
-          .fillColor(MUTED)
-          .text('PAYMENT INTENT', rightX + 12, sectionTop + 10);
-        const gatewayLabel =
-          args.payment.gateway === 'bank_transfer'
-            ? 'Bank Transfer'
-            : args.payment.gateway.charAt(0).toUpperCase() +
-              args.payment.gateway.slice(1);
-        const intentRows: Array<[string, string]> = [
-          ['Method', gatewayLabel],
-          ['Status', 'Awaiting transfer'],
-        ];
-        let pY = sectionTop + 28;
-        for (const [k, v] of intentRows) {
+        {
+          const displayName = args.buyer.name || args.buyer.email;
+          const isNameArabic = hasArabicChars(displayName);
+          // Alignment follows PDF locale, not name script; rtla features
+          // only track the actual name script so Arabic text still shapes.
+          const bodyAlign = rtl ? 'right' : 'left';
+          const nameFeatures = isNameArabic ? (['rtla'] as any) : undefined;
+          doc
+            .font(fontFor(displayName, true))
+            .fontSize(12)
+            .fillColor('#111827')
+            .text(displayName, billToX + 12, sectionTop + 26, {
+              width: cardW - 24,
+              features: nameFeatures,
+              align: bodyAlign,
+            });
           doc
             .font('Helvetica')
             .fontSize(9)
             .fillColor(MUTED)
-            .text(k, rightX + 12, pY, { width: 80 });
-          doc
-            .font('Helvetica-Bold')
-            .fontSize(10)
-            .fillColor('#111827')
-            .text(v, rightX + 90, pY, {
-              width: cardW - 102,
-              align: 'right',
-              lineBreak: false,
+            .text(args.buyer.email, billToX + 12, sectionTop + 50, {
+              width: cardW - 24,
+              align: bodyAlign,
             });
+        }
+
+        doc
+          .roundedRect(payDetailsX, sectionTop, cardW, cardH, 6)
+          .lineWidth(1)
+          .strokeColor('#E5E7EB')
+          .stroke();
+        doc
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
+          .fontSize(9)
+          .fillColor(MUTED)
+          .text(L.paymentIntent, payDetailsX + 12, sectionTop + 10, {
+            width: cardW - 24,
+            align: startAlign,
+            features: rtl ? ['rtla'] : undefined,
+          });
+        const gatewayLabel = L.gatewayName(args.payment.gateway);
+        const intentRows: Array<[string, string]> = [
+          [L.method, gatewayLabel],
+          [L.statusLabel, L.awaitingTransfer],
+        ];
+        let pY = sectionTop + 28;
+        // Baseline-aligned label + value (same pattern as paid invoice).
+        const payInteriorLeft = payDetailsX + 12;
+        const payInteriorRight = payDetailsX + cardW - 12;
+        for (const [k, v] of intentRows) {
+          const rowBaseline = pY + 10;
+          doc
+            .font(rtl ? 'NotoArabic' : 'Helvetica')
+            .fontSize(9)
+            .fillColor(MUTED);
+          const labelW = doc.widthOfString(k);
+          const labelX = rtl ? payInteriorRight - labelW : payInteriorLeft;
+          doc.text(k, labelX, rowBaseline, {
+            lineBreak: false,
+            features: rtl ? (['rtla'] as any) : undefined,
+            baseline: 'alphabetic' as any,
+          });
+          doc
+            .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
+            .fontSize(10)
+            .fillColor('#111827');
+          const valueW = doc.widthOfString(v);
+          const valueX = rtl ? payInteriorLeft : payInteriorRight - valueW;
+          doc.text(v, valueX, rowBaseline, {
+            lineBreak: false,
+            features: rtl ? (['rtla'] as any) : undefined,
+            baseline: 'alphabetic' as any,
+          });
           pY += 18;
         }
 
         // ── Line items table ──
         const tableTop = sectionTop + cardH + 22;
         doc.rect(40, tableTop, 515, 24).fill(SOFT);
-        doc
-          .fillColor(MUTED)
-          .font('Helvetica-Bold')
-          .fontSize(9)
-          .text('DESCRIPTION', 50, tableTop + 8, { width: 300 });
-        doc.text('QTY', 360, tableTop + 8, { width: 40, align: 'center' });
-        doc.text('UNIT', 400, tableTop + 8, { width: 75, align: 'right' });
-        doc.text('AMOUNT', 475, tableTop + 8, { width: 75, align: 'right' });
+        const colDescW = 300;
+        const colQtyW = 40;
+        const colUnitW = 75;
+        const colAmtW = 75;
+        const colDescX = rtl ? PAGE_W - 50 - colDescW : 50;
+        const colQtyX = rtl ? PAGE_W - 360 - colQtyW : 360;
+        const colUnitX = rtl ? PAGE_W - 400 - colUnitW : 400;
+        const colAmtX = rtl ? PAGE_W - 475 - colAmtW : 475;
+        doc.fillColor(MUTED).font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold').fontSize(9);
+        doc.text(L.description, colDescX, tableTop + 8, {
+          width: colDescW,
+          align: startAlign,
+          features: rtl ? ['rtla'] : undefined,
+        });
+        doc.text(L.qty, colQtyX, tableTop + 8, { width: colQtyW, align: 'center', features: rtl ? ['rtla'] : undefined });
+        doc.text(L.unit, colUnitX, tableTop + 8, { width: colUnitW, align: endAlign, features: rtl ? ['rtla'] : undefined });
+        doc.text(L.amount, colAmtX, tableTop + 8, { width: colAmtW, align: endAlign, features: rtl ? ['rtla'] : undefined });
         doc.fillColor('#000000');
 
         let y = tableTop + 32;
@@ -1155,34 +1703,48 @@ export class InvoiceService {
             doc.rect(40, rowTop - 4, 515, 26).fill('#FAFAFA');
             doc.fillColor('#000000');
           }
-          doc
-            .font('Helvetica')
-            .fontSize(10)
-            .fillColor('#111827')
-            .text(item.description, 50, y, { width: 300 });
+          {
+            const desc =
+              (rtl && item.descriptionAr) || item.description || '';
+            const isDescArabic = hasArabicChars(desc);
+            const descAlign = isDescArabic || rtl ? 'right' : 'left';
+            doc
+              .font(fontFor(desc))
+              .fontSize(10)
+              .fillColor('#111827')
+              .text(desc, colDescX, y, {
+                width: colDescW,
+                features: isDescArabic || rtl ? ['rtla'] : undefined,
+                align: descAlign,
+              });
+          }
           let rowExtra = 0;
           if (item.deliveryType) {
             doc
-              .font('Helvetica')
+              .font(rtl ? 'NotoArabic' : 'Helvetica')
               .fontSize(8)
               .fillColor(MUTED)
-              .text(item.deliveryType.toUpperCase(), 50, y + 14, { width: 300 });
+              .text(L.deliveryType(item.deliveryType), colDescX, y + 14, {
+                width: colDescW,
+                align: rtl ? 'right' : 'left',
+                features: rtl ? ['rtla'] : undefined,
+              });
             rowExtra += 12;
           }
           doc
             .font('Helvetica')
             .fontSize(10)
             .fillColor('#111827')
-            .text('1', 360, rowTop + 1, { width: 40, align: 'center' });
-          doc.text(`SAR ${Number(item.amount).toFixed(2)}`, 400, rowTop + 1, {
-            width: 75,
-            align: 'right',
+            .text('1', colQtyX, rowTop + 1, { width: colQtyW, align: 'center' });
+          doc.text(L.currency(Number(item.amount)), colUnitX, rowTop + 1, {
+            width: colUnitW,
+            align: endAlign,
           });
           doc
             .font('Helvetica-Bold')
-            .text(`SAR ${Number(item.amount).toFixed(2)}`, 475, rowTop + 1, {
-              width: 75,
-              align: 'right',
+            .text(L.currency(Number(item.amount)), colAmtX, rowTop + 1, {
+              width: colAmtW,
+              align: endAlign,
             });
           y += Math.max(24, 16 + rowExtra);
           rowIdx += 1;
@@ -1190,30 +1752,46 @@ export class InvoiceService {
 
         // ── Totals block ──
         let tY = y + 12;
-        const totalsLeft = 320;
         const totalsWidth = 235;
+        const totalsLeft = mirror(320, totalsWidth);
+        const totalsRight = totalsLeft + totalsWidth;
         const totalsRow = (label: string, value: string, bold = false) => {
+          const rowBaseline = tY + 10;
+          const labelFont = bold
+            ? rtl ? 'NotoArabicBold' : 'Helvetica-Bold'
+            : rtl ? 'NotoArabic' : 'Helvetica';
+          doc
+            .font(labelFont)
+            .fontSize(bold ? 11 : 10)
+            .fillColor(bold ? '#111827' : MUTED);
+          const labelW = doc.widthOfString(label);
+          const labelX = rtl ? totalsRight - labelW : totalsLeft;
+          doc.text(label, labelX, rowBaseline, {
+            lineBreak: false,
+            features: rtl ? (['rtla'] as any) : undefined,
+            baseline: 'alphabetic' as any,
+          });
           doc
             .font(bold ? 'Helvetica-Bold' : 'Helvetica')
             .fontSize(bold ? 11 : 10)
-            .fillColor(bold ? '#111827' : MUTED)
-            .text(label, totalsLeft, tY, { width: 120 });
-          doc
-            .font(bold ? 'Helvetica-Bold' : 'Helvetica')
-            .fontSize(bold ? 11 : 10)
-            .fillColor('#111827')
-            .text(value, totalsLeft, tY, { width: totalsWidth, align: 'right' });
+            .fillColor('#111827');
+          const valueW = doc.widthOfString(value);
+          const valueX = rtl ? totalsLeft : totalsRight - valueW;
+          doc.text(value, valueX, rowBaseline, {
+            lineBreak: false,
+            baseline: 'alphabetic' as any,
+          });
           tY += 16;
         };
 
-        totalsRow('Subtotal', `SAR ${Number(args.subtotal).toFixed(2)}`);
+        totalsRow(L.subtotal, L.currency(Number(args.subtotal)));
         if (args.discountAmount > 0) {
-          totalsRow('Discount', `- SAR ${Number(args.discountAmount).toFixed(2)}`);
+          totalsRow(L.discount, L.currencyNeg(Number(args.discountAmount)));
         }
         if (args.taxAmount > 0) {
           totalsRow(
-            `VAT (${taxSettings.vatRate}%)`,
-            `SAR ${Number(args.taxAmount).toFixed(2)}`,
+            L.vatRow(taxSettings.vatRate),
+            L.currency(Number(args.taxAmount)),
           );
         }
         doc
@@ -1224,21 +1802,33 @@ export class InvoiceService {
           .strokeColor('#000000');
         tY += 8;
 
-        doc.rect(totalsLeft, tY, totalsWidth, 30).fill(BRAND);
+        // AMOUNT DUE box — baseline-aligned label + value at box vertical center.
+        const dueBoxH = 30;
+        doc.rect(totalsLeft, tY, totalsWidth, dueBoxH).fill(BRAND);
+        const dueBaseline = tY + 20;
         doc
           .fillColor('#FFFFFF')
-          .font('Helvetica-Bold')
-          .fontSize(12)
-          .text('AMOUNT DUE', totalsLeft + 12, tY + 9);
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(14)
-          .text(
-            `SAR ${Number(args.totalAmount).toFixed(2)}`,
-            totalsLeft,
-            tY + 8,
-            { width: totalsWidth - 12, align: 'right' },
-          );
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
+          .fontSize(12);
+        const dueLabelW = doc.widthOfString(L.amountDue);
+        const dueLabelX = rtl
+          ? totalsRight - 12 - dueLabelW
+          : totalsLeft + 12;
+        doc.text(L.amountDue, dueLabelX, dueBaseline, {
+          lineBreak: false,
+          features: rtl ? (['rtla'] as any) : undefined,
+          baseline: 'alphabetic' as any,
+        });
+        doc.font('Helvetica-Bold').fontSize(14);
+        const dueValueStr = L.currency(Number(args.totalAmount));
+        const dueValueW = doc.widthOfString(dueValueStr);
+        const dueValueX = rtl
+          ? totalsLeft + 12
+          : totalsRight - 12 - dueValueW;
+        doc.text(dueValueStr, dueValueX, dueBaseline, {
+          lineBreak: false,
+          baseline: 'alphabetic' as any,
+        });
         doc.fillColor('#000000');
 
         // ── Notice band (replaces the QR strip used on real invoices) ──
@@ -1246,43 +1836,55 @@ export class InvoiceService {
         doc.roundedRect(40, noticeTop, 515, 64, 6).fill('#FFFBEB');
         doc
           .fillColor('#92400E')
-          .font('Helvetica-Bold')
+          .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
           .fontSize(10)
-          .text('Notice', 52, noticeTop + 10);
+          .text(L.noticeTitle, 52, noticeTop + 10, {
+            width: 491,
+            align: startAlign,
+            features: rtl ? ['rtla'] : undefined,
+          });
         doc
-          .font('Helvetica')
+          .font(rtl ? 'NotoArabic' : 'Helvetica')
           .fontSize(9)
           .fillColor('#78350F')
-          .text(
-            'This is a PROFORMA invoice issued before payment. It is NOT a tax invoice. A final tax invoice (with QR-verifiable invoice number) will be issued once your bank transfer is received and approved by our finance team.',
-            52,
-            noticeTop + 26,
-            { width: 491 },
-          );
+          .text(L.noticeBody, 52, noticeTop + 26, {
+            width: 491,
+            align: startAlign,
+            features: rtl ? ['rtla'] : undefined,
+          });
         doc.fillColor('#000000');
 
         // ── Footer band ──
-        doc.rect(0, 770, 595, 72).fill('#F9FAFB');
+        doc.rect(0, 770, PAGE_W, 72).fill('#F9FAFB');
+        const footerBrandX = rtl ? PAGE_W - 40 - 200 : 40;
         doc
           .fillColor(BRAND)
           .font('Helvetica-Bold')
           .fontSize(9)
-          .text(args.branding.siteNameEn, 40, 786);
+          .text(args.branding.siteNameEn, footerBrandX, 786, {
+            width: 200,
+            align: startAlign,
+          });
+        const footerMsgX = rtl ? PAGE_W - 40 - 360 : 40;
         doc
-          .font('Helvetica')
+          .font(rtl ? 'NotoArabic' : 'Helvetica')
           .fontSize(8)
           .fillColor(MUTED)
-          .text(
-            'Pay via bank transfer to activate your enrollment. Once received, a tax invoice will be emailed automatically.',
-            40,
-            802,
-            { width: 360 },
-          );
+          .text(L.footerProforma, footerMsgX, 802, {
+            width: 360,
+            align: startAlign,
+            features: rtl ? ['rtla'] : undefined,
+          });
+        const pageOfX = rtl ? 40 : PAGE_W - 40 - 115;
         doc
-          .font('Helvetica')
+          .font(rtl ? 'NotoArabic' : 'Helvetica')
           .fontSize(8)
           .fillColor(MUTED)
-          .text('Page 1 of 1', 440, 802, { width: 115, align: 'right' });
+          .text(L.pageOf(1, 1), pageOfX, 802, {
+            width: 115,
+            align: endAlign,
+            features: rtl ? ['rtla'] : undefined,
+          });
         doc.fillColor('#000000');
 
         const range = doc.bufferedPageRange();
@@ -1300,7 +1902,11 @@ export class InvoiceService {
     });
   }
 
-  async getInvoicePdfUrl(invoiceId: string, userId?: string) {
+  async getInvoicePdfUrl(
+    invoiceId: string,
+    userId?: string,
+    locale: InvoiceLocale = 'en',
+  ) {
     const conditions = [eq(invoices.id, invoiceId)];
     if (userId) {
       conditions.push(eq(invoices.userId, userId));
@@ -1316,53 +1922,65 @@ export class InvoiceService {
       throw new NotFoundException('Invoice not found');
     }
 
-    // Self-healing: generate PDF on demand if missing
-    if (!invoice.pdfUrl) {
-      try {
-        const [payment] = await db.select().from(payments).where(eq(payments.id, invoice.paymentId)).limit(1);
-        const [userData] = await db.select().from(users).where(eq(users.id, invoice.userId)).limit(1);
-        const [course] = await db.select().from(courses).where(eq(courses.id, invoice.courseId)).limit(1);
+    const localeKey = this.storageKeyFor(invoice.invoiceNumber, locale);
 
-        if (payment && userData && course) {
-          // Re-hydrate the line items snapshot saved at invoice creation time
-          // so the regenerated PDF matches the original (don't re-read live
-          // courses — a renamed course would silently rewrite a paid invoice).
-          const meta = (invoice.metadata as any) || {};
-          const persistedLineItems = Array.isArray(meta.lineItems) ? meta.lineItems : undefined;
-          const branding = await this.siteSettings.getBranding();
-          const pdfBuffer = await this.generatePdf(
-            invoice,
-            payment,
-            userData,
-            course,
-            persistedLineItems,
-            branding,
-          );
-          const filename = `invoices/${invoice.invoiceNumber}.pdf`;
-          await this.storageService.uploadPrivate(pdfBuffer, filename, 'application/pdf');
-          await db
-            .update(invoices)
-            .set({ pdfUrl: filename, updatedAt: new Date() })
-            .where(eq(invoices.id, invoice.id));
-          invoice.pdfUrl = filename;
-          this.logger.log(`On-demand PDF generated for invoice ${invoice.invoiceNumber}`);
-        }
-      } catch (err) {
-        this.logger.error(`On-demand PDF generation failed for ${invoiceId}: ${err.message}`);
-        throw new NotFoundException('Invoice PDF generation failed');
+    // Check if the locale-specific PDF already exists in storage. For legacy
+    // EN invoices generated before the locale split, fall back to the old
+    // no-suffix key so we don't force a needless regeneration.
+    const localeBuffer = await this.storageService.getFileBuffer('private', localeKey);
+    if (localeBuffer) {
+      const signedUrl = await this.storageService.getSignedUrl('private', localeKey);
+      return { url: signedUrl, invoiceNumber: invoice.invoiceNumber };
+    }
+    if (locale === 'en') {
+      const legacyKey = this.legacyStorageKey(invoice.invoiceNumber);
+      const legacyBuffer = await this.storageService.getFileBuffer('private', legacyKey);
+      if (legacyBuffer) {
+        const signedUrl = await this.storageService.getSignedUrl('private', legacyKey);
+        return { url: signedUrl, invoiceNumber: invoice.invoiceNumber };
       }
     }
 
-    if (!invoice.pdfUrl) {
-      throw new NotFoundException('Invoice PDF not available');
+    // Not in storage yet — regenerate from the persisted snapshot at the
+    // requested locale, upload, then hand back the signed URL.
+    try {
+      const [payment] = await db.select().from(payments).where(eq(payments.id, invoice.paymentId)).limit(1);
+      const [userData] = await db.select().from(users).where(eq(users.id, invoice.userId)).limit(1);
+      const [course] = await db.select().from(courses).where(eq(courses.id, invoice.courseId)).limit(1);
+
+      if (!payment || !userData || !course) {
+        throw new NotFoundException('Invoice source data missing');
+      }
+      const meta = (invoice.metadata as any) || {};
+      const persistedLineItems = Array.isArray(meta.lineItems) ? meta.lineItems : undefined;
+      const branding = await this.siteSettings.getBranding();
+      const pdfBuffer = await this.generatePdf(
+        invoice,
+        payment,
+        userData,
+        course,
+        persistedLineItems,
+        branding,
+        locale,
+      );
+      await this.storageService.uploadPrivate(pdfBuffer, localeKey, 'application/pdf');
+      // Preserve pdfUrl pointing to whatever it already had (EN default); if
+      // the invoice never got a first-generation URL, set it to the locale key
+      // so downstream "is generated?" checks succeed.
+      if (!invoice.pdfUrl) {
+        await db
+          .update(invoices)
+          .set({ pdfUrl: localeKey, updatedAt: new Date() })
+          .where(eq(invoices.id, invoice.id));
+      }
+      this.logger.log(`On-demand PDF generated for invoice ${invoice.invoiceNumber} (${locale})`);
+
+      const signedUrl = await this.storageService.getSignedUrl('private', localeKey);
+      return { url: signedUrl, invoiceNumber: invoice.invoiceNumber };
+    } catch (err: any) {
+      this.logger.error(`On-demand PDF generation failed for ${invoiceId} (${locale}): ${err.message}`);
+      throw new NotFoundException('Invoice PDF generation failed');
     }
-
-    const signedUrl = await this.storageService.getSignedUrl(
-      'private',
-      invoice.pdfUrl,
-    );
-
-    return { url: signedUrl, invoiceNumber: invoice.invoiceNumber };
   }
 
   async getInvoicesByUser(
@@ -1645,7 +2263,11 @@ export class InvoiceService {
    * content is unchanged; only the rendering refreshes. Audits the action
    * with the actor.
    */
-  async regeneratePdf(invoiceId: string, actorUserId: string) {
+  async regeneratePdf(
+    invoiceId: string,
+    actorUserId: string,
+    locale: InvoiceLocale = 'en',
+  ) {
     const [invoice] = await db
       .select()
       .from(invoices)
@@ -1686,24 +2308,35 @@ export class InvoiceService {
       course,
       persistedLineItems,
       branding,
+      locale,
     );
-    const filename = `invoices/${invoice.invoiceNumber}.pdf`;
+    const filename = this.storageKeyFor(invoice.invoiceNumber, locale);
     await this.storageService.uploadPrivate(
       pdfBuffer,
       filename,
       'application/pdf',
     );
-    await db
-      .update(invoices)
-      .set({ pdfUrl: filename, updatedAt: new Date() })
-      .where(eq(invoices.id, invoice.id));
+    // Leave `invoice.pdfUrl` alone (it points to whichever locale was first
+    // generated); locale-specific reads always go through storageKeyFor.
+    // Only set it if this is the very first PDF for this invoice row.
+    if (!invoice.pdfUrl) {
+      await db
+        .update(invoices)
+        .set({ pdfUrl: filename, updatedAt: new Date() })
+        .where(eq(invoices.id, invoice.id));
+    } else {
+      await db
+        .update(invoices)
+        .set({ updatedAt: new Date() })
+        .where(eq(invoices.id, invoice.id));
+    }
 
     await this.auditLogService.log({
       entityType: 'invoice',
       entityId: invoice.id,
       action: 'invoice_pdf_regenerated',
       performedBy: actorUserId,
-      metadata: { invoiceNumber: invoice.invoiceNumber },
+      metadata: { invoiceNumber: invoice.invoiceNumber, locale },
     });
 
     return { ok: true, invoiceNumber: invoice.invoiceNumber };
@@ -1809,7 +2442,7 @@ export class InvoiceService {
       opts.gateway,
     );
 
-    const header = [
+    const headers = [
       'Invoice Number',
       'Status',
       'Customer Name',
@@ -1825,43 +2458,25 @@ export class InvoiceService {
       'Due Date',
       'Refund Status',
     ];
-    const escape = (v: unknown) => {
-      const s = v === null || v === undefined ? '' : String(v);
-      return `"${s.replace(/"/g, '""')}"`;
-    };
 
-    const rows = [header.join(',')];
-    for (const r of data) {
-      rows.push(
-        [
-          escape(r.invoiceNumber),
-          escape(r.status),
-          escape((r as any).userName?.trim() || ''),
-          escape((r as any).userEmail || ''),
-          escape((r as any).courseTitle || ''),
-          escape((r as any).gateway || ''),
-          escape(Number((r as any).subtotal || 0).toFixed(2)),
-          escape(Number((r as any).discountAmount || 0).toFixed(2)),
-          escape(Number((r as any).taxAmount || 0).toFixed(2)),
-          escape(Number((r as any).totalAmount || 0).toFixed(2)),
-          escape(
-            (r as any).issuedAt
-              ? new Date((r as any).issuedAt).toISOString()
-              : '',
-          ),
-          escape(
-            (r as any).paidAt ? new Date((r as any).paidAt).toISOString() : '',
-          ),
-          escape(
-            (r as any).dueDate
-              ? new Date((r as any).dueDate).toISOString()
-              : '',
-          ),
-          escape((r as any).refundStatus || ''),
-        ].join(','),
-      );
-    }
-    return rows.join('\n');
+    const rows: (string | number | null)[][] = data.map((r) => [
+      r.invoiceNumber,
+      r.status,
+      (r as any).userName?.trim() || '',
+      (r as any).userEmail || '',
+      (r as any).courseTitle || '',
+      (r as any).gateway || '',
+      Number((r as any).subtotal || 0).toFixed(2),
+      Number((r as any).discountAmount || 0).toFixed(2),
+      Number((r as any).taxAmount || 0).toFixed(2),
+      Number((r as any).totalAmount || 0).toFixed(2),
+      (r as any).issuedAt ? new Date((r as any).issuedAt).toISOString() : '',
+      (r as any).paidAt ? new Date((r as any).paidAt).toISOString() : '',
+      (r as any).dueDate ? new Date((r as any).dueDate).toISOString() : '',
+      (r as any).refundStatus || '',
+    ]);
+
+    return toCsvString(rows, { headers });
   }
 
   /**
@@ -1976,6 +2591,7 @@ export class InvoiceService {
 
   async getInvoicePdfBuffer(
     paymentId: string,
+    locale: InvoiceLocale = 'en',
   ): Promise<{ buffer: Buffer; filename: string } | null> {
     const [invoice] = await db
       .select()
@@ -1983,22 +2599,60 @@ export class InvoiceService {
       .where(eq(invoices.paymentId, paymentId))
       .limit(1);
 
-    if (!invoice || !invoice.pdfUrl) return null;
+    if (!invoice) return null;
 
+    const localeKey = this.storageKeyFor(invoice.invoiceNumber, locale);
     try {
-      const buffer = await this.storageService.getFileBuffer(
-        'private',
-        invoice.pdfUrl,
-      );
-      if (!buffer) return null;
+      // Prefer the locale-specific PDF.
+      let buffer = await this.storageService.getFileBuffer('private', localeKey);
+      // Legacy EN objects live at the no-suffix path — check that too.
+      if (!buffer && locale === 'en') {
+        const legacyKey = this.legacyStorageKey(invoice.invoiceNumber);
+        buffer = await this.storageService.getFileBuffer('private', legacyKey);
+      }
+      // Not yet on disk in this locale — render + upload once so email jobs
+      // and future reads succeed.
+      if (!buffer) {
+        const [payment] = await db
+          .select()
+          .from(payments)
+          .where(eq(payments.id, invoice.paymentId))
+          .limit(1);
+        const [userData] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, invoice.userId))
+          .limit(1);
+        const [course] = await db
+          .select()
+          .from(courses)
+          .where(eq(courses.id, invoice.courseId))
+          .limit(1);
+        if (!payment || !userData || !course) return null;
+        const meta = (invoice.metadata as any) || {};
+        const persistedLineItems = Array.isArray(meta.lineItems)
+          ? meta.lineItems
+          : undefined;
+        const branding = await this.siteSettings.getBranding();
+        buffer = await this.generatePdf(
+          invoice,
+          payment,
+          userData,
+          course,
+          persistedLineItems,
+          branding,
+          locale,
+        );
+        await this.storageService.uploadPrivate(buffer, localeKey, 'application/pdf');
+      }
 
       return {
         buffer,
-        filename: `${invoice.invoiceNumber}.pdf`,
+        filename: `${invoice.invoiceNumber}-${locale}.pdf`,
       };
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error(
-        `Failed to retrieve PDF buffer for invoice ${invoice.invoiceNumber}: ${err.message}`,
+        `Failed to retrieve PDF buffer for invoice ${invoice.invoiceNumber} (${locale}): ${err.message}`,
       );
       return null;
     }

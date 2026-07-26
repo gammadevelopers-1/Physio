@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from "next-intl";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
+import Select from "@/components/ui/Select";
 import DashboardError from "./DashboardError";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
@@ -214,77 +215,46 @@ const MyCoursesContent = () => {
 
                   {/* Filters */}
                   <div className="flex flex-wrap gap-3">
-                    <select
+                    <Select
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="all">
-                        {t("courses.filters.allStatus")}
-                      </option>
-                      <option value="active">
-                        {t("courses.filters.active")}
-                      </option>
-                      <option value="draft">
-                        {t("courses.filters.draft")}
-                      </option>
-                      <option value="pending_review">
-                        {t("courses.filters.pendingReview")}
-                      </option>
-                      <option value="changes_requested">
-                        {t("courses.filters.changesRequested")}
-                      </option>
-                      <option value="completed">
-                        {t("courses.filters.completed")}
-                      </option>
-                      <option value="archived">
-                        {t("courses.filters.archived")}
-                      </option>
-                    </select>
+                      onChange={setStatusFilter}
+                      className="min-w-[160px]"
+                      options={[
+                        { value: "all", label: t("courses.filters.allStatus") },
+                        { value: "active", label: t("courses.filters.active") },
+                        { value: "draft", label: t("courses.filters.draft") },
+                        { value: "pending_review", label: t("courses.filters.pendingReview") },
+                        { value: "changes_requested", label: t("courses.filters.changesRequested") },
+                        { value: "completed", label: t("courses.filters.completed") },
+                        { value: "archived", label: t("courses.filters.archived") },
+                      ]}
+                    />
 
-                    <select
+                    <Select
                       value={deliveryFilter}
-                      onChange={(e) => setDeliveryFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="all">
-                        {t("courses.filters.allDelivery")}
-                      </option>
-                      <option value="zoom">
-                        {t("courses.filters.zoom")}
-                      </option>
-                      <option value="onsite">
-                        {t("courses.filters.onsite")}
-                      </option>
-                      <option value="blended">
-                        {t("courses.filters.blended")}
-                      </option>
-                      <option value="self-paced">
-                        {t("courses.filters.self-paced")}
-                      </option>
-                      <option value="webinar">
-                        {t("courses.filters.webinar")}
-                      </option>
-                    </select>
+                      onChange={setDeliveryFilter}
+                      className="min-w-[160px]"
+                      options={[
+                        { value: "all", label: t("courses.filters.allDelivery") },
+                        { value: "zoom", label: t("courses.filters.zoom") },
+                        { value: "onsite", label: t("courses.filters.onsite") },
+                        { value: "blended", label: t("courses.filters.blended") },
+                        { value: "self-paced", label: t("courses.filters.self-paced") },
+                        { value: "webinar", label: t("courses.filters.webinar") },
+                      ]}
+                    />
 
-                    <select
+                    <Select
                       value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="newest">
-                        {t("courses.sort.newest")}
-                      </option>
-                      <option value="oldest">
-                        {t("courses.sort.oldest")}
-                      </option>
-                      <option value="students">
-                        {t("courses.sort.mostStudents")}
-                      </option>
-                      <option value="alphabetical">
-                        {t("courses.sort.alphabetical")}
-                      </option>
-                    </select>
+                      onChange={setSortBy}
+                      className="min-w-[160px]"
+                      options={[
+                        { value: "newest", label: t("courses.sort.newest") },
+                        { value: "oldest", label: t("courses.sort.oldest") },
+                        { value: "students", label: t("courses.sort.mostStudents") },
+                        { value: "alphabetical", label: t("courses.sort.alphabetical") },
+                      ]}
+                    />
 
                     {/* View Toggle */}
                     <div className="flex items-center bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-0.5">

@@ -153,7 +153,14 @@ export default function VideoPlayer({
   );
 
   // Progress tracking
-  const [markedComplete, setMarkedComplete] = useState(false);
+  const [markedComplete, setMarkedComplete] = useState(
+    () => material.progress?.isCompleted === true
+  );
+
+  // Track whether the user has actually started playback this session.
+  // Guards against "resume seeks to 91% → timeupdate fires once →
+  // instant auto-complete → refetch storm" when re-opening a material.
+  const hasPlayedThisMountRef = useRef(false);
 
   // Transcript
   const [showTranscript, setShowTranscript] = useState(false);
@@ -205,17 +212,30 @@ export default function VideoPlayer({
     if (!video) return;
 
     const watchedSeconds = material.progress?.watchedSeconds || 0;
-    if (watchedSeconds > 0) {
-      const handleCanPlay = () => {
-        if (video.currentTime < 1 && watchedSeconds > 0) {
-          video.currentTime = watchedSeconds;
-          toast.info(t("resumeFrom", { time: formatTime(watchedSeconds) }));
-        }
-        video.removeEventListener("canplay", handleCanPlay);
-      };
-      video.addEventListener("canplay", handleCanPlay);
-      return () => video.removeEventListener("canplay", handleCanPlay);
-    }
+    const totalSeconds = material.progress?.totalSeconds || 0;
+    const isCompleted = material.progress?.isCompleted === true;
+
+    // Skip the "resume" flow entirely if:
+    //  - nothing to resume from
+    //  - the material was already completed (re-watching, not resuming)
+    //  - saved position is within the last 5% of the video
+    //    (resuming inside the auto-complete window would re-trigger
+    //     mark-complete → refetch → glitchy reload on every visit)
+    if (watchedSeconds <= 0) return;
+    if (isCompleted) return;
+    if (totalSeconds > 0 && watchedSeconds / totalSeconds >= 0.95) return;
+
+    const handleCanPlay = () => {
+      if (video.currentTime < 1) {
+        video.currentTime = watchedSeconds;
+        toast.info(t("resumeFrom", { time: formatTime(watchedSeconds) }), {
+          id: `resume-${material.id}`,
+        });
+      }
+      video.removeEventListener("canplay", handleCanPlay);
+    };
+    video.addEventListener("canplay", handleCanPlay);
+    return () => video.removeEventListener("canplay", handleCanPlay);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [material.id]);
 
@@ -341,6 +361,7 @@ export default function VideoPlayer({
     setIsPlaying(true);
     setHasEnded(false);
     setAutoAdvanceCountdown(null);
+    hasPlayedThisMountRef.current = true;
     if (autoAdvanceTimerRef.current) {
       clearInterval(autoAdvanceTimerRef.current);
       autoAdvanceTimerRef.current = null;
@@ -379,11 +400,16 @@ export default function VideoPlayer({
       setBuffered(video.buffered.end(video.buffered.length - 1));
     }
 
-    // 90% completion
+    // Auto-complete at ≥95% watched, but ONLY once the user has actually
+    // started playback this mount. Without the play-gate, a "resume" seek
+    // to a position past the threshold would instantly trigger complete +
+    // refetch, which on re-visits loops back through the same code path
+    // and shows a stack of "Resuming from …" toasts.
     if (
       !markedComplete &&
+      hasPlayedThisMountRef.current &&
       video.duration > 0 &&
-      video.currentTime / video.duration >= 0.9
+      video.currentTime / video.duration >= 0.95
     ) {
       setMarkedComplete(true);
       onComplete?.();
@@ -419,6 +445,13 @@ export default function VideoPlayer({
     if (video) pushWatchEvent("buffer", video.currentTime);
   }, [pushWatchEvent]);
   const handleCanPlay = useCallback(() => setIsWaiting(false), []);
+  const handlePlaying = useCallback(() => setIsWaiting(false), []);
+  const handleLoadedData = useCallback(() => setIsWaiting(false), []);
+
+  const handleError = useCallback(() => {
+    setIsWaiting(false);
+    toast.error(t("videoLoadError"));
+  }, [t]);
 
   const handleEnded = useCallback(() => {
     setIsPlaying(false);
@@ -786,20 +819,24 @@ export default function VideoPlayer({
       >
         {/* Video Element */}
         <video
+          key={`${material.id}:${selectedVariant?.id ?? "default"}`}
           ref={videoRef}
           className="w-full h-full object-contain"
           preload="metadata"
           playsInline
-          crossOrigin="anonymous"
+          {...(material.captionsUrl ? { crossOrigin: "anonymous" as const } : {})}
           onClick={togglePlayPause}
           onPlay={handlePlay}
           onPause={handlePause}
           onLoadedMetadata={handleLoadedMetadata}
+          onLoadedData={handleLoadedData}
           onTimeUpdate={handleTimeUpdate}
           onSeeking={handleSeeking}
           onWaiting={handleWaiting}
           onCanPlay={handleCanPlay}
+          onPlaying={handlePlaying}
           onEnded={handleEnded}
+          onError={handleError}
         >
           {videoSrc && (
             <source

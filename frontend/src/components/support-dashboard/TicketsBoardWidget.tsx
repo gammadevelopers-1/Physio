@@ -40,6 +40,8 @@ const TicketsBoardWidget = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const unknownLabel = t("ticketsBoard.unknownCustomer");
+
   useEffect(() => {
     const fetchTickets = async () => {
       setIsLoading(true);
@@ -63,7 +65,7 @@ const TicketsBoardWidget = () => {
           subject: t.subject,
           customer: [t.studentFirstName, t.studentLastName]
             .filter(Boolean)
-            .join(" ") || "Unknown",
+            .join(" ") || unknownLabel,
           category: t.category,
           priority: priorityMap[t.priority] || "Medium",
           status: statusMap[t.status] || "New",
@@ -177,22 +179,22 @@ const TicketsBoardWidget = () => {
         <table className="w-full min-w-[760px]">
           <thead>
             <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
-              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
+              <th className="text-start text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.id")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
+              <th className="text-start text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.subject")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
+              <th className="text-start text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.customer")}
               </th>
               <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5 hidden md:table-cell">
                 {t("ticketsBoard.columns.category")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
+              <th className="text-start text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.priority")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
+              <th className="text-start text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.status")}
               </th>
             </tr>

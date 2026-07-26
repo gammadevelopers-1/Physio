@@ -201,8 +201,8 @@ const TANavbar = () => {
                 const isActive = isActiveRoute(item.href);
                 return (
                   <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} aria-current={isActive ? "page" : undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-[#FFF8E6] text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"}`}>
-                    <Icon className={`w-5 h-5 ${isActive ? "text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)]"}`} />
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"}`}>
+                    <Icon className={`w-5 h-5 ${isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`} />
                     <span className={`text-sm ${isActive ? "font-medium" : ""}`}>{item.label}</span>
                   </Link>
                 );

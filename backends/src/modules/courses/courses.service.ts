@@ -8,7 +8,7 @@ import {
   Logger,
   forwardRef,
 } from '@nestjs/common';
-import { eq, and, ilike, or, desc, asc, count, sql, inArray, isNull, ne } from 'drizzle-orm';
+import { eq, and, ilike, or, desc, asc, count, sql, inArray, isNull, isNotNull, ne } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courses,
@@ -24,6 +24,10 @@ import {
   certificateRequests,
   users,
   waitlists,
+  materialVariants,
+  questions,
+  courseRedemptionSettings,
+  pointsConfig,
   COURSE_STATUS,
   CERTIFICATE_STATUS,
   NELC_EVENT_TYPE,
@@ -47,6 +51,7 @@ import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { RefundService } from '../payments/services/refund.service';
+import { DiscountService } from '../payments/services/discount.service';
 import { XapiService } from '../xapi/xapi.service';
 import { CancelCourseDto, CancelCourseResult } from './dto/cancel-course.dto';
 import {
@@ -73,14 +78,47 @@ export class CoursesService {
     private readonly sessionsService: SessionsService,
     @Inject(forwardRef(() => RefundService))
     private readonly refundService: RefundService,
+    @Inject(forwardRef(() => DiscountService))
+    private readonly discountService: DiscountService,
     private readonly xapiService: XapiService,
   ) {}
 
   /**
-   * Write a course-action entry to audit_logs. Currently only fires for
-   * admin-initiated actions — manager actions are covered by NELC audit
-   * (which is the regulator-facing log). This second log surfaces
-   * platform-level oversight in the admin-only Logs page.
+   * Write a course-action entry to `audit_logs`. Fires for EVERY actor
+   * (instructor, manager, admin) so the per-course audit trail is
+   * complete regardless of who performed the action. NELC audit
+   * remains the regulator-facing log; this second log powers the
+   * platform-level oversight in the admin/manager per-course Audit
+   * tab and the admin Logs page.
+   *
+   * Historically this gated on `isGlobalAdmin(actor)` — that meant
+   * every manager-driven action (activate, request-changes, archive,
+   * etc.) was invisible in the audit UI, which Amna flagged as a
+   * compliance gap. The gate is removed. `ipAddress` is optional so
+   * older call sites that don't have the request in scope still work.
+   */
+  private async logCourseAction(
+    actor: AuthenticatedUser,
+    courseId: string,
+    action: string,
+    metadata?: Record<string, unknown>,
+    ipAddress?: string,
+  ): Promise<void> {
+    await this.auditLogService.log({
+      entityType: 'course',
+      entityId: courseId,
+      action,
+      performedBy: actor.id,
+      metadata,
+      ipAddress,
+    });
+  }
+
+  /**
+   * @deprecated Use {@link logCourseAction} instead. Kept as a thin
+   * alias so existing call sites (that historically only logged for
+   * admins) now log for every actor too — no behavior change other
+   * than widened coverage.
    */
   private async maybeLogAdminAction(
     actor: AuthenticatedUser,
@@ -88,14 +126,7 @@ export class CoursesService {
     action: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
-    if (!isGlobalAdmin(actor)) return;
-    await this.auditLogService.log({
-      entityType: 'course',
-      entityId: courseId,
-      action,
-      performedBy: actor.id,
-      metadata,
-    });
+    return this.logCourseAction(actor, courseId, action, metadata);
   }
 
   /**
@@ -227,7 +258,369 @@ export class CoursesService {
       this.notifyInstructorAssigned(instructorId, course.title, user.id).catch(() => {});
     }
 
+    // Audit — captures who created the course, which instructor was
+    // assigned, and the delivery type so the per-course audit tab
+    // shows creation context. Previously missing; Amna flagged this
+    // as a compliance gap.
+    await this.logCourseAction(user, course.id, 'course.created', {
+      title: course.title,
+      deliveryType: course.deliveryType,
+      instructorId,
+      managerId,
+    });
+
     return course;
+  }
+
+  /**
+   * Duplicate an existing course into a fresh draft.
+   *
+   * Copies every configuration/content field and every child row (modules,
+   * materials + variants, assessments + questions, assistants, redemption
+   * settings), remapping FKs. Deliberately DOES NOT copy runtime/student
+   * data (enrollments, waitlists, sessions, attendance, submissions,
+   * progress, certificates, ratings, payments, invoices, refunds, surveys).
+   *
+   * The new course lands as `draft` with dates cleared so the manager must
+   * set startDate/endDate and re-submit the normal draft → activate flow.
+   * No emails fire on duplicate — the usual activation notifications
+   * trigger later when the manager activates the new offering.
+   */
+  async duplicateCourse(sourceId: string, user: AuthenticatedUser) {
+    const [source] = await db
+      .select()
+      .from(courses)
+      .where(and(eq(courses.id, sourceId), isNull(courses.deletedAt)))
+      .limit(1);
+    if (!source) {
+      throw new NotFoundException('Course not found');
+    }
+
+    // Ownership check — same rules as findOne/update.
+    if (!isGlobalAdmin(user)) {
+      if (isManager(user)) {
+        if (source.managerId && source.managerId !== user.id) {
+          throw new ForbiddenException(
+            'You do not have access to this course',
+          );
+        }
+      } else if (source.instructorId !== user.id) {
+        throw new ForbiddenException('You do not have access to this course');
+      }
+    }
+
+    // Localised " (Copy)" / " (نسخة)" suffix keeps titles disambiguated in
+    // the list. Truncate to fit varchar(255).
+    const suffixEn = ' (Copy)';
+    const suffixAr = ' (نسخة)';
+    const withSuffix = (value: string | null | undefined, suffix: string, max = 255) => {
+      if (!value) return value ?? null;
+      const combined = `${value}${suffix}`;
+      return combined.length > max ? combined.slice(0, max) : combined;
+    };
+
+    const newCourseId = await db.transaction(async (tx) => {
+      // 1. New courses row — copy config, reset dates + lifecycle audit.
+      const [inserted] = await tx
+        .insert(courses)
+        .values({
+          instructorId: source.instructorId,
+          managerId: source.managerId,
+          title: withSuffix(source.title, suffixEn) as string,
+          titleAr: withSuffix(source.titleAr, suffixAr),
+          description: source.description,
+          descriptionAr: source.descriptionAr,
+          deliveryType: source.deliveryType,
+          status: COURSE_STATUS.DRAFT,
+          thumbnail: source.thumbnail,
+          maxEnrollment: source.maxEnrollment,
+          price: source.price,
+          // Sale window is date-scoped — reset it. Manager sets a fresh one
+          // for the new offering if needed.
+          salePercent: null,
+          saleAmount: null,
+          saleStartsAt: null,
+          saleEndsAt: null,
+          saleAllowsCoupon: source.saleAllowsCoupon,
+          maxDiscountPct: source.maxDiscountPct,
+          vatTreatment: source.vatTreatment,
+          cmeHours: source.cmeHours,
+          // Date/lifecycle fields cleared so this must be a new offering.
+          enrollmentDeadline: null,
+          isCmeAccredited: source.isCmeAccredited,
+          language: source.language,
+          startDate: null,
+          endDate: null,
+          atRiskAttendanceThreshold: source.atRiskAttendanceThreshold,
+          atRiskScoreThreshold: source.atRiskScoreThreshold,
+          atRiskInactivityDays: source.atRiskInactivityDays,
+          // Cohort naming is offering-specific — clear it.
+          cohort: null,
+          accreditationNumber: source.accreditationNumber,
+          nelcReviewLink: source.nelcReviewLink,
+          recordingShareEnabled: source.recordingShareEnabled,
+          overview: source.overview,
+          overviewAr: source.overviewAr,
+          objectives: source.objectives,
+          objectivesAr: source.objectivesAr,
+          features: source.features,
+          featuresAr: source.featuresAr,
+          targetAudience: source.targetAudience,
+          targetAudienceAr: source.targetAudienceAr,
+          requirements: source.requirements,
+          requirementsAr: source.requirementsAr,
+          notices: source.notices,
+          noticesAr: source.noticesAr,
+          venue: source.venue,
+          venueAr: source.venueAr,
+          faqs: source.faqs,
+          showContents: source.showContents,
+          sectionsOrder: source.sectionsOrder,
+          // Inherit the source's public-visibility setting so the copy
+          // behaves the same way as the original once activated. Feature
+          // flag stays off — being "featured" is per-offering, not per
+          // course-template, so it must be re-earned by the new offering.
+          visibleOnPublicSite: source.visibleOnPublicSite,
+          isFeatured: false,
+          seoTitle: source.seoTitle,
+          seoDescription: source.seoDescription,
+          seoKeywords: source.seoKeywords,
+          seoOgImage: source.seoOgImage,
+          seoNoindex: source.seoNoindex,
+          assessmentProctoringEnabled: source.assessmentProctoringEnabled,
+          assessmentTimeLimitEnforced: source.assessmentTimeLimitEnforced,
+          assessmentMaxRetakes: source.assessmentMaxRetakes,
+          assessmentRetakeCoolingHours: source.assessmentRetakeCoolingHours,
+          assessmentRetakeScorePolicy: source.assessmentRetakeScorePolicy,
+          assessmentRetakeScope: source.assessmentRetakeScope,
+          // Review + cancel + reschedule + delete audit all reset — this
+          // is a fresh draft, not a continuation.
+        })
+        .returning({ id: courses.id });
+
+      const newId = inserted.id;
+
+      // 2. Modules — remap old moduleId → new for downstream FKs.
+      const srcModules = await tx
+        .select()
+        .from(courseModules)
+        .where(eq(courseModules.courseId, sourceId));
+      const moduleIdMap = new Map<string, string>();
+      if (srcModules.length > 0) {
+        const inserts = srcModules.map((m) => ({
+          courseId: newId,
+          title: m.title,
+          titleAr: m.titleAr,
+          orderIndex: m.orderIndex,
+          type: m.type,
+          durationMinutes: m.durationMinutes,
+        }));
+        const insertedModules = await tx
+          .insert(courseModules)
+          .values(inserts)
+          .returning({ id: courseModules.id, orderIndex: courseModules.orderIndex, title: courseModules.title });
+        // Match old→new by orderIndex+title (stable within a course).
+        for (const oldModule of srcModules) {
+          const match = insertedModules.find(
+            (im) =>
+              im.orderIndex === oldModule.orderIndex &&
+              im.title === oldModule.title,
+          );
+          if (match) moduleIdMap.set(oldModule.id, match.id);
+        }
+      }
+
+      // 3. Materials — copy only latest versions (previousVersionId chain
+      //    is version history, not content to re-clone). fileUrl reuses
+      //    the same GCS object; the copy points to the same immutable file.
+      const srcMaterials = await tx
+        .select()
+        .from(courseMaterials)
+        .where(
+          and(
+            eq(courseMaterials.courseId, sourceId),
+            isNull(courseMaterials.deletedAt),
+          ),
+        );
+      const materialIdMap = new Map<string, string>();
+      if (srcMaterials.length > 0) {
+        // Filter to latest version per lineage: drop rows that appear as
+        // some other row's `previousVersionId` (superseded).
+        const supersededIds = new Set(
+          srcMaterials
+            .map((m) => m.previousVersionId)
+            .filter((id): id is string => !!id),
+        );
+        const latestOnly = srcMaterials.filter((m) => !supersededIds.has(m.id));
+
+        for (const m of latestOnly) {
+          const [insertedMaterial] = await tx
+            .insert(courseMaterials)
+            .values({
+              courseId: newId,
+              moduleId: m.moduleId ? moduleIdMap.get(m.moduleId) ?? null : null,
+              title: m.title,
+              type: m.type,
+              fileUrl: m.fileUrl,
+              fileSize: m.fileSize,
+              mimeType: m.mimeType,
+              // Fresh lineage — reset version counter and drop history link.
+              version: 1,
+              previousVersionId: null,
+              orderIndex: m.orderIndex,
+              status: m.status,
+              wcagStatus: m.wcagStatus,
+              wcagDetails: m.wcagDetails,
+              captionsUrl: m.captionsUrl,
+              transcriptUrl: m.transcriptUrl,
+              autoTranscribe: m.autoTranscribe,
+              uploadedBy: user.id,
+            })
+            .returning({ id: courseMaterials.id });
+          materialIdMap.set(m.id, insertedMaterial.id);
+
+          // 3a. Material variants (video renditions).
+          const srcVariants = await tx
+            .select()
+            .from(materialVariants)
+            .where(eq(materialVariants.materialId, m.id));
+          if (srcVariants.length > 0) {
+            await tx.insert(materialVariants).values(
+              srcVariants.map((v) => ({
+                materialId: insertedMaterial.id,
+                resolution: v.resolution,
+                fileUrl: v.fileUrl,
+                fileSize: v.fileSize,
+                width: v.width,
+                height: v.height,
+                bitrate: v.bitrate,
+                mimeType: v.mimeType,
+              })),
+            );
+          }
+        }
+      }
+
+      // 4. Assessments — remap moduleId, clear dueDate + flag audit.
+      const srcAssessments = await tx
+        .select()
+        .from(assessments)
+        .where(eq(assessments.courseId, sourceId));
+      const assessmentIdMap = new Map<string, string>();
+      for (const a of srcAssessments) {
+        const [insertedAssessment] = await tx
+          .insert(assessments)
+          .values({
+            courseId: newId,
+            moduleId: a.moduleId ? moduleIdMap.get(a.moduleId) ?? null : null,
+            title: a.title,
+            type: a.type,
+            totalMarks: a.totalMarks,
+            passingMarks: a.passingMarks,
+            durationMinutes: a.durationMinutes,
+            attemptsAllowed: a.attemptsAllowed,
+            status: a.status,
+            instructions: a.instructions,
+            // dueDate is date-specific to the source offering.
+            dueDate: null,
+            assignmentFiles: a.assignmentFiles,
+            proctoringEnabled: a.proctoringEnabled,
+            proctoringRules: a.proctoringRules,
+            timeLimitEnforced: a.timeLimitEnforced,
+            maxRetakes: a.maxRetakes,
+            retakeCoolingHours: a.retakeCoolingHours,
+            retakeScorePolicy: a.retakeScorePolicy,
+            retakeScope: a.retakeScope,
+            randomizeOrder: a.randomizeOrder,
+            questionsPerAttempt: a.questionsPerAttempt,
+          })
+          .returning({ id: assessments.id });
+        assessmentIdMap.set(a.id, insertedAssessment.id);
+      }
+
+      // 5. Questions — remap assessmentId + courseId.
+      const srcQuestions = await tx
+        .select()
+        .from(questions)
+        .where(eq(questions.courseId, sourceId));
+      if (srcQuestions.length > 0) {
+        const questionInserts = srcQuestions
+          .map((q) => {
+            // Skip questions that reference an assessment we didn't copy
+            // (shouldn't happen — all assessments are copied — but defend
+            // against orphaned rows).
+            if (q.assessmentId && !assessmentIdMap.has(q.assessmentId)) {
+              return null;
+            }
+            return {
+              assessmentId: q.assessmentId
+                ? assessmentIdMap.get(q.assessmentId)!
+                : null,
+              courseId: newId,
+              type: q.type,
+              questionText: q.questionText,
+              questionTextAr: q.questionTextAr,
+              options: q.options,
+              correctAnswer: q.correctAnswer,
+              marks: q.marks,
+              difficultyLevel: q.difficultyLevel,
+            };
+          })
+          .filter((v): v is NonNullable<typeof v> => v !== null);
+        if (questionInserts.length > 0) {
+          await tx.insert(questions).values(questionInserts);
+        }
+      }
+
+      // 6. Course assistants — copy the same invited co-instructors as
+      //    approved, reassigned to the duplicating user for audit.
+      const srcAssistants = await tx
+        .select()
+        .from(courseAssistants)
+        .where(eq(courseAssistants.courseId, sourceId));
+      if (srcAssistants.length > 0) {
+        await tx.insert(courseAssistants).values(
+          srcAssistants.map((asst) => ({
+            courseId: newId,
+            userId: asst.userId,
+            status: 'approved',
+            priority: asst.priority,
+            assignedBy: user.id,
+          })),
+        );
+      }
+
+      // 7. Redemption settings — 1:1 by courseId PK.
+      const [srcRedemption] = await tx
+        .select()
+        .from(courseRedemptionSettings)
+        .where(eq(courseRedemptionSettings.courseId, sourceId))
+        .limit(1);
+      if (srcRedemption) {
+        await tx.insert(courseRedemptionSettings).values({
+          courseId: newId,
+          redeemableForFree: srcRedemption.redeemableForFree,
+          freeUnlockCostPoints: srcRedemption.freeUnlockCostPoints,
+          maxRedemptionPct: srcRedemption.maxRedemptionPct,
+        });
+      }
+
+      return newId;
+    });
+
+    // Admin oversight log — only fires for global admins.
+    await this.logCourseAction(user,newCourseId, 'course_duplicated', {
+      sourceCourseId: sourceId,
+      sourceTitle: source.title,
+    });
+
+    // Return the fresh row so the frontend can navigate straight to it.
+    const [fresh] = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.id, newCourseId))
+      .limit(1);
+    return fresh;
   }
 
   /**
@@ -393,6 +786,10 @@ export class CoursesService {
     cmeAccredited?: boolean;
     language?: string;
     availability?: string;
+    /** true → only courses with an active discount (per-course sale OR
+     * matching auto-apply campaign). Applied AFTER campaign resolution so
+     * campaign-covered courses show up too. */
+    onSale?: boolean;
     /**
      * Top-level visibility scope:
      *   'open'     → currently enrollable: not completed, deadline not passed,
@@ -501,9 +898,11 @@ export class CoursesService {
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
         salePercent: courses.salePercent,
+        saleAmount: courses.saleAmount,
         saleStartsAt: courses.saleStartsAt,
         saleEndsAt: courses.saleEndsAt,
         saleAllowsCoupon: courses.saleAllowsCoupon,
+        maxDiscountPct: courses.maxDiscountPct,
         cmeHours: courses.cmeHours,
         enrollmentDeadline: courses.enrollmentDeadline,
         isCmeAccredited: courses.isCmeAccredited,
@@ -572,6 +971,7 @@ export class CoursesService {
         effectivePrice: sale.effectivePrice,
         onSale: sale.onSale,
         salePercent: sale.onSale ? sale.salePercent : null,
+        saleAmount: sale.onSale ? sale.saleAmount : null,
         saleAllowsCoupon: sale.saleAllowsCoupon,
         // Don't expose the raw sale window publicly (leaks future-sale schedule).
         saleStartsAt: undefined,
@@ -580,7 +980,63 @@ export class CoursesService {
         isFull,
         availabilityStatus,
       };
-    });
+    }).map((c) => ({ ...c, campaignDiscount: null as null | {
+      campaignId: string; campaignName: string; campaignType: 'standard' | 'early_bird';
+      discountType: 'percentage' | 'fixed'; discountValue: number;
+      amountOff: number; basePrice: number; finalPrice: number;
+    } }));
+
+    // Tag each course with any active auto-apply campaign discount so the
+    // public card can render a "Sale" badge + effective price even when the
+    // discount comes from a global campaign (not a per-course sale). Runs
+    // one query for all campaigns; scope matching happens in-memory.
+    const campaignMap = await this.discountService.resolveActiveCampaignDiscountsForCourses(
+      data.map((c) => ({
+        id: c.id,
+        price: c.price,
+        deliveryType: c.deliveryType,
+        maxDiscountPct: c.maxDiscountPct,
+        salePercent: c.salePercent,
+        saleAmount: c.saleAmount,
+        saleStartsAt: c.saleStartsAt,
+        saleEndsAt: c.saleEndsAt,
+        saleAllowsCoupon: c.saleAllowsCoupon,
+      })),
+    );
+    for (const row of enriched) {
+      const camp = campaignMap.get(row.id);
+      if (camp) {
+        row.campaignDiscount = camp;
+        // Reflect the "there is a discount" flag so the frontend "on sale"
+        // rule is a single boolean. Effective price stays anchored to the
+        // per-course sale — the campaign discount surfaces separately as
+        // `campaignDiscount.finalPrice` so the two layers stay traceable.
+        row.onSale = true;
+        // Merge coupon-stacking permission across BOTH discount layers.
+        // Frontend checkout uses `saleAllowsCoupon` as the single gate for
+        // whether to show the coupon input. If a campaign is the only
+        // active discount, its `allowsCoupon` wins. If both layers apply,
+        // both must allow (strictest rule wins).
+        const perCourseSaleActive =
+          row.salePercent !== null || row.saleAmount !== null;
+        row.saleAllowsCoupon = perCourseSaleActive
+          ? row.saleAllowsCoupon && camp.allowsCoupon
+          : camp.allowsCoupon;
+      }
+    }
+
+    // Batch-attach the points-redemption offer for every course in one
+    // query. `null` when no row exists OR the row is disabled OR the cost
+    // is missing/zero — the FE reads redemption?.enabled as the gate for
+    // the "or X points" pill. Handles both explicit-cost rows and the
+    // auto-cost derived from price × pointsPerCurrency.
+    const redemptionMap = await this.resolvePublicRedemptionForCourses(
+      data.map((c) => ({ id: c.id, price: c.price })),
+    );
+    const enrichedWithRedemption = enriched.map((row) => ({
+      ...row,
+      redemption: redemptionMap.get(row.id) ?? null,
+    }));
 
     // Top-level scope: split open (currently enrollable / live) vs archived
     // (completed, deadline passed, or end date passed). Default is 'open' so
@@ -602,7 +1058,7 @@ export class CoursesService {
       hasEnded(c);
 
     const scope = params.scope === 'archived' ? 'archived' : 'open';
-    let filtered = enriched.filter((c) =>
+    let filtered = enrichedWithRedemption.filter((c) =>
       scope === 'archived' ? isArchived(c) : !isArchived(c),
     );
 
@@ -622,6 +1078,13 @@ export class CoursesService {
       } else if (params.availability === 'full') {
         filtered = filtered.filter((c) => c.isFull);
       }
+    }
+
+    // On-sale filter: keep only courses with an active per-course sale OR
+    // a matched auto-apply campaign discount. Runs post-map because both
+    // signals are in-memory after campaign resolution.
+    if (params.onSale) {
+      filtered = filtered.filter((c) => c.onSale || c.campaignDiscount !== null);
     }
 
     const [countResult] = await db
@@ -671,7 +1134,7 @@ export class CoursesService {
       `Course "${course.title}" featured=${updated.isFeatured} by ${user.id}`,
     );
 
-    await this.maybeLogAdminAction(user, courseId, 'course.toggle_featured', {
+    await this.logCourseAction(user,courseId, 'course.toggle_featured', {
       title: course.title,
       isFeatured: updated.isFeatured,
     });
@@ -697,9 +1160,11 @@ export class CoursesService {
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
         salePercent: courses.salePercent,
+        saleAmount: courses.saleAmount,
         saleStartsAt: courses.saleStartsAt,
         saleEndsAt: courses.saleEndsAt,
         saleAllowsCoupon: courses.saleAllowsCoupon,
+        maxDiscountPct: courses.maxDiscountPct,
         cmeHours: courses.cmeHours,
         enrollmentDeadline: courses.enrollmentDeadline,
         isCmeAccredited: courses.isCmeAccredited,
@@ -778,7 +1243,7 @@ export class CoursesService {
 
     // Enrich with capacity/availability (same rules as findAllPublic)
     const now = new Date();
-    return picked.map((c) => {
+    const enriched = picked.map((c) => {
       const isSelfPaced = c.deliveryType === 'self-paced';
       let effectiveMax: number | null;
       if (isSelfPaced) {
@@ -814,6 +1279,7 @@ export class CoursesService {
         effectivePrice: sale.effectivePrice,
         onSale: sale.onSale,
         salePercent: sale.onSale ? sale.salePercent : null,
+        saleAmount: sale.onSale ? sale.saleAmount : null,
         saleAllowsCoupon: sale.saleAllowsCoupon,
         // Don't expose the raw sale window publicly (leaks future-sale schedule).
         saleStartsAt: undefined,
@@ -821,8 +1287,93 @@ export class CoursesService {
         remainingSeats,
         isFull,
         availabilityStatus,
+        campaignDiscount: null as null | {
+          campaignId: string; campaignName: string; campaignType: 'standard' | 'early_bird';
+          discountType: 'percentage' | 'fixed'; discountValue: number;
+          amountOff: number; basePrice: number; finalPrice: number;
+        },
       };
     });
+
+    const campaignMap = await this.discountService.resolveActiveCampaignDiscountsForCourses(
+      picked.map((c) => ({
+        id: c.id,
+        price: c.price,
+        deliveryType: c.deliveryType,
+        maxDiscountPct: c.maxDiscountPct,
+        salePercent: c.salePercent,
+        saleAmount: c.saleAmount,
+        saleStartsAt: c.saleStartsAt,
+        saleEndsAt: c.saleEndsAt,
+        saleAllowsCoupon: c.saleAllowsCoupon,
+      })),
+    );
+    for (const row of enriched) {
+      const camp = campaignMap.get(row.id);
+      if (camp) {
+        row.campaignDiscount = camp;
+        row.onSale = true;
+      }
+    }
+
+    // Same points-redemption resolution as findAllPublic — batched so the
+    // homepage featured strip picks up the "or X points" pill for free.
+    const redemptionMap = await this.resolvePublicRedemptionForCourses(
+      picked.map((c) => ({ id: c.id, price: c.price })),
+    );
+    return enriched.map((row) => ({
+      ...row,
+      redemption: redemptionMap.get(row.id) ?? null,
+    }));
+  }
+
+  /**
+   * Resolve the public "redeem with points" offer for a batch of courses.
+   *
+   * Returns a Map<courseId, { enabled, pointsCost }> — the FE reads the
+   * whole envelope so it can tell "not configured" (map miss) from
+   * "configured but toggled off" (in map with enabled=false).
+   *
+   * Cost precedence: explicit `free_unlock_cost_points` overrides the
+   * derived `price × conversionRatePointsPerSar`. Rows whose derived cost
+   * comes out ≤ 0 are omitted from the map — the pill would be nonsensical.
+   *
+   * NOTE: exposed on the public detail + list responses; no auth gating on
+   * the read side. Whether the CURRENT USER has enough points is decided
+   * client-side once the caller passes down their own balance.
+   */
+  private async resolvePublicRedemptionForCourses(
+    rows: Array<{ id: string; price: string | number | null }>,
+  ): Promise<Map<string, { enabled: boolean; pointsCost: number }>> {
+    const map = new Map<string, { enabled: boolean; pointsCost: number }>();
+    if (rows.length === 0) return map;
+
+    const [config] = await db.select().from(pointsConfig).limit(1);
+    const conversionRate = config?.conversionRatePointsPerSar ?? 10;
+
+    const settings = await db
+      .select({
+        courseId: courseRedemptionSettings.courseId,
+        redeemableForFree: courseRedemptionSettings.redeemableForFree,
+        freeUnlockCostPoints: courseRedemptionSettings.freeUnlockCostPoints,
+      })
+      .from(courseRedemptionSettings)
+      .where(inArray(courseRedemptionSettings.courseId, rows.map((r) => r.id)));
+
+    const settingsById = new Map(settings.map((s) => [s.courseId, s]));
+    for (const row of rows) {
+      const s = settingsById.get(row.id);
+      if (!s) continue;
+      const priceNum = Number(row.price ?? 0);
+      const computed = Math.ceil(priceNum * conversionRate);
+      const cost = s.freeUnlockCostPoints ?? computed;
+      if (cost <= 0) continue;
+      map.set(row.id, {
+        enabled: s.redeemableForFree,
+        pointsCost: cost,
+      });
+    }
+    return map;
   }
 
   /**
@@ -844,9 +1395,11 @@ export class CoursesService {
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
         salePercent: courses.salePercent,
+        saleAmount: courses.saleAmount,
         saleStartsAt: courses.saleStartsAt,
         saleEndsAt: courses.saleEndsAt,
         saleAllowsCoupon: courses.saleAllowsCoupon,
+        maxDiscountPct: courses.maxDiscountPct,
         cmeHours: courses.cmeHours,
         enrollmentDeadline: courses.enrollmentDeadline,
         isCmeAccredited: courses.isCmeAccredited,
@@ -1157,15 +1710,53 @@ export class CoursesService {
     };
 
     const sale = getEffectivePrice(rest);
+
+    // Resolve any active auto-apply campaign that covers this course so
+    // the course detail page can render the sale badge + final price too.
+    const campaignMap =
+      await this.discountService.resolveActiveCampaignDiscountsForCourses([
+        {
+          id: rest.id,
+          price: rest.price,
+          deliveryType: rest.deliveryType,
+          maxDiscountPct: rest.maxDiscountPct,
+          salePercent: rest.salePercent,
+          saleAmount: rest.saleAmount,
+          saleStartsAt: rest.saleStartsAt,
+          saleEndsAt: rest.saleEndsAt,
+          saleAllowsCoupon: rest.saleAllowsCoupon,
+        },
+      ]);
+    const campaignDiscount = campaignMap.get(rest.id) ?? null;
+    // Merge coupon-stacking permission across per-course sale AND campaign
+    // (same rule as findAllPublic). Frontend checkout uses this single
+    // flag to decide whether to show the coupon input.
+    const mergedSaleAllowsCoupon = campaignDiscount
+      ? sale.onSale
+        ? sale.saleAllowsCoupon && campaignDiscount.allowsCoupon
+        : campaignDiscount.allowsCoupon
+      : sale.saleAllowsCoupon;
+
+    // Points-redemption offer for this course. Same shape as the list
+    // payload; drives the "Redeem for X points" secondary CTA on the
+    // detail page + the "or X points" pill on any card that renders it.
+    const redemptionMap = await this.resolvePublicRedemptionForCourses([
+      { id: rest.id, price: rest.price },
+    ]);
+    const redemption = redemptionMap.get(rest.id) ?? null;
+
     return {
       ...rest,
       totalHours: Math.round((rest.totalHours / 60) * 10) / 10,
       avgRating: Number(Number(rest.avgRating || 0).toFixed(1)),
       price: sale.originalPrice,
       effectivePrice: sale.effectivePrice,
-      onSale: sale.onSale,
+      onSale: sale.onSale || campaignDiscount !== null,
       salePercent: sale.onSale ? sale.salePercent : null,
-      saleAllowsCoupon: sale.saleAllowsCoupon,
+      saleAmount: sale.onSale ? sale.saleAmount : null,
+      saleAllowsCoupon: mergedSaleAllowsCoupon,
+      campaignDiscount,
+      redemption,
       // Don't expose the raw sale window publicly (leaks future-sale schedule).
       saleStartsAt: undefined,
       saleEndsAt: undefined,
@@ -1219,13 +1810,50 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
+    // Resolve display names/emails for the instructor and manager so
+    // the manager/admin course detail Team tab can render them without
+    // a second round-trip. Kept as a single-shot IN () so it's one
+    // query regardless of whether the manager is set.
+    const relatedIds = [course.instructorId, course.managerId].filter(
+      (id): id is string => !!id,
+    );
+    const relatedUsers = relatedIds.length
+      ? await db
+          .select({
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+          })
+          .from(users)
+          .where(inArray(users.id, relatedIds))
+      : [];
+    const nameOf = (id: string | null | undefined) => {
+      if (!id) return null;
+      const u = relatedUsers.find((r) => r.id === id);
+      if (!u) return null;
+      const combined = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+      return combined || u.email || null;
+    };
+    const emailOf = (id: string | null | undefined) => {
+      if (!id) return null;
+      return relatedUsers.find((r) => r.id === id)?.email ?? null;
+    };
+
     const modules = await db
       .select()
       .from(courseModules)
       .where(eq(courseModules.courseId, courseId))
       .orderBy(asc(courseModules.orderIndex));
 
-    return { ...course, modules };
+    return {
+      ...course,
+      modules,
+      instructorName: nameOf(course.instructorId),
+      instructorEmail: emailOf(course.instructorId),
+      managerName: nameOf(course.managerId),
+      managerEmail: emailOf(course.managerId),
+    };
   }
 
   /**
@@ -1385,7 +2013,7 @@ export class CoursesService {
     ]) {
       if (k in dto) auditPayload[k] = (dto as any)[k];
     }
-    await this.maybeLogAdminAction(user, courseId, 'course.update', auditPayload);
+    await this.logCourseAction(user,courseId, 'course.update', auditPayload);
 
     return updated;
   }
@@ -2922,7 +3550,20 @@ export class CoursesService {
       );
     }
 
-    // Validate all materials are live or archived
+    // Validate all materials THAT WILL BE DELIVERED are live/archived.
+    //
+    // Only count materials attached to a module (moduleId IS NOT NULL) —
+    // orphans sitting in the content library aren't going to reach
+    // students. Instructors regularly detach a bad upload and add a
+    // replacement; if we counted library items, the detached one would
+    // silently block submission with no way to clear it from the UI.
+    //
+    // Also exclude 'failed' materials. A failed material is a system
+    // outcome (Cloud Run Job died, WCAG timed out, etc.), not a
+    // pending-approval state — nothing an instructor can do to move it
+    // to 'live'. If it's attached to a module the instructor should
+    // detach or re-upload it; if it's orphaned it's already ignored by
+    // the moduleId filter above.
     const pendingMaterials = await db
       .select({
         id: courseMaterials.id,
@@ -2933,7 +3574,8 @@ export class CoursesService {
       .where(
         and(
           eq(courseMaterials.courseId, courseId),
-          sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
+          isNotNull(courseMaterials.moduleId),
+          sql`${courseMaterials.status} NOT IN ('live', 'archived', 'failed')`,
           isNull(courseMaterials.deletedAt),
         ),
       );
@@ -3112,7 +3754,7 @@ export class CoursesService {
 
     this.logger.log(`Changes requested on course "${course.title}" by ${user.id}: ${note}`);
 
-    await this.maybeLogAdminAction(user, courseId, 'course.request_changes', {
+    await this.logCourseAction(user,courseId, 'course.request_changes', {
       title: course.title,
       note,
     });
@@ -3344,7 +3986,13 @@ export class CoursesService {
       // Validate course readiness (modules, sessions, dates, CME hours)
       await this.validateCourseReadiness(courseId, 'activation');
 
-      // Check all materials have been reviewed (status = 'live')
+      // Check all materials THAT WILL BE DELIVERED have been reviewed
+      // (status = 'live' or 'archived'). Only materials attached to a
+      // module count — orphans in the content library aren't going to
+      // reach students, and 'failed' materials are a system outcome
+      // (Cloud Run Job died, WCAG timed out) that no amount of manager
+      // approval can fix. Mirror the same rule used in submitForReview
+      // to keep the two gates consistent.
       const pendingMaterials = await db
         .select({
           id: courseMaterials.id,
@@ -3355,7 +4003,8 @@ export class CoursesService {
         .where(
           and(
             eq(courseMaterials.courseId, courseId),
-            sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
+            isNotNull(courseMaterials.moduleId),
+            sql`${courseMaterials.status} NOT IN ('live', 'archived', 'failed')`,
             isNull(courseMaterials.deletedAt),
           ),
         );
@@ -3407,10 +4056,11 @@ export class CoursesService {
     await this.userNotificationsService.create({
       recipientId: course.instructorId,
       type: 'course_approved',
-      title: apIsAr ? 'تمت الموافقة على الدورة' : 'Course Approved',
-      message: apIsAr
-        ? `تمت الموافقة على دورتك "${course.title}" وهي الآن نشطة.`
-        : `Your course "${course.title}" has been approved and is now active.`,
+      title: 'Course Approved',
+      message: `Your course "${course.title}" has been approved and is now active.`,
+      titleKey: 'notifications.types.course_approved.title',
+      messageKey: 'notifications.types.course_approved.messageWithTitle',
+      messageParams: { courseTitle: course.title },
       link: '/dashboard/instructor/courses',
       entityType: 'course',
       entityId: courseId,
@@ -3430,7 +4080,7 @@ export class CoursesService {
 
     this.logger.log(`Course "${course.title}" activated by ${user.id}`);
 
-    await this.maybeLogAdminAction(user, courseId, 'course.activate', {
+    await this.logCourseAction(user,courseId, 'course.activate', {
       title: course.title,
       isReactivation,
     });
@@ -3484,7 +4134,7 @@ export class CoursesService {
 
     this.logger.log(`Course "${course.title}" deactivated by ${user.id}`);
 
-    await this.maybeLogAdminAction(user, courseId, 'course.archive', {
+    await this.logCourseAction(user,courseId, 'course.archive', {
       title: course.title,
     });
 
@@ -3512,13 +4162,16 @@ export class CoursesService {
       );
     }
 
-    // Block completion if there are unreviewed materials
+    // Block completion if there are unreviewed materials attached to
+    // any module. Orphans in the content library shouldn't matter —
+    // students never saw them. Same rule as submitForReview / activate.
     const [pendingMaterials] = await db
       .select({ count: count() })
       .from(courseMaterials)
       .where(
         and(
           eq(courseMaterials.courseId, courseId),
+          isNotNull(courseMaterials.moduleId),
           sql`${courseMaterials.status} IN ('pending_review', 'changes_requested')`,
           isNull(courseMaterials.deletedAt),
         ),
@@ -3574,7 +4227,7 @@ export class CoursesService {
 
     this.logger.log(`Course "${course.title}" marked as completed by ${user.id}`);
 
-    await this.maybeLogAdminAction(user, courseId, 'course.complete', {
+    await this.logCourseAction(user,courseId, 'course.complete', {
       title: course.title,
     });
 
@@ -3961,6 +4614,14 @@ export class CoursesService {
     this.logger.log(
       `Course "${course.title}" reassigned from ${course.instructorId} to ${newInstructorId} by ${user.id}`,
     );
+
+    // Audit — captures the reassignment so the course's history shows
+    // who moved it from whom to whom. Previously missing; Amna wants
+    // every instructor change tracked for compliance.
+    await this.logCourseAction(user, courseId, 'course.instructor_reassigned', {
+      previousInstructorId: course.instructorId,
+      newInstructorId,
+    });
 
     // Notify old instructor (removed) and new instructor (assigned)
     this.notifyInstructorUnassigned(course.instructorId, course.title).catch(() => {});
@@ -5621,9 +6282,11 @@ export class CoursesService {
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
         salePercent: courses.salePercent,
+        saleAmount: courses.saleAmount,
         saleStartsAt: courses.saleStartsAt,
         saleEndsAt: courses.saleEndsAt,
         saleAllowsCoupon: courses.saleAllowsCoupon,
+        maxDiscountPct: courses.maxDiscountPct,
         cmeHours: courses.cmeHours,
         enrollmentDeadline: courses.enrollmentDeadline,
         isCmeAccredited: courses.isCmeAccredited,
@@ -5698,6 +6361,7 @@ export class CoursesService {
         effectivePrice: sale.effectivePrice,
         onSale: sale.onSale,
         salePercent: sale.onSale ? sale.salePercent : null,
+        saleAmount: sale.onSale ? sale.saleAmount : null,
         saleAllowsCoupon: sale.saleAllowsCoupon,
         // Don't expose the raw sale window publicly (leaks future-sale schedule).
         saleStartsAt: undefined,

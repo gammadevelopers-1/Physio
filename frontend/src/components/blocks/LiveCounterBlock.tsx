@@ -136,9 +136,19 @@ export function LiveCounterBlock({ data }: LiveCounterBlockProps) {
   const counters = data.counters || [];
 
   return (
+    // Outer section defaults to the themed page surface so the vertical
+    // padding around the counters card doesn't leave a white gap when
+    // the Strapi backgroundColor field is empty. The prior default of
+    // "transparent" only worked when every parent up the tree was also
+    // themed — anywhere the tree exposed a hardcoded white bg (body
+    // fallback, wrapper element), the padding read as an unrelated
+    // white band around the block. Admin can still override via the
+    // Strapi backgroundColor field for a specific accent color.
     <section
       className="px-4 lg:px-16 py-12 lg:py-20"
-      style={{ backgroundColor: data.backgroundColor || "transparent" }}
+      style={{
+        backgroundColor: data.backgroundColor || 'var(--color-surface-page)',
+      }}
     >
       <div className="max-w-[1280px] mx-auto">
         <div

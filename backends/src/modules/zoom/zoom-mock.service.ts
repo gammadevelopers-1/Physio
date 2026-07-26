@@ -12,6 +12,8 @@ import {
   UpdateZoomWebinarParams,
   WebinarRegistrantInput,
   WebinarRegistrantResult,
+  PanelistInput,
+  PanelistResult,
   ZoomConfig,
   ZoomAccountInfo,
   ZoomConnectionStatus,
@@ -212,6 +214,30 @@ export class ZoomMockService implements IZoomService {
       `[MOCK] Registered ${registrant.email} for webinar ${webinarId}`,
     );
     return result;
+  }
+
+  async registerPanelist(
+    webinarId: string,
+    panelist: PanelistInput,
+  ): Promise<PanelistResult> {
+    const panelistId = `mock_panelist_${Math.random().toString(36).slice(2, 10)}`;
+    this.logger.log(
+      `[MOCK] Panelist added to webinar ${webinarId}: ${panelist.email}`,
+    );
+    return {
+      panelistId,
+      joinUrl: `https://zoom.us/w/${webinarId}?mock=true&role=panelist&email=${encodeURIComponent(panelist.email)}`,
+    };
+  }
+
+  async renameParticipant(
+    meetingId: string,
+    participantId: string,
+    newDisplayName: string,
+  ): Promise<void> {
+    this.logger.log(
+      `[MOCK] Rename participant meeting=${meetingId} participant=${participantId} → "${newDisplayName}"`,
+    );
   }
 
   async cancelWebinarRegistrant(

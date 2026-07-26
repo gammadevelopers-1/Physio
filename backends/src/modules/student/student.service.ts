@@ -444,6 +444,10 @@ export class StudentService {
         )`,
         enrollmentId: enrollments.id,
         enrollmentStatus: enrollments.status,
+        // Where this enrollment came from — powers the small chip on the
+        // My Courses card (Redeemed with points / From reward / Granted by
+        // admin / Free). Default 'purchase' rows render no chip.
+        enrollmentSource: enrollments.source,
         progress: enrollments.progress,
         enrolledAt: enrollments.enrolledAt,
         completedAt: enrollments.completedAt,
@@ -1639,10 +1643,13 @@ export class StudentService {
       if (existing.status === 'active') {
         throw new BadRequestException('You are already enrolled in this course');
       }
-      // Re-activate dropped/suspended enrollment
+      // Re-activate dropped/suspended enrollment. This code path only runs
+      // for free courses (see the coursePrice > 0 guard above), so the
+      // enrollment's provenance is 'free_public' — overwrite whatever the
+      // stale row said.
       const [reactivated] = await db
         .update(enrollments)
-        .set({ status: 'active', lastAccessedAt: new Date() })
+        .set({ status: 'active', lastAccessedAt: new Date(), source: 'free_public' })
         .where(eq(enrollments.id, existing.id))
         .returning();
 
@@ -1681,10 +1688,13 @@ export class StudentService {
       return reactivated;
     }
 
-    // 4. Create new enrollment
+    // 4. Create new enrollment. Only free courses reach here (the paid-course
+    //    guard above throws PAYMENT_REQUIRED). Tag as 'free_public' so the
+    //    student card + finance reports can distinguish free public enrollments
+    //    from admin grants and points redemptions.
     const [enrollment] = await db
       .insert(enrollments)
-      .values({ courseId, studentId })
+      .values({ courseId, studentId, source: 'free_public' })
       .returning();
 
     await this.auditService.log({

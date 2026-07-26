@@ -13,6 +13,7 @@ import {
   type ReportFormat,
 } from "@/lib/api";
 import DatePicker from "@/components/ui/DatePicker";
+import Select from "@/components/ui/Select";
 import type { InstructorCourse } from "@/types/instructor-dashboard";
 import { toast } from "sonner";
 import {
@@ -186,22 +187,21 @@ function ExportModal({
                 <span className="text-red-500 ml-0.5">*</span>
               )}
             </label>
-            <select
+            <Select
               value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-            >
-              {reportType.requiresCourse ? (
-                <option value="">{t("reports.chooseCourse")}</option>
-              ) : (
-                <option value="">{t("reports.allCourses")}</option>
-              )}
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedCourse}
+              className="w-full"
+              placeholder={reportType.requiresCourse ? t("reports.chooseCourse") : t("reports.allCourses")}
+              options={[
+                {
+                  value: "",
+                  label: reportType.requiresCourse
+                    ? t("reports.chooseCourse")
+                    : t("reports.allCourses"),
+                },
+                ...courses.map((c) => ({ value: c.id, label: c.title })),
+              ]}
+            />
           </div>
 
           {/* Date Range (only for attendance) */}
@@ -453,44 +453,41 @@ const ReportsContent = () => {
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1 flex flex-col md:flex-row gap-3">
                     {/* Delivery type filter */}
-                    <select
+                    <Select
                       value={filterDelivery}
-                      onChange={(e) => { setFilterDelivery(e.target.value); setFilterCourse(""); }}
-                      className="md:w-40 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="all">{t("reports.allDeliveryTypes")}</option>
-                      <option value="zoom">{t("reports.zoom")}</option>
-                      <option value="onsite">{t("reports.onsite")}</option>
-                      <option value="blended">{t("reports.blended")}</option>
-                    </select>
+                      onChange={(v) => { setFilterDelivery(v); setFilterCourse(""); }}
+                      className="md:w-40"
+                      options={[
+                        { value: "all", label: t("reports.allDeliveryTypes") },
+                        { value: "zoom", label: t("reports.zoom") },
+                        { value: "onsite", label: t("reports.onsite") },
+                        { value: "blended", label: t("reports.blended") },
+                      ]}
+                    />
 
                     {/* Course filter */}
-                    <select
+                    <Select
                       value={filterCourse}
-                      onChange={(e) => setFilterCourse(e.target.value)}
+                      onChange={setFilterCourse}
                       disabled={loadingCourses}
-                      className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] disabled:opacity-50"
-                    >
-                      <option value="">{t("reports.allCourses")}</option>
-                      {filteredCourses.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.title}
-                        </option>
-                      ))}
-                    </select>
+                      className="flex-1"
+                      options={[
+                        { value: "", label: t("reports.allCourses") },
+                        ...filteredCourses.map((c) => ({ value: c.id, label: c.title })),
+                      ]}
+                    />
 
                     {/* Format filter */}
-                    <select
+                    <Select
                       value={filterFormat}
-                      onChange={(e) =>
-                        setFilterFormat(e.target.value as ReportFormat)
-                      }
-                      className="md:w-40 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                    >
-                      <option value="pdf">PDF</option>
-                      <option value="csv">CSV</option>
-                      <option value="xlsx">Excel (XLSX)</option>
-                    </select>
+                      onChange={(v) => setFilterFormat(v as ReportFormat)}
+                      className="md:w-40"
+                      options={[
+                        { value: "pdf", label: "PDF" },
+                        { value: "csv", label: "CSV" },
+                        { value: "xlsx", label: "Excel (XLSX)" },
+                      ]}
+                    />
                   </div>
 
                   <button

@@ -34,10 +34,14 @@ async function bootstrap() {
   app.setGlobalPrefix(apiPrefix);
 
   // Enable CORS
+  // exposedHeaders is required so the frontend can read Content-Disposition on
+  // file-download responses — without it the browser strips the header from
+  // JS and every download falls back to a generic "report.pdf" filename.
   app.enableCors({
     origin: corsOrigin.split(','),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true, // Important for cookies
+    exposedHeaders: ['Content-Disposition'],
   });
 
   // Cookie parser (for refresh tokens)

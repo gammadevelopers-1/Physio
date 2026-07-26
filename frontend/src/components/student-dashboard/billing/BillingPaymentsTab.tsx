@@ -28,6 +28,7 @@ import {
   pickCourseTitle,
   statusPillClasses,
   statusLabel,
+  resolvePaymentStatusChip,
 } from "./billingHelpers";
 
 type Props = {
@@ -212,11 +213,21 @@ const BillingPaymentsTab = ({ onOpenPayment }: Props) => {
                       {gatewayLabel(p.gateway, t)}
                     </Td>
                     <Td>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(p.status)}`}
-                      >
-                        {statusLabel(p.status, t)}
-                      </span>
+                      {(() => {
+                        const chip = resolvePaymentStatusChip(
+                          p.status,
+                          p.latestRefundStatus
+                            ? [{ status: p.latestRefundStatus }]
+                            : null,
+                        );
+                        return (
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(chip.pillKey)}`}
+                          >
+                            {t(chip.labelKey)}
+                          </span>
+                        );
+                      })()}
                     </Td>
                     <Td>
                       <ChevronRight
@@ -236,13 +247,20 @@ const BillingPaymentsTab = ({ onOpenPayment }: Props) => {
                 <button
                   type="button"
                   onClick={() => onOpenPayment(p.id)}
-                  className="w-full bg-white border border-[#E5E7EB] rounded-xl p-3 text-left flex items-center gap-3"
+                  // `text-start` is direction-aware (LEFT in LTR, RIGHT in
+                  // RTL). Previously hard-coded `text-left` left the course
+                  // name pinned to the wrong side in Arabic.
+                  className="w-full bg-white border border-[#E5E7EB] rounded-xl p-3 text-start flex items-center gap-3"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-[#1F2937] truncate">
+                  <div className="flex-1 min-w-0 block">
+                    <div
+                      className={`block text-sm font-medium text-[#1F2937] truncate ${isRTL ? "text-right" : "text-left"}`}
+                    >
                       {pickCourseTitle(p.courseTitle, p.courseTitleAr, locale)}
                     </div>
-                    <div className="text-xs text-[#6B7280] mt-0.5">
+                    <div
+                      className={`block text-xs text-[#6B7280] mt-0.5 ${isRTL ? "text-right" : "text-left"}`}
+                    >
                       {formatDate(p.paidAt ?? p.createdAt, locale)} ·{" "}
                       {gatewayLabel(p.gateway, t)}
                     </div>
@@ -251,11 +269,21 @@ const BillingPaymentsTab = ({ onOpenPayment }: Props) => {
                     <div className="text-sm font-semibold text-[#1F2937] tabular-nums">
                       {formatSar(p.amount)} {t("common.sar")}
                     </div>
-                    <span
-                      className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusPillClasses(p.status)}`}
-                    >
-                      {statusLabel(p.status, t)}
-                    </span>
+                    {(() => {
+                      const chip = resolvePaymentStatusChip(
+                        p.status,
+                        p.latestRefundStatus
+                          ? [{ status: p.latestRefundStatus }]
+                          : null,
+                      );
+                      return (
+                        <span
+                          className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusPillClasses(chip.pillKey)}`}
+                        >
+                          {t(chip.labelKey)}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </button>
               </li>

@@ -386,14 +386,14 @@ try {
                 <div className="flex flex-col md:flex-row gap-3 flex-wrap">
                   <div className="relative flex-1 min-w-[240px] md:basis-72">
                     <Search
-                      className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
+                      className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] start-3`}
                     />
                     <input
                       type="text"
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
                       placeholder={t("allTicketsPage.searchPlaceholder")}
-                      className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                      className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] ps-10 pe-3`}
                     />
                   </div>
 
@@ -498,28 +498,28 @@ try {
                   <table className="w-full min-w-[1100px]">
                     <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                       <tr>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap text-start`}>
                           {t("allTicketsPage.columns.ticketId")}
                         </th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase text-start`}>
                           {t("allTicketsPage.columns.subject")}
                         </th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase text-start`}>
                           {t("allTicketsPage.columns.customer")}
                         </th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap text-start`}>
                           {t("allTicketsPage.columns.category")}
                         </th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap text-start`}>
                           {t("allTicketsPage.columns.priority")}
                         </th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap text-start`}>
                           {t("allTicketsPage.columns.status")}
                         </th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap text-start`}>
                           {t("allTicketsPage.columns.assignedTo")}
                         </th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap text-start`}>
                           {t("allTicketsPage.columns.date")}
                         </th>
                         <th className="py-3 px-4 w-12"></th>
@@ -725,7 +725,7 @@ try {
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <ChevronLeft className="w-4 h-4" />
+                        {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                         {t("allTicketsPage.pagination.previous")}
                       </button>
                       {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -762,7 +762,7 @@ try {
                         className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {t("allTicketsPage.pagination.next")}
-                        <ChevronRight className="w-4 h-4" />
+                        {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>

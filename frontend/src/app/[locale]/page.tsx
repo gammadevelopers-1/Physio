@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import Navbar from "@/components/Navbar";
+import ActiveCampaignBanner from "@/components/courses/ActiveCampaignBanner";
 import Hero from "@/components/Hero";
 import FeaturedCourses from "@/components/FeaturedCourses";
 import BecomeTrainer from "@/components/BecomeTrainer";
@@ -72,6 +73,7 @@ export default async function Home({
   return (
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)] pb-16 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
+      <ActiveCampaignBanner />
       {/* top: before all sections */}
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
 

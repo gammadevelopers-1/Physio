@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Download, ChevronDown, FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { instructorApi } from "@/lib/api";
+import Select from "@/components/ui/Select";
 
 interface ModuleProgress {
   name: string;
@@ -175,7 +176,8 @@ const CoursePerformance = ({
       csv += `${t("performance.passRate")},${passFailStats.passRate}%\n`;
     }
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    // Leading BOM so Excel opens the CSV as UTF-8 and Arabic renders correctly.
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -259,41 +261,39 @@ const CoursePerformance = ({
         </div>
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Select
             value={deliveryFilter}
-            onChange={(e) => setDeliveryFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
-          >
-            <option value="all">{t("performance.allDeliveryTypes")}</option>
-            <option value="zoom">{t("performance.zoom")}</option>
-            <option value="onsite">{t("performance.onsite")}</option>
-            <option value="blended">{t("performance.blended")}</option>
-          </select>
+            onChange={setDeliveryFilter}
+            size="sm"
+            className="min-w-[160px]"
+            options={[
+              { value: "all", label: t("performance.allDeliveryTypes") },
+              { value: "zoom", label: t("performance.zoom") },
+              { value: "onsite", label: t("performance.onsite") },
+              { value: "blended", label: t("performance.blended") },
+            ]}
+          />
 
           {cohorts.length > 0 && (
-            <select
+            <Select
               value={cohortFilter}
-              onChange={(e) => setCohortFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
-            >
-              <option value="all">{t("performance.allCohorts")}</option>
-              {cohorts.map((cohort) => (
-                <option key={cohort} value={cohort}>{cohort}</option>
-              ))}
-            </select>
+              onChange={setCohortFilter}
+              size="sm"
+              className="min-w-[160px]"
+              options={[
+                { value: "all", label: t("performance.allCohorts") },
+                ...cohorts.map((cohort) => ({ value: cohort, label: cohort })),
+              ]}
+            />
           )}
 
-          <select
+          <Select
             value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
-          >
-            {filteredCourses.map((course) => (
-              <option key={course.value} value={course.value}>
-                {course.label}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedCourse}
+            size="sm"
+            className="min-w-[200px]"
+            options={filteredCourses.map((course) => ({ value: course.value, label: course.label }))}
+          />
         </div>
       </div>
 

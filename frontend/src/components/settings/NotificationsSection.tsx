@@ -113,6 +113,8 @@ export default function NotificationsSection({
 }
 
 function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) {
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   return (
     <button
       type="button"
@@ -125,7 +127,9 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
     >
       <span
         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
-          enabled ? "translate-x-6" : "translate-x-1"
+          enabled
+            ? isRTL ? "-translate-x-6" : "translate-x-6"
+            : isRTL ? "-translate-x-1" : "translate-x-1"
         }`}
       />
     </button>

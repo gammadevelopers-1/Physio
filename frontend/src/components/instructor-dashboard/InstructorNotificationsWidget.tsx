@@ -5,6 +5,7 @@ import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import type { PlatformLocaleSettings } from "@/lib/platform-locale";
 import { formatDate as formatDateHijri, type CalendarFormat } from "@/lib/hijri";
+import { tOrFallback } from "@/lib/notification-i18n";
 import { Bell, Clock } from "lucide-react";
 
 interface Notification {
@@ -12,6 +13,10 @@ interface Notification {
   type: string;
   title: string;
   message: string;
+  titleKey?: string | null;
+  titleParams?: Record<string, string | number> | null;
+  messageKey?: string | null;
+  messageParams?: Record<string, string | number> | null;
   date: string;
   read: boolean;
 }
@@ -51,6 +56,7 @@ const InstructorNotificationsWidget = ({
 }: InstructorNotificationsWidgetProps) => {
   const t = useTranslations("instructorDashboard");
   const tN = useTranslations("notifications");
+  const tRoot = useTranslations();
   const tA = useTranslations("accessibility");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
@@ -125,14 +131,28 @@ const InstructorNotificationsWidget = ({
             >
               <div className="flex items-start justify-between gap-2 mb-1">
                 <h4 className="text-sm font-medium text-[var(--color-text-primary)] leading-tight">
-                  {tN.has(`types.${notification.type}.title`) ? tN(`types.${notification.type}.title`) : notification.title}
+                  {tOrFallback(
+                    tRoot,
+                    notification.titleKey,
+                    notification.titleParams,
+                    tN.has(`types.${notification.type}.title`)
+                      ? tN(`types.${notification.type}.title`)
+                      : notification.title,
+                  )}
                 </h4>
                 {!notification.read && (
                   <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] flex-shrink-0 mt-1.5" />
                 )}
               </div>
               <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
-                {notification.message}
+                {tOrFallback(
+                  tRoot,
+                  notification.messageKey,
+                  notification.messageParams,
+                  tN.has(`types.${notification.type}.message`)
+                    ? tN(`types.${notification.type}.message`)
+                    : notification.message,
+                )}
               </p>
               <div className="flex items-center gap-1 mt-1.5">
                 <Clock className="w-3 h-3 text-[var(--color-text-secondary)]" />

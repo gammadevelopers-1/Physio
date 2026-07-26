@@ -36,6 +36,10 @@ export default function TimePicker({
 
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Popover viewport coords — position:fixed so the popover escapes any
+  // parent overflow (dialogs, drawers) and flips edges when there's not
+  // enough room on the natural side.
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
 
   // Parse current value into hour12, minute, meridiem
   const { hour12, minute, meridiem } = useMemo(() => {
@@ -60,6 +64,43 @@ export default function TimePicker({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
+
+  // Compute popover coords whenever open changes, plus on scroll/resize.
+  useEffect(() => {
+    if (!open) {
+      setPopoverPos(null);
+      return;
+    }
+    const POPOVER_W = 220;
+    const POPOVER_H_APPROX = 240;
+    const MARGIN = 8;
+    const compute = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      let top = rect.bottom + 4;
+      if (top + POPOVER_H_APPROX > window.innerHeight - MARGIN) {
+        top = Math.max(MARGIN, rect.top - POPOVER_H_APPROX - 4);
+      }
+      let left: number;
+      if (isRTL) {
+        left = rect.right - POPOVER_W;
+        if (left < MARGIN) left = Math.min(rect.left, window.innerWidth - POPOVER_W - MARGIN);
+      } else {
+        left = rect.left;
+        if (left + POPOVER_W > window.innerWidth - MARGIN) {
+          left = Math.max(MARGIN, rect.right - POPOVER_W);
+        }
+      }
+      setPopoverPos({ top, left });
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
+    };
+  }, [open, isRTL]);
 
   const commit = (h12: number, m: number, mer: "AM" | "PM") => {
     let h24 = h12 % 12;
@@ -94,16 +135,10 @@ export default function TimePicker({
         </span>
       </button>
 
-      {open && (
+      {open && popoverPos && (
         <div
-          // Anchor so the popover always extends toward the viewport CENTER
-          // rather than the trailing edge. `end-0` in RTL / `start-0` in
-          // LTR both resolve to `left:0` physically (RTL inline-end = left
-          // edge), which mirrors the DatePicker fix and prevents horizontal
-          // page scroll when the trigger sits near the leading edge in RTL.
-          className={`absolute z-50 mt-1 bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[220px] max-w-[calc(100vw-1rem)] ${
-            isRTL ? "end-0" : "start-0"
-          }`}
+          style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left }}
+          className="z-[100] bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[220px] max-w-[calc(100vw-1rem)]"
         >
           <div className="flex divide-x divide-[var(--color-border)]" dir="ltr">
             <ScrollColumn

@@ -49,17 +49,20 @@ interface ActivityEvent {
   at: string;
 }
 
-function formatRelativeTime(dateStr: string): string {
+function formatRelativeTime(
+  dateStr: string,
+  t: ReturnType<typeof useTranslations>,
+): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diffMs = now - then;
   const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return "Just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 1) return t("rightSidebar.relativeTime.justNow");
+  if (diffMin < 60) return t("rightSidebar.relativeTime.minutesAgo", { count: diffMin });
   const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
+  if (diffHr < 24) return t("rightSidebar.relativeTime.hoursAgo", { count: diffHr });
   const diffDays = Math.floor(diffHr / 24);
-  return `${diffDays}d ago`;
+  return t("rightSidebar.relativeTime.daysAgo", { count: diffDays });
 }
 
 function getActivityStyle(type: ActivityEvent["type"]) {
@@ -352,7 +355,7 @@ const SupportRightSidebar = () => {
                       {item.subject}
                     </p>
                     <p className="text-[11px] text-[var(--color-text-secondary)]">
-                      {formatRelativeTime(item.at)}
+                      {formatRelativeTime(item.at, t)}
                     </p>
                   </div>
                 </Link>

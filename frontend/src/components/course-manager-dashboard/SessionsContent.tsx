@@ -43,6 +43,7 @@ import { openWebinarWhatsAppShare, openCoursePageWhatsAppShare } from "@/lib/web
 import DatePicker from "@/components/ui/DatePicker";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
+import Select from "@/components/admin-dashboard/Select";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformTime } from "@/lib/platform-locale";
@@ -194,16 +195,15 @@ function ScheduleSessionModal({
           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.course")} *
           </label>
-          <select
+          <Select
             value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-          >
-            <option value="">{t("sessionsPage.form.selectCourse")}</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>{c.title}</option>
-            ))}
-          </select>
+            onChange={setCourseId}
+            options={[
+              { value: "", label: t("sessionsPage.form.selectCourse") },
+              ...courses.map((c) => ({ value: c.id, label: c.title })),
+            ]}
+            className="w-full"
+          />
         </div>
 
         {/* Title */}
@@ -1214,28 +1214,30 @@ const SessionsContent = () => {
                     {t("sessionsPage.calendarView")}
                   </button>
                 </div>
-                <select
+                <Select
                   value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-                >
-                  <option value="">{t("sessionsPage.allStatuses")}</option>
-                  <option value="scheduled">{t("sessionsPage.statusUpcoming")}</option>
-                  <option value="live">{t("sessionsPage.statusLive")}</option>
-                  <option value="ended">{t("sessionsPage.statusEnded")}</option>
-                  <option value="completed">{t("sessionsPage.statusCompleted")}</option>
-                  <option value="cancelled">{t("sessionsPage.statusCancelled")}</option>
-                </select>
-                <select
+                  onChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}
+                  options={[
+                    { value: "", label: t("sessionsPage.allStatuses") },
+                    { value: "scheduled", label: t("sessionsPage.statusUpcoming") },
+                    { value: "live", label: t("sessionsPage.statusLive") },
+                    { value: "ended", label: t("sessionsPage.statusEnded") },
+                    { value: "completed", label: t("sessionsPage.statusCompleted") },
+                    { value: "cancelled", label: t("sessionsPage.statusCancelled") },
+                  ]}
+                  className="w-44"
+                  size="sm"
+                />
+                <Select
                   value={instructorFilter}
-                  onChange={(e) => { setInstructorFilter(e.target.value); setCurrentPage(1); }}
-                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-                >
-                  <option value="">{t("sessionsPage.allInstructors")}</option>
-                  {instructors.map((inst) => (
-                    <option key={inst.id} value={inst.id}>{inst.name}</option>
-                  ))}
-                </select>
+                  onChange={(v) => { setInstructorFilter(v); setCurrentPage(1); }}
+                  options={[
+                    { value: "", label: t("sessionsPage.allInstructors") },
+                    ...instructors.map((inst) => ({ value: inst.id, label: inst.name })),
+                  ]}
+                  className="w-44"
+                  size="sm"
+                />
                 <button
                   onClick={() => setShowMoreFilters(!showMoreFilters)}
                   className="px-3 py-2 text-sm text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
@@ -1250,29 +1252,29 @@ const SessionsContent = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div>
                       <label className="block text-xs text-[var(--color-text-secondary)] mb-1">{t("sessionsPage.filterByCourse")}</label>
-                      <select
+                      <Select
                         value={courseFilter}
-                        onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
-                        className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-                      >
-                        <option value="">{t("sessionsPage.allCourses")}</option>
-                        {coursesList.map((c) => (
-                          <option key={c.id} value={c.id}>{c.title}</option>
-                        ))}
-                      </select>
+                        onChange={(v) => { setCourseFilter(v); setCurrentPage(1); }}
+                        options={[
+                          { value: "", label: t("sessionsPage.allCourses") },
+                          ...coursesList.map((c) => ({ value: c.id, label: c.title })),
+                        ]}
+                        className="w-full"
+                      />
                     </div>
                     <div>
                       <label className="block text-xs text-[var(--color-text-secondary)] mb-1">{t("sessionsPage.filterByType")}</label>
-                      <select
+                      <Select
                         value={typeFilter}
-                        onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-                        className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-                      >
-                        <option value="">{t("sessionsPage.allTypes")}</option>
-                        <option value="zoom">{t("sessionsPage.typeZoom")}</option>
-                        <option value="onsite">{t("sessionsPage.typeOnsite")}</option>
-                        <option value="hybrid">{t("sessionsPage.typeHybrid")}</option>
-                      </select>
+                        onChange={(v) => { setTypeFilter(v); setCurrentPage(1); }}
+                        options={[
+                          { value: "", label: t("sessionsPage.allTypes") },
+                          { value: "zoom", label: t("sessionsPage.typeZoom") },
+                          { value: "onsite", label: t("sessionsPage.typeOnsite") },
+                          { value: "hybrid", label: t("sessionsPage.typeHybrid") },
+                        ]}
+                        className="w-full"
+                      />
                     </div>
                     <div>
                       <label className="block text-xs text-[var(--color-text-secondary)] mb-1">{t("sessionsPage.dateFrom")}</label>
@@ -1570,16 +1572,15 @@ const SessionsContent = () => {
             ) : (
               <>
                 <p className="text-sm text-[var(--color-text-secondary)] mb-3">Select substitute for &quot;{substituteModal.title}&quot;:</p>
-                <select
+                <Select
                   value={substituteId}
-                  onChange={(e) => setSubstituteId(e.target.value)}
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-input-focus)] outline-none"
-                >
-                  <option value="">Select instructor...</option>
-                  {instructors.map((inst) => (
-                    <option key={inst.id} value={inst.id}>{inst.name}</option>
-                  ))}
-                </select>
+                  onChange={setSubstituteId}
+                  options={[
+                    { value: "", label: "Select instructor..." },
+                    ...instructors.map((inst) => ({ value: inst.id, label: inst.name })),
+                  ]}
+                  className="w-full mb-4"
+                />
                 <div className="flex justify-end gap-3">
                   <button onClick={() => setSubstituteModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]">Close</button>
                   <button onClick={handleAssignSubstitute} disabled={!substituteId || actionLoading} className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2">
@@ -1704,15 +1705,17 @@ const SessionsContent = () => {
             {/* Export Footer */}
             {attendanceData.length > 0 && (
               <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[var(--color-border)]">
-                <select
+                <Select
                   value={exportFormat}
-                  onChange={(e) => setExportFormat(e.target.value as "csv" | "pdf" | "xlsx")}
-                  className="px-2 py-2 text-xs border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:ring-1 focus:ring-[var(--color-input-focus)] outline-none"
-                >
-                  <option value="csv">CSV</option>
-                  <option value="pdf">PDF</option>
-                  <option value="xlsx">Excel</option>
-                </select>
+                  onChange={(v) => setExportFormat(v as "csv" | "pdf" | "xlsx")}
+                  options={[
+                    { value: "csv", label: "CSV" },
+                    { value: "pdf", label: "PDF" },
+                    { value: "xlsx", label: "Excel" },
+                  ]}
+                  className="w-28"
+                  size="sm"
+                />
                 <button
                   onClick={async () => {
                     try {

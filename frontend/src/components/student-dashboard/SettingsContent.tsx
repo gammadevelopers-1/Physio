@@ -15,6 +15,7 @@ import {
   PreferencesInline,
   MasterNotificationToggles,
 } from "@/components/settings";
+import DatePicker from "@/components/ui/DatePicker";
 
 type TabKey = "profile" | "security" | "notifications";
 
@@ -264,12 +265,11 @@ function StudentExtraFields({
           <label htmlFor="student-dob" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("dob")}
           </label>
-          <input
+          <DatePicker
             id="student-dob"
-            type="date"
             value={extras.dateOfBirth}
-            onChange={(e) => update("dateOfBirth", e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+            onChange={(v) => update("dateOfBirth", v)}
+            max={new Date().toISOString().slice(0, 10)}
           />
         </div>
       </div>

@@ -37,7 +37,10 @@ const ExpertInstructors = ({ instructors: strapiInstructors = [], sectionData }:
 
   return (
     <section className="bg-[var(--color-surface-card)] px-4 md:px-10 py-12 lg:py-20 overflow-hidden">
-      <div className="flex flex-col gap-5 md:gap-8 items-center justify-center w-full">
+      {/* Cap inner content at 1440px + center so section stops
+          stretching to the edges on ultra-wide displays (>1440px)
+          while keeping the outer section full-bleed for the bg color. */}
+      <div className="flex flex-col gap-5 md:gap-8 items-center justify-center w-full max-w-[1440px] mx-auto">
         {title && (
           <h2
             className="text-[var(--on-surface-default)] font-semibold text-center leading-none tracking-[-0.15px] md:tracking-[-0.24px] w-full md:w-[600px]"

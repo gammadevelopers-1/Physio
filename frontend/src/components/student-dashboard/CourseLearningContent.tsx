@@ -79,17 +79,28 @@ function detectFileKind(material: ModuleMaterial): FileKind {
 function PdfViewer({ material }: { material: ModuleMaterial }) {
   const t = useTranslations("studentDashboard.learning");
   const [loading, setLoading] = useState(true);
+  const [errored, setErrored] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    setErrored(false);
+    // Fallback: clear the spinner after 4s regardless — some browsers (notably
+    // Chrome's built-in PDF viewer) never fire onLoad on <iframe>/<embed>.
+    const timer = setTimeout(() => setLoading(false), 4000);
+    return () => clearTimeout(timer);
+  }, [material.fileUrl]);
 
   if (!material.fileUrl) return null;
 
   const kind = detectFileKind(material);
+  const fileUrl = material.fileUrl;
 
   if (kind === "office") {
-    const officeSrc = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(material.fileUrl)}`;
+    const officeSrc = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
     return (
       <div className="relative">
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-surface-page)] rounded-lg z-10">
+        {loading && !errored && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-surface-page)]/70 rounded-lg z-10 pointer-events-none">
             <Loader2 className="w-6 h-6 text-[var(--color-text-secondary)] animate-spin" />
           </div>
         )}
@@ -99,13 +110,17 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           className="w-full rounded-lg border border-[var(--color-border)]"
           style={{ height: "680px" }}
           onLoad={() => setLoading(false)}
+          onError={() => {
+            setLoading(false);
+            setErrored(true);
+          }}
         />
         <p className="text-[10px] text-[var(--color-text-secondary)] mt-2 text-center">
           {t("officePreviewNote")}
         </p>
         <div className="mt-2 flex justify-end gap-2">
           <a
-            href={material.fileUrl}
+            href={fileUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
@@ -114,7 +129,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
             {t("openInTab")}
           </a>
           <a
-            href={material.fileUrl}
+            href={fileUrl}
             download
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
           >
@@ -141,7 +156,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           </p>
         </div>
         <a
-          href={material.fileUrl}
+          href={fileUrl}
           download
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
         >
@@ -154,21 +169,49 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
 
   return (
     <div className="relative">
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-surface-page)] rounded-lg z-10">
+      {loading && !errored && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-surface-page)]/70 rounded-lg z-10 pointer-events-none">
           <Loader2 className="w-6 h-6 text-[var(--color-text-secondary)] animate-spin" />
         </div>
       )}
-      <embed
-        src={material.fileUrl}
-        type="application/pdf"
-        className="w-full rounded-lg border border-[var(--color-border)]"
-        style={{ height: "680px" }}
-        onLoad={() => setLoading(false)}
-      />
+      {errored ? (
+        <div className="flex flex-col items-center justify-center gap-4 py-14 text-center border border-[var(--color-border)] rounded-lg">
+          <div className="w-16 h-16 rounded-2xl bg-[var(--color-border-subtle)] flex items-center justify-center">
+            <FileText className="w-8 h-8 text-[var(--color-primary)]" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+              {material.title}
+            </p>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              {t("previewUnavailable")}
+            </p>
+          </div>
+          <a
+            href={fileUrl}
+            download
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            {t("downloadToView")}
+          </a>
+        </div>
+      ) : (
+        <iframe
+          src={fileUrl}
+          title={material.title}
+          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-card)]"
+          style={{ height: "680px" }}
+          onLoad={() => setLoading(false)}
+          onError={() => {
+            setLoading(false);
+            setErrored(true);
+          }}
+        />
+      )}
       <div className="mt-3 flex justify-end gap-2">
         <a
-          href={material.fileUrl}
+          href={fileUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
@@ -177,7 +220,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           {t("openInTab")}
         </a>
         <a
-          href={material.fileUrl}
+          href={fileUrl}
           download
           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
         >
@@ -884,7 +927,13 @@ const CourseLearningContent = () => {
     return (
       <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[var(--color-text-secondary)] mb-4">{error || t("courseDetail.notFound")}</p>
+          <p className="text-[var(--color-text-secondary)] mb-4">
+            {/* See StudentCourseDetailContent — the backend "not enrolled"
+                message is a raw English string; localize it before render. */}
+            {error && /not enrolled/i.test(error)
+              ? t("myCourses.notEnrolled")
+              : error || t("courseDetail.notFound")}
+          </p>
           <Link
             href={`/${locale}/dashboard/student/courses`}
             className="text-sm text-[var(--color-primary)] hover:underline"

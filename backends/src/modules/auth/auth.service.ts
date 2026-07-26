@@ -1746,6 +1746,84 @@ export class AuthService {
       .orderBy(asc(users.firstName));
   }
 
+  /**
+   * Search STUDENT-role users by name or email for the manager/admin
+   * manual-enrollment picker. Returns up to `limit` matches ordered by
+   * first-name; empty query returns the first `limit` students.
+   *
+   * Uses the same subquery pattern as `getAllUsers` (proven to work in
+   * production) instead of an INNER JOIN — a JOIN duplicated rows for
+   * users who happened to have multiple user_roles entries and caused
+   * the picker to appear empty when the driver deduplicated to nothing.
+   *
+   * Deliberately narrower than `getAllUsers` (admin-only) so managers
+   * can enroll a student without seeing the full user list, and does
+   * NOT filter by isActive — inactive students still need to be
+   * findable so an admin can re-add them; the picker just shows them
+   * with their existing email/name.
+   *
+   * `scfhsNumber` is intentionally NOT searchable: it's stored
+   * encrypted, so ILIKE against ciphertext can never match plaintext
+   * input. It's still returned in the response so the picker can
+   * display the decrypted value.
+   */
+  async searchStudents(
+    q: string | undefined,
+    limit: number,
+  ): Promise<
+    Array<{
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      scfhsNumber: string | null;
+    }>
+  > {
+    const conditions: (SQL | undefined)[] = [
+      notLike(users.email, 'deleted-%@deleted.local'),
+      // Role filter as a subquery so users with multiple role rows
+      // aren't returned as duplicates.
+      sql`${users.id} IN (
+        SELECT ${userRoles.userId}
+        FROM ${userRoles}
+        INNER JOIN ${roles} ON ${roles.id} = ${userRoles.roleId}
+        WHERE ${roles.name} = ${ROLE_NAMES.STUDENT}
+      )`,
+    ];
+
+    const trimmed = (q ?? '').trim();
+    if (trimmed) {
+      const pattern = `%${trimmed}%`;
+      conditions.push(
+        or(
+          ilike(users.firstName, pattern),
+          ilike(users.lastName, pattern),
+          ilike(users.email, pattern),
+        ),
+      );
+    }
+
+    const rows = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        scfhsNumber: users.scfhsNumber,
+      })
+      .from(users)
+      .where(and(...conditions))
+      .orderBy(asc(users.firstName), asc(users.lastName))
+      .limit(Math.min(Math.max(limit, 1), 50));
+
+    // Decrypt SCFHS number for display. Legacy plaintext rows pass
+    // through unchanged.
+    return rows.map((r) => ({
+      ...r,
+      scfhsNumber: r.scfhsNumber ? decryptPII(r.scfhsNumber) : null,
+    }));
+  }
+
   // ===========================================
   // Get All Users (Admin) — with pagination, search, filter, sort
   // ===========================================

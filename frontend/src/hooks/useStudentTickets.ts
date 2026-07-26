@@ -47,55 +47,68 @@ export function useTicketDetail(ticketId: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDetail = useCallback(async () => {
-    if (!ticketId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await supportApi.getTicket(ticketId);
-      // Map support-api response shape to student TicketDetail shape.
-      // Backend returns `comments` with split `userFirstName`/`userLastName`
-      // and a single `courseName`; student UI expects `replies` with
-      // `userName` and separate `courseTitle`/`courseTitleAr`.
-      const mapped: TicketDetail = {
-        id: result.id,
-        category: result.category,
-        priority: result.priority,
-        subject: result.subject,
-        description: result.description,
-        attachmentUrl: result.attachmentUrl ?? null,
-        status: result.status,
-        satisfactionRating: result.satisfactionRating ?? null,
-        courseTitle: result.courseName ?? null,
-        courseTitleAr: null,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-        resolvedAt: result.resolvedAt ?? null,
-        closedAt: result.closedAt ?? null,
-        replies: (result.comments ?? []).map((c: any) => ({
-          id: c.id,
-          message: c.message,
-          isStaffReply: Boolean(c.isStaffReply),
-          createdAt: c.createdAt,
-          userName:
-            [c.userFirstName, c.userLastName].filter(Boolean).join(" ") ||
-            "Unknown",
-          attachments: Array.isArray(c.attachments) ? c.attachments : [],
-        })),
-      };
-      setData(mapped);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load ticket",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [ticketId]);
+  // Two entry points into the same fetch: initial load toggles the
+  // page-level spinner; the poller MUST NOT — otherwise the whole
+  // ticket page would flash every few seconds.
+  const runFetch = useCallback(
+    async (opts: { silent: boolean }) => {
+      if (!ticketId) return;
+      if (!opts.silent) setLoading(true);
+      setError(null);
+      try {
+        const result = await supportApi.getTicket(ticketId);
+        // Map support-api response shape to student TicketDetail shape.
+        // Backend returns `comments` with split `userFirstName`/`userLastName`
+        // and a single `courseName`; student UI expects `replies` with
+        // `userName` and separate `courseTitle`/`courseTitleAr`.
+        const mapped: TicketDetail = {
+          id: result.id,
+          category: result.category,
+          priority: result.priority,
+          subject: result.subject,
+          description: result.description,
+          attachmentUrl: result.attachmentUrl ?? null,
+          status: result.status,
+          satisfactionRating: result.satisfactionRating ?? null,
+          courseTitle: result.courseName ?? null,
+          courseTitleAr: null,
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt,
+          resolvedAt: result.resolvedAt ?? null,
+          closedAt: result.closedAt ?? null,
+          replies: (result.comments ?? []).map((c: any) => ({
+            id: c.id,
+            message: c.message,
+            isStaffReply: Boolean(c.isStaffReply),
+            createdAt: c.createdAt,
+            userName:
+              [c.userFirstName, c.userLastName].filter(Boolean).join(" ") ||
+              "Unknown",
+            attachments: Array.isArray(c.attachments) ? c.attachments : [],
+          })),
+        };
+        setData(mapped);
+      } catch (err) {
+        // Silent polls swallow errors so a transient network hiccup
+        // on tick N doesn't blow away the thread the user is reading.
+        if (!opts.silent) {
+          setError(
+            err instanceof Error ? err.message : "Failed to load ticket",
+          );
+        }
+      } finally {
+        if (!opts.silent) setLoading(false);
+      }
+    },
+    [ticketId],
+  );
+
+  const fetchDetail = useCallback(() => runFetch({ silent: false }), [runFetch]);
+  const refetchQuiet = useCallback(() => runFetch({ silent: true }), [runFetch]);
 
   useEffect(() => {
     fetchDetail();
   }, [fetchDetail]);
 
-  return { data, loading, error, refetch: fetchDetail };
+  return { data, loading, error, refetch: fetchDetail, refetchQuiet };
 }

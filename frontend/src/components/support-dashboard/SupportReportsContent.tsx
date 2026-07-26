@@ -675,28 +675,29 @@ function AdditionalReportsPanel({
   dateTo?: string;
   canExportCsv: boolean;
 }) {
+  const tR = useTranslations("supportDashboard.reportsPage");
   const [exportingType, setExportingType] = useState<string | null>(null);
 
   const reports = [
     {
       type: "frt",
-      title: "First Response Time",
-      description: "Per-ticket FRT in minutes, vs SLA target. Filtered by reply date.",
+      title: tR("additionalReports.reports.frt.title"),
+      description: tR("additionalReports.reports.frt.description"),
     },
     {
       type: "ttr",
-      title: "Resolution Time",
-      description: "Per-ticket TTR in business minutes (on-hold excluded). Filtered by resolution date.",
+      title: tR("additionalReports.reports.ttr.title"),
+      description: tR("additionalReports.reports.ttr.description"),
     },
     {
       type: "escalation",
-      title: "Escalations",
-      description: "Every SLA breach, priority bump, and reassignment in the period.",
+      title: tR("additionalReports.reports.escalation.title"),
+      description: tR("additionalReports.reports.escalation.description"),
     },
     {
       type: "overdue",
-      title: "Overdue Tickets (live)",
-      description: "Currently open tickets that have passed FRT or TTR target. Ignores date filter.",
+      title: tR("additionalReports.reports.overdue.title"),
+      description: tR("additionalReports.reports.overdue.description"),
     },
   ];
 
@@ -735,9 +736,9 @@ function AdditionalReportsPanel({
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
-      toast.success("Report downloaded");
+      toast.success(tR("additionalReports.toasts.downloaded"));
     } catch {
-      toast.error("Export failed");
+      toast.error(tR("additionalReports.toasts.exportFailed"));
     } finally {
       setExportingType(null);
     }
@@ -746,10 +747,10 @@ function AdditionalReportsPanel({
   return (
     <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mt-6">
       <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
-        Additional reports
+        {tR("additionalReports.title")}
       </h3>
       <p className="text-xs text-[var(--color-text-secondary)] mb-4">
-        Direct-download exports. Use the period filter above to scope the date range.
+        {tR("additionalReports.description")}
       </p>
       <div className="space-y-2">
         {reports.map((r) => (
@@ -817,6 +818,7 @@ function KbSearchAnalyticsPanel({
   dateFrom?: string;
   dateTo?: string;
 }) {
+  const tR = useTranslations("supportDashboard.reportsPage");
   const router = useRouter();
   const pathname = usePathname();
   const [data, setData] = useState<{
@@ -911,15 +913,15 @@ function KbSearchAnalyticsPanel({
   const articleTitle = (a: {
     titleEn: string | null;
     titleAr: string | null;
-  }) => a.titleEn || a.titleAr || "(untitled)";
+  }) => a.titleEn || a.titleAr || tR("kbSearchPanel.untitledArticle");
 
   return (
     <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mt-6">
       <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
-        Help Center search analytics
+        {tR("kbSearchPanel.title")}
       </h3>
       <p className="text-xs text-[var(--color-text-secondary)] mb-4">
-        Most-asked questions and zero-result queries (content gaps).
+        {tR("kbSearchPanel.description")}
       </p>
 
       {loading ? (
@@ -928,14 +930,14 @@ function KbSearchAnalyticsPanel({
         </div>
       ) : !data || data.totalSearches === 0 ? (
         <div className="text-xs text-[var(--color-text-secondary)] py-3 text-center">
-          No search activity in this period.
+          {tR("kbSearchPanel.empty")}
         </div>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-2 mb-4">
             <div className="p-3 rounded-lg bg-[var(--color-border-subtle)]">
               <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">
-                Total searches
+                {tR("kbSearchPanel.kpis.totalSearches")}
               </p>
               <p className="text-lg font-bold text-[var(--color-text-primary)]">
                 {data.totalSearches}
@@ -943,7 +945,7 @@ function KbSearchAnalyticsPanel({
             </div>
             <div className="p-3 rounded-lg bg-[var(--color-border-subtle)]">
               <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">
-                Zero-result
+                {tR("kbSearchPanel.kpis.zeroResult")}
               </p>
               <p className="text-lg font-bold text-[var(--color-text-primary)]">
                 {data.zeroResultSearches}
@@ -951,7 +953,7 @@ function KbSearchAnalyticsPanel({
             </div>
             <div className="p-3 rounded-lg bg-[var(--color-border-subtle)]">
               <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">
-                Gap rate
+                {tR("kbSearchPanel.kpis.gapRate")}
               </p>
               <p className="text-lg font-bold text-[var(--color-text-primary)]">
                 {data.zeroResultRate}%
@@ -963,11 +965,11 @@ function KbSearchAnalyticsPanel({
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]">
-                  <th className="text-left py-2 px-2 font-medium">Query</th>
-                  <th className="text-left py-2 px-2 font-medium">Lang</th>
-                  <th className="text-right py-2 px-2 font-medium">Searches</th>
-                  <th className="text-right py-2 px-2 font-medium">Avg results</th>
-                  <th className="text-right py-2 px-2 font-medium">Empty</th>
+                  <th className="text-start py-2 px-2 font-medium">{tR("kbSearchPanel.query")}</th>
+                  <th className="text-start py-2 px-2 font-medium">{tR("kbSearchPanel.columns.lang")}</th>
+                  <th className="text-end py-2 px-2 font-medium">{tR("kbSearchPanel.columns.searches")}</th>
+                  <th className="text-end py-2 px-2 font-medium">{tR("kbSearchPanel.columns.avgResults")}</th>
+                  <th className="text-end py-2 px-2 font-medium">{tR("kbSearchPanel.columns.empty")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -982,14 +984,14 @@ function KbSearchAnalyticsPanel({
                     <td className="py-2 px-2 uppercase text-[10px] text-[var(--color-text-secondary)]">
                       {q.locale}
                     </td>
-                    <td className="py-2 px-2 text-right text-[var(--color-text-primary)]">
+                    <td className="py-2 px-2 text-end text-[var(--color-text-primary)]">
                       {q.searches}
                     </td>
-                    <td className="py-2 px-2 text-right text-[var(--color-text-secondary)]">
+                    <td className="py-2 px-2 text-end text-[var(--color-text-secondary)]">
                       {q.avgResults}
                     </td>
                     <td
-                      className={`py-2 px-2 text-right font-medium ${q.zeroResultCount > 0 ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}
+                      className={`py-2 px-2 text-end font-medium ${q.zeroResultCount > 0 ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}
                     >
                       {q.zeroResultCount > 0 ? q.zeroResultCount : "—"}
                     </td>
@@ -1009,11 +1011,10 @@ function KbSearchAnalyticsPanel({
         <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
           <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
             <FileSpreadsheet className="w-4 h-4 text-[#16A34A]" />
-            Suggested FAQ opportunities
+            {tR("kbSearchPanel.suggestedFaqs.title")}
           </h4>
           <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-            These queries returned no results 3 or more times — strong
-            candidates for new help articles.
+            {tR("kbSearchPanel.suggestedFaqs.description")}
           </p>
           <div className="space-y-1.5">
             {suggestedFaqs.map((q, idx) => (
@@ -1028,13 +1029,13 @@ function KbSearchAnalyticsPanel({
                   {q.locale}
                 </span>
                 <span className="text-[10px] text-[#DC2626] font-medium">
-                  {q.zeroResultCount} empty
+                  {tR("kbSearchPanel.suggestedFaqs.emptyCount", { count: q.zeroResultCount })}
                 </span>
                 <button
                   onClick={() => handleCreateFaq(q.query, q.locale)}
                   className="px-2 py-1 text-[10px] font-medium bg-[#16A34A] text-white rounded hover:opacity-90"
                 >
-                  Create FAQ
+                  {tR("kbSearchPanel.suggestedFaqs.createFaq")}
                 </button>
               </div>
             ))}
@@ -1050,12 +1051,14 @@ function KbSearchAnalyticsPanel({
         <div>
           <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
             <Eye className="w-4 h-4 text-[var(--color-primary)]" />
-            Most viewed articles
-            <span className="text-[10px] text-[var(--color-text-secondary)] font-normal">(all time)</span>
+            {tR("kbSearchPanel.mostViewed.title")}
+            <span className="text-[10px] text-[var(--color-text-secondary)] font-normal">
+              {tR("kbSearchPanel.mostViewed.allTime")}
+            </span>
           </h4>
           {mostViewed.length === 0 ? (
             <p className="text-xs text-[var(--color-text-secondary)] py-3">
-              No published articles have been viewed yet.
+              {tR("kbSearchPanel.mostViewed.empty")}
             </p>
           ) : (
             <ul className="space-y-1 mt-3">
@@ -1068,7 +1071,7 @@ function KbSearchAnalyticsPanel({
                     {articleTitle(a)}
                   </span>
                   <span className="text-[10px] text-[var(--color-text-secondary)] capitalize">
-                    {a.category}
+                    {translateCategory(tR, a.category)}
                   </span>
                   <span className="font-mono text-[var(--color-text-secondary)] min-w-[40px] text-end">
                     {a.viewCount}
@@ -1082,14 +1085,14 @@ function KbSearchAnalyticsPanel({
         <div>
           <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-[#D97706]" />
-            Low engagement articles
+            {tR("kbSearchPanel.lowEngagement.title")}
             <span className="text-[10px] text-[var(--color-text-secondary)] font-normal">
-              (30+ days old, fewest views)
+              {tR("kbSearchPanel.lowEngagement.subtitle")}
             </span>
           </h4>
           {lowEngagement.length === 0 ? (
             <p className="text-xs text-[var(--color-text-secondary)] py-3">
-              No articles older than 30 days yet — check back later.
+              {tR("kbSearchPanel.lowEngagement.empty")}
             </p>
           ) : (
             <ul className="space-y-1 mt-3">
@@ -1102,7 +1105,7 @@ function KbSearchAnalyticsPanel({
                     {articleTitle(a)}
                   </span>
                   <span className="text-[10px] text-[var(--color-text-secondary)] capitalize">
-                    {a.category}
+                    {translateCategory(tR, a.category)}
                   </span>
                   <span
                     className={`font-mono min-w-[40px] text-end ${a.viewCount === 0 ? 'text-[#DC2626]' : 'text-[var(--color-text-secondary)]'}`}
@@ -1113,7 +1116,7 @@ function KbSearchAnalyticsPanel({
                     onClick={() => handleEditArticle(a.id)}
                     className="text-[10px] text-[var(--color-primary)] hover:underline"
                   >
-                    Edit
+                    {tR("kbSearchPanel.lowEngagement.edit")}
                   </button>
                 </li>
               ))}
@@ -1123,6 +1126,28 @@ function KbSearchAnalyticsPanel({
       </div>
     </div>
   );
+}
+
+// Translate a data-driven category slug (e.g. "billing" / "course") via
+// the reportsPage.categories dictionary. Falls back to the raw slug if
+// no entry exists — safeguards custom admin-added categories that
+// don't have translations. `translator` accepts either the local tR
+// (rooted at supportDashboard.reportsPage) or the page-level t (rooted
+// at supportDashboard); pick the right prefix accordingly.
+function translateCategory(
+  translator: ReturnType<typeof useTranslations>,
+  category: string | null | undefined,
+  keyPrefix: "categories" | "reportsPage.categories" = "categories",
+): string {
+  if (!category) return "—";
+  const key = `${keyPrefix}.${category.toLowerCase()}`;
+  try {
+    const val = translator(key);
+    if (val && val !== key) return val;
+  } catch {
+    // ignore missing keys
+  }
+  return category;
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -1290,7 +1315,7 @@ function CategoryBreakdown({
               <div key={cat}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-medium text-[var(--color-text-primary)] capitalize">
-                    {cat}
+                    {translateCategory(t, cat, "reportsPage.categories")}
                   </span>
                   <span className="text-[11px] text-[var(--color-text-secondary)]">
                     {cnt} · {pct}%
@@ -1354,7 +1379,7 @@ function TopIssuesPanel({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize mb-1">
-                  {item.category}
+                  {translateCategory(t, item.category, "reportsPage.categories")}
                 </p>
                 <div className="bg-[var(--color-border-subtle)] rounded-full h-1.5 overflow-hidden">
                   <div
@@ -1880,7 +1905,7 @@ function CsatNpsPanel({
                 <tbody>
                   {byCategory.map((row) => (
                     <tr key={row.category} className="border-b border-[var(--color-border-subtle)] last:border-b-0">
-                      <td className="py-1.5 text-[var(--color-text-primary)] capitalize">{row.category}</td>
+                      <td className="py-1.5 text-[var(--color-text-primary)] capitalize">{translateCategory(t, row.category, "reportsPage.categories")}</td>
                       <td className="py-1.5 text-end text-[var(--color-text-secondary)]">{row.responses}</td>
                       <td className="py-1.5 text-end">{scoreChip(row.avgScore)}</td>
                       <td className="py-1.5 text-end text-[10px]">
@@ -2026,7 +2051,7 @@ function CsatNpsPanel({
                     {Array.from({ length: row.score }).map((_, i) => '★').join('')} {row.score}/5
                   </span>
                   <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide rounded bg-[#EFF6FF] text-[#3B82F6] border border-[#DBEAFE] capitalize">
-                    {row.ticketCategory}
+                    {translateCategory(t, row.ticketCategory, "reportsPage.categories")}
                   </span>
                   <span className="text-[10px] text-[var(--color-text-secondary)] ms-auto">
                     {row.submittedAt ? new Date(row.submittedAt).toLocaleDateString() : '—'}

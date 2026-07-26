@@ -133,6 +133,57 @@ export function statusLabel(
     : t("status.unknown");
 }
 
+/**
+ * Combined payment + refund status resolver.
+ *
+ * The bug this replaces: the payment card used to render its chip straight
+ * from `payment.status`. But when a student submits a refund, the backend
+ * writes a new `refunds` row with `status = "pending"` and deliberately
+ * DOES NOT flip `payments.status` until the refund reaches `completed`
+ * (see refund.service.ts:465 vs :1118). So the chip stayed on "Paid" even
+ * after a request landed, and separately the UI in some places was
+ * inferring "Refunded" from the mere presence of a refund row — labeling
+ * a pending request as fully refunded.
+ *
+ * Correct behavior: if there's an attached refund, its status wins the
+ * label as long as it hasn't completed. A completed refund also collapses
+ * back to the payment status (which the backend will have flipped to
+ * `refunded` / `partially_refunded` inside the completion transaction).
+ *
+ * `refunds` is expected sorted DESC by createdAt — the API returns it
+ * that way — so index 0 is the latest.
+ */
+export type PaymentStatusChip = {
+  labelKey: string;
+  pillKey: string;
+};
+
+export function resolvePaymentStatusChip(
+  paymentStatus: string,
+  refunds?: Array<{ status: string; createdAt?: string }> | null,
+): PaymentStatusChip {
+  const latest = refunds && refunds.length > 0 ? refunds[0] : null;
+  if (latest) {
+    switch (latest.status) {
+      case "pending":
+        return { labelKey: "refund.status.pending", pillKey: "processing" };
+      case "approved":
+        return { labelKey: "refund.status.approved", pillKey: "approved" };
+      case "processing":
+        return { labelKey: "refund.status.processing", pillKey: "processing" };
+      case "rejected":
+        return { labelKey: "refund.status.rejected", pillKey: "rejected" };
+      case "failed":
+        return { labelKey: "refund.status.failed", pillKey: "failed" };
+      // "completed" falls through: the payment status will already have
+      // been flipped to refunded / partially_refunded by the completion
+      // transaction, so we defer to payment status for the definitive
+      // label instead of double-labelling.
+    }
+  }
+  return { labelKey: `status.${paymentStatus}`, pillKey: paymentStatus };
+}
+
 /** Pick the user-facing course title for the active locale, with EN fallback. */
 export function pickCourseTitle(
   titleEn: string | null | undefined,

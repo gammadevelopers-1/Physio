@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { BookOpen, AlertTriangle, Clock, Search, ArrowUpDown, Users, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
 import { taApi, type TAAssignedCourse } from "@/lib/api";
 import { FmtDate } from "@/components/ui/Fmt";
+import Select from "@/components/admin-dashboard/Select";
 
 type StatusFilter = "all" | "approved" | "suggested" | "completed";
 type SortOption = "newest" | "oldest" | "alphabetical";
@@ -95,15 +96,15 @@ const TACoursesList = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "active":
-        return "Active";
+        return t("courseStatus.active");
       case "completed":
-        return "Completed";
+        return t("courseStatus.completed");
       case "cancelled":
-        return "Cancelled";
+        return t("courseStatus.cancelled");
       case "suggested":
         return t("courses.pendingApproval");
       case "pre_assigned":
-        return "Pre-assigned";
+        return t("courseStatus.pre_assigned");
       default:
         return status;
     }
@@ -111,9 +112,9 @@ const TACoursesList = () => {
 
   const filters: { key: StatusFilter; label: string }[] = [
     { key: "all", label: t("courses.all") },
-    { key: "approved", label: "Active" },
+    { key: "approved", label: t("courseStatus.active") },
     { key: "suggested", label: t("courses.pendingApproval") },
-    { key: "completed" as StatusFilter, label: "Completed" },
+    { key: "completed" as StatusFilter, label: t("courseStatus.completed") },
   ];
 
   return (
@@ -132,28 +133,30 @@ const TACoursesList = () => {
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
             <input
               type="text"
               placeholder={t("courses.searchPlaceholder") || "Search courses..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20 focus:border-transparent"
+              className="w-full ps-10 pe-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
             />
           </div>
 
           {/* Sort */}
           <div className="flex items-center gap-2">
             <ArrowUpDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
-            <select
+            <Select
+              className="min-w-[180px]"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
-            >
-              <option value="newest">{t("courses.sortNewest") || "Newest First"}</option>
-              <option value="oldest">{t("courses.sortOldest") || "Oldest First"}</option>
-              <option value="alphabetical">{t("courses.sortAlphabetical") || "Alphabetical"}</option>
-            </select>
+              onChange={(v) => setSortBy(v as SortOption)}
+              ariaLabel={t("courses.sortNewest") || "Sort"}
+              options={[
+                { value: "newest", label: t("courses.sortNewest") || "Newest First" },
+                { value: "oldest", label: t("courses.sortOldest") || "Oldest First" },
+                { value: "alphabetical", label: t("courses.sortAlphabetical") || "Alphabetical" },
+              ]}
+            />
           </div>
         </div>
       </div>

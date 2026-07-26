@@ -107,6 +107,19 @@ export class StudentFinanceController {
         createdAt: payments.createdAt,
         courseTitle: courses.title,
         courseTitleAr: courses.titleAr,
+        // Latest refund status (any state) so the FE chip can render
+        // "Refund requested" / "Approved" / etc. instead of the stale
+        // "Paid" that payment.status keeps until the refund COMPLETES.
+        // Completed refunds are excluded — payment.status will have
+        // already flipped to refunded/partially_refunded at completion,
+        // and the FE helper falls through to that.
+        latestRefundStatus: sql<string | null>`(
+          SELECT r.status FROM refunds r
+          WHERE r.payment_id = ${payments.id}
+            AND r.status <> 'completed'
+          ORDER BY r.created_at DESC
+          LIMIT 1
+        )`,
       })
       .from(payments)
       .leftJoin(courses, eq(payments.courseId, courses.id))
@@ -205,6 +218,16 @@ export class StudentFinanceController {
         // Invoice + refund presence flags — saves the client from extra
         // round-trips when rendering action buttons.
         invoiceId: invoices.id,
+        // Latest non-completed refund status — lets the row chip render
+        // "Refund requested" / "Approved" / etc. instead of the stale
+        // "Paid" that payment.status keeps until the refund COMPLETES.
+        latestRefundStatus: sql<string | null>`(
+          SELECT r.status FROM refunds r
+          WHERE r.payment_id = ${payments.id}
+            AND r.status <> 'completed'
+          ORDER BY r.created_at DESC
+          LIMIT 1
+        )`,
       })
       .from(payments)
       .leftJoin(courses, eq(payments.courseId, courses.id))
@@ -332,18 +355,28 @@ export class StudentFinanceController {
     //   - payment must be `paid` (bank-transfer in review isn't refundable)
     //   - no in-flight refund (pending/approved/processing) already exists
     //   - full refund already issued → ineligible
+    //   - any previously rejected refund → student cannot self-serve a
+    //     re-request. Once finance has said no, the button stays off
+    //     until an admin re-opens the case via /refunds/admin-initiate
+    //     (which bypasses this gate). Prior behavior let students spam
+    //     duplicate requests after each rejection, so finance had to
+    //     keep re-reviewing the same case.
     const hasInflight = refundRows.some((r) =>
       ['pending', 'approved', 'processing'].includes(r.status),
     );
+    const hasRejected = refundRows.some((r) => r.status === 'rejected');
     const alreadyRefunded = row.status === PAYMENT_STATUS.REFUNDED;
     const canRequestRefund =
       row.status === PAYMENT_STATUS.PAID &&
       !hasInflight &&
       !alreadyRefunded &&
+      !hasRejected &&
       eligibility.eligible;
 
     // Decorate eligibility with the hard-gate reason if applicable so UI
     // only needs to read one field to render the disabled-state copy.
+    // Order matters: earlier branches take precedence when multiple
+    // gates apply.
     let refundReason = eligibility.reason;
     let refundBlockedBy: string | null = eligibility.blockedBy;
     if (row.status === PAYMENT_STATUS.AWAITING_APPROVAL) {
@@ -358,6 +391,10 @@ export class StudentFinanceController {
     } else if (hasInflight) {
       refundReason = 'You already have a refund request in progress for this payment.';
       refundBlockedBy = 'refund_in_progress';
+    } else if (hasRejected) {
+      refundReason =
+        'A previous refund request for this payment was rejected. Please contact support if you believe this decision should be reconsidered.';
+      refundBlockedBy = 'refund_rejected';
     }
 
     const gatewayKey = row.gateway as

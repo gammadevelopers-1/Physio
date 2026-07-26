@@ -27,6 +27,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import SkeletonCard from "@/components/shared/SkeletonCard";
+import Select from "@/components/admin-dashboard/Select";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
@@ -465,27 +466,32 @@ const NELCComplianceCenterContent = () => {
                     className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent outline-none`}
                   />
                 </div>
-                <select
+                <Select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent outline-none"
-                >
-                  <option value="all">{t("catalog.allStatus")}</option>
-                  <option value="passed">{t("nelc.passed")}</option>
-                  <option value="review">{t("nelc.review")}</option>
-                  <option value="failed">{t("nelc.failed")}</option>
-                </select>
-                <select
+                  onChange={(v) => setStatusFilter(v as typeof statusFilter)}
+                  options={[
+                    { value: "all", label: t("catalog.allStatus") },
+                    { value: "passed", label: t("nelc.passed") },
+                    { value: "review", label: t("nelc.review") },
+                    { value: "failed", label: t("nelc.failed") },
+                  ]}
+                  className="w-40"
+                  size="sm"
+                />
+                <Select
                   value={deliveryFilter}
-                  onChange={(e) => setDeliveryFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent outline-none"
-                >
-                  <option value="all">{t("sessionsPage.allTypes")}</option>
-                  <option value="zoom">{t("coursesPage.delivery.zoom")}</option>
-                  <option value="onsite">{t("coursesPage.delivery.onsite")}</option>
-                  <option value="blended">{t("coursesPage.delivery.blended")}</option>
-                  <option value="self-paced">{t("coursesPage.delivery.self-paced" as Parameters<typeof t>[0])}</option>
-                </select>
+                  onChange={setDeliveryFilter}
+                  options={[
+                    { value: "all", label: t("sessionsPage.allTypes") },
+                    { value: "zoom", label: t("coursesPage.delivery.zoom") },
+                    { value: "onsite", label: t("coursesPage.delivery.onsite") },
+                    { value: "blended", label: t("coursesPage.delivery.blended") },
+                    { value: "self-paced", label: t("coursesPage.delivery.self-paced" as Parameters<typeof t>[0]) },
+                    { value: "webinar", label: t("coursesPage.delivery.webinar") },
+                  ]}
+                  className="w-40"
+                  size="sm"
+                />
               </div>
 
               {/* Courses Tab Content */}

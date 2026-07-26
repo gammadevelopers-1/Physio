@@ -11,6 +11,7 @@ import AdminMobileSidebar from "@/components/admin-dashboard/AdminMobileSidebar"
 import SearchableSelect, {
   SearchableOption,
 } from "@/components/admin-dashboard/SearchableSelect";
+import Select from "@/components/admin-dashboard/Select";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { adminApi, courseManagerApi, FilterPerson } from "@/lib/api";
@@ -872,40 +873,44 @@ const CertificatesContent = ({ role = "manager" }: CertificatesContentProps = {}
                             />
                           </div>
                         )}
-                        <select
+                        <Select
                           value={selectedCourse}
-                          onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          <option value="all">{t("certificates.allCourses")}</option>
-                          {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                        </select>
-                        <select
+                          onChange={(v) => { setSelectedCourse(v); setCurrentPage(1); setSelectedIds(new Set()); }}
+                          options={[
+                            { value: "all", label: t("certificates.allCourses") },
+                            ...courses.map((c) => ({ value: c.id, label: c.title })),
+                          ]}
+                          className="w-48"
+                          size="sm"
+                        />
+                        <Select
                           value={selectedStatus}
-                          onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-                        </select>
+                          onChange={(v) => { setSelectedStatus(v); setCurrentPage(1); setSelectedIds(new Set()); }}
+                          options={statusOptions.map((o) => ({ value: o.id, label: o.name }))}
+                          className="w-48"
+                          size="sm"
+                        />
                       </div>
                     </div>
                     {showFilters && (
                       <div className="md:hidden mt-4 pt-4 border-t border-[var(--color-border)] grid grid-cols-2 gap-3">
-                        <select
+                        <Select
                           value={selectedCourse}
-                          onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          <option value="all">{t("certificates.allCourses")}</option>
-                          {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                        </select>
-                        <select
+                          onChange={(v) => { setSelectedCourse(v); setCurrentPage(1); }}
+                          options={[
+                            { value: "all", label: t("certificates.allCourses") },
+                            ...courses.map((c) => ({ value: c.id, label: c.title })),
+                          ]}
+                          className="w-full"
+                          size="sm"
+                        />
+                        <Select
                           value={selectedStatus}
-                          onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-                        </select>
+                          onChange={(v) => { setSelectedStatus(v); setCurrentPage(1); }}
+                          options={statusOptions.map((o) => ({ value: o.id, label: o.name }))}
+                          className="w-full"
+                          size="sm"
+                        />
                       </div>
                     )}
                   </div>

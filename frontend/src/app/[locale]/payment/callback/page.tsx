@@ -127,7 +127,7 @@ export default function PaymentCallbackPage() {
   }, [paymentId, chargeId, gatewayStatus, gracePeriodMs, locale, router]);
 
   return (
-    <div className="min-h-screen bg-[#EEF3F7] flex flex-col">
+    <div className="min-h-screen bg-[var(--color-surface-page)] flex flex-col">
       <Navbar />
       <main className="flex-1 flex items-center justify-center px-4 py-20">
         <div className="bg-white rounded-2xl shadow-sm p-8 max-w-md w-full text-center">

@@ -20,6 +20,7 @@ import {
   reconciliationFindings,
   reconciliationEscalations,
   auditLogs,
+  couponCampaigns,
   PAYMENT_STATUS,
   COURSE_STATUS,
   ENROLLMENT_STATUS,
@@ -227,12 +228,18 @@ export class PaymentsService {
    */
   async prescoreTabby(
     user: AuthenticatedUser,
-    dto: { courseIds: string[]; discountCode?: string; locale?: 'ar' | 'en' },
+    dto: {
+      courseIds: string[];
+      discountCode?: string;
+      applyActiveCampaign?: boolean;
+      locale?: 'ar' | 'en';
+    },
   ): Promise<{ eligible: boolean; reason?: string; message?: string }> {
     try {
       const quote = await this.quotePayment(user, {
         courseIds: dto.courseIds,
         discountCode: dto.discountCode,
+        applyActiveCampaign: dto.applyActiveCampaign,
       });
 
       const [userData] = await db
@@ -343,7 +350,11 @@ export class PaymentsService {
    */
   async quotePayment(
     user: AuthenticatedUser,
-    dto: { courseIds: string[]; discountCode?: string },
+    dto: {
+      courseIds: string[];
+      discountCode?: string;
+      applyActiveCampaign?: boolean;
+    },
   ) {
     const courseIds = Array.from(new Set(dto.courseIds));
     if (courseIds.length === 0) {
@@ -440,8 +451,37 @@ export class PaymentsService {
       Math.round(lines.reduce((s, l) => s + l.salePrice, 0) * 100) / 100;
     const saleDiscount = Math.max(0, originalSubtotal - subtotal);
 
-    let discountAmount = 0;
-    let discountId: string | null = null;
+    // ── Additive discount stacking ─────────────────────────────────────
+    // Two independent buckets can subtract from the subtotal:
+    //   1. `campaignAmount` — a direct-campaign discount (no coupon
+    //      row). Only applied when the caller opts in via
+    //      `applyActiveCampaign` AND the server-side recompute
+    //      confirms the campaign is still eligible.
+    //   2. `couponAmount` — a validated coupon in `discountCode`.
+    // Both are computed off the ORIGINAL sale-adjusted subtotal so the
+    // buyer's expectation ("coupon takes 10% off the price I see")
+    // matches the invoice. Combined discount is clamped to <= subtotal
+    // so the total never goes negative.
+    let couponAmount = 0;
+    let couponId: string | null = null;
+    let campaignAmount = 0;
+    let campaignId: string | null = null;
+    let campaignName: string | null = null;
+
+    if (dto.applyActiveCampaign) {
+      const best = await this.discountService.getBestAutoApplyDiscount(
+        lines.map((l) => l.course.id),
+        user.id,
+      );
+      if (best && best.isCampaignDirect) {
+        campaignAmount = best.discountAmount;
+        campaignId = best.discountId;
+        campaignName = best.campaign?.name || null;
+      }
+      // Silent no-op if no eligible direct campaign — the FE re-fetches
+      // auto-apply on cart change, so a stale opt-in is not a hard error.
+    }
+
     if (dto.discountCode) {
       const saleHoldout = lines.find(
         (l) => l.sale.onSale && !l.sale.saleAllowsCoupon,
@@ -450,6 +490,20 @@ export class PaymentsService {
         throw new BadRequestException(
           `Course "${saleHoldout.course.title}" is on sale; coupon codes cannot be combined with the sale.`,
         );
+      }
+      // Belt-and-suspenders: if a direct-campaign discount is stacking
+      // on top, honour the campaign's own `allowsCoupon` flag.
+      if (campaignId) {
+        const [camp] = await db
+          .select({ allowsCoupon: couponCampaigns.allowsCoupon })
+          .from(couponCampaigns)
+          .where(eq(couponCampaigns.id, campaignId))
+          .limit(1);
+        if (camp && !camp.allowsCoupon) {
+          throw new BadRequestException(
+            'This campaign does not allow coupon codes on top.',
+          );
+        }
       }
       const result = await this.discountService.validateDiscount(
         dto.discountCode,
@@ -460,9 +514,14 @@ export class PaymentsService {
       if (!result.valid) {
         throw new BadRequestException(result.error || 'Invalid discount code');
       }
-      discountAmount = result.discountAmount;
-      discountId = result.discountId;
+      couponAmount = result.discountAmount;
+      couponId = result.discountId;
     }
+
+    const discountAmount = Math.min(
+      subtotal,
+      Math.round((campaignAmount + couponAmount) * 100) / 100,
+    );
 
     // VAT now comes from the finance-managed tax settings + the primary
     // course's `vat_treatment` (exempt/zero-rated/standard). For mixed
@@ -493,6 +552,7 @@ export class PaymentsService {
         effectivePrice: salePrice,
         onSale: sale.onSale,
         salePercent: sale.salePercent,
+        saleAmount: sale.saleAmount,
         saleAllowsCoupon: sale.saleAllowsCoupon,
         deliveryType: course.deliveryType || null,
         startDate: course.startDate,
@@ -502,9 +562,24 @@ export class PaymentsService {
         originalSubtotal,
         subtotal,
         saleDiscount,
+        // `discountAmount` remains the SUM (campaign + coupon) so
+        // existing consumers (invoice PDF, finance dashboard, refund
+        // math) that sum this into savings still show the full amount
+        // saved. The two legs are ALSO surfaced individually below.
         discountAmount,
+        // Real coupon (or null when only a direct-campaign discount is
+        // applied). NEVER a `CAMPAIGN:xxx` sentinel.
         discountCode: dto.discountCode || null,
-        discountId,
+        discountId: couponId,
+        // Coupon leg (broken out so the FE can render a distinct
+        // summary line without recomputing).
+        couponAmount,
+        couponId,
+        couponCode: dto.discountCode || null,
+        // Direct-campaign leg.
+        campaignAmount,
+        campaignId,
+        campaignName,
         taxAmount,
         taxRate: taxCalc.vatRate,
         vatTreatment: taxCalc.treatment,
@@ -665,11 +740,33 @@ export class PaymentsService {
     const subtotal =
       Math.round(lines.reduce((s, l) => s + l.salePrice, 0) * 100) / 100;
 
-    // 5. Discount code — applied once, cart-wide, against the subtotal.
-    //    For V1 a course-restricted discount uses the FIRST cart course as
-    //    its qualifying line (the discount service is course-keyed).
-    let discountAmount = 0;
-    let discountId: string | null = null;
+    // 5. Discount — additive stacking of an OPTIONAL direct-campaign
+    //    discount (opt-in via dto.applyActiveCampaign) and an OPTIONAL
+    //    coupon in dto.discountCode. Both are computed off the cart
+    //    subtotal (sale-adjusted) and clamped so the combined amount
+    //    never exceeds the subtotal. The FE renders them as two
+    //    distinct summary lines; we persist both so refunds + reporting
+    //    can trace each redemption independently.
+    let couponAmount = 0;
+    let couponId: string | null = null;
+    let campaignAmount = 0;
+    let campaignId: string | null = null;
+    let campaignName: string | null = null;
+
+    if (dto.applyActiveCampaign) {
+      // Server-side recompute — buyer can never spoof a bigger discount
+      // from the client, and stale opt-ins silently no-op.
+      const best = await this.discountService.getBestAutoApplyDiscount(
+        lines.map((l) => l.course.id),
+        user.id,
+      );
+      if (best && best.isCampaignDirect) {
+        campaignAmount = best.discountAmount;
+        campaignId = best.discountId;
+        campaignName = best.campaign?.name || null;
+      }
+    }
+
     if (dto.discountCode) {
       // Sale + coupon are mutually exclusive UNLESS every sale-on course in
       // the cart explicitly allows coupon stacking. One holdout disqualifies
@@ -682,6 +779,21 @@ export class PaymentsService {
           `Course "${saleHoldout.course.title}" is on sale; coupon codes cannot be combined with the sale.`,
         );
       }
+      // When a direct-campaign discount is already applied, respect the
+      // campaign's own `allowsCoupon` flag — some campaigns forbid
+      // stacking regardless of per-course sale rules.
+      if (campaignId) {
+        const [camp] = await db
+          .select({ allowsCoupon: couponCampaigns.allowsCoupon })
+          .from(couponCampaigns)
+          .where(eq(couponCampaigns.id, campaignId))
+          .limit(1);
+        if (camp && !camp.allowsCoupon) {
+          throw new BadRequestException(
+            'This campaign does not allow coupon codes on top.',
+          );
+        }
+      }
       const discountResult = await this.discountService.validateDiscount(
         dto.discountCode,
         lines[0].course.id,
@@ -693,9 +805,17 @@ export class PaymentsService {
           discountResult.error || 'Invalid discount code',
         );
       }
-      discountAmount = discountResult.discountAmount;
-      discountId = discountResult.discountId;
+      couponAmount = discountResult.discountAmount;
+      couponId = discountResult.discountId;
     }
+
+    const discountAmount = Math.min(
+      subtotal,
+      Math.round((campaignAmount + couponAmount) * 100) / 100,
+    );
+    // `discountId` remains the coupon id for backward compat with the
+    // legacy metadata shape read by refund + reporting code.
+    const discountId = couponId;
 
     // 6. Calculate totals — VAT comes from finance-managed tax settings
     // + the primary course's vat_treatment override (see TaxComputationService).
@@ -807,13 +927,16 @@ export class PaymentsService {
           continue;
         }
 
-        // Brand-new enrollment.
+        // Brand-new enrollment. `source: 'purchase'` is the default column
+        // value, but set it explicitly so readers of this call site don't
+        // have to check the column default to know why the row exists.
         const [created] = await tx
           .insert(enrollments)
           .values({
             courseId: course.id,
             studentId: user.id,
             status: ENROLLMENT_STATUS.PENDING_PAYMENT,
+            source: 'purchase',
           })
           .returning({ id: enrollments.id });
         enrollmentIds.push(created.id);
@@ -860,9 +983,22 @@ export class PaymentsService {
             originalPrice: originalSubtotal,
             salePercent: null,
             saleDiscountAmount: saleDiscountTotal,
+            // Legacy keys — combined discount + coupon-only ids. Kept for
+            // backward compat with in-flight payments and refund logic
+            // that reads these directly.
             discountAmount,
             discountId,
             discountCode: dto.discountCode || null,
+            // New keys — the two stacked legs, persisted separately so
+            // settlement can record both redemptions and the invoice PDF
+            // can render two lines when the buyer stacked them. Either
+            // may be zero / null when only one leg fired.
+            couponAmount,
+            couponId,
+            couponCode: dto.discountCode || null,
+            campaignAmount,
+            campaignId,
+            campaignName,
             taxAmount,
             // VAT snapshot captured at payment time so the invoice PDF
             // renders the rate that applied THEN (ZATCA-compliant — past
@@ -1286,21 +1422,80 @@ export class PaymentsService {
         );
     }
 
-    // Record discount usage if applicable. recordUsage is itself atomic +
-    // idempotent; guard it so a usage hiccup can't abort an already-paid order.
+    // Record discount usage if applicable. Both legs (campaign-direct +
+    // coupon) can fire in the same settlement — they're independent and
+    // each atomic. Guard the whole block so a usage hiccup can't abort
+    // an already-paid order.
     const metadata = payment.metadata as any;
-    if (metadata?.discountId && metadata?.discountCode) {
+
+    // ── Campaign-direct leg ──────────────────────────────────────────
+    // New shape: `metadata.campaignId` is written alongside `campaignAmount`
+    // whenever the buyer accepted a direct-campaign discount.
+    if (metadata?.campaignId) {
       try {
-        await this.discountService.recordUsage(
-          metadata.discountId,
+        await this.discountService.recordCampaignDirectUsage(
+          metadata.campaignId,
           payment.userId,
           payment.id,
-          metadata.discountAmount || 0,
+          Number(metadata.campaignAmount) || 0,
         );
       } catch (err) {
         this.logger.error(
-          `Discount usage recording failed for payment ${paymentId}: ${(err as Error).message}`,
+          `Campaign-direct usage recording failed for payment ${paymentId}: ${(err as Error).message}`,
         );
+      }
+    }
+
+    // ── Coupon leg ───────────────────────────────────────────────────
+    // Prefer the new `couponId` key; fall back to the legacy `discountId`
+    // key so in-flight payments written before this change still settle.
+    //
+    // Legacy shim: pre-0108 payments stored a synthetic `CAMPAIGN:xxx`
+    // sentinel in `discountCode` and the campaign id in `discountId`,
+    // routing to `recordCampaignDirectUsage`. Preserve that path so
+    // already-created payments don't blow up post-deploy trying to write
+    // against a discount_codes row that doesn't exist.
+    const legacyDiscountCode: string | undefined = metadata?.discountCode;
+    const isLegacyCampaignSentinel =
+      typeof legacyDiscountCode === 'string' &&
+      legacyDiscountCode.startsWith('CAMPAIGN:');
+
+    if (isLegacyCampaignSentinel && metadata?.discountId && !metadata?.campaignId) {
+      // Legacy pre-0108 shim — only fire when we didn't already record a
+      // campaign-direct usage from the new metadata shape above.
+      try {
+        await this.discountService.recordCampaignDirectUsage(
+          metadata.discountId,
+          payment.userId,
+          payment.id,
+          Number(metadata.discountAmount) || 0,
+        );
+      } catch (err) {
+        this.logger.error(
+          `Legacy campaign-direct usage recording failed for payment ${paymentId}: ${(err as Error).message}`,
+        );
+      }
+    } else {
+      const couponIdForUsage: string | undefined =
+        metadata?.couponId || metadata?.discountId;
+      const couponCodeForUsage: string | undefined =
+        metadata?.couponCode || metadata?.discountCode;
+      const couponAmountForUsage = Number(
+        metadata?.couponAmount ?? metadata?.discountAmount ?? 0,
+      );
+      if (couponIdForUsage && couponCodeForUsage) {
+        try {
+          await this.discountService.recordUsage(
+            couponIdForUsage,
+            payment.userId,
+            payment.id,
+            couponAmountForUsage,
+          );
+        } catch (err) {
+          this.logger.error(
+            `Coupon usage recording failed for payment ${paymentId}: ${(err as Error).message}`,
+          );
+        }
       }
     }
 

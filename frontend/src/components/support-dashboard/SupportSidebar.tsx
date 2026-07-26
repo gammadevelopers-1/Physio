@@ -74,9 +74,9 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
       const { url } = await profileApi.uploadAvatar(file);
       await profileApi.update({ avatar: url });
       await refreshUser();
-      toast.success("Profile photo updated");
+      toast.success(t("sidebar.toasts.photoUpdated"));
     } catch {
-      toast.error("Failed to upload photo");
+      toast.error(t("sidebar.toasts.photoUploadFailed"));
     }
     e.target.value = "";
   };
@@ -85,9 +85,9 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
     try {
       await profileApi.update({ avatar: null });
       await refreshUser();
-      toast.success("Profile photo removed");
+      toast.success(t("sidebar.toasts.photoRemoved"));
     } catch {
-      toast.error("Failed to remove photo");
+      toast.error(t("sidebar.toasts.photoRemoveFailed"));
     }
   };
 
@@ -257,7 +257,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
                     role="menuitem"
                   >
                     <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                    Upload Photo
+                    {t("sidebar.uploadPhoto")}
                   </button>
                   {user?.avatar && (
                     <button
@@ -266,7 +266,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
                       role="menuitem"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Remove Photo
+                      {t("sidebar.removePhoto")}
                     </button>
                   )}
                 </div>
@@ -285,7 +285,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EDE9FE] rounded-full">
               <Headphones className="w-4 h-4 text-[#8B5CF6]" />
               <span className="text-sm font-medium text-[#8B5CF6]">
-                {supportSubRole === "supervisor" ? "Supervisor" : "Agent"}
+                {supportSubRole === "supervisor" ? t("sidebar.roleSupervisor") : t("sidebar.roleAgent")}
               </span>
             </div>
             {isOnline !== null && (
@@ -318,8 +318,8 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
           <div className="mt-6 py-4 border-t border-[var(--color-border)] text-center">
             <p className="text-xs text-[var(--color-text-secondary)]">
               {isSupervisor
-                ? "You don't have assigned tickets yet. View your team's performance in Reports."
-                : "You haven't been assigned any tickets yet."}
+                ? t("sidebar.emptyStateSupervisor")
+                : t("sidebar.emptyStateAgent")}
             </p>
           </div>
         ) : (
@@ -337,7 +337,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
                   : "—"}
               </p>
               <p className="text-xs text-[var(--color-text-secondary)]">
-                {profile.csat != null ? "CSAT /5" : t("sidebar.csat")}
+                {profile.csat != null ? t("sidebar.csatOutOf5") : t("sidebar.csat")}
               </p>
             </div>
             <div className="text-center">

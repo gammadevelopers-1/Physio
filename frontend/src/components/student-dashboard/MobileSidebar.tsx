@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
-  Calendar as CalendarIcon,
   LayoutDashboard,
   BookOpen,
   Heart,
@@ -20,10 +19,11 @@ import {
   Upload,
   Trash2,
   Headphones,
+  Gift,
 } from "lucide-react";
 import SaudiRiyalIcon from "@/components/shared/SaudiRiyalIcon";
 import { useAuth } from "@/contexts/AuthContext";
-import { profileApi } from "@/lib/api";
+import { pointsApi, profileApi } from "@/lib/api";
 import type { StudentProfile } from "@/hooks/useStudentProfile";
 
 interface MobileSidebarProps {
@@ -42,6 +42,23 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
   const avatarMenuRef = useRef<HTMLDivElement>(null);
 
   const closeAvatarMenu = useCallback(() => setAvatarMenuOpen(false), []);
+
+  // Mirror of DashboardSidebar's red-dot indicator on the mobile drawer.
+  const [unusedCouponCount, setUnusedCouponCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const page = await pointsApi.getMyRewardHistory({ page: 1, limit: 1 });
+        if (!cancelled) setUnusedCouponCount(page.unusedCouponCount ?? 0);
+      } catch {
+        /* silent */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!avatarMenuOpen) return;
@@ -87,11 +104,9 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
       href: `/${locale}/dashboard/student/courses`,
       icon: BookOpen,
     },
-    {
-      label: t("sidebar.calendar"),
-      href: `/${locale}/dashboard/student/calendar`,
-      icon: CalendarIcon,
-    },
+    // Lectures/Calendar entry removed — see DashboardSidebar for context.
+    // Kept the /calendar route so any bookmarked deep-links still work;
+    // just unlisted from the mobile navigation to match desktop.
     {
       label: t("sidebar.certifications"),
       href: `/${locale}/dashboard/student/certifications`,
@@ -106,6 +121,11 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
       label: t("sidebar.inviteFriends"),
       href: `/${locale}/dashboard/student/invite-friends`,
       icon: Users,
+    },
+    {
+      label: t("sidebar.myRewards"),
+      href: `/${locale}/dashboard/student/my-rewards`,
+      icon: Gift,
     },
     {
       label: t("sidebar.support"),
@@ -278,9 +298,15 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
                     <Icon
                       className={`w-5 h-5 ${active ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`}
                     />
-                    <span className={`text-sm ${active ? "font-medium" : ""}`}>
+                    <span className={`text-sm flex-1 ${active ? "font-medium" : ""}`}>
                       {item.label}
                     </span>
+                    {item.href.endsWith("/my-rewards") && unusedCouponCount > 0 && (
+                      <span
+                        className="w-2 h-2 rounded-full bg-red-500"
+                        aria-label={t("sidebar.myRewardsUnreadDot")}
+                      />
+                    )}
                   </Link>
                 );
               })}

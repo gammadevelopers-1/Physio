@@ -6,6 +6,7 @@ import Link from "next/link";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
+import Select from "@/components/ui/Select";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
@@ -419,53 +420,53 @@ const StudentsContent = () => {
                       </button>
 
                       <div className="hidden md:flex gap-3">
-                        <select
+                        <Select
                           value={selectedCourse}
-                          onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          <option value="all">{t("students.allCourses")}</option>
-                          {courses.map((c) => (
-                            <option key={c.id} value={c.id}>{locale === "ar" && c.titleAr ? c.titleAr : c.title}</option>
-                          ))}
-                        </select>
-                        <select
+                          onChange={(v) => { setSelectedCourse(v); setCurrentPage(1); }}
+                          className="min-w-[180px]"
+                          options={[
+                            { value: "all", label: t("students.allCourses") },
+                            ...courses.map((c) => ({
+                              value: c.id,
+                              label: locale === "ar" && c.titleAr ? c.titleAr : c.title,
+                            })),
+                          ]}
+                        />
+                        <Select
                           value={selectedStatus}
-                          onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {statusOptions.map((option) => (
-                            <option key={option.id} value={option.id}>
-                              {option.name}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={setSelectedStatus}
+                          className="min-w-[160px]"
+                          options={statusOptions.map((option) => ({
+                            value: option.id,
+                            label: option.name,
+                          }))}
+                        />
                       </div>
                     </div>
 
                     {showFilters && (
                       <div className="md:hidden mt-4 pt-4 border-t border-[var(--color-border)] space-y-3">
-                        <select
+                        <Select
                           value={selectedCourse}
-                          onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          <option value="all">{t("students.allCourses")}</option>
-                          {courses.map((c) => (
-                            <option key={c.id} value={c.id}>{locale === "ar" && c.titleAr ? c.titleAr : c.title}</option>
-                          ))}
-                        </select>
-                        <select
+                          onChange={(v) => { setSelectedCourse(v); setCurrentPage(1); }}
+                          className="w-full"
+                          options={[
+                            { value: "all", label: t("students.allCourses") },
+                            ...courses.map((c) => ({
+                              value: c.id,
+                              label: locale === "ar" && c.titleAr ? c.titleAr : c.title,
+                            })),
+                          ]}
+                        />
+                        <Select
                           value={selectedStatus}
-                          onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {statusOptions.map((option) => (
-                            <option key={option.id} value={option.id}>
-                              {option.name}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={setSelectedStatus}
+                          className="w-full"
+                          options={statusOptions.map((option) => ({
+                            value: option.id,
+                            label: option.name,
+                          }))}
+                        />
                       </div>
                     )}
                   </div>

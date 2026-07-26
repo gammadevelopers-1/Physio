@@ -56,7 +56,7 @@ export default async function SupportPage({
   return (
     <main
       id="main-content"
-      className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0"
+      className="min-h-screen bg-[var(--color-surface-page)] pb-16 lg:pb-0"
     >
       <Navbar
         siteSettings={siteSettings}

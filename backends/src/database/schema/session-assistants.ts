@@ -2,6 +2,7 @@ import {
   pgTable,
   uuid,
   varchar,
+  text,
   timestamp,
   boolean,
   uniqueIndex,
@@ -26,6 +27,11 @@ export const sessionAssistants = pgTable(
     assignedAt: timestamp('assigned_at').defaultNow().notNull(),
     assignedBy: uuid('assigned_by').references(() => users.id),
     isAutoAssigned: boolean('is_auto_assigned').notNull().default(false),
+    // Personal panelist join URL for webinar sessions — populated lazily
+    // by CourseAssistantsService.autoRegisterTAAsPanelist on TA approval
+    // or new-session propagation. Null for meeting-only sessions and
+    // for webinar rows that have not been synced with Zoom yet.
+    zoomPanelistJoinUrl: text('zoom_panelist_join_url'),
   },
   (table) => [
     uniqueIndex('session_assistants_session_user_unique').on(

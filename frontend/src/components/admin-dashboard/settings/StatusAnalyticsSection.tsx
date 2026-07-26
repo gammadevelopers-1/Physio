@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   BarChart3,
   Clock,
@@ -40,6 +41,7 @@ function fmtNumber(n: number): string {
 }
 
 export default function StatusAnalyticsSection() {
+  const t = useTranslations("adminDashboard.settingsPage.statusAnalytics");
   const [presetKey, setPresetKey] = useState("30");
   const [data, setData] = useState<StatusAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,13 +77,13 @@ export default function StatusAnalyticsSection() {
       const url = serviceStatusApi.exportIncidentsCsvUrl({ from: fromDate });
       window.open(url, "_blank");
     } catch {
-      toast.error("Couldn't start export");
+      toast.error(t("toasts.startFailed"));
     }
   };
 
   const handleExportPdf = () => {
     if (!data) return;
-    exportAnalyticsPdf(data);
+    exportAnalyticsPdf(data, t("toasts.allowPopups"));
   };
 
   return (
@@ -340,10 +342,10 @@ function TrendBars({
   );
 }
 
-function exportAnalyticsPdf(data: StatusAnalytics) {
+function exportAnalyticsPdf(data: StatusAnalytics, popupBlockedMessage: string) {
   const win = window.open("", "_blank");
   if (!win) {
-    toast.error("Allow pop-ups to export PDF");
+    toast.error(popupBlockedMessage);
     return;
   }
   const r = data.range;

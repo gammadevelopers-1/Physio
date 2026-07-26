@@ -22,7 +22,17 @@ import {
 } from '../../database/schema';
 import { courseMaterials } from '../../database/schema/course-materials';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
+import { isGlobalAdmin, isManager, isTA, hasRole } from '../../common/role-helpers';
+
+// Reports use "maximum-permission" role checks: if a user *has* the ADMIN
+// role at all (even if their activeRole is currently INSTRUCTOR for viewing
+// their own courses), they see admin-scope reports. Without this, an admin
+// whose current activeRole isn't ADMIN gets empty results — because the
+// scope filter falls through to "courses I teach" and admins rarely teach.
+const hasAdminScope = (user: AuthenticatedUser): boolean =>
+  isGlobalAdmin(user) || hasRole(user, 'ADMIN') || hasRole(user, 'SUPER_ADMIN');
+const hasManagerScope = (user: AuthenticatedUser): boolean =>
+  isManager(user) || hasRole(user, 'MANAGER');
 import { decryptPII } from '../../common/crypto';
 import { computeEffectiveScore } from '../../common/score-policy';
 import { NelcComplianceService } from '../nelc-compliance/nelc-compliance.service';
@@ -33,7 +43,12 @@ import {
   toArabicIndic,
   type PlatformLocaleSettings,
 } from '../../common/platform-locale';
-import PDFDocument from 'pdfkit';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const PDFDocument = require('pdfkit');
+// Historical note: the ES-style `import PDFDocument from 'pdfkit'` compiled to
+// `pdfkit_1.default` which is undefined (pdfkit uses `module.exports = ctor`,
+// not `.default`) — so every report PDF 500'd in production. The rest of the
+// codebase uses `import * as PDFDocument from 'pdfkit'` for the same reason.
 
 type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
@@ -41,9 +56,19 @@ type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 const TZ = 'Asia/Riyadh';
 
 interface ReportMetadata {
+  /** Kept for backwards compat — treated as the exporter's display name. */
   instructorName?: string;
+  /** Role of the exporter, used to label the metadata line correctly. */
+  exporterRole?: 'ADMIN' | 'MANAGER' | 'INSTRUCTOR' | 'TEACHING_ASSISTANT';
   filters?: string;
 }
+
+const EXPORTER_LABEL: Record<NonNullable<ReportMetadata['exporterRole']>, string> = {
+  ADMIN: 'Administrator',
+  MANAGER: 'Manager',
+  INSTRUCTOR: 'Instructor',
+  TEACHING_ASSISTANT: 'Teaching Assistant',
+};
 
 interface ReportResult {
   buffer: Buffer;
@@ -52,7 +77,7 @@ interface ReportResult {
 }
 
 const CONTENT_TYPES: Record<ReportFormat, string> = {
-  csv: 'text/csv',
+  csv: 'text/csv; charset=utf-8',
   pdf: 'application/pdf',
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 };
@@ -95,9 +120,9 @@ export class ReportsService {
     conditions: any[],
     user: AuthenticatedUser,
   ): void {
-    if (isGlobalAdmin(user)) {
-      // No filter
-    } else if (isManager(user)) {
+    if (hasAdminScope(user)) {
+      // No filter — see all courses
+    } else if (hasManagerScope(user)) {
       conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     } else if (isTA(user)) {
       // TA can access courses they are assigned to
@@ -123,7 +148,9 @@ export class ReportsService {
   }
 
   /**
-   * Fetch the instructor's full name for report metadata.
+   * Fetch the exporter's full name for report metadata. Name kept legacy to
+   * avoid a giant callsite rename — the "instructor" label is corrected at
+   * render time via metadata.exporterRole + EXPORTER_LABEL.
    */
   private async getInstructorName(userId: string): Promise<string> {
     const [instructor] = await db
@@ -132,6 +159,18 @@ export class ReportsService {
       .where(eq(users.id, userId))
       .limit(1);
     return `${instructor?.firstName || ''} ${instructor?.lastName || ''}`.trim() || 'Unknown';
+  }
+
+  /**
+   * Resolve the label role for report metadata from the exporter's active
+   * role. Falls back to INSTRUCTOR when no role can be inferred (matches
+   * pre-existing behavior — the endpoint is under /instructor/reports).
+   */
+  private resolveExporterRole(user: AuthenticatedUser): ReportMetadata['exporterRole'] {
+    if (hasAdminScope(user)) return 'ADMIN';
+    if (hasManagerScope(user)) return 'MANAGER';
+    if (isTA(user)) return 'TEACHING_ASSISTANT';
+    return 'INSTRUCTOR';
   }
 
   /**
@@ -181,6 +220,7 @@ export class ReportsService {
 
     const metadata: ReportMetadata = {
       instructorName,
+      exporterRole: this.resolveExporterRole(user),
       filters: filterParts.join(', '),
     };
 
@@ -458,6 +498,7 @@ export class ReportsService {
 
     const metadata: ReportMetadata = {
       instructorName,
+      exporterRole: this.resolveExporterRole(user),
       filters: `Course: ${courseName}`,
     };
 
@@ -584,6 +625,7 @@ export class ReportsService {
 
     const metadata: ReportMetadata = {
       instructorName,
+      exporterRole: this.resolveExporterRole(user),
       filters: params.courseId
         ? `Course: ${await this.getCourseName(params.courseId)}`
         : 'All Courses',
@@ -645,6 +687,7 @@ export class ReportsService {
 
     const metadata: ReportMetadata = {
       instructorName,
+      exporterRole: this.resolveExporterRole(user),
       filters: params.courseId
         ? `Course: ${await this.getCourseName(params.courseId)}`
         : 'All Courses',
@@ -1204,7 +1247,7 @@ export class ReportsService {
     const fmt = this.validateFormat(format);
     await this.loadPlatformLocale();
 
-    if (!isGlobalAdmin(user) && !isManager(user)) {
+    if (!hasAdminScope(user) && !hasManagerScope(user)) {
       // Instructors can only see their own performance
       return this.generateSingleInstructorReport(user.id, fmt, user);
     }
@@ -1390,7 +1433,7 @@ export class ReportsService {
   private async buildMetadata(user: AuthenticatedUser, courseId?: string): Promise<ReportMetadata> {
     const instructorName = await this.getInstructorName(user.id);
     const filters = courseId ? `Course: ${await this.getCourseName(courseId)}` : 'All Courses';
-    return { instructorName, filters };
+    return { instructorName, exporterRole: this.resolveExporterRole(user), filters };
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -1514,6 +1557,7 @@ export class ReportsService {
 
     const metadata: ReportMetadata = {
       instructorName,
+      exporterRole: this.resolveExporterRole(user),
       filters: filterParts.length > 0 ? filterParts.join(', ') : 'All Time',
     };
 
@@ -2056,7 +2100,10 @@ export class ReportsService {
 
     const metaLines: string[] = [];
     if (metadata?.instructorName) {
-      metaLines.push(`# Instructor: ${metadata.instructorName}`);
+      const label = metadata.exporterRole
+        ? EXPORTER_LABEL[metadata.exporterRole]
+        : 'Generated by';
+      metaLines.push(`# ${label}: ${metadata.instructorName}`);
     }
     if (metadata?.filters) {
       metaLines.push(`# Filters: ${metadata.filters}`);
@@ -2099,7 +2146,13 @@ export class ReportsService {
 
     const hasArabic = (text: string) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
 
+    const logger = this.logger;
     return new Promise<Buffer>((resolve, reject) => {
+      // Everything inside pdfkit's synchronous drawing pipeline can throw
+      // (font swaps, addPage callbacks, layout overflow, etc). Without this
+      // wrapper those throws bubble out of the executor as an unhandled
+      // rejection and the controller returns a bare 500 with no context.
+      try {
       // Top margin leaves room for the branded title band (drawn manually
       // on every page so the layout looks like a designed report, not a
       // raw table dump).
@@ -2119,7 +2172,13 @@ export class ReportsService {
       const chunks: Buffer[] = [];
       doc.on('data', (chunk: Buffer) => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
+      // Log the real error to Cloud Run before propagating — without this the
+      // controller just emits a bare "Internal server error" JSON with no clue.
+      doc.on('error', (err: unknown) => {
+        const msg = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
+        logger.error(`PDF generation failed [title=${title}, rows=${rows.length}]: ${msg}`);
+        reject(err);
+      });
 
       // PhysioGuidance brand palette — kept close to existing UI.
       const BRAND_PRIMARY = '#002D87'; // deep blue title band
@@ -2161,7 +2220,12 @@ export class ReportsService {
         });
         doc.font('Helvetica').fontSize(9).fillColor('#CBD5E1');
         const metaBits: string[] = [];
-        if (metadata?.instructorName) metaBits.push(`Owner: ${metadata.instructorName}`);
+        if (metadata?.instructorName) {
+          const label = metadata.exporterRole
+            ? EXPORTER_LABEL[metadata.exporterRole]
+            : 'Generated by';
+          metaBits.push(`${label}: ${metadata.instructorName}`);
+        }
         if (metadata?.filters) metaBits.push(`Filters: ${metadata.filters}`);
         metaBits.push(`Generated: ${this.formatTimestamp(new Date())}`);
         doc.text(metaBits.join('  ·  '), startX, 34, {
@@ -2324,7 +2388,18 @@ export class ReportsService {
         );
       }
 
-      doc.end();
+      try {
+        doc.end();
+      } catch (err) {
+        const msg = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
+        logger.error(`PDF doc.end() threw [title=${title}, rows=${rows.length}]: ${msg}`);
+        reject(err);
+      }
+      } catch (err) {
+        const msg = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
+        logger.error(`PDF sync throw [title=${title}, rows=${rows.length}]: ${msg}`);
+        reject(err);
+      }
     });
   }
 
@@ -2358,9 +2433,12 @@ export class ReportsService {
     }
     rowNum++;
 
-    // Instructor row
+    // Exporter row (role-aware — "Administrator: …" / "Manager: …" / etc.)
     if (metadata?.instructorName) {
-      const instrRow = worksheet.addRow([`Instructor: ${metadata.instructorName}`]);
+      const label = metadata.exporterRole
+        ? EXPORTER_LABEL[metadata.exporterRole]
+        : 'Generated by';
+      const instrRow = worksheet.addRow([`${label}: ${metadata.instructorName}`]);
       instrRow.font = { italic: true, size: 10, color: { argb: 'FF666666' } };
       if (headers.length > 1) {
         worksheet.mergeCells(rowNum, 1, rowNum, headers.length);
@@ -2494,14 +2572,14 @@ export class ReportsService {
       return [courseId];
     }
 
-    if (isGlobalAdmin(user)) {
+    if (hasAdminScope(user)) {
       const allCourses = await db
         .select({ id: courses.id })
         .from(courses);
       return allCourses.map((c) => c.id);
     }
 
-    if (isManager(user)) {
+    if (hasManagerScope(user)) {
       const managedCourses = await db
         .select({ id: courses.id })
         .from(courses)

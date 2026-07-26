@@ -22,7 +22,6 @@ import {
   Tag,
   Percent,
   Megaphone,
-  Clock,
   BarChart3,
 } from "lucide-react";
 import DiscountOverviewTab from "./discounts/DiscountOverviewTab";
@@ -108,12 +107,15 @@ const DiscountsContent = ({ embedded = false }: DiscountsContentProps) => {
     [pathname, router, searchParams],
   );
 
+  // Early Bird is now surfaced inside Campaigns (as a campaign type with its
+  // own "New Early Bird" preset + Early Bird pill on cards). The standalone
+  // tab is intentionally hidden — kept in the codebase (EarlyBirdTab render
+  // below + URL deep-link support) in case the client asks for it back.
   const tabs: Array<{ key: TabKey; label: string; icon: typeof Tag }> = [
     { key: "overview", label: t("tabs.overview"), icon: BarChart3 },
     { key: "codes", label: t("tabs.codes"), icon: Tag },
     { key: "campaigns", label: t("tabs.campaigns"), icon: Megaphone },
     { key: "course-sales", label: t("tabs.courseSales"), icon: Percent },
-    { key: "early-bird", label: t("tabs.earlyBird"), icon: Clock },
   ];
 
   const inner = (
@@ -194,6 +196,7 @@ const DiscountsContent = ({ embedded = false }: DiscountsContentProps) => {
         campaignId={drawerCampaignId}
         onClose={() => openCampaignDrawer(null)}
         onOpenCoupon={openCouponDrawer}
+        onChanged={() => setRefreshKey((v) => v + 1)}
       />
     </>
   );

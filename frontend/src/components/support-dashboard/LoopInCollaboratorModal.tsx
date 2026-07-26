@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import { Loader2, UserPlus, X, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
+import { useSupportAttachmentUpload } from "@/hooks/useSupportAttachmentUpload";
+import AttachmentPickerBar from "@/components/support-shared/AttachmentPickerBar";
 
 interface Props {
   open: boolean;
@@ -62,6 +64,8 @@ export default function LoopInCollaboratorModal({
   const [memberId, setMemberId] = useState<string | null>(null);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const upload = useSupportAttachmentUpload();
 
   // Reset state on (re)open.
   useEffect(() => {
@@ -69,7 +73,23 @@ export default function LoopInCollaboratorModal({
     setDept(suggestedDepartment ?? null);
     setMemberId(null);
     setMembers([]);
+    setMessage("");
+    upload.clear();
+    // upload.clear identity is stable per instance; deliberately not
+    // in deps to avoid re-firing every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, suggestedDepartment]);
+
+  const notifyAttachmentRejects = (
+    r: ReturnType<typeof upload.addFiles>,
+  ) => {
+    if (r.rejectedType.length)
+      toast.error(t("attachRejectedType", { names: r.rejectedType.join(", ") }));
+    if (r.rejectedSize.length)
+      toast.error(t("attachRejectedSize", { names: r.rejectedSize.join(", ") }));
+    if (r.rejectedCap.length)
+      toast.error(t("attachRejectedCap"));
+  };
 
   // Fetch members when dept changes.
   useEffect(() => {
@@ -126,11 +146,19 @@ export default function LoopInCollaboratorModal({
       toast.error(t("alreadyActive"));
       return;
     }
+    if (upload.isUploading) {
+      toast.error(t("waitForUploads"));
+      return;
+    }
+    const richAtts = upload.getDoneRich();
+    const trimmedMessage = message.trim();
     setSubmitting(true);
     try {
       await supportApi.addCollaborator(ticketId, {
         userId: memberId,
         department: dept,
+        message: trimmedMessage || undefined,
+        attachments: richAtts.length > 0 ? richAtts : undefined,
       });
       toast.success(t("addedSuccess"));
       onAdded();
@@ -287,6 +315,39 @@ export default function LoopInCollaboratorModal({
           )}
         </div>
 
+        {/* Step 3 — Optional context reply (message + attachments).
+            Posted as an internal comment on the ticket so the new
+            collaborator sees WHY they were pulled in. Empty on both
+            fields → legacy silent add. */}
+        <div className="px-5 pt-3 pb-1">
+          <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-2">
+            {t("stepMessage")}{" "}
+            <span className="font-normal normal-case text-[var(--color-text-secondary)]/60">
+              ({t("messageOptional")})
+            </span>
+          </div>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={t("messagePlaceholder")}
+            maxLength={1000}
+            rows={3}
+            disabled={submitting}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] resize-none disabled:opacity-50 mb-2"
+          />
+          <AttachmentPickerBar
+            pending={upload.pending}
+            onAdd={(files) => notifyAttachmentRejects(upload.addFiles(files))}
+            onRemove={upload.remove}
+            disabled={submitting}
+            maxCount={upload.maxCount}
+            maxBytes={upload.maxBytes}
+          />
+          <p className="text-[10px] text-[var(--color-text-secondary)] mt-1.5">
+            {t("messageHint")}
+          </p>
+        </div>
+
         {/* Footer */}
         <div className="px-5 py-4 bg-[var(--color-bg-secondary)] flex items-center justify-end gap-2 border-t border-[var(--color-border)]">
           <button
@@ -300,7 +361,9 @@ export default function LoopInCollaboratorModal({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={submitting || !dept || !memberId}
+            disabled={
+              submitting || !dept || !memberId || upload.isUploading
+            }
             className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}

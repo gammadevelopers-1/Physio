@@ -978,7 +978,7 @@ const SupportSettingsContent = () => {
                                 className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm resize-none focus:outline-none focus:border-[var(--color-primary)]"
                                 placeholder={t("settingsPage.macrosPanel.bodyTemplatePlaceholder", { learnerVar: '{{learner_name}}' })}
                               />
-                              <p className="text-[10px] text-[var(--color-text-secondary)] text-right mt-0.5">{macroForm.bodyTemplate.length}/10,000</p>
+                              <p className="text-[10px] text-[var(--color-text-secondary)] text-end mt-0.5">{macroForm.bodyTemplate.length}/10,000</p>
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
@@ -994,7 +994,7 @@ const SupportSettingsContent = () => {
                                 className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm resize-none focus:outline-none focus:border-[var(--color-primary)]"
                                 placeholder={t("settingsPage.macrosPanel.bodyArPlaceholder")}
                               />
-                              <p className="text-[10px] text-[var(--color-text-secondary)] text-right mt-0.5">{macroForm.bodyAr.length}/10,000</p>
+                              <p className="text-[10px] text-[var(--color-text-secondary)] text-end mt-0.5">{macroForm.bodyAr.length}/10,000</p>
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.macrosPanel.kbPickerLabel")}</label>
@@ -1004,7 +1004,7 @@ const SupportSettingsContent = () => {
                                 ) : (
                                   kbArticlesForPicker.map((art) => {
                                     const checked = macroForm.kbArticleIds.includes(art.id);
-                                    const title = art.titleEn || art.titleAr || '(untitled)';
+                                    const title = art.titleEn || art.titleAr || t("kbPage.untitled");
                                     return (
                                       <label
                                         key={art.id}
@@ -1178,7 +1178,7 @@ const SupportSettingsContent = () => {
                                     <li key={c.categoryKey} className="flex items-center gap-2 text-xs">
                                       <span className="flex-1 capitalize text-[var(--color-text-primary)]">{c.categoryKey}</span>
                                       <span className="text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.analytics.macrosShort", { count: c.macroCount })}</span>
-                                      <span className="font-mono text-[var(--color-text-primary)] min-w-[40px] text-right">×{c.uses}</span>
+                                      <span className="font-mono text-[var(--color-text-primary)] min-w-[40px] text-end">×{c.uses}</span>
                                     </li>
                                   ))}
                                 </ul>
@@ -1882,6 +1882,8 @@ function ChannelRow({
   busy: boolean;
   onToggle: (v: boolean) => void;
 }) {
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   return (
     <div className="flex items-center justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl">
       <div className="flex items-start gap-3 min-w-0">
@@ -1908,7 +1910,9 @@ function ChannelRow({
         ) : (
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
-              checked ? "translate-x-6" : "translate-x-1"
+              checked
+                ? isRTL ? "-translate-x-6" : "translate-x-6"
+                : isRTL ? "-translate-x-1" : "translate-x-1"
             }`}
           />
         )}
@@ -3026,6 +3030,7 @@ function SmartphoneIcon() {
 // supervisor still gets the policy hook so compliance can sign off.
 
 function RetentionPolicyPanel() {
+  const t = useTranslations("supportDashboard.retentionPolicy");
   const [days, setDays] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -3041,15 +3046,15 @@ function RetentionPolicyPanel() {
   async function save() {
     const n = parseInt(days, 10);
     if (!Number.isFinite(n) || n < 0) {
-      toast.error("Retention must be a non-negative number of days");
+      toast.error(t("toasts.mustBeNonNegative"));
       return;
     }
     setSaving(true);
     try {
       await supportApi.setRetentionConfig(n);
-      toast.success("Retention policy saved");
+      toast.success(t("toasts.saved"));
     } catch (err: any) {
-      toast.error(err?.message || "Save failed");
+      toast.error(err?.message || t("toasts.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -3058,11 +3063,12 @@ function RetentionPolicyPanel() {
   return (
     <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mt-4">
       <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
-        Ticket retention
+        {t("title")}
       </h3>
       <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-        Closed tickets older than this many days are eligible for purge.
-        Set to <code>0</code> to disable retention enforcement.
+        {t.rich("description", {
+          code: (chunks) => <code>{chunks}</code>,
+        })}
       </p>
       <div className="flex items-center gap-2">
         <input
@@ -3073,14 +3079,14 @@ function RetentionPolicyPanel() {
           onChange={(e) => setDays(e.target.value)}
           className="w-28 h-9 px-3 text-sm border border-[var(--color-input-border)] rounded-lg"
         />
-        <span className="text-xs text-[var(--color-text-secondary)]">days</span>
+        <span className="text-xs text-[var(--color-text-secondary)]">{t("daysLabel")}</span>
         <button
           type="button"
           onClick={save}
           disabled={saving || loading}
           className="ms-2 px-3 h-9 text-sm bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-50"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("saving") : t("save")}
         </button>
       </div>
     </div>

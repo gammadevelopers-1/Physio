@@ -14,6 +14,8 @@ import DashboardError from "./DashboardError";
 import DatePicker from "@/components/ui/DatePicker";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Select from "@/components/ui/Select";
 import CourseAssistantsSuggestPanel from "./CourseAssistantsSuggestPanel";
 import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
@@ -389,6 +391,9 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const [loadingUnassigned, setLoadingUnassigned] = useState(false);
   const [selectedMaterialIds, setSelectedMaterialIds] = useState<string[]>([]);
   const [assigningMaterials, setAssigningMaterials] = useState(false);
+  // Unlink-material confirmation (replaces window.confirm on the detach action)
+  const [unlinkTarget, setUnlinkTarget] = useState<{ materialId: string; moduleId: string } | null>(null);
+  const [unlinking, setUnlinking] = useState(false);
 
   // ─── Module Assessments State ─────────────────────────────
   const [moduleAssessments, setModuleAssessments] = useState<import("@/types/instructor-dashboard").AssessmentResponse[]>([]);
@@ -556,8 +561,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     return () => clearInterval(interval);
   }, [expandedModules, moduleMaterials, courseId]);
 
-  const handleUnlinkMaterial = async (materialId: string, moduleId: string) => {
-    if (!window.confirm(t("courseDetail.unlinkConfirm"))) return;
+  // Opens the confirm dialog — actual unlink happens in confirmUnlinkMaterial
+  // after user clicks Confirm. Keeps the button handler side-effect free.
+  const handleUnlinkMaterial = (materialId: string, moduleId: string) => {
+    setUnlinkTarget({ materialId, moduleId });
+  };
+
+  const confirmUnlinkMaterial = async () => {
+    if (!unlinkTarget) return;
+    const { materialId, moduleId } = unlinkTarget;
+    setUnlinking(true);
     try {
       await materialsApi.unlinkFromModule(materialId);
       setModuleMaterials((prev) => ({
@@ -565,8 +578,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         [moduleId]: (prev[moduleId] || []).filter((m) => m.id !== materialId),
       }));
       toast.success(t("courseDetail.materialUnlinked"));
+      setUnlinkTarget(null);
     } catch (err: any) {
       toast.error(err?.message || t("courseDetail.materialUnlinkError"));
+    } finally {
+      setUnlinking(false);
     }
   };
 
@@ -1994,16 +2010,18 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.deliveryTypeLabel")}</label>
-                              <select
+                              <Select
                                 value={settingsForm.deliveryType}
+                                onChange={() => {}}
                                 disabled
-                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed"
-                              >
-                                <option value="zoom">{t("courseDetail.deliveryOptions.zoom")}</option>
-                                <option value="onsite">{t("courseDetail.deliveryOptions.onsite")}</option>
-                                <option value="blended">{t("courseDetail.deliveryOptions.blended")}</option>
-                                <option value="self-paced">{t("courseDetail.deliveryOptions.self-paced")}</option>
-                              </select>
+                                className="w-full"
+                                options={[
+                                  { value: "zoom", label: t("courseDetail.deliveryOptions.zoom") },
+                                  { value: "onsite", label: t("courseDetail.deliveryOptions.onsite") },
+                                  { value: "blended", label: t("courseDetail.deliveryOptions.blended") },
+                                  { value: "self-paced", label: t("courseDetail.deliveryOptions.self-paced") },
+                                ]}
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.maxEnrollmentLabel")}</label>
@@ -2143,16 +2161,17 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.moduleType")} *</label>
-                <select
+                <Select
                   value={moduleForm.type}
-                  onChange={(e) => setModuleForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent bg-[var(--color-surface-card)]"
-                >
-                  <option value="video">{t("courseDetail.moduleTypes.video")}</option>
-                  <option value="document">{t("courseDetail.moduleTypes.document")}</option>
-                  <option value="quiz">{t("courseDetail.moduleTypes.quiz")}</option>
-                  <option value="mixed">{t("courseDetail.moduleTypes.mixed")}</option>
-                </select>
+                  onChange={(v) => setModuleForm((f) => ({ ...f, type: v }))}
+                  className="w-full"
+                  options={[
+                    { value: "video", label: t("courseDetail.moduleTypes.video") },
+                    { value: "document", label: t("courseDetail.moduleTypes.document") },
+                    { value: "quiz", label: t("courseDetail.moduleTypes.quiz") },
+                    { value: "mixed", label: t("courseDetail.moduleTypes.mixed") },
+                  ]}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.moduleDuration")}</label>
@@ -2311,15 +2330,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.sessionType")} *</label>
-                <select
+                <Select
                   value={sessionForm.type}
-                  onChange={(e) => setSessionForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent bg-[var(--color-surface-card)]"
-                >
-                  <option value="zoom">{t("courseDetail.sessionTypes.zoom")}</option>
-                  <option value="onsite">{t("courseDetail.sessionTypes.onsite")}</option>
-                  <option value="hybrid">{t("courseDetail.sessionTypes.hybrid")}</option>
-                </select>
+                  onChange={(v) => setSessionForm((f) => ({ ...f, type: v }))}
+                  className="w-full"
+                  options={[
+                    { value: "zoom", label: t("courseDetail.sessionTypes.zoom") },
+                    { value: "onsite", label: t("courseDetail.sessionTypes.onsite") },
+                    { value: "hybrid", label: t("courseDetail.sessionTypes.hybrid") },
+                  ]}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.scheduledDate")} *</label>
@@ -2534,6 +2554,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
           onClose={() => setRegistrantsDrawer(null)}
         />
       )}
+      <ConfirmDialog
+        open={!!unlinkTarget}
+        title={t("courseDetail.unlinkTitle")}
+        message={t("courseDetail.unlinkConfirm")}
+        confirmLabel={t("courseDetail.unlinkConfirmLabel")}
+        cancelLabel={t("courseDetail.cancel")}
+        loading={unlinking}
+        onConfirm={confirmUnlinkMaterial}
+        onClose={() => !unlinking && setUnlinkTarget(null)}
+      />
     </>
   );
 };

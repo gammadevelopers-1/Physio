@@ -202,7 +202,7 @@ export default function CartPageClient({
         navLinks={navbarLinks}
         footerLinks={footerLinks}
       />
-      <main className="bg-[#F9FAFB] min-h-screen">
+      <main className="bg-[var(--color-surface-page)] min-h-screen">
         <div
           className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-10"
           dir={isRTL ? "rtl" : "ltr"}

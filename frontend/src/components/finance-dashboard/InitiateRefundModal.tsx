@@ -36,7 +36,16 @@ type RefundablePayment = Awaited<
 >[number];
 type RefundPreview = Awaited<ReturnType<typeof refundApi.getPreview>>;
 
-const REASONS = ["policy", "cancelled", "duplicate", "technical", "other"] as const;
+const REASONS = [
+  "description_mismatch",
+  "cancelled",
+  "technical",
+  "duplicate",
+  "wrong_course",
+  "access_issue",
+  "policy",
+  "other",
+] as const;
 
 function formatDateTime(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
@@ -532,7 +541,7 @@ function PickerStep({
               key={p.id}
               type="button"
               onClick={() => onPick(p)}
-              className="w-full text-left px-4 py-3 hover:bg-[var(--color-surface-page)] transition-colors"
+              className="w-full text-start px-4 py-3 hover:bg-[var(--color-surface-page)] transition-colors"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -546,7 +555,7 @@ function PickerStep({
                     {formatDate(p.paidAt, locale)}
                   </p>
                 </div>
-                <div className="text-right flex-shrink-0">
+                <div className="text-end flex-shrink-0">
                   <Money
                     amount={Number(p.amount || 0)}
                     className="text-sm font-semibold text-[var(--color-text-primary)]"
@@ -682,7 +691,7 @@ function PreviewStep({
           icon={<UserIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />}
           label={t("refundsPage.initiateModal.preview.buyer")}
           value={
-            <div className="text-right">
+            <div className="text-end">
               <p className="text-sm text-[var(--color-text-primary)] font-medium">
                 {preview.buyer?.name || "—"}
               </p>
@@ -748,7 +757,7 @@ function PreviewStep({
           <Row
             label={t("refundsPage.initiateModal.preview.chargeId")}
             value={
-              <span className="text-[11px] font-mono text-[var(--color-text-primary)] break-all max-w-[240px] text-right">
+              <span className="text-[11px] font-mono text-[var(--color-text-primary)] break-all max-w-[240px] text-end">
                 {preview.payment.gatewayChargeId}
               </span>
             }
@@ -824,7 +833,7 @@ function PreviewStep({
                       </p>
                     ) : null}
                   </div>
-                  <div className="text-right shrink-0 tabular-nums">
+                  <div className="text-end shrink-0 tabular-nums">
                     <Money
                       amount={li.lineTotal}
                       className={`text-sm font-semibold ${
@@ -1071,7 +1080,7 @@ function Row({
         {icon}
         <span>{label}</span>
       </div>
-      <div className="text-right">{value}</div>
+      <div className="text-end">{value}</div>
     </div>
   );
 }

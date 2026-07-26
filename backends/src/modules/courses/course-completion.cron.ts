@@ -138,19 +138,14 @@ export class CourseCompletionCronService {
 
           // Notify instructor
           if (course.instructorId) {
-            const [instructor] = await db
-              .select({ language: users.language })
-              .from(users)
-              .where(eq(users.id, course.instructorId))
-              .limit(1);
-            const iIsAr = instructor?.language === 'ar';
             await this.notificationsService.create({
               recipientId: course.instructorId,
               type: 'course_auto_completed',
-              title: iIsAr ? 'اكتملت الدورة تلقائياً' : 'Course Auto-Completed',
-              message: iIsAr
-                ? `تم إكمال دورتك "${course.title}" تلقائياً بعد انتهاء تاريخ الانتهاء. تم إنهاء ${activeStudents.length} تسجيل(ات).`
-                : `Your course "${course.title}" has been automatically completed as the end date has passed. ${activeStudents.length} enrollment(s) were finalized.`,
+              title: 'Course Auto-Completed',
+              message: `Your course "${course.title}" has been automatically completed as the end date has passed. ${activeStudents.length} enrollment(s) were finalized.`,
+              titleKey: 'notifications.types.course_auto_completed.title',
+              messageKey: 'notifications.types.course_auto_completed.messageInstructor',
+              messageParams: { courseTitle: course.title, count: activeStudents.length },
               link: '/dashboard/instructor/courses',
               entityType: 'course',
               entityId: course.id,
@@ -159,19 +154,14 @@ export class CourseCompletionCronService {
 
           // Notify manager
           if (course.managerId) {
-            const [manager] = await db
-              .select({ language: users.language })
-              .from(users)
-              .where(eq(users.id, course.managerId))
-              .limit(1);
-            const mIsAr = manager?.language === 'ar';
             await this.notificationsService.create({
               recipientId: course.managerId,
               type: 'course_auto_completed',
-              title: mIsAr ? 'اكتملت الدورة تلقائياً' : 'Course Auto-Completed',
-              message: mIsAr
-                ? `تم إكمال الدورة "${course.title}" تلقائياً (تم الوصول لتاريخ الانتهاء). تم إنهاء ${activeStudents.length} تسجيل(ات).`
-                : `Course "${course.title}" has been automatically completed (end date reached). ${activeStudents.length} enrollment(s) were finalized.`,
+              title: 'Course Auto-Completed',
+              message: `Course "${course.title}" has been automatically completed (end date reached). ${activeStudents.length} enrollment(s) were finalized.`,
+              titleKey: 'notifications.types.course_auto_completed.title',
+              messageKey: 'notifications.types.course_auto_completed.messageManager',
+              messageParams: { courseTitle: course.title, count: activeStudents.length },
               link: '/dashboard/manager/courses',
               entityType: 'course',
               entityId: course.id,

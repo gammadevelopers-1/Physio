@@ -2,7 +2,17 @@
  * Session reminder email template for PhysioGuidance
  * Sent 5 minutes before a Zoom/hybrid session starts
  */
-import { EmailLocale, getEmailStrings, t, htmlAttrs, textAlign } from '../email-i18n';
+import {
+  EmailLocale,
+  getEmailStrings,
+  t,
+  htmlAttrs,
+  textAlign,
+  bodyAttrs,
+  infoTable,
+  actionButton,
+  bidi,
+} from '../email-i18n';
 import { toArabicIndic } from '../../../common/platform-locale';
 
 export function getSessionReminderHtml(params: {
@@ -33,18 +43,29 @@ export function getSessionReminderHtml(params: {
   const roleText = isInstructor ? s.roleInstructor : s.roleStudent;
   const platformUrl = process.env.FRONTEND_URL || 'https://physioguidance.org';
 
-  // No Zoom links in emails — everyone joins from platform
-  const dashboardPath = isInstructor ? '/en/dashboard/instructor' : '/en/dashboard/student';
-  const buttonLabel = isInstructor ? 'Start from Platform' : 'Join from Platform';
+  // Localize the dashboard path prefix so a click from the AR email
+  // opens the AR dashboard, not the EN one.
+  const dashboardPath = isInstructor
+    ? `/${locale}/dashboard/instructor`
+    : `/${locale}/dashboard/student`;
+  const buttonLabel = isInstructor
+    ? locale === 'ar'
+      ? 'ابدأ من المنصة'
+      : 'Start from Platform'
+    : locale === 'ar'
+      ? 'انضم من المنصة'
+      : 'Join from Platform';
+  const joinFromHint =
+    locale === 'ar'
+      ? `يُرجى ${isInstructor ? 'بدء' : 'الانضمام إلى'} المحاضرة من لوحة تحكم PhysioGuidance.`
+      : `Please ${isInstructor ? 'start' : 'join'} the lecture through your PhysioGuidance dashboard.`;
   const joinBlock = `
           <!-- Platform button -->
           <tr>
-            <td style="padding:0 32px 24px;text-align:center;">
-              <a href="${platformUrl}${dashboardPath}" target="_blank" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:15px;font-weight:600;font-family:'DM Sans',Arial,sans-serif;text-decoration:none;border-radius:8px;">
-                ${buttonLabel}
-              </a>
-              <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                Please ${isInstructor ? 'start' : 'join'} the lecture through your PhysioGuidance dashboard.
+            <td style="padding:0 32px 24px;">
+              ${actionButton(locale, `${platformUrl}${dashboardPath}`, buttonLabel)}
+              <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;text-align:center;">
+                ${joinFromHint}
               </p>
             </td>
           </tr>`;
@@ -56,7 +77,7 @@ export function getSessionReminderHtml(params: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lecture Starting Soon - PhysioGuidance</title>
 </head>
-<body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
+<body ${bodyAttrs(locale)} style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
     <tr>
       <td align="center" style="padding:40px 16px;">
@@ -103,29 +124,13 @@ export function getSessionReminderHtml(params: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${s.sessionLabel}</p>
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">${s.sessionLabel}</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${sessionTitle}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.courseLabel}</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${courseName}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.timeLabel}</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${formattedTime}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.durationLabel}</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${durationMinutes} ${s.minutesLabel}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.roleLabel}</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${roleText}</td>
-                      </tr>
-                    </table>
+                    ${infoTable(locale, [
+                      { label: s.sessionLabel, value: `<strong>${bidi(sessionTitle)}</strong>` },
+                      { label: s.courseLabel, value: `<strong>${bidi(courseName)}</strong>` },
+                      { label: s.timeLabel, value: bidi(formattedTime) },
+                      { label: s.durationLabel, value: bidi(`${durationMinutes} ${s.minutesLabel}`) },
+                      { label: s.roleLabel, value: roleText },
+                    ])}
                   </td>
                 </tr>
               </table>

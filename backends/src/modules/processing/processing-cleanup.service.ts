@@ -10,26 +10,35 @@ export class ProcessingCleanupService {
   private readonly logger = new Logger(ProcessingCleanupService.name);
 
   /**
-   * Every 15 minutes, check for materials stuck in 'processing' for over 1 hour.
-   * Mark them as 'failed' with a timeout error.
+   * Every 15 minutes, reap materials stuck in 'processing' for >3 hours.
+   * The 3-hour threshold covers the max legitimate wallclock of a video
+   * pipeline: Cloud Run video-transcode Job has a 90-min task timeout
+   * and --max-retries=2, so the worst-case honest runtime is ~180 min.
+   * Anything longer means the Job died in a way that didn't hit
+   * markFailed() (Cloud Run force-kill, OOM, quota exhaustion, etc.).
+   *
+   * updatedAt is bumped at every step transition (transcoding →
+   * captions → wcag → complete), so a healthy pipeline resets the
+   * timer each stage. Only truly stuck rows are reaped.
    */
   @Cron('*/15 * * * *')
   async cleanupStaleProcessing(): Promise<void> {
     if (isCronExternalized('processing.cleanup')) return;
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const cutoff = new Date(Date.now() - 3 * 60 * 60 * 1000);
 
     try {
       const stale = await db
         .update(courseMaterials)
         .set({
           status: MATERIAL_STATUS.FAILED,
-          processingError: 'Processing timed out after 1 hour',
+          processingError:
+            'Processing timed out after 3 hours — the Cloud Run Job likely died or exceeded its max runtime',
           updatedAt: new Date(),
         })
         .where(
           and(
             eq(courseMaterials.status, MATERIAL_STATUS.PROCESSING),
-            lt(courseMaterials.updatedAt, oneHourAgo),
+            lt(courseMaterials.updatedAt, cutoff),
           ),
         )
         .returning({ id: courseMaterials.id });

@@ -16,6 +16,8 @@ import {
   UpdateZoomWebinarParams,
   WebinarRegistrantInput,
   WebinarRegistrantResult,
+  PanelistInput,
+  PanelistResult,
   ZoomConfig,
   ZoomAccountInfo,
   ZoomSeat,
@@ -1060,6 +1062,146 @@ export class ZoomService implements IZoomService, OnModuleInit {
       registrantId: String(data.registrant_id || data.id || ''),
       joinUrl: data.join_url,
     };
+  }
+
+  /**
+   * Add a user as a panelist on a webinar. Panelists get presenter rights
+   * (mic, cam, screen-share, Q&A moderation) via a dedicated join URL —
+   * no separate registration form required. Idempotent: Zoom dedupes by
+   * email, so re-adding an existing panelist returns their existing
+   * panelist row (and its `join_url`).
+   *
+   * NOTE: Zoom's `POST /webinars/:id/panelists` response does NOT include
+   * a personal join URL in the payload — the panelist join URL must be
+   * fetched from `GET /webinars/:id/panelists` after the fact. This
+   * method does both calls and returns the composite result.
+   *
+   * Some Zoom accounts require the panelist's email to correspond to an
+   * existing Zoom user. Others allow "guest panelists" (email-only, no
+   * Zoom account required) — behavior depends on the webinar's account
+   * settings. If the panelist add succeeds but the join URL lookup
+   * cannot find the panelist, we return the webinar's generic join URL
+   * (works but does not confer panelist rights until the host promotes
+   * them from the participant list).
+   */
+  async registerPanelist(
+    webinarId: string,
+    panelist: PanelistInput,
+  ): Promise<PanelistResult> {
+    const token = await this.getAccessToken();
+
+    const displayName =
+      [panelist.firstName, panelist.lastName].filter(Boolean).join(' ').trim() ||
+      panelist.email;
+
+    const addResponse = await this.zoomFetch(
+      `https://api.zoom.us/v2/webinars/${encodeURIComponent(webinarId)}/panelists`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          panelists: [{ email: panelist.email, name: displayName }],
+        }),
+      },
+    );
+
+    if (!addResponse.ok && addResponse.status !== 201) {
+      const errorText = await addResponse.text();
+      this.logger.error(
+        `Zoom register panelist failed for webinar ${webinarId} / ${panelist.email}: ${addResponse.status} - ${errorText}`,
+      );
+      throw new Error(
+        `Failed to register panelist: ${addResponse.status} ${errorText.slice(0, 200)}`,
+      );
+    }
+
+    // The POST response payload varies by account: sometimes it includes
+    // { panelists: [{ id, join_url }] }, sometimes it only returns ids.
+    // Try to read it, then fall back to listing panelists.
+    let panelistId: string | null = null;
+    let joinUrl = '';
+    try {
+      const data: any = await addResponse.clone().json();
+      const first = Array.isArray(data?.panelists) ? data.panelists[0] : null;
+      if (first) {
+        panelistId = first.id ? String(first.id) : null;
+        joinUrl = first.join_url || '';
+      }
+    } catch {
+      /* body wasn't JSON — fall through to list lookup */
+    }
+
+    if (!joinUrl) {
+      try {
+        const listRes = await this.zoomFetch(
+          `https://api.zoom.us/v2/webinars/${encodeURIComponent(webinarId)}/panelists`,
+          {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        if (listRes.ok) {
+          const data: any = await listRes.json();
+          const list: any[] = Array.isArray(data?.panelists) ? data.panelists : [];
+          const target = panelist.email.toLowerCase();
+          const found = list.find(
+            (p) => String(p.email || '').toLowerCase() === target,
+          );
+          if (found) {
+            panelistId = panelistId || (found.id ? String(found.id) : null);
+            joinUrl = found.join_url || joinUrl;
+          }
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Zoom panelist list lookup failed for webinar ${webinarId}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    if (!joinUrl) {
+      // Last-resort fallback: use the webinar's public join URL. It won't
+      // grant panelist rights on click, but the host can still promote the
+      // participant manually from the participant list.
+      try {
+        const w = await this.getWebinar(webinarId);
+        joinUrl = w.joinUrl || '';
+      } catch {
+        /* leave joinUrl empty */
+      }
+    }
+
+    this.logger.log(
+      `Zoom panelist registered on webinar ${webinarId}: ${panelist.email}`,
+    );
+
+    return { panelistId, joinUrl };
+  }
+
+  /**
+   * Rename a live meeting participant. Zoom's REST API does NOT expose a
+   * per-participant rename on live meetings — the rename action is only
+   * available via the meeting SDK / client controls. This implementation
+   * logs a warning and no-ops so callers can proceed without the
+   * display-name suffix. Follow-up: swap to the Zoom SDK when we adopt it.
+   *
+   * TODO(SDK): once the Zoom Meeting SDK is wired up, replace this no-op
+   * with the SDK's `rename` action so TAs get the "(TA)" suffix on
+   * meeting sessions too. For webinars we already control the display
+   * name through the panelist registration `name` field, so no rename
+   * is needed there.
+   */
+  async renameParticipant(
+    meetingId: string,
+    participantId: string,
+    newDisplayName: string,
+  ): Promise<void> {
+    this.logger.warn(
+      `Zoom REST does not support renaming meeting participants — ignoring rename request for meeting=${meetingId} participant=${participantId} to "${newDisplayName}". Follow-up: use Zoom Meeting SDK.`,
+    );
   }
 
   /**

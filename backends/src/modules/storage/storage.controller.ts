@@ -70,18 +70,27 @@ export class StorageController {
     FileInterceptor('file', {
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
       fileFilter: (_req, file, cb) => {
+        // Kept in sync with SUPPORT_ATTACH_ALLOWED_MIME in
+        // support.service.ts so the pre-attach client check and the
+        // storage-level check never diverge. If either the reply box
+        // or an internal-collab surface (chat, transfer, loop-in)
+        // rejects a file, the other must too.
         const allowed = [
           'application/pdf',
           'image/jpeg',
           'image/png',
           'image/webp',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ];
         if (allowed.includes(file.mimetype)) {
           cb(null, true);
         } else {
           cb(
             new BadRequestException(
-              'Only PDF and image files (JPEG, PNG, WebP) are allowed',
+              'Only PDF, image (JPEG/PNG/WebP), Word (DOC/DOCX), and Excel (XLS/XLSX) files are allowed',
             ),
             false,
           );

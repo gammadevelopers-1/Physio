@@ -70,10 +70,8 @@ export default function MasterNotificationToggles() {
         </p>
       </div>
 
-      <div
-        className={`flex items-center justify-between gap-3 p-4 border border-[var(--color-border)] rounded-lg ${isRTL ? "flex-row-reverse" : ""}`}
-      >
-        <div className={`flex items-start gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+      <div className="flex items-center justify-between gap-3 p-4 border border-[var(--color-border)] rounded-lg">
+        <div className="flex items-start gap-3">
           <Mail className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-[var(--color-text-primary)]">
@@ -95,16 +93,16 @@ export default function MasterNotificationToggles() {
         >
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
-              emailOn ? "translate-x-6" : "translate-x-1"
+              emailOn
+                ? isRTL ? "-translate-x-6" : "translate-x-6"
+                : isRTL ? "-translate-x-1" : "translate-x-1"
             }`}
           />
         </button>
       </div>
 
-      <div
-        className={`flex items-center justify-between gap-3 p-4 border border-[var(--color-border)] rounded-lg ${isRTL ? "flex-row-reverse" : ""}`}
-      >
-        <div className={`flex items-start gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+      <div className="flex items-center justify-between gap-3 p-4 border border-[var(--color-border)] rounded-lg">
+        <div className="flex items-start gap-3">
           <Bell className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-[var(--color-text-primary)]">
@@ -126,7 +124,9 @@ export default function MasterNotificationToggles() {
         >
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
-              inAppOn ? "translate-x-6" : "translate-x-1"
+              inAppOn
+                ? isRTL ? "-translate-x-6" : "translate-x-6"
+                : isRTL ? "-translate-x-1" : "translate-x-1"
             }`}
           />
         </button>

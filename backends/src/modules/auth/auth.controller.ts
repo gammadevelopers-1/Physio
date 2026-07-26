@@ -494,6 +494,22 @@ export class AuthController {
     return this.authService.getInstructors();
   }
 
+  /**
+   * GET /auth/students-search — narrow student search for the manager/
+   * admin manual-enrollment picker. Deliberately not the full
+   * `GET /auth/users` (admin-only): managers only need to find a
+   * student by name/email, not browse all users on the platform.
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('students-search')
+  async searchStudents(
+    @Query('q') q?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.authService.searchStudents(q, limit ? Number(limit) : 20);
+  }
+
   // ===========================================
   // ADMIN ENDPOINTS
   // ===========================================

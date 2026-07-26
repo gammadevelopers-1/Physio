@@ -1,28 +1,24 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import FinanceNavbar from "./FinanceNavbar";
 import FinanceSidebar from "./FinanceSidebar";
 import FinanceMobileSidebar from "./FinanceMobileSidebar";
+import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 import LoopedInTickets from "@/components/support-shared/LoopedInTickets";
 
-// Mirror of the mockProfile shape used by FinanceDashboardContent —
-// the chrome's FinanceProfile type expects these exact fields. We
-// only really need name/email for the navbar avatar; the rest are
-// inherited so TypeScript stays happy.
-const FINANCE_MOCK = {
-  name: "Nora Al-Fahad",
-  email: "n.alfahad@physio.edu.sa",
-  revenue: "245K",
-  invoices: 156,
-  refundRate: 2.1,
-};
-
+/**
+ * Finance → "Assisting Support" page wrapper.
+ *
+ * Mounts the finance dashboard chrome (navbar + sidebar) around the
+ * shared LoopedInTickets inbox so the list looks like every other
+ * finance page. Uses `useFinanceProfile` — same real-user profile the
+ * rest of the finance dashboard uses — instead of a mock, so the
+ * navbar and sidebar keep showing the actual logged-in finance user.
+ */
 export default function FinanceAssistingSupportContent() {
-  const t = useTranslations("financeDashboard");
+  const profile = useFinanceProfile();
   const locale = useLocale();
-  const profile = { ...FINANCE_MOCK, name: t("names.noraAlFahad") };
 
   return (
     <>

@@ -43,10 +43,17 @@ const CourseSalesTab = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
+  // Sale type is exclusive: PERCENTAGE (1..100) or FIXED (SAR > 0, < price).
+  // Backend rejects both being set together; the UI mirrors that with a
+  // toggle so finance can't accidentally send both.
+  const [saleType, setSaleType] = useState<"percentage" | "fixed">("percentage");
   const [percent, setPercent] = useState("");
+  const [amount, setAmount] = useState("");
   const [allowsCoupon, setAllowsCoupon] = useState(false);
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
+  const [amountError, setAmountError] = useState<string | null>(null);
+  const [percentError, setPercentError] = useState<string | null>(null);
 
   const load = useCallback(
     async (q: string) => {
@@ -74,30 +81,70 @@ const CourseSalesTab = () => {
 
   const beginEdit = (c: CourseSaleItem) => {
     setEditingId(c.id);
+    const initialType: "percentage" | "fixed" =
+      c.saleAmount != null ? "fixed" : "percentage";
+    setSaleType(initialType);
     setPercent(c.salePercent != null ? String(c.salePercent) : "");
+    setAmount(c.saleAmount != null ? String(c.saleAmount) : "");
     setAllowsCoupon(c.saleAllowsCoupon);
     setStartsAt(c.saleStartsAt ? toRiyadhLocal(c.saleStartsAt) : "");
     setEndsAt(c.saleEndsAt ? toRiyadhLocal(c.saleEndsAt) : "");
+    setAmountError(null);
+    setPercentError(null);
   };
 
-  const save = async (courseId: string, clear = false) => {
-    setSavingId(courseId);
+  const save = async (course: CourseSaleItem, clear = false) => {
+    // Client-side validation mirrors the backend rules so bad input never
+    // reaches the API. Clearing bypasses validation.
+    if (!clear) {
+      if (saleType === "percentage") {
+        const p = Number(percent);
+        if (!Number.isFinite(p) || p < 1 || p > 100) {
+          setPercentError(tShared("errors.percentRange"));
+          toast.error(tShared("errors.percentRange"));
+          return;
+        }
+      } else {
+        const a = Number(amount);
+        if (!Number.isFinite(a) || a <= 0) {
+          setAmountError(tShared("errors.amountPositive"));
+          toast.error(tShared("errors.amountPositive"));
+          return;
+        }
+        if (a >= course.price) {
+          const msg = tShared("errors.amountTooLarge", {
+            amount: a.toFixed(2),
+            price: course.price.toFixed(2),
+          });
+          setAmountError(msg);
+          toast.error(msg);
+          return;
+        }
+      }
+    }
+
+    setSavingId(course.id);
     try {
+      // On clear: null both fields so the DB CHECK is happy either way.
+      // On save: send only the active type; force-null the other so a
+      // type switch (% → SAR or vice versa) doesn't leave a stale value.
       const payload = clear
         ? {
             salePercent: null,
+            saleAmount: null,
             saleStartsAt: null,
             saleEndsAt: null,
             saleAllowsCoupon: false,
           }
         : {
-            salePercent: percent ? Number(percent) : null,
+            salePercent: saleType === "percentage" ? Number(percent) : null,
+            saleAmount: saleType === "fixed" ? Number(amount) : null,
             saleStartsAt: startsAt ? fromRiyadhLocal(startsAt) : null,
             saleEndsAt: endsAt ? fromRiyadhLocal(endsAt) : null,
             saleAllowsCoupon: allowsCoupon,
           };
-      const updated = await discountApi.setCourseSale(courseId, payload);
-      setItems((prev) => prev.map((c) => (c.id === courseId ? updated : c)));
+      const updated = await discountApi.setCourseSale(course.id, payload);
+      setItems((prev) => prev.map((c) => (c.id === course.id ? updated : c)));
       setEditingId(null);
       toast.success(clear ? tShared("removed") : tShared("saved"));
     } catch (e: unknown) {
@@ -118,32 +165,49 @@ const CourseSalesTab = () => {
       hour12: false,
     });
 
-  const inactiveReason = (c: CourseSaleItem): string => {
-    const now = Date.now();
-    const pct = c.salePercent ?? 0;
-    if (c.saleStartsAt && now < new Date(c.saleStartsAt).getTime())
-      return tShared("startsOn", { percent: pct, date: fmtDate(c.saleStartsAt) });
-    if (c.saleEndsAt && now >= new Date(c.saleEndsAt).getTime())
-      return tShared("endedOn", { percent: pct, date: fmtDate(c.saleEndsAt) });
-    if (c.price <= 0) return tShared("freeNoEffect");
-    return tShared("inactive", { percent: pct });
+  /** Human label for a configured-but-inactive sale (before start /
+   * after end). Renders "25% off" or "SAR 50 off" depending on which
+   * kind of sale was set. */
+  const saleValueLabel = (c: CourseSaleItem): string => {
+    if (c.saleAmount != null) {
+      return tShared("amountOff", { amount: c.saleAmount.toFixed(2) });
+    }
+    return tShared("percentOff", { percent: c.salePercent ?? 0 });
   };
 
-  const filtered = items.filter((c) => {
+  const inactiveReason = (c: CourseSaleItem): string => {
+    const now = Date.now();
+    const label = saleValueLabel(c);
+    if (c.saleStartsAt && now < new Date(c.saleStartsAt).getTime())
+      return tShared("startsOnLabel", { label, date: fmtDate(c.saleStartsAt) });
+    if (c.saleEndsAt && now >= new Date(c.saleEndsAt).getTime())
+      return tShared("endedOnLabel", { label, date: fmtDate(c.saleEndsAt) });
+    if (c.price <= 0) return tShared("freeNoEffect");
+    return tShared("inactiveLabel", { label });
+  };
+
+  // Only paid courses are eligible for a sale — a sale on a free course
+  // is nonsensical (backend also rejects it). If a course is edited to
+  // have a price later it'll show up here automatically on next load.
+  const paidItems = items.filter((c) => c.price > 0);
+
+  const filtered = paidItems.filter((c) => {
     if (filter === "live") return c.onSale;
     if (filter === "scheduled") {
+      const hasSale = c.salePercent !== null || c.saleAmount !== null;
       return (
-        c.salePercent !== null &&
+        hasSale &&
         c.saleStartsAt &&
         new Date(c.saleStartsAt).getTime() > Date.now()
       );
     }
-    if (filter === "none") return c.salePercent === null;
+    if (filter === "none")
+      return c.salePercent === null && c.saleAmount === null;
     return true;
   });
 
-  const liveCount = items.filter((c) => c.onSale).length;
-  const totalSavings = items
+  const liveCount = paidItems.filter((c) => c.onSale).length;
+  const totalSavings = paidItems
     .filter((c) => c.onSale)
     .reduce((sum, c) => sum + (c.price - c.effectivePrice), 0);
 
@@ -159,7 +223,11 @@ const CourseSalesTab = () => {
         />
         <KpiTile
           label={t("kpi.totalConfigured")}
-          value={items.filter((c) => c.salePercent !== null).length}
+          value={
+            paidItems.filter(
+              (c) => c.salePercent !== null || c.saleAmount !== null,
+            ).length
+          }
           icon={Tag}
           color={FINANCE_COLORS.info}
         />
@@ -262,7 +330,7 @@ const CourseSalesTab = () => {
                             <Money amount={c.price} decimals={0} />
                           </span>
                           <span className="px-1.5 py-0.5 rounded bg-[#DC2626] text-white font-bold text-[10px]">
-                            {tShared("percentOff", { percent: c.salePercent ?? 0 })}
+                            {saleValueLabel(c)}
                           </span>
                           {c.saleEndsAt && (
                             <span className="text-[var(--color-text-secondary)] inline-flex items-center gap-1">
@@ -271,7 +339,7 @@ const CourseSalesTab = () => {
                             </span>
                           )}
                         </>
-                      ) : c.salePercent ? (
+                      ) : c.salePercent != null || c.saleAmount != null ? (
                         <span className="text-[#D97706] font-medium">{inactiveReason(c)}</span>
                       ) : (
                         <span className="text-[var(--color-text-secondary)]">
@@ -285,12 +353,12 @@ const CourseSalesTab = () => {
                   <button
                     onClick={() => beginEdit(c)}
                     className={`shrink-0 px-3 py-2 text-xs font-medium rounded-lg flex items-center gap-1.5 ${
-                      c.salePercent
+                      c.salePercent != null || c.saleAmount != null
                         ? "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)]"
                         : "bg-[var(--color-primary)] text-white hover:opacity-90"
                     }`}
                   >
-                    {c.salePercent ? (
+                    {c.salePercent != null || c.saleAmount != null ? (
                       <>{tShared("edit")}</>
                     ) : (
                       <>
@@ -302,52 +370,119 @@ const CourseSalesTab = () => {
               </div>
 
               {editingId === c.id && (
-                <div className="px-5 pb-5 border-t border-[var(--color-border-subtle)] pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="px-5 pb-5 border-t border-[var(--color-border-subtle)] pt-4 space-y-3">
+                  {/* Sale type toggle — mirrors the backend's exclusive
+                      "percentage OR fixed amount" rule. Switching resets
+                      the OTHER field's error so old validation doesn't
+                      ghost across types. */}
                   <div>
                     <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                      {tShared("percentLabel")}
+                      {tShared("typeLabel")}
                     </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={100}
-                      value={percent}
-                      onChange={(e) => setPercent(e.target.value)}
-                      placeholder="25"
-                      className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm outline-none focus:border-[var(--color-primary)]"
-                    />
-                    <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
-                      {tShared("percentHint")}
-                    </p>
+                    <div className="inline-flex items-center gap-0 rounded-lg border border-[var(--color-border)] p-0.5 bg-[var(--color-surface-page)]">
+                      {(["percentage", "fixed"] as const).map((tv) => (
+                        <button
+                          key={tv}
+                          type="button"
+                          onClick={() => {
+                            setSaleType(tv);
+                            setAmountError(null);
+                            setPercentError(null);
+                          }}
+                          className={`px-3 py-1.5 text-[12px] font-medium rounded-md ${
+                            saleType === tv
+                              ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                              : "text-[var(--color-text-secondary)]"
+                          }`}
+                        >
+                          {tShared(`types.${tv}`)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <label className="flex items-start gap-2 sm:pt-6 text-sm text-[var(--color-text-secondary)]">
-                    <input
-                      type="checkbox"
-                      checked={allowsCoupon}
-                      onChange={(e) => setAllowsCoupon(e.target.checked)}
-                      className="mt-0.5 w-4 h-4 accent-[var(--color-primary)]"
-                    />
-                    {tShared("allowCoupon")}
-                  </label>
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                      {tShared("startsLabel")}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {saleType === "percentage" ? (
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                          {tShared("percentLabel")}
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={percent}
+                          onChange={(e) => {
+                            setPercent(e.target.value);
+                            setPercentError(null);
+                          }}
+                          placeholder="25"
+                          className={`w-full h-10 px-3 border rounded-lg text-sm outline-none ${
+                            percentError
+                              ? "border-[#DC2626] focus:border-[#DC2626]"
+                              : "border-[var(--color-border)] focus:border-[var(--color-primary)]"
+                          }`}
+                        />
+                        <p className={`text-[11px] mt-1 ${percentError ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}>
+                          {percentError ?? tShared("percentHint")}
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                          {tShared("amountLabel")}
+                        </label>
+                        <input
+                          type="number"
+                          min={0.01}
+                          step="0.01"
+                          value={amount}
+                          onChange={(e) => {
+                            setAmount(e.target.value);
+                            setAmountError(null);
+                          }}
+                          placeholder="50"
+                          className={`w-full h-10 px-3 border rounded-lg text-sm outline-none ${
+                            amountError
+                              ? "border-[#DC2626] focus:border-[#DC2626]"
+                              : "border-[var(--color-border)] focus:border-[var(--color-primary)]"
+                          }`}
+                        />
+                        <p className={`text-[11px] mt-1 ${amountError ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}>
+                          {amountError ?? tShared("amountHint", { price: c.price.toFixed(2) })}
+                        </p>
+                      </div>
+                    )}
+                    <label className="flex items-start gap-2 sm:pt-6 text-sm text-[var(--color-text-secondary)]">
+                      <input
+                        type="checkbox"
+                        checked={allowsCoupon}
+                        onChange={(e) => setAllowsCoupon(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 accent-[var(--color-primary)]"
+                      />
+                      {tShared("allowCoupon")}
                     </label>
-                    <DateTimePicker id={`sale-start-${c.id}`} value={startsAt} onChange={setStartsAt} />
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                        {tShared("startsLabel")}
+                      </label>
+                      <DateTimePicker id={`sale-start-${c.id}`} value={startsAt} onChange={setStartsAt} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                        {tShared("endsLabel")}
+                      </label>
+                      <DateTimePicker id={`sale-end-${c.id}`} value={endsAt} onChange={setEndsAt} />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                      {tShared("endsLabel")}
-                    </label>
-                    <DateTimePicker id={`sale-end-${c.id}`} value={endsAt} onChange={setEndsAt} />
-                  </div>
-                  <p className="sm:col-span-2 text-[11px] text-[var(--color-text-secondary)] -mt-1">
+
+                  <p className="text-[11px] text-[var(--color-text-secondary)]">
                     {tShared("immediateHint")}
                   </p>
-                  <div className="sm:col-span-2 flex items-center justify-between gap-2 pt-1">
-                    {c.salePercent ? (
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    {c.salePercent != null || c.saleAmount != null ? (
                       <button
-                        onClick={() => save(c.id, true)}
+                        onClick={() => save(c, true)}
                         disabled={savingId === c.id}
                         className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg text-[#B91C1C] hover:bg-[#FEE2E2] disabled:opacity-50"
                       >
@@ -365,7 +500,7 @@ const CourseSalesTab = () => {
                         {tShared("cancel")}
                       </button>
                       <button
-                        onClick={() => save(c.id)}
+                        onClick={() => save(c)}
                         disabled={savingId === c.id}
                         className="inline-flex items-center gap-1 px-4 py-2 text-xs font-semibold rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-50"
                       >

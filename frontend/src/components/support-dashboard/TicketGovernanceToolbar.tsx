@@ -390,27 +390,47 @@ function PriorityChip({ priority }: { priority: string }) {
       : priority === "low"
         ? "text-[#1D4ED8] bg-[#DBEAFE] border-[#93C5FD]"
         : "text-[#92400E] bg-[#FEF3C7] border-[#FDE68A]";
+  const tShared = useTranslations("supportDashboard");
+  let label = priority;
+  try {
+    const key = `ticketsBoard.priorities.${priority}`;
+    const val = tShared(key);
+    if (val && val !== key) label = val;
+  } catch {
+    // ignore
+  }
   return (
     <span
       className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded border ${cls} uppercase`}
     >
-      {priority}
+      {label}
     </span>
   );
 }
 
 function StatusChip({ status }: { status: string }) {
+  const tShared = useTranslations("supportDashboard");
   const cls =
     status === "new"
       ? "text-[#1D4ED8] bg-[#DBEAFE] border-[#93C5FD]"
       : status === "in_progress"
         ? "text-[#92400E] bg-[#FEF3C7] border-[#FDE68A]"
         : "text-[#6B21A8] bg-[#F3E8FF] border-[#D8B4FE]"; // on_hold
+  // Fall back to the raw slug for any status not in the ticketStatus map
+  // (e.g. custom project statuses).
+  let label = status.replace(/_/g, " ");
+  try {
+    const key = `activeIncidents.ticketStatus.${status}`;
+    const val = tShared(key);
+    if (val && val !== key) label = val;
+  } catch {
+    // ignore
+  }
   return (
     <span
       className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded border ${cls} uppercase`}
     >
-      {status.replace(/_/g, " ")}
+      {label}
     </span>
   );
 }

@@ -15,6 +15,7 @@ import {
 import AdminNavbar from "@/components/admin-dashboard/AdminNavbar";
 import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
 import AdminMobileSidebar from "@/components/admin-dashboard/AdminMobileSidebar";
+import Select from "@/components/ui/Select";
 import SubmissionDetailDrawer from "./SubmissionDetailDrawer";
 import { instructorApi, ApiError } from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
@@ -191,18 +192,18 @@ export default function AssessmentSubmissionsContent({ courseId, assessmentId }:
                       className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)] focus:outline-none focus:border-[var(--color-primary)]`}
                     />
                   </div>
-                  <select
+                  <Select
                     value={statusFilter}
-                    onChange={(e) =>
-                      setStatusFilter(e.target.value as "all" | Status)
-                    }
-                    className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)]"
-                  >
-                    <option value="all">{t("filters.all")}</option>
-                    <option value="graded">{t("statuses.graded")}</option>
-                    <option value="submitted">{t("statuses.submitted")}</option>
-                    <option value="in_progress">{t("statuses.inProgress")}</option>
-                  </select>
+                    onChange={(v) => setStatusFilter(v as "all" | Status)}
+                    size="sm"
+                    className="min-w-[160px]"
+                    options={[
+                      { value: "all", label: t("filters.all") },
+                      { value: "graded", label: t("statuses.graded") },
+                      { value: "submitted", label: t("statuses.submitted") },
+                      { value: "in_progress", label: t("statuses.inProgress") },
+                    ]}
+                  />
                 </div>
 
                 {/* Table */}
@@ -250,7 +251,19 @@ export default function AssessmentSubmissionsContent({ courseId, assessmentId }:
                             s.studentEmail;
                           const isGraded = s.status === "graded";
                           const total = s.totalMarks ?? assessment?.totalMarks ?? 0;
-                          const scored = s.score ?? 0;
+                          // Prefer the sum of per-answer marksAwarded (same
+                          // source the SubmissionDetailDrawer uses) — the
+                          // submissions.score column has been observed to
+                          // fall out of sync with the per-answer marks on
+                          // some legacy rows, so trust the per-answer sum
+                          // when available.
+                          const answerSum = Array.isArray(s.answers)
+                            ? s.answers.reduce(
+                                (sum, a) => sum + (a?.marksAwarded ?? 0),
+                                0,
+                              )
+                            : null;
+                          const scored = answerSum ?? s.score ?? 0;
                           const pct = total > 0 ? Math.round((scored / total) * 100) : 0;
                           return (
                             <tr

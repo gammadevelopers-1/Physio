@@ -70,10 +70,14 @@ const MobileCourseCard = ({
         : null;
 
   const price = course.price ?? 0;
-  const onSale = course.onSale ?? false;
   const salePercent = course.salePercent ?? null;
-  const effectivePrice = course.effectivePrice ?? price;
+  const saleAmount = course.saleAmount ?? null;
+  const perCourseSalePrice = course.effectivePrice ?? price;
+  const campaign = course.campaignDiscount ?? null;
+  const effectivePrice = campaign?.finalPrice ?? perCourseSalePrice;
+  const onSale = (course.onSale ?? false) || !!campaign;
   const isFree = effectivePrice === 0;
+  const isEarlyBirdCampaign = campaign?.campaignType === "early_bird";
 
   const isEnded = course.availabilityStatus === "completed";
   const isFull = course.availabilityStatus === "full";
@@ -251,12 +255,27 @@ const MobileCourseCard = ({
         {/* Footer: price + CTA */}
         <div className={`flex items-center justify-between pt-2 ${isRTL ? "flex-row-reverse" : ""}`}>
           {onSale && !isFree ? (
-            <span className={`flex items-baseline gap-1.5 ${isRTL ? "flex-row-reverse" : ""}`}>
+            <span className={`flex items-baseline gap-1.5 flex-wrap ${isRTL ? "flex-row-reverse" : ""}`}>
               <span className="text-[var(--color-primary)] font-bold text-[15px]">{effectivePrice} SAR</span>
               <span className="text-[var(--color-text-secondary)] text-[13px] line-through">{price} SAR</span>
-              {salePercent ? (
+              {/* Badge priority: Early Bird campaign → Sale campaign → per-course sale. */}
+              {campaign && isEarlyBirdCampaign ? (
+                <span className="text-[11px] font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded px-1.5 py-0.5">
+                  {t("card.earlyBird")}
+                </span>
+              ) : campaign ? (
+                <span className="text-[11px] font-bold text-white bg-red-600 rounded px-1.5 py-0.5">
+                  {campaign.discountType === "percentage"
+                    ? t("card.percentOff", { percent: campaign.discountValue })
+                    : t("card.amountOff", { amount: campaign.discountValue })}
+                </span>
+              ) : salePercent ? (
                 <span className="text-[11px] font-bold text-white bg-red-600 rounded px-1.5 py-0.5">
                   {t("card.percentOff", { percent: salePercent })}
+                </span>
+              ) : saleAmount ? (
+                <span className="text-[11px] font-bold text-white bg-red-600 rounded px-1.5 py-0.5">
+                  {t("card.amountOff", { amount: saleAmount })}
                 </span>
               ) : null}
             </span>

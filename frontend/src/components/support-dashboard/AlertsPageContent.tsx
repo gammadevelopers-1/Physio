@@ -386,7 +386,9 @@ const AlertsPageContent = () => {
                                         : "bg-[#DCFCE7] text-[#15803D]"
                                   }`}
                                 >
-                                  {alert.priority}
+                                  {alert.priority
+                                    ? t(`ticketsBoard.priorities.${alert.priority}`)
+                                    : ""}
                                 </span>
                               </div>
                               <p className="text-sm font-medium text-[var(--color-text-primary)] line-clamp-2">

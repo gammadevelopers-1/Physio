@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, TrendingUp, Archive, Tag as TagIcon, CheckCircle2 } from "lucide-react";
 import { supportApi } from "@/lib/api";
 
@@ -25,6 +26,7 @@ function textForBg(hex: string): string {
 //
 // Everything is computed server-side; this view is pure render.
 export default function TagAnalyticsPanel() {
+  const tr = useTranslations("supportDashboard.tagAnalytics");
   const [data, setData] = useState<Analytics | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +38,7 @@ export default function TagAnalyticsPanel() {
         if (!cancelled) setData(res);
       })
       .catch((err) => {
-        if (!cancelled) setError(err?.message || "Failed to load analytics");
+        if (!cancelled) setError(err?.message || tr("loadFailed"));
       });
     return () => {
       cancelled = true;
@@ -67,18 +69,18 @@ export default function TagAnalyticsPanel() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <KpiCard
-          label="Total tags"
+          label={tr("totalTags")}
           value={data.totalTags}
           icon={<TagIcon className="w-3.5 h-3.5" />}
         />
         <KpiCard
-          label="Active"
+          label={tr("active")}
           value={data.totalTags - data.archivedTags}
           icon={<CheckCircle2 className="w-3.5 h-3.5" />}
           accent="text-[var(--color-primary)]"
         />
         <KpiCard
-          label="Archived"
+          label={tr("archived")}
           value={data.archivedTags}
           icon={<Archive className="w-3.5 h-3.5" />}
           accent="text-[#92400E]"
@@ -88,57 +90,57 @@ export default function TagAnalyticsPanel() {
       {/* Top tags */}
       <section>
         <h4 className="text-xs font-semibold text-[var(--color-text-primary)] mb-2 uppercase">
-          Top tags
+          {tr("topTags")}
         </h4>
         {data.topTags.length === 0 ? (
           <p className="text-xs text-[var(--color-text-secondary)] py-3 text-center">
-            No tag activity yet.
+            {tr("noActivity")}
           </p>
         ) : (
           <div className="space-y-1.5">
-            {data.topTags.map((t) => (
+            {data.topTags.map((tag) => (
               <div
-                key={t.tagId}
+                key={tag.tagId}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg border border-[var(--color-border-subtle)]"
               >
                 <span
                   className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full"
                   style={{
-                    backgroundColor: t.color,
-                    color: textForBg(t.color),
+                    backgroundColor: tag.color,
+                    color: textForBg(tag.color),
                   }}
                 >
-                  {t.name}
+                  {tag.name}
                 </span>
-                {t.archived && (
+                {tag.archived && (
                   <span className="text-[10px] uppercase text-[#92400E] bg-[#FEF3C7] border border-[#FDE68A] px-1.5 py-0.5 rounded">
-                    archived
+                    {tr("archivedBadge")}
                   </span>
                 )}
-                <span className="text-xs text-[var(--color-text-secondary)] ml-auto flex items-center gap-3">
-                  <span title="Total assignments">
+                <span className="text-xs text-[var(--color-text-secondary)] ms-auto flex items-center gap-3">
+                  <span title={tr("stats.totalAssignmentsTitle")}>
                     <span className="font-semibold text-[var(--color-text-primary)]">
-                      {t.usageCount}
+                      {tag.usageCount}
                     </span>{" "}
-                    total
+                    {tr("stats.total")}
                   </span>
-                  <span title="Last 30 days">
+                  <span title={tr("stats.last30DaysTitle")}>
                     <span
                       className={`font-semibold ${
-                        t.last30Count > 0
+                        tag.last30Count > 0
                           ? "text-[var(--color-primary)]"
                           : "text-[var(--color-text-secondary)]"
                       }`}
                     >
-                      {t.last30Count}
+                      {tag.last30Count}
                     </span>{" "}
-                    in 30d
+                    {tr("stats.in30d")}
                   </span>
-                  <span title="On resolved or closed tickets">
+                  <span title={tr("stats.resolvedTitle")}>
                     <span className="font-semibold text-[#16A34A]">
-                      {t.resolvedCount}
+                      {tag.resolvedCount}
                     </span>{" "}
-                    resolved
+                    {tr("stats.resolved")}
                   </span>
                 </span>
               </div>
@@ -151,11 +153,11 @@ export default function TagAnalyticsPanel() {
       <section>
         <h4 className="text-xs font-semibold text-[var(--color-text-primary)] mb-2 uppercase flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5" />
-          Tag applications, last 30 days
+          {tr("trendTitle")}
         </h4>
         {data.trend.length === 0 ? (
           <p className="text-xs text-[var(--color-text-secondary)] py-3 text-center">
-            No assignments in the last 30 days.
+            {tr("trendEmpty")}
           </p>
         ) : (
           <div className="px-3 py-3 rounded-xl border border-[var(--color-border)] bg-white">
@@ -184,7 +186,7 @@ export default function TagAnalyticsPanel() {
             <div className="flex justify-between items-center text-[10px] text-[var(--color-text-secondary)] mt-2 pt-2 border-t border-[var(--color-border-subtle)]">
               <span>{data.trend[0]?.day || ""}</span>
               <span className="font-medium">
-                {maxTrend > 0 && `Peak: ${maxTrend}/day`}
+                {maxTrend > 0 && tr("peakPerDay", { value: maxTrend })}
               </span>
               <span>{data.trend[data.trend.length - 1]?.day || ""}</span>
             </div>
@@ -195,11 +197,11 @@ export default function TagAnalyticsPanel() {
       {/* By category */}
       <section>
         <h4 className="text-xs font-semibold text-[var(--color-text-primary)] mb-2 uppercase">
-          Tags by category
+          {tr("byCategoryTitle")}
         </h4>
         {data.byCategory.length === 0 ? (
           <p className="text-xs text-[var(--color-text-secondary)] py-3 text-center">
-            No assignments yet.
+            {tr("byCategoryEmpty")}
           </p>
         ) : (
           <div className="space-y-2">
@@ -209,20 +211,20 @@ export default function TagAnalyticsPanel() {
                 className="px-3 py-2 rounded-lg border border-[var(--color-border-subtle)]"
               >
                 <div className="text-[11px] uppercase font-medium text-[var(--color-text-secondary)] mb-1.5">
-                  {row.category}
+                  {translateCategory(tr, row.category)}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {row.tags.map((t) => (
+                  {row.tags.map((tag) => (
                     <span
-                      key={t.tagId}
+                      key={tag.tagId}
                       className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full"
                       style={{
-                        backgroundColor: t.color,
-                        color: textForBg(t.color),
+                        backgroundColor: tag.color,
+                        color: textForBg(tag.color),
                       }}
                     >
-                      {t.name}
-                      <span className="opacity-70">· {t.count}</span>
+                      {tag.name}
+                      <span className="opacity-70">· {tag.count}</span>
                     </span>
                   ))}
                 </div>
@@ -233,6 +235,23 @@ export default function TagAnalyticsPanel() {
       </section>
     </div>
   );
+}
+
+// Translate a category slug via the reportsPage.categories dictionary.
+// Falls back to the raw slug if no entry exists.
+function translateCategory(
+  translator: ReturnType<typeof useTranslations>,
+  category: string | null | undefined,
+): string {
+  if (!category) return "—";
+  const key = `categories.${category.toLowerCase()}`;
+  try {
+    const val = translator(key);
+    if (val && val !== key) return val;
+  } catch {
+    // ignore missing keys
+  }
+  return category;
 }
 
 function KpiCard({

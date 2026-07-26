@@ -69,6 +69,23 @@ interface Detail {
     amountSaved: number;
     usedAt: string;
   }>;
+  /** Origin trail — populated when the parent campaign was auto-minted
+   * by a points reward. Null for every hand-crafted coupon. */
+  source: {
+    type: string;
+    rewardId: string | null;
+    rewardName: string | null;
+    rewardType: string | null;
+    rewardPointsCost: number | null;
+    redemptionId: string | null;
+    redeemedAt: string | null;
+    user: {
+      id: string;
+      email: string | null;
+      firstName: string | null;
+      lastName: string | null;
+    } | null;
+  } | null;
 }
 
 interface AuditEntry {
@@ -130,7 +147,9 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose, onChanged }: Props) => {
   const locale = useLocale();
   // const isRTL = locale === "ar"; // not needed — dir="rtl" on <html> handles flex order
 
-  const [tab, setTab] = useState<"overview" | "config" | "usage" | "audit">("overview");
+  const [tab, setTab] = useState<
+    "overview" | "config" | "usage" | "audit" | "points-reward"
+  >("overview");
   const [data, setData] = useState<Detail | null>(null);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -211,11 +230,15 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose, onChanged }: Props) => {
     }
   };
 
+  const isPointsReward = data?.source?.type === "points_reward";
   const tabs: Array<{ key: typeof tab; label: string }> = [
     { key: "overview", label: t("tabs.overview") },
     { key: "config", label: t("tabs.config") },
     { key: "usage", label: t("tabs.usage") },
     { key: "audit", label: t("tabs.audit") },
+    ...(isPointsReward
+      ? [{ key: "points-reward" as const, label: t("tabs.pointsReward") }]
+      : []),
   ];
 
   return (
@@ -397,6 +420,8 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose, onChanged }: Props) => {
               <ConfigRow label={t("config.batch")} value={data.batchId ?? "—"} />
             </dl>
           </div>
+        ) : tab === "points-reward" && data.source ? (
+          <PointsRewardTab source={data.source} locale={locale} />
         ) : tab === "usage" ? (
           <div className="p-5">
             {data.usageHistory.length === 0 ? (
@@ -584,5 +609,104 @@ const ConfigRow = ({
     <dd className="text-[12px] font-medium text-[var(--color-text-primary)] text-end">{value}</dd>
   </div>
 );
+
+/**
+ * Read-only Points Reward provenance tab — only mounted when the coupon's
+ * parent campaign has `source_type = 'points_reward'`. Every field is
+ * safe-optional because the reward or user rows can be soft-deleted long
+ * after this coupon was minted.
+ */
+const PointsRewardTab = ({
+  source,
+  locale,
+}: {
+  source: NonNullable<Detail["source"]>;
+  locale: string;
+}) => {
+  const t = useTranslations("financeDashboard.discountsPage.detailDrawer.pointsReward");
+  const userName = source.user
+    ? [source.user.firstName, source.user.lastName].filter(Boolean).join(" ") ||
+      source.user.email ||
+      ""
+    : "";
+  return (
+    <div className="p-5 space-y-4">
+      <div className="rounded-2xl bg-gradient-to-br from-[#FEF3C7] to-[#FDE68A] border border-[#F59E0B]/30 p-5 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/70 shadow-sm mb-2">
+          <Sparkles className="w-4 h-4 text-[#B45309]" />
+          <span className="font-semibold text-sm text-[#78350F]">{t("header")}</span>
+        </div>
+        {source.rewardName && (
+          <div className="mt-1">
+            <a
+              href={`/dashboard/admin/points?tab=rewards&rewardId=${source.rewardId ?? ""}`}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-base font-bold text-[#78350F] hover:underline"
+            >
+              {source.rewardName}
+            </a>
+          </div>
+        )}
+      </div>
+
+      <dl className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl divide-y divide-[var(--color-border-subtle)]">
+        {source.rewardType && (
+          <ConfigRow
+            label={t("rewardType")}
+            value={
+              <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-[#EDE9FE] text-[#6D28D9]">
+                {source.rewardType}
+              </span>
+            }
+          />
+        )}
+        {source.rewardPointsCost !== null && (
+          <ConfigRow
+            label={t("pointsCost")}
+            value={
+              <span className="inline-flex items-center gap-1 font-semibold">
+                <Sparkles className="w-3 h-3 text-[#B45309]" />
+                {source.rewardPointsCost.toLocaleString()}
+              </span>
+            }
+          />
+        )}
+        {source.redeemedAt && (
+          <ConfigRow label={t("redeemedAt")} value={fmtDateTime(source.redeemedAt, locale)} />
+        )}
+        {source.user && (
+          <ConfigRow
+            label={t("redeemedBy")}
+            value={
+              <div className="text-end">
+                <div>{userName}</div>
+                {source.user.email && (
+                  <div className="text-[11px] text-[var(--color-text-secondary)]">
+                    {source.user.email}
+                  </div>
+                )}
+              </div>
+            }
+          />
+        )}
+        {source.redemptionId && (
+          <ConfigRow
+            label={t("redemptionId")}
+            value={
+              <span className="font-mono text-[11px] break-all">
+                {source.redemptionId}
+              </span>
+            }
+          />
+        )}
+      </dl>
+
+      <p className="text-[11px] text-[var(--color-text-secondary)] italic">
+        {t("note")}
+      </p>
+    </div>
+  );
+};
 
 export default DiscountDetailDrawerV2;

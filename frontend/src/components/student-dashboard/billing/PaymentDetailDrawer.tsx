@@ -24,8 +24,11 @@ import {
   pickCourseTitle,
   statusPillClasses,
   statusLabel,
+  resolvePaymentStatusChip,
 } from "./billingHelpers";
 import StudentRefundRequestModal from "./StudentRefundRequestModal";
+import InvoiceLanguageDialog from "@/components/ui/InvoiceLanguageDialog";
+import { useInvoiceLanguage } from "@/hooks/useInvoiceLanguage";
 
 type Props = {
   paymentId: string | null;
@@ -39,7 +42,11 @@ type Props = {
  * "Request refund" action is rendered but disabled with a TODO marker —
  * the actual refund modal lands in Phase 3.
  */
-const PaymentDetailDrawer = ({ paymentId, onClose, policy }: Props) => {
+const PaymentDetailDrawer = ({ paymentId, onClose, policy: _policy }: Props) => {
+  // `policy` is retained on the public prop shape (callers still pass it)
+  // but the drawer no longer needs to render partial-refund copy — the
+  // modal itself surfaces the actual policy at request time. Underscore
+  // prefix silences the unused-var hint without breaking the API.
   const locale = useLocale();
   const t = useTranslations("studentDashboard.billing");
   const isRTL = locale === "ar";
@@ -88,12 +95,17 @@ const PaymentDetailDrawer = ({ paymentId, onClose, policy }: Props) => {
     return () => document.removeEventListener("keydown", onKey);
   }, [paymentId, onClose]);
 
+  // MUST stay above the early-return below — hooks cannot be conditional.
+  const { dialogProps: langDialogProps, promptForLocale } = useInvoiceLanguage();
+
   if (!paymentId) return null;
 
   const handleDownloadInvoice = async (invoiceId: string) => {
+    const chosen = await promptForLocale();
+    if (!chosen) return;
     setDownloadingPdf(true);
     try {
-      const res = await invoiceApi.getPdfUrl(invoiceId);
+      const res = await invoiceApi.getPdfUrl(invoiceId, chosen);
       if (res.url) {
         window.open(res.url, "_blank", "noopener,noreferrer");
       } else {
@@ -152,7 +164,6 @@ const PaymentDetailDrawer = ({ paymentId, onClose, policy }: Props) => {
           ) : data ? (
             <DrawerBody
               data={data}
-              policy={policy}
               locale={locale}
               t={t}
               onDownloadInvoice={handleDownloadInvoice}
@@ -185,6 +196,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose, policy }: Props) => {
           lineItems={data.lineItems}
         />
       )}
+      <InvoiceLanguageDialog {...langDialogProps} />
     </>
   );
 };
@@ -193,7 +205,6 @@ export default PaymentDetailDrawer;
 
 function DrawerBody({
   data,
-  policy,
   locale,
   t,
   onDownloadInvoice,
@@ -201,7 +212,6 @@ function DrawerBody({
   onRequestRefund,
 }: {
   data: StudentPaymentDetailResponse;
-  policy: StudentFinancePolicySnapshot | null;
   locale: string;
   t: (key: string, vars?: Record<string, string | number>) => string;
   onDownloadInvoice: (invoiceId: string) => Promise<void>;
@@ -222,15 +232,21 @@ function DrawerBody({
     lineItems.length > 1 ||
     lineItems.some((l) => l.alreadyRefundedByRefundId);
 
+  // Derive the chip from BOTH the payment.status AND the latest refund —
+  // see `resolvePaymentStatusChip` for the full rationale. Without this,
+  // a fresh refund request still reads "Paid" (backend deliberately keeps
+  // payment.status until completion), and previously certain callers were
+  // even labeling pending refunds as "Refunded".
+  const chip = resolvePaymentStatusChip(payment.status, refunds);
   return (
     <>
       {/* Status + amount */}
       <div>
         <div className="flex items-center gap-2 mb-1">
           <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(payment.status)}`}
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusPillClasses(chip.pillKey)}`}
           >
-            {statusLabel(payment.status, t)}
+            {t(chip.labelKey)}
           </span>
           <span className="text-xs text-[#6B7280]">
             {formatDateTime(payment.paidAt ?? payment.createdAt, locale)}
@@ -261,12 +277,24 @@ function DrawerBody({
                 li.courseTitleAr,
                 locale,
               );
-              const isRefunded = !!li.alreadyRefundedByRefundId;
+              // Backend flags a line item with `alreadyRefundedByRefundId`
+              // for ANY in-flight or completed refund (so a second refund
+              // can't re-select the same line). Only show the "Refunded"
+              // strikethrough when the linked refund is actually COMPLETED;
+              // otherwise the refund is still pending/approved/processing
+              // and we mark the line as such without the finality of
+              // strikethrough copy.
+              const linkedRefund = li.alreadyRefundedByRefundId
+                ? refunds.find((r) => r.id === li.alreadyRefundedByRefundId)
+                : null;
+              const isRefunded = linkedRefund?.status === "completed";
+              const isRefundInProgress =
+                !!linkedRefund && linkedRefund.status !== "completed";
               return (
                 <li
                   key={li.paymentItemId ?? li.courseId}
                   className={`flex items-start justify-between gap-3 p-2.5 rounded-md ${
-                    isRefunded
+                    isRefunded || isRefundInProgress
                       ? "bg-[#F3F4F6] opacity-70"
                       : "bg-white border border-[#F3F4F6]"
                   }`}
@@ -276,7 +304,9 @@ function DrawerBody({
                       className={`text-sm font-medium ${
                         isRefunded
                           ? "text-[#6B7280] line-through"
-                          : "text-[#1F2937]"
+                          : isRefundInProgress
+                            ? "text-[#6B7280]"
+                            : "text-[#1F2937]"
                       }`}
                     >
                       {title}
@@ -286,16 +316,22 @@ function DrawerBody({
                         <Check className="w-3 h-3" />
                         {t("drawer.lineRefunded")}
                       </p>
+                    ) : isRefundInProgress ? (
+                      <p className="text-[11px] text-[#B45309] mt-0.5">
+                        {t("drawer.lineRefundInProgress")}
+                      </p>
                     ) : li.enrollmentStatus ? (
                       <p className="text-[11px] text-[#6B7280] mt-0.5 capitalize">
                         {li.enrollmentStatus.replace(/_/g, " ")}
                       </p>
                     ) : null}
                   </div>
-                  <div className="text-right shrink-0 tabular-nums">
+                  <div className="text-end shrink-0 tabular-nums">
                     <p
                       className={`text-sm font-semibold ${
-                        isRefunded ? "text-[#9CA3AF]" : "text-[#1F2937]"
+                        isRefunded || isRefundInProgress
+                          ? "text-[#9CA3AF]"
+                          : "text-[#1F2937]"
                       }`}
                     >
                       {formatSar(li.lineTotal)} {t("common.sar")}
@@ -412,11 +448,10 @@ function DrawerBody({
       <section className="border border-[#E5E7EB] rounded-lg p-3">
         {refundability.canRequest ? (
           <>
-            <p className="text-xs text-[#6B7280] mb-2">
-              {refundability.partialAllowed
-                ? t("policy.partialAllowed")
-                : t("policy.partialNotAllowed")}
-            </p>
+            {/* Removed on request: the "Partial refunds allowed" line and the
+                "we cover the gateway processing fee" note were confusing users
+                on the card. Only the CTA remains — the refund modal itself
+                still surfaces the actual policy the moment they open it. */}
             <button
               type="button"
               onClick={onRequestRefund}
@@ -473,11 +508,6 @@ function DrawerBody({
         )}
       </section>
 
-      {policy?.activeGateways && (
-        <p className="text-[11px] text-[#9CA3AF] text-center pt-2">
-          {t("policy.merchantDeductionNote")}
-        </p>
-      )}
     </>
   );
 }

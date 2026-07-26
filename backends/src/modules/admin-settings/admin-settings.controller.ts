@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -117,6 +118,24 @@ export class AdminSettingsController {
       value = normalizePaymentsForSave(value, existing);
     }
 
+    // Mail category: minimal shape validation so the UI can't save
+    // garbage that would produce an unsendable From header. Empty
+    // string is intentional — clears the override and falls back to
+    // env MAIL_FROM.
+    if (category === 'mail') {
+      const rawEmail =
+        typeof value.senderEmail === 'string' ? value.senderEmail.trim() : '';
+      const rawName =
+        typeof value.senderName === 'string' ? value.senderName.trim() : '';
+      if (rawEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+        throw new BadRequestException('senderEmail must be a valid email address');
+      }
+      if (rawName.length > 100) {
+        throw new BadRequestException('senderName must be 100 characters or fewer');
+      }
+      value = { senderEmail: rawEmail, senderName: rawName };
+    }
+
     return this.settingsService.updateCategory(category, value, user.id);
   }
 
@@ -231,7 +250,15 @@ export class AdminSettingsController {
         description: 'Transactional email delivery',
       },
       mailFrom: {
-        configured: has('MAIL_FROM'),
+        // Now considers the admin-editable DB row too — admin can set
+        // the sender via the Mail settings section without touching
+        // MAIL_FROM env.
+        configured:
+          has('MAIL_FROM') ||
+          !!(await this.settingsService
+            .getMailSettings()
+            .then((s) => s.senderEmail)
+            .catch(() => null)),
         required: true,
         description: 'Sender address for all emails',
       },

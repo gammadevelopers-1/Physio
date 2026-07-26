@@ -139,9 +139,15 @@ export class BankTransferController {
     @Param('paymentId') paymentId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Res() res: Response,
+    @Query('locale') locale?: string,
   ) {
-    const pdf = await this.bankTransferService.getProformaPdf(paymentId, user);
-    const filename = `proforma-${paymentId.slice(0, 8)}.pdf`;
+    const chosenLocale = locale === 'ar' ? 'ar' : 'en';
+    const pdf = await this.bankTransferService.getProformaPdf(
+      paymentId,
+      user,
+      chosenLocale,
+    );
+    const filename = `proforma-${paymentId.slice(0, 8)}-${chosenLocale}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
@@ -159,16 +165,26 @@ export class BankTransferController {
   @Post('proforma/quote')
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   async downloadProformaFromQuote(
-    @Body() body: { courseIds: string[]; discountCode?: string },
+    @Body()
+    body: {
+      courseIds: string[];
+      discountCode?: string;
+      applyActiveCampaign?: boolean;
+      locale?: string;
+    },
     @CurrentUser() user: AuthenticatedUser,
     @Res() res: Response,
   ) {
+    const chosenLocale = body.locale === 'ar' ? 'ar' : 'en';
     const { buffer, proformaNumber } =
-      await this.bankTransferService.getProformaPdfForQuote(user, body);
+      await this.bankTransferService.getProformaPdfForQuote(user, {
+        ...body,
+        locale: chosenLocale,
+      });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="proforma-${proformaNumber}.pdf"`,
+      `attachment; filename="proforma-${proformaNumber}-${chosenLocale}.pdf"`,
     );
     res.setHeader('Content-Length', buffer.length.toString());
     res.end(buffer);

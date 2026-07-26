@@ -25,6 +25,7 @@ import {
 import { adminSettingsApi } from "@/lib/api";
 import { TabShell } from "./TabShell";
 import ZoomIntegrationPanel from "./ZoomIntegrationPanel";
+import MailSettingsCard from "./MailSettingsCard";
 
 interface HealthRow {
   configured: boolean;
@@ -83,6 +84,11 @@ export default function IntegrationsTab() {
       noSaveBar
       loadError={error}
     >
+      {/* Admin-editable sender identity — sits above the health list
+          because it's the ONLY editable integration on this tab.
+          Everything below is read-only status. */}
+      <MailSettingsCard />
+
       <div className="flex items-center justify-end">
         <button
           type="button"

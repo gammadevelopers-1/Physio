@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { supportApi } from "@/lib/api";
+import DatePicker from "@/components/ui/DatePicker";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -732,21 +733,9 @@ function RangePicker({
       </div>
       {range === "custom" && (
         <div className="inline-flex items-center gap-1.5">
-          <input
-            type="date"
-            value={customFrom}
-            onChange={(e) => onCustomFromChange(e.target.value)}
-            aria-label={t("health.rangeFromLabel")}
-            className="px-2 py-1 text-xs rounded border border-[var(--color-border)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)]"
-          />
+          <DatePicker value={customFrom} onChange={onCustomFromChange} />
           <span className="text-xs text-[var(--color-text-secondary)]">→</span>
-          <input
-            type="date"
-            value={customTo}
-            onChange={(e) => onCustomToChange(e.target.value)}
-            aria-label={t("health.rangeToLabel")}
-            className="px-2 py-1 text-xs rounded border border-[var(--color-border)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)]"
-          />
+          <DatePicker value={customTo} onChange={onCustomToChange} min={customFrom || undefined} />
         </div>
       )}
     </div>

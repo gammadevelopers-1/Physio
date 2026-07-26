@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supportApi, uploadFormData } from "@/lib/api";
 import { useSupportProfile } from "@/hooks/useSupportProfile";
 import { useSupportOnlineStatus } from "@/hooks/useSupportOnlineStatus";
+import { useVisibilityPolling } from "@/hooks/useVisibilityPolling";
 import { toast } from "sonner";
 import TicketTagPanel from "./TicketTagPanel";
 import HoldRequestModal from "./HoldRequestModal";
@@ -445,18 +446,28 @@ const TicketDetailContent = () => {
       )
       .catch(() => undefined);
 
-    // Auto-refresh every 60 seconds for live SLA updates
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        supportApi
-          .getTicket(ticketId)
-          .then((data) => setTicket(data))
-          .catch(() => {});
-      }
-    }, 60000);
-
-    return () => clearInterval(interval);
+    // Live-thread polling lives in a separate useVisibilityPolling
+    // hook below — kept out of this effect so the category catalog
+    // fetch above doesn't refire on every ticket change.
   }, [ticketId]);
+
+  // Poll the ticket every 8s so new replies from the requester (or
+  // other agents on the same thread) appear without a manual refresh.
+  // Auto-pauses when the tab is hidden and refetches immediately when
+  // the user returns to the tab. See hooks/useVisibilityPolling.ts.
+  useVisibilityPolling(
+    async () => {
+      if (!ticketId) return;
+      try {
+        const data = await supportApi.getTicket(ticketId);
+        setTicket(data);
+      } catch {
+        // Silent — transient poll failures shouldn't disturb the UI.
+      }
+    },
+    8000,
+    Boolean(ticketId),
+  );
 
   async function handleSendReply() {
     if (!replyMessage.trim() || !ticketId) return;
@@ -798,7 +809,7 @@ const TicketDetailContent = () => {
                             </button>
                             {showExportDropdown && (
                               <div
-                                className={`absolute top-full ${isRTL ? "right-0" : "left-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-20 w-[260px] py-1`}
+                                className={`absolute top-full start-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-20 w-[260px] py-1`}
                               >
                                 <button
                                   type="button"
@@ -815,7 +826,7 @@ const TicketDetailContent = () => {
                                         ),
                                       );
                                   }}
-                                  className={`w-full ${isRTL ? "text-right" : "text-left"} px-3 py-2 hover:bg-[var(--color-border-subtle)]`}
+                                  className={`w-full text-start px-3 py-2 hover:bg-[var(--color-border-subtle)]`}
                                 >
                                   <div className="text-xs font-medium text-[var(--color-text-primary)]">
                                     {t("ticketDetail.export.csvLabel")}
@@ -845,7 +856,7 @@ const TicketDetailContent = () => {
                                       setIsExportingArchive(false);
                                     }
                                   }}
-                                  className={`w-full ${isRTL ? "text-right" : "text-left"} px-3 py-2 hover:bg-[var(--color-border-subtle)] border-t border-[var(--color-border)]`}
+                                  className={`w-full text-start px-3 py-2 hover:bg-[var(--color-border-subtle)] border-t border-[var(--color-border)]`}
                                 >
                                   <div className="text-xs font-medium text-[var(--color-text-primary)]">
                                     {t("ticketDetail.export.archiveLabel")}
@@ -1021,24 +1032,24 @@ const TicketDetailContent = () => {
                                   {authorName || t("ticketDetail.unknownAuthor")}
                                 </span>
                                 {comment.isStaffReply && (
-                                  <span className="ml-1.5 text-xs text-[var(--color-primary)] bg-[#EFF6FF] px-1.5 py-0.5 rounded">
+                                  <span className="ms-1.5 text-xs text-[var(--color-primary)] bg-[#EFF6FF] px-1.5 py-0.5 rounded">
                                     {t("ticketDetail.staffBadge")}
                                   </span>
                                 )}
                                 {comment.userRole &&
                                   comment.userRole !== "student" && (
-                                    <span className="ml-1.5 text-[10px] text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                    <span className="ms-1.5 text-[10px] text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] px-1.5 py-0.5 rounded uppercase tracking-wide">
                                       {t(`ticketDetail.roleBadge.${comment.userRole}`)}
                                     </span>
                                   )}
                                 {comment.isInternal && (
-                                  <span className="ml-1.5 text-xs text-[#D97706] bg-[#FEF3C7] px-1.5 py-0.5 rounded flex items-center gap-1 inline-flex">
+                                  <span className="ms-1.5 text-xs text-[#D97706] bg-[#FEF3C7] px-1.5 py-0.5 rounded flex items-center gap-1 inline-flex">
                                     <Lock className="w-3 h-3" />
                                     {t("ticketDetail.internalBadge")}
                                   </span>
                                 )}
                               </div>
-                              <span className="ml-auto text-xs text-[var(--color-text-secondary)]">
+                              <span className="ms-auto text-xs text-[var(--color-text-secondary)]">
                                 {new Date(comment.createdAt).toLocaleString()}
                               </span>
                             </div>
@@ -1114,7 +1125,7 @@ const TicketDetailContent = () => {
                                       } catch { toast.error(t("ticketDetail.toasts.applyMacroFailed")); }
                                       finally { setIsApplyingMacro(false); }
                                     }}
-                                    className={`w-full ${isRTL ? "text-right" : "text-left"} px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] flex items-center justify-between gap-2 disabled:opacity-50`}
+                                    className={`w-full text-start px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] flex items-center justify-between gap-2 disabled:opacity-50`}
                                   >
                                     <span className="truncate flex-1">{macro.title}</span>
                                     {macro.bodyAr && locale === "ar" && (
@@ -1123,7 +1134,7 @@ const TicketDetailContent = () => {
                                   </button>
                                 );
                                 return (
-                                  <div className={`absolute top-full ${isRTL ? "right-0" : "left-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-20 w-[280px] py-1 max-h-[360px] overflow-y-auto`}>
+                                  <div className={`absolute top-full start-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-20 w-[280px] py-1 max-h-[360px] overflow-y-auto`}>
                                     <div className="px-2 py-1.5 border-b border-[var(--color-border)] sticky top-0 bg-white">
                                       <input
                                         type="text"
@@ -1168,7 +1179,7 @@ const TicketDetailContent = () => {
                                 isInternal
                                   ? "border-amber-300 bg-amber-50"
                                   : "border-[var(--color-border)] bg-white"
-                              } ${isRTL ? "mr-auto" : "ml-auto"}`}
+                              } ms-auto`}
                               role="tablist"
                               aria-label={t("ticketDetail.composer.lane")}
                             >
@@ -1760,7 +1771,7 @@ const TicketDetailContent = () => {
                         {ticket.courseName && (
                           <div className="flex justify-between">
                             <span className="text-[var(--color-text-secondary)]">{t("ticketDetail.detailsLabels.course")}</span>
-                            <span className="font-medium text-[var(--color-text-primary)] text-right max-w-[150px] truncate">
+                            <span className="font-medium text-[var(--color-text-primary)] text-end max-w-[150px] truncate">
                               {ticket.courseName}
                             </span>
                           </div>
@@ -1815,7 +1826,7 @@ const TicketDetailContent = () => {
                                             toast.success(t("ticketDetail.toasts.reassigned", { name: [agent.firstName, agent.lastName].filter(Boolean).join(' ') }));
                                           } catch { toast.error(t("ticketDetail.toasts.reassignFailed")); }
                                         }}
-                                        className={`w-full ${isRTL ? "text-right" : "text-left"} px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg flex items-center gap-2`}
+                                        className={`w-full text-start px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg flex items-center gap-2`}
                                       >
                                         <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-[10px] text-white font-bold">
                                           {[agent.firstName?.[0], agent.lastName?.[0]].filter(Boolean).join('')}

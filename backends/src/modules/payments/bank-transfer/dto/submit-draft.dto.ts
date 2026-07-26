@@ -1,6 +1,7 @@
 import {
   IsString,
   IsOptional,
+  IsBoolean,
   MinLength,
   MaxLength,
   Matches,
@@ -39,6 +40,25 @@ export class SubmitDraftDto {
   @IsOptional()
   @IsString()
   discountCode?: string;
+
+  /**
+   * Multipart form fields arrive as strings — normalize "true"/"1" to a
+   * real boolean so class-validator's @IsBoolean accepts it. When true,
+   * the underlying `quotePayment` also applies the active direct-campaign
+   * discount on top of any coupon in `discountCode`.
+   */
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const v = value.toLowerCase();
+      if (v === 'true' || v === '1') return true;
+      if (v === 'false' || v === '0' || v === '') return false;
+    }
+    return value;
+  })
+  applyActiveCampaign?: boolean;
 
   @IsString()
   @MinLength(2)

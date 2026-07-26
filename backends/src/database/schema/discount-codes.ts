@@ -68,6 +68,15 @@ export const discountCodes = pgTable(
     createdBy: uuid('created_by')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    /**
+     * When set, only this user can redeem the code. Used by the points
+     * rewards system: a "get SAR 50 off" reward mints a discount code with
+     * target_user_id = redeeming student, so sharing the code with someone
+     * else is a no-op. NULL for admin-created public codes.
+     */
+    targetUserId: uuid('target_user_id').references(() => users.id, {
+      onDelete: 'cascade',
+    }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -75,6 +84,7 @@ export const discountCodes = pgTable(
     uniqueIndex('discount_codes_code_unique').on(table.code),
     index('discount_codes_is_active_idx').on(table.isActive),
     index('discount_codes_campaign_idx').on(table.campaign),
+    index('discount_codes_target_user_id_idx').on(table.targetUserId),
     check(
       'discount_codes_type_check',
       sql`${table.type} IN ('percentage', 'fixed')`,

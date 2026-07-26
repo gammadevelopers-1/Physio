@@ -195,7 +195,7 @@ function TicketRow({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 sm:p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-subtle)] transition-colors text-left"
+      className="w-full flex items-center gap-3 p-3 sm:p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-subtle)] transition-colors text-start"
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="flex-1 min-w-0">
@@ -763,7 +763,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
             <div key={index} className="border border-[var(--color-border)] rounded-lg overflow-hidden">
               <button
                 onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[var(--color-border-subtle)] transition-colors"
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-start hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] flex-shrink-0">

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,6 +8,7 @@ import {
   HttpStatus,
   Param,
   ParseEnumPipe,
+  Post,
   Put,
   UseGuards,
 } from '@nestjs/common';
@@ -70,5 +72,28 @@ export class TemplatesController {
     @Param('locale', new ParseEnumPipe(LocaleParam)) locale: LocaleParam,
   ) {
     await this.service.reset(eventKey, locale);
+  }
+
+  /**
+   * Test-send: renders the current (override OR fallback) template
+   * with the registry's example variable values and delivers it to
+   * the caller's own email address. Fastest way for admin to verify
+   * their edits landed and look right in a real inbox.
+   *
+   * Recipient is taken from the JWT — no body needed, no risk of an
+   * admin accidentally sending a test to a random address.
+   */
+  @Post(':eventKey/:locale/test-send')
+  async testSend(
+    @Param('eventKey') eventKey: string,
+    @Param('locale', new ParseEnumPipe(LocaleParam)) locale: LocaleParam,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    if (!user.email) {
+      throw new BadRequestException(
+        'Your admin account has no email on file — cannot send test.',
+      );
+    }
+    return this.service.sendTest(eventKey, locale, user.email);
   }
 }

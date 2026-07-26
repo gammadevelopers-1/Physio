@@ -374,10 +374,13 @@ export class BankTransferService {
 
     // Re-run the full validation pipeline (course exists, capacity, NELC,
     // discount). Throws BadRequestException / NotFoundException on failure,
-    // same as the regular initiate flow.
+    // same as the regular initiate flow. `applyActiveCampaign` opts into
+    // stacking a direct-campaign discount on top of any coupon in
+    // `discountCode` — mirrors the /initiate flow.
     const quote = await this.paymentsService.quotePayment(user, {
       courseIds: dto.courseIds,
       discountCode: dto.discountCode,
+      applyActiveCampaign: dto.applyActiveCampaign,
     });
 
     // Belt-and-suspenders: block only when another receipt is actively
@@ -483,14 +486,26 @@ export class BankTransferService {
           .where(inArray(payments.id, staleIds));
       }
 
-      // Build payment metadata that the proforma PDF + UI rely on.
+      // Build payment metadata that the proforma PDF + UI rely on. Mirrors
+      // the /initiate metadata shape so settlement (recordUsage) can find
+      // both discount legs on the same keys.
       const metadata = {
         subtotal: quote.totals.subtotal,
         originalPrice: quote.totals.originalSubtotal,
         saleDiscountAmount: quote.totals.saleDiscount,
+        // Legacy combined-discount keys (kept for backward compat with
+        // existing invoice + refund readers).
         discountAmount: quote.totals.discountAmount,
         discountCode: quote.totals.discountCode,
         discountId: quote.totals.discountId,
+        // Two stacked legs, persisted separately so settlement can record
+        // both redemptions.
+        couponAmount: quote.totals.couponAmount,
+        couponId: quote.totals.couponId,
+        couponCode: quote.totals.couponCode,
+        campaignAmount: quote.totals.campaignAmount,
+        campaignId: quote.totals.campaignId,
+        campaignName: quote.totals.campaignName,
         taxAmount: quote.totals.taxAmount,
         source: 'bank_transfer_draft',
       };
@@ -551,6 +566,7 @@ export class BankTransferService {
               courseId: it.id,
               studentId: user.id,
               status: ENROLLMENT_STATUS.PENDING_PAYMENT,
+              source: 'purchase',
             })
             .returning({ id: enrollments.id });
           enrollmentId = created.id;
@@ -643,7 +659,11 @@ export class BankTransferService {
    * employer for reimbursement before they actually make the transfer.
    * Ownership is enforced by the controller.
    */
-  async getProformaPdf(paymentId: string, user: AuthenticatedUser): Promise<Buffer> {
+  async getProformaPdf(
+    paymentId: string,
+    user: AuthenticatedUser,
+    locale: 'en' | 'ar' = 'en',
+  ): Promise<Buffer> {
     const [payment] = await db
       .select()
       .from(payments)
@@ -660,7 +680,7 @@ export class BankTransferService {
         'Proforma invoices are only available for bank-transfer payments',
       );
     }
-    return this.invoiceService.generateProformaPdfBuffer(paymentId);
+    return this.invoiceService.generateProformaPdfBuffer(paymentId, locale);
   }
 
   /**
@@ -672,7 +692,12 @@ export class BankTransferService {
    */
   async getProformaPdfForQuote(
     user: AuthenticatedUser,
-    dto: { courseIds: string[]; discountCode?: string },
+    dto: {
+      courseIds: string[];
+      discountCode?: string;
+      applyActiveCampaign?: boolean;
+      locale?: 'en' | 'ar';
+    },
   ): Promise<{ buffer: Buffer; proformaNumber: string }> {
     const quote = await this.paymentsService.quotePayment(user, dto);
 
@@ -699,6 +724,7 @@ export class BankTransferService {
       discountAmount: quote.totals.discountAmount,
       taxAmount: quote.totals.taxAmount,
       totalAmount: quote.totals.totalAmount,
+      locale: dto.locale || 'en',
     });
   }
 

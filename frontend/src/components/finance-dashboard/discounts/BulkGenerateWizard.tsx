@@ -39,6 +39,7 @@ interface SimpleCourse {
   id: string;
   title: string;
   thumbnail?: string | null;
+  price?: number;
 }
 
 interface Props {
@@ -110,11 +111,19 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
           if (res?.data) {
             setCourses(
               res.data.map((c) => {
-                const cc = c as unknown as { id: string; title?: string; titleEn?: string; titleAr?: string; thumbnail?: string | null };
+                const cc = c as unknown as {
+                  id: string;
+                  title?: string;
+                  titleEn?: string;
+                  titleAr?: string;
+                  thumbnail?: string | null;
+                  price?: number | string;
+                };
                 return {
                   id: cc.id,
                   title: cc.title || cc.titleEn || cc.titleAr || t("untitledCourse"),
                   thumbnail: cc.thumbnail || null,
+                  price: Number(cc.price ?? 0),
                 };
               }),
             );
@@ -181,8 +190,9 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
   ];
 
   const downloadCsv = (codes: string[], batchPrefix: string) => {
-    const csv = ["Code", ...codes].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const csv = ["Code", ...codes].join("\r\n");
+    // Leading BOM keeps Excel in UTF-8 mode even if a code ever contains non-ASCII.
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -454,16 +464,29 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
                     <div className="max-h-72 overflow-y-auto">
                       {filteredCourses.map((c) => {
                         const checked = courseIds.includes(c.id);
+                        // Free courses can't take a coupon (bulk-generated
+                        // codes are still coupons). Grey out + block, matching
+                        // the single-coupon wizard behaviour.
+                        const isFree = (c.price ?? 0) <= 0;
                         return (
                           <button
                             key={c.id}
                             type="button"
-                            onClick={() =>
+                            disabled={isFree}
+                            title={
+                              isFree ? t("step3.freeCourseCannotBeAdded") : undefined
+                            }
+                            onClick={() => {
+                              if (isFree) return;
                               setCourseIds((prev) =>
                                 checked ? prev.filter((id) => id !== c.id) : [...prev, c.id],
-                              )
-                            }
-                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--color-surface-page)] text-start border-b border-[var(--color-border-subtle)] last:border-b-0"
+                              );
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-start border-b border-[var(--color-border-subtle)] last:border-b-0 ${
+                              isFree
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:bg-[var(--color-surface-page)]"
+                            }`}
                           >
                             <span
                               className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
@@ -474,7 +497,12 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
                             >
                               {checked && <Check className="w-3 h-3 text-white" />}
                             </span>
-                            <span className="text-sm text-[var(--color-text-primary)] truncate">{c.title}</span>
+                            <span className="text-sm text-[var(--color-text-primary)] truncate flex-1">{c.title}</span>
+                            {isFree && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#DCFCE7] text-[#166534] uppercase tracking-wide flex-shrink-0">
+                                {t("step3.freeBadge")}
+                              </span>
+                            )}
                           </button>
                         );
                       })}

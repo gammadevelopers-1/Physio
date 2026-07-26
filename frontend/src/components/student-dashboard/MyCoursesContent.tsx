@@ -19,8 +19,13 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
+  Gift,
+  ShieldCheck,
+  Tag,
 } from "lucide-react";
 import { studentApi, ApiError } from "@/lib/api";
+import Select from "@/components/ui/Select";
 import { canDropCourseNow } from "@/lib/calendar-utils";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDate, type PlatformLocaleSettings } from "@/lib/platform-locale";
@@ -360,42 +365,45 @@ const MyCoursesContent = () => {
                   </div>
 
                   {/* Status filter */}
-                  <select
+                  <Select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                  >
-                    <option value="all">{t("myCourses.tabs.all")}</option>
-                    <option value="active">{t("myCourses.tabs.inProgress")}</option>
-                    <option value="completed">{t("myCourses.tabs.completed")}</option>
-                    <option value="dropped">{t("myCourses.tabs.dropped")}</option>
-                  </select>
+                    onChange={(v) => setStatusFilter(v as StatusFilter)}
+                    className="min-w-[140px]"
+                    options={[
+                      { value: "all", label: t("myCourses.tabs.all") },
+                      { value: "active", label: t("myCourses.tabs.inProgress") },
+                      { value: "completed", label: t("myCourses.tabs.completed") },
+                      { value: "dropped", label: t("myCourses.tabs.dropped") },
+                    ]}
+                  />
 
                   {/* Delivery filter */}
-                  <select
+                  <Select
                     value={deliveryFilter}
-                    onChange={(e) => setDeliveryFilter(e.target.value as DeliveryFilter)}
-                    className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                  >
-                    <option value="all">{t("myCourses.deliveryAll")}</option>
-                    <option value="zoom">{t("myCourses.deliveryZoom")}</option>
-                    <option value="onsite">{t("myCourses.deliveryOnsite")}</option>
-                    <option value="blended">{t("myCourses.deliveryBlended")}</option>
-                    <option value="self-paced">{t("myCourses.deliverySelfPaced")}</option>
-                    <option value="webinar">{t("myCourses.deliveryWebinar")}</option>
-                  </select>
+                    onChange={(v) => setDeliveryFilter(v as DeliveryFilter)}
+                    className="min-w-[140px]"
+                    options={[
+                      { value: "all", label: t("myCourses.deliveryAll") },
+                      { value: "zoom", label: t("myCourses.deliveryZoom") },
+                      { value: "onsite", label: t("myCourses.deliveryOnsite") },
+                      { value: "blended", label: t("myCourses.deliveryBlended") },
+                      { value: "self-paced", label: t("myCourses.deliverySelfPaced") },
+                      { value: "webinar", label: t("myCourses.deliveryWebinar") },
+                    ]}
+                  />
 
                   {/* Sort */}
-                  <select
+                  <Select
                     value={sort}
-                    onChange={(e) => setSort(e.target.value as SortOption)}
-                    className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                  >
-                    <option value="recent">{t("myCourses.sortRecent")}</option>
-                    <option value="newest">{t("myCourses.sortNewest")}</option>
-                    <option value="title">{t("myCourses.sortTitle")}</option>
-                    <option value="completed_date">{t("myCourses.sortCompleted")}</option>
-                  </select>
+                    onChange={(v) => setSort(v as SortOption)}
+                    className="min-w-[160px]"
+                    options={[
+                      { value: "recent", label: t("myCourses.sortRecent") },
+                      { value: "newest", label: t("myCourses.sortNewest") },
+                      { value: "title", label: t("myCourses.sortTitle") },
+                      { value: "completed_date", label: t("myCourses.sortCompleted") },
+                    ]}
+                  />
 
                   {hasFilters && (
                     <button
@@ -636,6 +644,7 @@ const MyCoursesContent = () => {
                                 ? course.titleAr
                                 : course.title}
                             </h3>
+                            <EnrollmentSourceChip source={course.enrollmentSource} isRTL={isRTL} />
 
                             {/* Instructor Row */}
                             <div className="flex items-center gap-2 mb-2">
@@ -921,5 +930,57 @@ const MyCoursesContent = () => {
     </>
   );
 };
+
+// ─── Enrollment source chip ───────────────────────────────────
+//
+// Small badge next to the course title on the student's My Courses cards
+// telling them WHY they got this seat. Default ('purchase') renders nothing
+// so the vast majority of cards stay uncluttered — chip fires only when the
+// provenance is worth calling out.
+
+interface EnrollmentSourceChipProps {
+  source: StudentEnrolledCourse["enrollmentSource"];
+  isRTL?: boolean;
+}
+
+function EnrollmentSourceChip({ source, isRTL }: EnrollmentSourceChipProps) {
+  const t = useTranslations("studentDashboard.myCourses.sourceChip");
+  if (!source || source === "purchase") return null;
+
+  const config: Record<
+    Exclude<typeof source, undefined | "purchase">,
+    { icon: typeof Sparkles; className: string; label: string }
+  > = {
+    points_redemption: {
+      icon: Sparkles,
+      className: "bg-[#EDE9FE] text-[#7C3AED]",
+      label: t("pointsRedemption"),
+    },
+    reward: {
+      icon: Gift,
+      className: "bg-[#FEF3C7] text-[#B45309]",
+      label: t("reward"),
+    },
+    admin_grant: {
+      icon: ShieldCheck,
+      className: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+      label: t("adminGrant"),
+    },
+    free_public: {
+      icon: Tag,
+      className: "bg-[#DCFCE7] text-[#15803D]",
+      label: t("freePublic"),
+    },
+  };
+  const entry = config[source as keyof typeof config];
+  if (!entry) return null;
+  const Icon = entry.icon;
+  return (
+    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium mb-2 self-start ${entry.className} ${isRTL ? "flex-row-reverse" : ""}`}>
+      <Icon className="w-3 h-3" strokeWidth={2} />
+      {entry.label}
+    </div>
+  );
+}
 
 export default MyCoursesContent;

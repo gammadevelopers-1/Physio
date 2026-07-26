@@ -157,6 +157,30 @@ export class PointsLedgerService {
   }
 
   /**
+   * Sum of positive ledger deltas (earn rows only) from the first
+   * moment of the current calendar month, in UTC. Used by the Phase-4
+   * hero card's "You've earned +N this month" line. Debits and expiries
+   * are excluded — this is a motivational counter, not a net-flow number.
+   */
+  async earnedThisMonth(userId: string): Promise<number> {
+    const [result] = await db
+      .select({
+        amount: sql<number>`COALESCE(SUM(${pointTransactions.delta}), 0)`.mapWith(
+          Number,
+        ),
+      })
+      .from(pointTransactions)
+      .where(
+        and(
+          eq(pointTransactions.userId, userId),
+          sql`${pointTransactions.delta} > 0`,
+          sql`${pointTransactions.createdAt} >= date_trunc('month', now())`,
+        ),
+      );
+    return Number(result?.amount ?? 0);
+  }
+
+  /**
    * Sum of points scheduled to expire within `days` days. Used to surface
    * an "expiring soon" warning on the My Points page.
    */

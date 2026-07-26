@@ -1,12 +1,18 @@
 import {
+  ArrayMaxSize,
+  IsArray,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
   MaxLength,
+  Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 // Mirrors TICKET_COLLAB_DEPARTMENTS from the schema. Inline literal
 // so the validator can use it directly.
@@ -45,4 +51,37 @@ export class TransferTicketDto {
   @IsOptional()
   @MaxLength(1000)
   noteToRequester?: string;
+
+  // Optional supporting docs attached to the transfer system message.
+  // Visible to the requester alongside the note. Same URL/mime rules
+  // as agent-reply attachments — enforced by validateTicketAttachmentUrl
+  // in the service.
+  @IsArray()
+  @IsOptional()
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => TransferAttachmentDto)
+  attachments?: TransferAttachmentDto[];
+}
+
+export class TransferAttachmentDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  url: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  filename?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  mimeType?: string;
+
+  @IsInt()
+  @IsOptional()
+  @Min(0)
+  sizeBytes?: number;
 }

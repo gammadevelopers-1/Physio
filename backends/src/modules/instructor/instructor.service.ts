@@ -835,6 +835,10 @@ export class InstructorService {
       id: string;
       title: string;
       message: string;
+      titleKey: string | null;
+      titleParams: Record<string, string | number> | null;
+      messageKey: string | null;
+      messageParams: Record<string, string | number> | null;
       type: string;
       read: boolean;
       date: string;
@@ -845,6 +849,10 @@ export class InstructorService {
         id: n.id,
         title: n.title,
         message: n.message ?? '',
+        titleKey: n.titleKey ?? null,
+        titleParams: n.titleParams ?? null,
+        messageKey: n.messageKey ?? null,
+        messageParams: n.messageParams ?? null,
         type: n.type ?? 'info',
         read: n.isRead ?? false,
         date: n.createdAt?.toISOString?.() ?? new Date().toISOString(),

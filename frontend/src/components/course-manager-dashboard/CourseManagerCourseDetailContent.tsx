@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,7 +16,11 @@ import { courseManagerApi } from "@/lib/api";
 import type {
   CourseDetailResponse,
   CourseModule,
+  CourseEnrollment,
+  CourseSession,
+  CertificateRequestResponse,
 } from "@/types/instructor-dashboard";
+import Select from "@/components/admin-dashboard/Select";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
@@ -54,6 +58,14 @@ import {
   ClipboardCheck,
   Award,
   Star,
+  Search,
+  History,
+  ChevronLeft,
+  UserCheck,
+  UserX,
+  UserPlus,
+  TrendingUp,
+  BarChart3,
 } from "lucide-react";
 
 interface CourseManagerCourseDetailContentProps {
@@ -96,6 +108,38 @@ const CourseDetailSkeleton = () => (
     </div>
   </div>
 );
+
+// ─── Tabs ──────────────────────────────────────────────────────
+type TabId =
+  | "overview"
+  | "modules"
+  | "sessions"
+  | "assessments"
+  | "students"
+  | "team"
+  | "reviews"
+  | "analytics"
+  | "certificates"
+  | "audit"
+  | "settings";
+
+const ALL_TAB_IDS: readonly TabId[] = [
+  "overview",
+  "modules",
+  "sessions",
+  "assessments",
+  "students",
+  "team",
+  "reviews",
+  "analytics",
+  "certificates",
+  "audit",
+  "settings",
+];
+
+function isValidTab(value: string | null): value is TabId {
+  return !!value && (ALL_TAB_IDS as readonly string[]).includes(value);
+}
 
 const CourseManagerCourseDetailContent = ({
   courseId,
@@ -151,16 +195,20 @@ const CourseManagerCourseDetailContent = ({
     }).catch(() => {});
   }, [courseId]);
 
-  // Reviews-block state — toggled between course reviews and instructor reviews
-  // for the same course. Each switch refetches; both share the same render layout.
+  // Reviews-block state — toggled between course reviews and instructor
+  // reviews for the same course. Uses the manager endpoints which
+  // return ALL moderation states (pending / approved / rejected), NOT
+  // the public endpoints which hide unpublished rows — otherwise
+  // managers can't see the reviews they need to moderate on the
+  // course-detail Reviews tab.
   const [reviewKind, setReviewKind] = useState<"course" | "instructor">("course");
   useEffect(() => {
     if (!courseId) return;
     setReviewsLoading(true);
     const fetcher =
       reviewKind === "course"
-        ? courseManagerApi.getCourseRatings(courseId, { limit: 5, sort: "highest" })
-        : courseManagerApi.getCourseInstructorRatings(courseId, { limit: 5, sort: "highest" });
+        ? courseManagerApi.getManagerReviews({ courseId, limit: 20, sort: "newest" })
+        : courseManagerApi.getManagerInstructorReviews({ courseId, limit: 20, sort: "newest" });
     fetcher
       .then((res) => setReviews(res?.data || []))
       .catch(() => setReviews([]))
@@ -175,6 +223,327 @@ const CourseManagerCourseDetailContent = ({
   type ReviewItem = { id: string; rating: number; reviewText: string | null; createdAt: string; studentName: string };
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  // ─── Tabs ────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    if (typeof window === "undefined") return "overview";
+    const p = new URLSearchParams(window.location.search).get("tab");
+    return isValidTab(p) ? (p as TabId) : "overview";
+  });
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", activeTab);
+    window.history.replaceState({}, "", url.toString());
+  }, [activeTab]);
+
+  // ─── Students tab — enrollments (lazy-fetched, cached) ────────
+  const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
+  const [enrollmentsLoading, setEnrollmentsLoading] = useState(false);
+  const [enrollmentsError, setEnrollmentsError] = useState<string | null>(null);
+  const [enrollmentsFetched, setEnrollmentsFetched] = useState(false);
+  const [studentsSearch, setStudentsSearch] = useState("");
+  const [studentsPage, setStudentsPage] = useState(1);
+  const STUDENTS_PAGE_SIZE = 25;
+
+  const refetchEnrollments = useCallback(() => {
+    if (!courseId) return;
+    setEnrollmentsLoading(true);
+    setEnrollmentsError(null);
+    courseManagerApi
+      .getEnrollments({ courseId })
+      .then((data) => {
+        setEnrollments(data || []);
+        setEnrollmentsFetched(true);
+      })
+      .catch((err) => {
+        setEnrollmentsError(err instanceof Error ? err.message : t("courseDetail.loadError"));
+      })
+      .finally(() => setEnrollmentsLoading(false));
+  }, [courseId, t]);
+
+  useEffect(() => {
+    // Enrollments feed BOTH the Students tab AND the Analytics tab.
+    // Fetch as soon as the course loads so Analytics has real data even
+    // if the user hasn't opened the Students tab yet.
+    if (enrollmentsFetched || !courseId) return;
+    refetchEnrollments();
+  }, [courseId, enrollmentsFetched, refetchEnrollments]);
+
+  // ─── Add Student modal state ──────────────────────────────────
+  type StudentSearchHit = {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    scfhsNumber: string | null;
+  };
+  const [addStudentOpen, setAddStudentOpen] = useState(false);
+  const [studentPickerQuery, setStudentPickerQuery] = useState("");
+  const [studentPickerResults, setStudentPickerResults] = useState<StudentSearchHit[]>([]);
+  const [studentPickerLoading, setStudentPickerLoading] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<StudentSearchHit | null>(null);
+  const [manualEnrollReason, setManualEnrollReason] = useState("");
+  const [manualEnrollSubmitting, setManualEnrollSubmitting] = useState(false);
+
+  // Debounced student search — 300ms after last keystroke.
+  useEffect(() => {
+    if (!addStudentOpen) return;
+    const handle = setTimeout(() => {
+      setStudentPickerLoading(true);
+      courseManagerApi
+        .searchStudents(studentPickerQuery, 20)
+        .then((data) => setStudentPickerResults(data || []))
+        .catch(() => setStudentPickerResults([]))
+        .finally(() => setStudentPickerLoading(false));
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [studentPickerQuery, addStudentOpen]);
+
+  const openAddStudent = () => {
+    setSelectedStudent(null);
+    setManualEnrollReason("");
+    setStudentPickerQuery("");
+    setStudentPickerResults([]);
+    setAddStudentOpen(true);
+  };
+
+  const submitManualEnroll = async () => {
+    if (!course || !selectedStudent || manualEnrollReason.trim().length < 3) return;
+    setManualEnrollSubmitting(true);
+    try {
+      await courseManagerApi.manualEnrollStudent(
+        course.id,
+        selectedStudent.id,
+        manualEnrollReason.trim(),
+      );
+      toast.success(t("courseDetail.students.addSuccess"));
+      setAddStudentOpen(false);
+      refetchEnrollments();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("courseDetail.students.addFailed"));
+    } finally {
+      setManualEnrollSubmitting(false);
+    }
+  };
+
+  // ─── Remove Student modal state ───────────────────────────────
+  const [removeEnrollment, setRemoveEnrollment] = useState<CourseEnrollment | null>(null);
+  const [removeEnrollReason, setRemoveEnrollReason] = useState("");
+  const [removeEnrollSubmitting, setRemoveEnrollSubmitting] = useState(false);
+
+  const openRemoveEnrollment = (enrollment: CourseEnrollment) => {
+    setRemoveEnrollment(enrollment);
+    setRemoveEnrollReason("");
+  };
+
+  const submitRemoveEnrollment = async () => {
+    if (!course || !removeEnrollment || removeEnrollReason.trim().length < 3) return;
+    setRemoveEnrollSubmitting(true);
+    try {
+      await courseManagerApi.removeEnrolledStudent(
+        course.id,
+        removeEnrollment.studentId,
+        removeEnrollReason.trim(),
+      );
+      toast.success(t("courseDetail.students.removeSuccess"));
+      setRemoveEnrollment(null);
+      refetchEnrollments();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("courseDetail.students.removeFailed"));
+    } finally {
+      setRemoveEnrollSubmitting(false);
+    }
+  };
+
+  // ─── Sessions tab (lazy-fetched, cached) ──────────────────────
+  const [sessions, setSessions] = useState<CourseSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [sessionsFetched, setSessionsFetched] = useState(false);
+
+  useEffect(() => {
+    // Sessions feed the Sessions tab AND the Analytics tab (total /
+    // completed session counts). Fetch eagerly so Analytics is
+    // populated without requiring the user to visit the Sessions tab.
+    if (sessionsFetched || !courseId) return;
+    setSessionsLoading(true);
+    setSessionsError(null);
+    courseManagerApi
+      .getSessions({ courseId, limit: 50 })
+      .then((res) => {
+        setSessions(res.data || []);
+        setSessionsFetched(true);
+      })
+      .catch((err) => {
+        setSessionsError(err instanceof Error ? err.message : t("courseDetail.loadError"));
+      })
+      .finally(() => setSessionsLoading(false));
+  }, [courseId, sessionsFetched, t]);
+
+  // Lazy per-session attendance counts. Fetches for any session that
+  // could plausibly have records ("completed" or "ended"). We track
+  // both present+late (attended) and total-with-records so the display
+  // can render "3 / 5" instead of just a single number — surfaces
+  // useful info even when many students were absent.
+  type AttendanceSummary = { attended: number; total: number };
+  const [attendanceCounts, setAttendanceCounts] = useState<Record<string, AttendanceSummary>>({});
+  useEffect(() => {
+    const ids = sessions
+      .filter(
+        (s) =>
+          (s.status === "completed" || s.status === "ended") &&
+          attendanceCounts[s.id] === undefined,
+      )
+      .map((s) => s.id);
+    if (ids.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      ids.map((id) =>
+        courseManagerApi
+          .getSessionAttendance(id)
+          .then((records) => {
+            const attended = records.filter(
+              (r) => r.status === "present" || r.status === "late",
+            ).length;
+            return [id, { attended, total: records.length }] as const;
+          })
+          .catch(() => [id, { attended: 0, total: 0 }] as const),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      setAttendanceCounts((prev) => {
+        const next = { ...prev };
+        for (const [id, summary] of results) {
+          next[id] = summary;
+        }
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessions, attendanceCounts]);
+
+  // ─── Audit tab — per-course audit log (lazy-fetched, cached) ────
+  type CourseAuditRow = {
+    id: string;
+    action: string;
+    performedBy: string | null;
+    metadata: Record<string, unknown> | null;
+    ipAddress: string | null;
+    createdAt: string;
+    performerFirstName: string | null;
+    performerLastName: string | null;
+    performerEmail: string | null;
+  };
+  const [auditLogs, setAuditLogs] = useState<CourseAuditRow[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  const [auditFetched, setAuditFetched] = useState(false);
+
+  useEffect(() => {
+    if (activeTab !== "audit" || auditFetched || !courseId) return;
+    setAuditLoading(true);
+    setAuditError(null);
+    courseManagerApi
+      .getCourseAuditLogs(courseId, 1, 100)
+      .then((res) => {
+        setAuditLogs(res.data || []);
+        setAuditFetched(true);
+      })
+      .catch((err) => {
+        setAuditError(err instanceof Error ? err.message : t("courseDetail.loadError"));
+      })
+      .finally(() => setAuditLoading(false));
+  }, [activeTab, courseId, auditFetched, t]);
+
+  // ─── Certificates tab — cert requests for this course ────────
+  const [certificates, setCertificates] = useState<CertificateRequestResponse[]>([]);
+  const [certificatesLoading, setCertificatesLoading] = useState(false);
+  const [certificatesError, setCertificatesError] = useState<string | null>(null);
+  const [certificatesFetched, setCertificatesFetched] = useState(false);
+  const [certStatusFilter, setCertStatusFilter] = useState<string>("all");
+  const [certActionRow, setCertActionRow] = useState<{
+    row: CertificateRequestResponse;
+    action: "approve" | "reject" | "hold" | "revoke";
+  } | null>(null);
+  const [certActionNote, setCertActionNote] = useState("");
+  const [certActionSubmitting, setCertActionSubmitting] = useState(false);
+
+  const refetchCertificates = useCallback(() => {
+    if (!courseId) return;
+    setCertificatesLoading(true);
+    setCertificatesError(null);
+    // Pass status:"all" so the backend does NOT default to pending —
+    // we want every status back (pending / approved / rejected / held /
+    // revoked) and filter client-side via the status dropdown.
+    courseManagerApi
+      .getCertificates({ courseId, status: "all", limit: 100 })
+      .then((res) => {
+        setCertificates(res.data || []);
+        setCertificatesFetched(true);
+      })
+      .catch((err) => {
+        setCertificatesError(err instanceof Error ? err.message : t("courseDetail.loadError"));
+      })
+      .finally(() => setCertificatesLoading(false));
+  }, [courseId, t]);
+
+  useEffect(() => {
+    if (activeTab !== "certificates" || certificatesFetched || !courseId) return;
+    refetchCertificates();
+  }, [activeTab, courseId, certificatesFetched, refetchCertificates]);
+
+  const openCertAction = (
+    row: CertificateRequestResponse,
+    action: "approve" | "reject" | "hold" | "revoke",
+  ) => {
+    setCertActionRow({ row, action });
+    setCertActionNote("");
+  };
+
+  const submitCertAction = async () => {
+    if (!certActionRow) return;
+    const { row, action } = certActionRow;
+    // approve is one-click; the other three require a note.
+    if (action !== "approve" && certActionNote.trim().length < 3) return;
+    setCertActionSubmitting(true);
+    try {
+      if (action === "approve") {
+        await courseManagerApi.approveCertificate(row.id);
+      } else if (action === "reject") {
+        await courseManagerApi.rejectCertificate(row.id, certActionNote.trim());
+      } else if (action === "hold") {
+        await courseManagerApi.holdCertificate(row.id, certActionNote.trim());
+      } else if (action === "revoke") {
+        await courseManagerApi.revokeCertificate(row.id, certActionNote.trim());
+      }
+      toast.success(t(`courseDetail.certificates.action.${action}Success`));
+      setCertActionRow(null);
+      refetchCertificates();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t(`courseDetail.certificates.action.${action}Failed`),
+      );
+    } finally {
+      setCertActionSubmitting(false);
+    }
+  };
+
+  // ─── Analytics tab — computed client-side from already-fetched data ──
+  const analytics = useMemo(() => {
+    const total = enrollments.length;
+    const active = enrollments.filter((e) => e.status === "active").length;
+    const completed = enrollments.filter((e) => e.status === "completed").length;
+    const dropped = enrollments.filter((e) => e.status === "dropped").length;
+    const avgProgress =
+      total > 0 ? Math.round(enrollments.reduce((sum, e) => sum + e.progress, 0) / total) : 0;
+    const totalSessions = sessions.length;
+    const completedSessions = sessions.filter((s) => s.status === "completed").length;
+    const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+    return { total, active, completed, dropped, avgProgress, totalSessions, completedSessions, avgRating };
+  }, [enrollments, sessions, reviews]);
 
   const fetchCourse = useCallback(async () => {
     setLoading(true);
@@ -439,6 +808,23 @@ const CourseManagerCourseDetailContent = ({
   };
 
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
+
+  const isSelfPaced = course?.deliveryType === "self-paced";
+  const isWebinarCourse = course?.deliveryType === "webinar";
+
+  const tabs: Array<{ id: TabId; label: string }> = [
+    { id: "overview", label: t("courseDetail.tabs.overview") },
+    ...(!isWebinarCourse ? [{ id: "modules" as const, label: t("courseDetail.tabs.modules") }] : []),
+    ...(!isSelfPaced && !isWebinarCourse ? [{ id: "sessions" as const, label: t("courseDetail.tabs.sessions") }] : []),
+    { id: "assessments", label: t("courseDetail.tabs.assessments") },
+    { id: "students", label: t("courseDetail.tabs.students") },
+    { id: "team", label: t("courseDetail.tabs.team") },
+    { id: "reviews", label: t("courseDetail.tabs.reviews") },
+    { id: "analytics", label: t("courseDetail.tabs.analytics") },
+    { id: "certificates", label: t("courseDetail.tabs.certificates") },
+    { id: "audit", label: t("courseDetail.tabs.audit") },
+    { id: "settings", label: t("courseDetail.tabs.settings") },
+  ];
 
   return (
     <>
@@ -719,355 +1105,1157 @@ const CourseManagerCourseDetailContent = ({
                   )}
                 </div>
 
-                {/* Description */}
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 mb-6">
-                  <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">
-                    {t("courseDetail.description")}
-                  </h2>
-                  {course.description ? (
-                    <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
-                      {course.description}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-[var(--color-text-secondary)] italic">
-                      {t("courseDetail.noDescription")}
-                    </p>
-                  )}
-                  {course.descriptionAr && (
-                    <p
-                      className="text-sm text-[var(--color-text-secondary)] leading-relaxed mt-3 pt-3 border-t border-[var(--color-border)] whitespace-pre-wrap"
-                      dir="rtl"
-                    >
-                      {course.descriptionAr}
-                    </p>
-                  )}
-                </div>
-
-                {/* NELC Compliance Scorecard */}
-                {(course.status === "pending_review" || course.status === "active" || course.status === "changes_requested") && (
-                  <div className="mb-6">
-                    <NELCScorecardPanel courseId={course.id} />
-                  </div>
-                )}
-
-                {/* Teaching Assistants Management — hidden for self-paced */}
-                {course.deliveryType !== "self-paced" && (course.status === "active" || course.status === "pending_review") && (
-                  <div className="mb-6">
-                    <CourseAssistantsManagePanel courseId={course.id} />
-                  </div>
-                )}
-
-                {/* Modules — hidden for Webinar Courses (attendance-only by design) */}
-                {course.deliveryType !== "webinar" && (
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
-                  <div className="p-5 border-b border-[var(--color-border)] flex items-center justify-between">
-                    <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-                      {t("courseDetail.modules")} ({course.modules?.length ?? 0})
-                    </h2>
+                {/* Tabs */}
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+                  <div className="flex border-b border-[var(--color-border)] overflow-x-auto" role="tablist">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
+                        className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap relative transition-colors ${
+                          activeTab === tab.id ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                        }`}
+                      >
+                        {tab.label}
+                        {activeTab === tab.id && (
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)]" />
+                        )}
+                      </button>
+                    ))}
                   </div>
 
-                  {course.modules && course.modules.length > 0 ? (
-                    <div className="divide-y divide-[var(--color-border)]">
-                      {course.modules
-                        .sort((a, b) => a.orderIndex - b.orderIndex)
-                        .map((mod: CourseModule, idx: number) => (
-                          <div key={mod.id}>
-                            <button
-                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-border-subtle)] transition-colors"
-                              onClick={() => toggleModule(mod.id)}
+                  <div className="p-5">
+                    {/* ═══ OVERVIEW ═══ */}
+                    {activeTab === "overview" && (
+                      <div className="space-y-6">
+                        {/* Description */}
+                        <div>
+                          <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">
+                            {t("courseDetail.description")}
+                          </h2>
+                          {course.description ? (
+                            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
+                              {course.description}
+                            </p>
+                          ) : (
+                            <p className="text-sm text-[var(--color-text-secondary)] italic">
+                              {t("courseDetail.noDescription")}
+                            </p>
+                          )}
+                          {course.descriptionAr && (
+                            <p
+                              className="text-sm text-[var(--color-text-secondary)] leading-relaxed mt-3 pt-3 border-t border-[var(--color-border)] whitespace-pre-wrap"
+                              dir="rtl"
                             >
-                              <div className="flex items-center gap-3">
-                                <span className="w-8 h-8 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center text-sm font-semibold text-[var(--color-primary)]">
-                                  {idx + 1}
-                                </span>
-                                <div className={`text-start`}>
-                                  <span className="text-sm font-medium text-[var(--color-text-primary)]">
-                                    {mod.title}
-                                  </span>
-                                  {mod.titleAr && (
-                                    <p className="text-xs text-[var(--color-text-secondary)]" dir="rtl">
-                                      {mod.titleAr}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                {mod.durationMinutes && (
-                                  <span className="text-xs text-[var(--color-text-secondary)] flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    {formatDuration(mod.durationMinutes, locale)}
-                                  </span>
-                                )}
-                                <span className="px-2 py-0.5 text-xs rounded bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] capitalize">
-                                  {mod.type}
-                                </span>
-                                {expandedModules.has(mod.id) ? (
-                                  <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                                ) : (
-                                  <ChevronRight
-                                    className={`w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`}
-                                  />
-                                )}
-                              </div>
-                            </button>
-                            {expandedModules.has(mod.id) && (
-                              <div className="px-4 pb-4 bg-[var(--color-surface-page)]">
-                                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                                  <div>
-                                    <span className="text-[var(--color-text-secondary)]">{t("courseDetail.moduleType")}:</span>{" "}
-                                    <span className="text-[var(--color-text-primary)] capitalize">{mod.type}</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-[var(--color-text-secondary)]">{t("courseDetail.moduleDuration")}:</span>{" "}
-                                    <span className="text-[var(--color-text-primary)]">
-                                      {mod.durationMinutes ? formatDuration(mod.durationMinutes, locale) : "—"}
-                                    </span>
-                                  </div>
-                                </div>
+                              {course.descriptionAr}
+                            </p>
+                          )}
+                        </div>
 
-                                {/* Materials in this module */}
-                                <div className="border-t border-[var(--color-border)] pt-3">
-                                  <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">
-                                    {t("courseDetail.materials")}
-                                  </p>
-                                  {loadingMaterials.has(mod.id) ? (
-                                    <div className="flex items-center gap-2 py-2">
-                                      <Loader2 className="w-4 h-4 text-[var(--color-primary)] animate-spin" />
-                                      <span className="text-xs text-[var(--color-text-secondary)]">{t("dashboard.loading")}</span>
-                                    </div>
-                                  ) : (moduleMaterials[mod.id] && moduleMaterials[mod.id].length > 0) ? (
-                                    <div className="space-y-2">
-                                      {moduleMaterials[mod.id].map((mat) => (
-                                        <div
-                                          key={mat.id}
-                                          className="flex items-center gap-3 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] px-3 py-2"
-                                        >
-                                          {getMaterialIcon(mat.type)}
-                                          <div className="flex-1 min-w-0">
-                                            <p className="text-sm text-[var(--color-text-secondary)] truncate">{mat.title}</p>
-                                            <p className="text-xs text-[var(--color-text-secondary)]">
-                                              {mat.type} • {formatFileSize(mat.fileSize)}
-                                              {mat.wcagStatus && (
-                                                <span className={`ms-2 ${mat.wcagStatus === "compliant" ? "text-[#16A34A]" : mat.wcagStatus === "warning" ? "text-[#D97706]" : mat.wcagStatus === "fail" ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}>
-                                                  WCAG: {mat.wcagStatus}
-                                                </span>
-                                              )}
-                                            </p>
-                                          </div>
-                                          <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
-                                            mat.status === "live" ? "bg-[#DCFCE7] text-[#16A34A]" :
-                                            mat.status === "pending_review" ? "bg-[var(--color-border-subtle)] text-[#1D4ED8]" :
-                                            mat.status === "processing" ? "bg-[#FEF3C7] text-[#D97706]" :
-                                            mat.status === "failed" ? "bg-[#FEE2E2] text-[#DC2626]" :
-                                            "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
-                                          }`}>
-                                            {mat.status.replace("_", " ")}
-                                          </span>
-                                          {mat.fileUrl && (
-                                            <a
-                                              href={mat.fileUrl}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              onClick={(e) => e.stopPropagation()}
-                                              className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
-                                              title={t("courseDetail.viewContent")}
-                                            >
-                                              <Eye className="w-3.5 h-3.5" />
-                                            </a>
-                                          )}
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setRemovingMaterial(mat); }}
-                                            className="p-1 text-[var(--color-text-secondary)] hover:text-[#DC2626] transition-colors"
-                                            title={t("courseDetail.removeMaterial")}
-                                          >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                          </button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <p className="text-xs text-[var(--color-text-secondary)] italic py-1">
-                                      {t("courseDetail.noMaterials")}
-                                    </p>
-                                  )}
-                                </div>
+                        {/* NELC Compliance Scorecard — always shown so managers can gauge readiness at any stage */}
+                        <NELCScorecardPanel courseId={course.id} />
 
-                                {/* Module assessments */}
-                                {(() => {
-                                  const modAssessments = moduleAssessments.filter((a) => a.moduleId === mod.id);
-                                  if (modAssessments.length === 0) return null;
-                                  return (
-                                    <div className="border-t border-[var(--color-border)] pt-3">
-                                      <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">
-                                        {t("courseDetail.moduleAssessments")}
-                                      </p>
-                                      <div className="space-y-2">
-                                        {modAssessments.map((ma) => (
-                                          <button
-                                            type="button"
-                                            key={ma.id}
-                                            onClick={() => setPreviewAssessmentId(ma.id)}
-                                            className="w-full flex items-center gap-3 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] px-3 py-2 hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)] transition-colors text-start"
-                                          >
-                                            <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                              <p className="text-sm text-[var(--color-text-primary)] truncate font-medium">{ma.title}</p>
-                                              <p className="text-xs text-[var(--color-text-secondary)]">
-                                                {ma.totalMarks} {t("courseDetail.marks") || "marks"}
-                                                {typeof ma.submissionCount === "number" && (
-                                                  <>
-                                                    {" · "}
-                                                    {ma.submissionCount} {t("courseDetail.submissions") || "submissions"}
-                                                  </>
-                                                )}
-                                              </p>
-                                            </div>
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                                              ma.type === "assignment" ? "bg-amber-50 text-amber-700" : ma.type === "exam" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"
-                                            }`}>
-                                              {ma.type}
-                                            </span>
-                                          </button>
-                                        ))}
+                        {/* Course Metadata */}
+                        <div>
+                          <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">
+                            {t("courseDetail.courseInfo")}
+                          </h2>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-[var(--color-text-secondary)]">{t("courseDetail.courseId")}:</span>{" "}
+                              <span className="text-[var(--color-text-primary)] font-mono text-xs">{course.id}</span>
+                            </div>
+                            <div>
+                              <span className="text-[var(--color-text-secondary)]">{t("courseDetail.createdAt")}:</span>{" "}
+                              <span className="text-[var(--color-text-primary)]">{formatDate(course.createdAt)}</span>
+                            </div>
+                            <div>
+                              <span className="text-[var(--color-text-secondary)]">{t("courseDetail.updatedAt")}:</span>{" "}
+                              <span className="text-[var(--color-text-primary)]">{formatDate(course.updatedAt)}</span>
+                            </div>
+                            <div>
+                              <span className="text-[var(--color-text-secondary)]">{t("courseDetail.instructorId")}:</span>{" "}
+                              <span className="text-[var(--color-text-primary)] font-mono text-xs">{course.instructorId}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ═══ MODULES ═══ */}
+                    {activeTab === "modules" && course.deliveryType !== "webinar" && (
+                      <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
+                        <div className="p-4 border-b border-[var(--color-border)] flex items-center justify-between">
+                          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+                            {t("courseDetail.modules")} ({course.modules?.length ?? 0})
+                          </h2>
+                        </div>
+
+                        {course.modules && course.modules.length > 0 ? (
+                          <div className="divide-y divide-[var(--color-border)]">
+                            {course.modules
+                              .sort((a, b) => a.orderIndex - b.orderIndex)
+                              .map((mod: CourseModule, idx: number) => (
+                                <div key={mod.id}>
+                                  <button
+                                    className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-border-subtle)] transition-colors"
+                                    onClick={() => toggleModule(mod.id)}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <span className="w-8 h-8 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center text-sm font-semibold text-[var(--color-primary)]">
+                                        {idx + 1}
+                                      </span>
+                                      <div className={`text-start`}>
+                                        <span className="text-sm font-medium text-[var(--color-text-primary)]">
+                                          {mod.title}
+                                        </span>
+                                        {mod.titleAr && (
+                                          <p className="text-xs text-[var(--color-text-secondary)]" dir="rtl">
+                                            {mod.titleAr}
+                                          </p>
+                                        )}
                                       </div>
                                     </div>
+                                    <div className="flex items-center gap-3">
+                                      {mod.durationMinutes && (
+                                        <span className="text-xs text-[var(--color-text-secondary)] flex items-center gap-1">
+                                          <Clock className="w-3 h-3" />
+                                          {formatDuration(mod.durationMinutes, locale)}
+                                        </span>
+                                      )}
+                                      <span className="px-2 py-0.5 text-xs rounded bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] capitalize">
+                                        {mod.type}
+                                      </span>
+                                      {expandedModules.has(mod.id) ? (
+                                        <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                                      ) : (
+                                        <ChevronRight
+                                          className={`w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`}
+                                        />
+                                      )}
+                                    </div>
+                                  </button>
+                                  {expandedModules.has(mod.id) && (
+                                    <div className="px-4 pb-4 bg-[var(--color-surface-page)]">
+                                      <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                                        <div>
+                                          <span className="text-[var(--color-text-secondary)]">{t("courseDetail.moduleType")}:</span>{" "}
+                                          <span className="text-[var(--color-text-primary)] capitalize">{mod.type}</span>
+                                        </div>
+                                        <div>
+                                          <span className="text-[var(--color-text-secondary)]">{t("courseDetail.moduleDuration")}:</span>{" "}
+                                          <span className="text-[var(--color-text-primary)]">
+                                            {mod.durationMinutes ? formatDuration(mod.durationMinutes, locale) : "—"}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* Materials in this module */}
+                                      <div className="border-t border-[var(--color-border)] pt-3">
+                                        <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">
+                                          {t("courseDetail.materials")}
+                                        </p>
+                                        {loadingMaterials.has(mod.id) ? (
+                                          <div className="flex items-center gap-2 py-2">
+                                            <Loader2 className="w-4 h-4 text-[var(--color-primary)] animate-spin" />
+                                            <span className="text-xs text-[var(--color-text-secondary)]">{t("dashboard.loading")}</span>
+                                          </div>
+                                        ) : (moduleMaterials[mod.id] && moduleMaterials[mod.id].length > 0) ? (
+                                          <div className="space-y-2">
+                                            {moduleMaterials[mod.id].map((mat) => (
+                                              <div
+                                                key={mat.id}
+                                                className="flex items-center gap-3 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] px-3 py-2"
+                                              >
+                                                {getMaterialIcon(mat.type)}
+                                                <div className="flex-1 min-w-0">
+                                                  <p className="text-sm text-[var(--color-text-secondary)] truncate">{mat.title}</p>
+                                                  <p className="text-xs text-[var(--color-text-secondary)]">
+                                                    {mat.type} • {formatFileSize(mat.fileSize)}
+                                                    {mat.wcagStatus && (
+                                                      <span className={`ms-2 ${mat.wcagStatus === "compliant" ? "text-[#16A34A]" : mat.wcagStatus === "warning" ? "text-[#D97706]" : mat.wcagStatus === "fail" ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}>
+                                                        WCAG: {mat.wcagStatus}
+                                                      </span>
+                                                    )}
+                                                  </p>
+                                                </div>
+                                                <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                                                  mat.status === "live" ? "bg-[#DCFCE7] text-[#16A34A]" :
+                                                  mat.status === "pending_review" ? "bg-[var(--color-border-subtle)] text-[#1D4ED8]" :
+                                                  mat.status === "processing" ? "bg-[#FEF3C7] text-[#D97706]" :
+                                                  mat.status === "failed" ? "bg-[#FEE2E2] text-[#DC2626]" :
+                                                  "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+                                                }`}>
+                                                  {mat.status.replace("_", " ")}
+                                                </span>
+                                                {mat.fileUrl && (
+                                                  <a
+                                                    href={mat.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+                                                    title={t("courseDetail.viewContent")}
+                                                  >
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                  </a>
+                                                )}
+                                                <button
+                                                  onClick={(e) => { e.stopPropagation(); setRemovingMaterial(mat); }}
+                                                  className="p-1 text-[var(--color-text-secondary)] hover:text-[#DC2626] transition-colors"
+                                                  title={t("courseDetail.removeMaterial")}
+                                                >
+                                                  <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <p className="text-xs text-[var(--color-text-secondary)] italic py-1">
+                                            {t("courseDetail.noMaterials")}
+                                          </p>
+                                        )}
+                                      </div>
+
+                                      {/* Module assessments */}
+                                      {(() => {
+                                        const modAssessments = moduleAssessments.filter((a) => a.moduleId === mod.id);
+                                        if (modAssessments.length === 0) return null;
+                                        return (
+                                          <div className="border-t border-[var(--color-border)] pt-3">
+                                            <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">
+                                              {t("courseDetail.moduleAssessments")}
+                                            </p>
+                                            <div className="space-y-2">
+                                              {modAssessments.map((ma) => (
+                                                <button
+                                                  type="button"
+                                                  key={ma.id}
+                                                  onClick={() => setPreviewAssessmentId(ma.id)}
+                                                  className="w-full flex items-center gap-3 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] px-3 py-2 hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)] transition-colors text-start"
+                                                >
+                                                  <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
+                                                  <div className="flex-1 min-w-0">
+                                                    <p className="text-sm text-[var(--color-text-primary)] truncate font-medium">{ma.title}</p>
+                                                    <p className="text-xs text-[var(--color-text-secondary)]">
+                                                      {ma.totalMarks} {t("courseDetail.marks") || "marks"}
+                                                      {typeof ma.submissionCount === "number" && (
+                                                        <>
+                                                          {" · "}
+                                                          {ma.submissionCount} {t("courseDetail.submissions") || "submissions"}
+                                                        </>
+                                                      )}
+                                                    </p>
+                                                  </div>
+                                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                                    ma.type === "assignment" ? "bg-amber-50 text-amber-700" : ma.type === "exam" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"
+                                                  }`}>
+                                                    {ma.type}
+                                                  </span>
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <div className="p-8 text-center">
+                            <FileText className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">
+                              {t("courseDetail.noModules")}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ═══ SESSIONS ═══ */}
+                    {activeTab === "sessions" && !isSelfPaced && !isWebinarCourse && (
+                      <div>
+                        {sessionsLoading ? (
+                          <div className="text-center py-8">
+                            <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin mx-auto mb-2" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
+                          </div>
+                        ) : sessionsError ? (
+                          <div className="text-center py-8">
+                            <AlertTriangle className="w-10 h-10 text-[#D97706] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{sessionsError}</p>
+                          </div>
+                        ) : sessions.length === 0 ? (
+                          <div className="text-center py-8">
+                            <Calendar className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.sessionsEmpty")}</p>
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b border-[var(--color-border)]">
+                                  <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t("courseDetail.sessionDateColumn")}</th>
+                                  <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t("courseDetail.sessionTitleColumn")}</th>
+                                  <th className="px-3 pb-3 text-center text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-28">{t("courseDetail.columnStatusLabel")}</th>
+                                  <th className="px-3 pb-3 text-center text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-28">{t("courseDetail.sessionAttendanceLabel")}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {sessions.map((session) => (
+                                  <tr key={session.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]">
+                                    <td className="px-3 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">
+                                      {formatDate(session.scheduledAt)}
+                                    </td>
+                                    <td className="px-3 py-3 text-sm text-[var(--color-text-primary)]">{session.title}</td>
+                                    <td className="px-3 py-3 text-center">
+                                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                        session.status === "completed" ? "bg-[#DCFCE7] text-[#16A34A]" :
+                                        session.status === "live" ? "bg-[#FEF3C7] text-[#D97706]" :
+                                        session.status === "cancelled" || session.status === "missed" ? "bg-[#FEE2E2] text-[#DC2626]" :
+                                        "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                                      }`}>
+                                        {t(`courseDetail.sessionStatus.${session.status}`)}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-3 text-center text-sm text-[var(--color-text-secondary)]">
+                                      {(session.status === "completed" || session.status === "ended")
+                                        ? (attendanceCounts[session.id]
+                                            ? `${attendanceCounts[session.id].attended} / ${attendanceCounts[session.id].total}`
+                                            : "…")
+                                        : "—"}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ═══ ASSESSMENTS ═══ */}
+                    {activeTab === "assessments" && (
+                      <div className="space-y-2">
+                        {moduleAssessments.length === 0 ? (
+                          <div className="text-center py-8">
+                            <ClipboardCheck className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.assessmentsEmpty")}</p>
+                          </div>
+                        ) : (
+                          moduleAssessments.map((ma) => {
+                            const mod = course.modules?.find((m) => m.id === ma.moduleId);
+                            return (
+                              <button
+                                type="button"
+                                key={ma.id}
+                                onClick={() => setPreviewAssessmentId(ma.id)}
+                                className="w-full flex items-center gap-3 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border)] px-4 py-3 hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)] transition-colors text-start"
+                              >
+                                <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-[var(--color-text-primary)] truncate font-medium">{ma.title}</p>
+                                  <p className="text-xs text-[var(--color-text-secondary)]">
+                                    {t("courseDetail.assessmentModuleLabel")}: {mod?.title || t("courseDetail.assessmentNoModule")}
+                                    {" · "}
+                                    {ma.totalMarks} {t("courseDetail.marks")}
+                                    {typeof ma.submissionCount === "number" && (
+                                      <>
+                                        {" · "}
+                                        {ma.submissionCount} {t("courseDetail.submissions")}
+                                      </>
+                                    )}
+                                  </p>
+                                </div>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                                  ma.type === "assignment" ? "bg-amber-50 text-amber-700" : ma.type === "exam" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"
+                                }`}>
+                                  {ma.type}
+                                </span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+
+                    {/* ═══ STUDENTS ═══ */}
+                    {activeTab === "students" && (() => {
+                      // Split enrolled vs removed rows so the removed
+                      // audit is visible but doesn't clutter the active
+                      // list. Backend now returns dropped rows too.
+                      const activeAndCompleted = enrollments.filter(
+                        (e) => e.status === "active" || e.status === "completed",
+                      );
+                      const removedRows = enrollments.filter((e) => e.status === "dropped");
+
+                      const filtered = activeAndCompleted.filter((e) => {
+                        if (!studentsSearch.trim()) return true;
+                        const q = studentsSearch.trim().toLowerCase();
+                        return (
+                          `${e.studentFirstName} ${e.studentLastName}`.toLowerCase().includes(q) ||
+                          e.studentEmail.toLowerCase().includes(q) ||
+                          (e.studentScfhsNumber || "").toLowerCase().includes(q)
+                        );
+                      });
+                      const totalPages = Math.max(1, Math.ceil(filtered.length / STUDENTS_PAGE_SIZE));
+                      const page = Math.min(studentsPage, totalPages);
+                      const paginated = filtered.slice((page - 1) * STUDENTS_PAGE_SIZE, page * STUDENTS_PAGE_SIZE);
+                      return (
+                        <div>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                            <div className="relative flex-1 max-w-sm">
+                              <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]`} />
+                              <input
+                                type="text"
+                                value={studentsSearch}
+                                onChange={(e) => { setStudentsSearch(e.target.value); setStudentsPage(1); }}
+                                placeholder={t("courseDetail.studentsSearchPlaceholder")}
+                                className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent`}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={openAddStudent}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors flex-shrink-0"
+                            >
+                              <UserPlus className="w-4 h-4" />
+                              {t("courseDetail.students.addStudentBtn")}
+                            </button>
+                          </div>
+                          {enrollmentsLoading ? (
+                            <div className="text-center py-8">
+                              <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin mx-auto mb-2" />
+                              <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
+                            </div>
+                          ) : enrollmentsError ? (
+                            <div className="text-center py-8">
+                              <AlertTriangle className="w-10 h-10 text-[#D97706] mx-auto mb-3" />
+                              <p className="text-sm text-[var(--color-text-secondary)]">{enrollmentsError}</p>
+                            </div>
+                          ) : filtered.length === 0 && removedRows.length === 0 ? (
+                            <div className="text-center py-8">
+                              <Users className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                              <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.enrollmentsEmpty")}</p>
+                            </div>
+                          ) : (
+                            <>
+                              {filtered.length > 0 && (
+                                <div className="overflow-x-auto">
+                                  <table className="w-full">
+                                    <thead>
+                                      <tr className="border-b border-[var(--color-border)]">
+                                        <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t("courseDetail.columnStudent")}</th>
+                                        <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t("courseDetail.columnScfhs")}</th>
+                                        <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t("courseDetail.columnEnrolled")}</th>
+                                        <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-32">{t("courseDetail.progress")}</th>
+                                        <th className="px-3 pb-3 text-center text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-24">{t("courseDetail.columnStatusLabel")}</th>
+                                        <th className="px-3 pb-3 text-end text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-24" />
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {paginated.map((enrollment) => (
+                                        <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]">
+                                          <td className="px-3 py-3">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+                                                {enrollment.studentFirstName} {enrollment.studentLastName}
+                                              </p>
+                                              {enrollment.enrolledBy && (
+                                                <span
+                                                  title={enrollment.enrollmentReason || ""}
+                                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+                                                >
+                                                  <UserPlus className="w-2.5 h-2.5" />
+                                                  {t("courseDetail.students.manuallyEnrolledChip")}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <p className="text-[11px] text-[var(--color-text-secondary)]">{enrollment.studentEmail}</p>
+                                          </td>
+                                          <td className="px-3 py-3 text-xs text-[var(--color-text-secondary)]">{enrollment.studentScfhsNumber || "—"}</td>
+                                          <td className="px-3 py-3 text-xs text-[var(--color-text-secondary)]">{formatDate(enrollment.enrolledAt)}</td>
+                                          <td className="px-3 py-3">
+                                            <div className="flex items-center gap-2">
+                                              <div className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
+                                                <div
+                                                  className={`h-full rounded-full ${
+                                                    enrollment.progress >= 75 ? "bg-[#16A34A]" : enrollment.progress >= 50 ? "bg-[var(--color-primary)]" : enrollment.progress >= 25 ? "bg-[#F59E0B]" : "bg-[#DC2626]"
+                                                  }`}
+                                                  style={{ width: `${enrollment.progress}%` }}
+                                                />
+                                              </div>
+                                              <span className="text-xs text-[var(--color-text-secondary)] w-8 text-end">{enrollment.progress}%</span>
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-3 text-center">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                              enrollment.status === "active" ? "bg-[#DCFCE7] text-[#16A34A]" :
+                                              enrollment.status === "completed" ? "bg-[var(--color-border-subtle)] text-[#1D4ED8]" :
+                                              enrollment.status === "dropped" ? "bg-[#FEE2E2] text-[#DC2626]" :
+                                              "bg-[#FEF3C7] text-[#D97706]"
+                                            }`}>
+                                              {t(`courseDetail.studentStatus.${enrollment.status}`)}
+                                            </span>
+                                          </td>
+                                          <td className="px-3 py-3 text-end">
+                                            <button
+                                              type="button"
+                                              onClick={() => openRemoveEnrollment(enrollment)}
+                                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#DC2626] hover:bg-[#FEF2F2] rounded transition-colors"
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                              {t("courseDetail.students.rowAction.remove")}
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                  {totalPages > 1 && (
+                                    <div className="flex items-center justify-between pt-4 mt-2 border-t border-[var(--color-border)]">
+                                      <p className="text-xs text-[var(--color-text-secondary)]">
+                                        {(page - 1) * STUDENTS_PAGE_SIZE + 1}–{Math.min(page * STUDENTS_PAGE_SIZE, filtered.length)} / {filtered.length}
+                                      </p>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
+                                          disabled={page === 1}
+                                          className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+                                        >
+                                          <ChevronLeft className="w-3.5 h-3.5" />
+                                        </button>
+                                        <span className="text-xs text-[var(--color-text-secondary)] px-2">
+                                          {page} / {totalPages}
+                                        </span>
+                                        <button
+                                          onClick={() => setStudentsPage((p) => Math.min(totalPages, p + 1))}
+                                          disabled={page === totalPages}
+                                          className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+                                        >
+                                          <ChevronRight className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Removed section — historical audit for
+                                  finance/manager. Reason is the load-bearing
+                                  detail; that's why finance decides refund. */}
+                              {removedRows.length > 0 && (
+                                <div className="mt-8 pt-6 border-t border-[var(--color-border)]">
+                                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
+                                    {t("courseDetail.students.removedSectionTitle")} ({removedRows.length})
+                                  </h3>
+                                  <div className="space-y-3">
+                                    {removedRows.map((enrollment) => (
+                                      <div
+                                        key={enrollment.id}
+                                        className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FEF9F9]"
+                                      >
+                                        <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
+                                          <div>
+                                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                              {enrollment.studentFirstName} {enrollment.studentLastName}
+                                            </p>
+                                            <p className="text-[11px] text-[var(--color-text-secondary)]">
+                                              {enrollment.studentEmail}
+                                              {enrollment.studentScfhsNumber ? ` · ${enrollment.studentScfhsNumber}` : ""}
+                                            </p>
+                                          </div>
+                                          {enrollment.removedAt && (
+                                            <span className="text-[11px] text-[var(--color-text-secondary)]">
+                                              {t("courseDetail.students.removedOnBy", { date: formatDate(enrollment.removedAt) })}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {enrollment.removalReason && (
+                                          <div className="mt-2">
+                                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] mb-1">
+                                              {t("courseDetail.students.removalReasonLabel")}
+                                            </p>
+                                            <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">
+                                              {enrollment.removalReason}
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* ═══ TEAM ═══ */}
+                    {activeTab === "team" && (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="border border-[var(--color-border)] rounded-lg p-4">
+                            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
+                              {t("courseDetail.instructorCardTitle")}
+                            </h3>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)] mb-0.5">
+                              {(course as { instructorName?: string | null }).instructorName || t("courseDetail.unknownUser")}
+                            </p>
+                            {(course as { instructorEmail?: string | null }).instructorEmail && (
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-4">
+                                {(course as { instructorEmail?: string | null }).instructorEmail}
+                              </p>
+                            )}
+                            <Link
+                              href={`${dashboardBase}/${course.id}/edit`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-sm font-medium text-[var(--color-text-secondary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
+                            >
+                              {t("courseDetail.reassignInstructor")}
+                            </Link>
+                          </div>
+
+                          {(course as { managerName?: string | null }).managerName && (
+                            <div className="border border-[var(--color-border)] rounded-lg p-4">
+                              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
+                                {t("courseDetail.managerCardTitle")}
+                              </h3>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)] mb-0.5">
+                                {(course as { managerName?: string | null }).managerName}
+                              </p>
+                              {(course as { managerEmail?: string | null }).managerEmail && (
+                                <p className="text-xs text-[var(--color-text-secondary)]">
+                                  {(course as { managerEmail?: string | null }).managerEmail}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {course.deliveryType !== "self-paced" && (course.status === "active" || course.status === "pending_review") && (
+                          <CourseAssistantsManagePanel courseId={course.id} />
+                        )}
+                      </div>
+                    )}
+
+                    {/* ═══ REVIEWS ═══ */}
+                    {activeTab === "reviews" && (
+                      <div>
+                        <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+                          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+                            {t("courseDetail.reviewsTitle")}
+                          </h2>
+                          {/* Course | Instructor switch */}
+                          <div className="inline-flex p-1 bg-[var(--color-border-subtle)] rounded-lg">
+                            {(
+                              [
+                                { key: "course" as const, label: isRTL ? "الدورة" : "Course" },
+                                { key: "instructor" as const, label: isRTL ? "المدرب" : "Instructor" },
+                              ]
+                            ).map((seg) => (
+                              <button
+                                key={seg.key}
+                                onClick={() => setReviewKind(seg.key)}
+                                className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                                  reviewKind === seg.key
+                                    ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                                }`}
+                              >
+                                {seg.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end mb-4">
+                          {reviews.length > 0 && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => {
+                                  const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+                                  return (
+                                    <Star
+                                      key={s}
+                                      className={`w-4 h-4 ${s <= Math.round(avg) ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)]"}`}
+                                    />
                                   );
-                                })()}
+                                })}
                               </div>
+                              <span className="font-medium text-[var(--color-text-primary)]">
+                                {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {reviewsLoading ? (
+                          <div className="text-center py-6 text-sm text-[var(--color-text-secondary)]">
+                            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                            {t("courseDetail.reviewsLoading")}
+                          </div>
+                        ) : reviews.length === 0 ? (
+                          <div className="text-center py-8">
+                            <Star className="w-10 h-10 text-[var(--color-star-border)] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noReviewsYet")}</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="space-y-3">
+                              {reviews.map((r) => (
+                                <div key={r.id} className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                      <p className="text-sm font-medium text-[var(--color-text-secondary)]">{r.studentName}</p>
+                                      <p className="text-xs text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                      {[1, 2, 3, 4, 5].map((s) => (
+                                        <Star
+                                          key={s}
+                                          className={`w-3.5 h-3.5 ${s <= r.rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)]"}`}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                  {r.reviewText && (
+                                    <p dir="auto" className="text-sm text-[var(--color-text-secondary)] whitespace-pre-line">{r.reviewText}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-[var(--color-border)] flex items-center justify-center">
+                              <Link
+                                href={`${dashboardBase}/${courseId}/reviews`}
+                                className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
+                              >
+                                {isRTL ? "عرض كل المراجعات" : "View all reviews"}
+                                {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                              </Link>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ═══ ANALYTICS ═══ */}
+                    {activeTab === "analytics" && (
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.tabs.students")}</h3>
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
+                              <div className="w-10 h-10 mx-auto mb-2 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                                <Users className="w-5 h-5 text-[var(--color-primary)]" />
+                              </div>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.total}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.analyticsCards.totalStudents")}</p>
+                            </div>
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
+                              <div className="w-10 h-10 mx-auto mb-2 bg-[#DCFCE7] rounded-lg flex items-center justify-center">
+                                <UserCheck className="w-5 h-5 text-[#16A34A]" />
+                              </div>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.active}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.analyticsCards.activeStudents")}</p>
+                            </div>
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
+                              <div className="w-10 h-10 mx-auto mb-2 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                                <TrendingUp className="w-5 h-5 text-[var(--color-primary)]" />
+                              </div>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.completed}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.analyticsCards.completedStudents")}</p>
+                            </div>
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
+                              <div className="w-10 h-10 mx-auto mb-2 bg-[#FEE2E2] rounded-lg flex items-center justify-center">
+                                <UserX className="w-5 h-5 text-[#DC2626]" />
+                              </div>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.dropped}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.analyticsCards.droppedStudents")}</p>
+                            </div>
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
+                              <div className="w-10 h-10 mx-auto mb-2 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                                <BarChart3 className="w-5 h-5 text-[var(--color-primary)]" />
+                              </div>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.avgProgress}%</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.analyticsCards.avgProgress")}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {sessionsFetched && (
+                          <div>
+                            <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.tabs.sessions")}</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
+                                <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.totalSessions}</p>
+                                <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.analyticsCards.totalSessions")}</p>
+                              </div>
+                              <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
+                                <p className="text-2xl font-bold text-[#16A34A]">{analytics.completedSessions}</p>
+                                <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.analyticsCards.completedSessions")}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.reviewsTitle")}</h3>
+                          <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center max-w-xs">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <Star className="w-5 h-5 text-[var(--color-star)] fill-[var(--color-star)]" />
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.avgRating.toFixed(1)}</p>
+                            </div>
+                            <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.analyticsCards.avgRating")}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ═══ CERTIFICATES ═══ */}
+                    {activeTab === "certificates" && (() => {
+                      const filtered =
+                        certStatusFilter === "all"
+                          ? certificates
+                          : certificates.filter((c) => c.status === certStatusFilter);
+                      const statusOptions = [
+                        { value: "all", label: t("courseDetail.certificates.filter.all") },
+                        { value: "pending", label: t("courseDetail.certificates.status.pending") },
+                        { value: "approved", label: t("courseDetail.certificates.status.approved") },
+                        { value: "rejected", label: t("courseDetail.certificates.status.rejected") },
+                        { value: "held", label: t("courseDetail.certificates.status.held") },
+                        { value: "revoked", label: t("courseDetail.certificates.status.revoked") },
+                      ];
+                      const badgeClass = (status: string) => {
+                        switch (status) {
+                          case "approved":
+                            return "bg-[#DCFCE7] text-[#16A34A]";
+                          case "pending":
+                            return "bg-[#FEF3C7] text-[#D97706]";
+                          case "rejected":
+                          case "revoked":
+                            return "bg-[#FEE2E2] text-[#DC2626]";
+                          case "held":
+                            return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
+                          default:
+                            return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
+                        }
+                      };
+                      return (
+                        <div>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                            <Select
+                              value={certStatusFilter}
+                              onChange={setCertStatusFilter}
+                              options={statusOptions}
+                              className="w-48"
+                              size="sm"
+                            />
+                            <p className="text-xs text-[var(--color-text-secondary)]">
+                              {t("courseDetail.certificates.total", { count: filtered.length })}
+                            </p>
+                          </div>
+
+                          {certificatesLoading ? (
+                            <div className="text-center py-8">
+                              <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin mx-auto mb-2" />
+                              <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
+                            </div>
+                          ) : certificatesError ? (
+                            <div className="text-center py-8">
+                              <AlertTriangle className="w-10 h-10 text-[#D97706] mx-auto mb-3" />
+                              <p className="text-sm text-[var(--color-text-secondary)]">{certificatesError}</p>
+                            </div>
+                          ) : filtered.length === 0 ? (
+                            <div className="text-center py-12">
+                              <Award className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                              <p className="text-sm text-[var(--color-text-secondary)]">
+                                {t("courseDetail.certificates.empty")}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto">
+                              <table className="w-full">
+                                <thead>
+                                  <tr className="border-b border-[var(--color-border)]">
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                                      {t("courseDetail.columnStudent")}
+                                    </th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-32">
+                                      {t("courseDetail.certificates.column.attendance")}
+                                    </th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-28">
+                                      {t("courseDetail.certificates.column.assessment")}
+                                    </th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-32">
+                                      {t("courseDetail.certificates.column.requested")}
+                                    </th>
+                                    <th className="px-3 pb-3 text-center text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-24">
+                                      {t("courseDetail.columnStatusLabel")}
+                                    </th>
+                                    <th className="px-3 pb-3 text-end text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider" />
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {filtered.map((cert) => (
+                                    <tr
+                                      key={cert.id}
+                                      className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)] align-top"
+                                    >
+                                      <td className="px-3 py-3">
+                                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                          {cert.studentFirstName} {cert.studentLastName}
+                                        </p>
+                                        <p className="text-[11px] text-[var(--color-text-secondary)]">{cert.studentEmail}</p>
+                                        {cert.status === "rejected" && cert.rejectionReason && (
+                                          <p className="text-[11px] text-[#DC2626] mt-1">
+                                            <strong>{t("courseDetail.certificates.rejectedReasonLabel")}:</strong> {cert.rejectionReason}
+                                          </p>
+                                        )}
+                                      </td>
+                                      <td className="px-3 py-3 text-xs text-[var(--color-text-secondary)]">
+                                        {cert.attendancePercent ? `${cert.attendancePercent}%` : "—"}
+                                      </td>
+                                      <td className="px-3 py-3 text-xs">
+                                        {cert.assessmentPassed === true ? (
+                                          <span className="text-[#16A34A]">{t("courseDetail.certificates.assessmentPassed")}</span>
+                                        ) : cert.assessmentPassed === false ? (
+                                          <span className="text-[#DC2626]">{t("courseDetail.certificates.assessmentFailed")}</span>
+                                        ) : (
+                                          <span className="text-[var(--color-text-secondary)]">—</span>
+                                        )}
+                                      </td>
+                                      <td className="px-3 py-3 text-xs text-[var(--color-text-secondary)]">
+                                        {formatDate(cert.createdAt)}
+                                      </td>
+                                      <td className="px-3 py-3 text-center">
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${badgeClass(cert.status)}`}>
+                                          {t(`courseDetail.certificates.status.${cert.status}`)}
+                                        </span>
+                                      </td>
+                                      <td className="px-3 py-3 text-end whitespace-nowrap">
+                                        {cert.status === "pending" && (
+                                          <>
+                                            <button
+                                              type="button"
+                                              onClick={() => openCertAction(cert, "approve")}
+                                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#16A34A] hover:bg-[#F0FDF4] rounded transition-colors me-1"
+                                            >
+                                              <CheckCircle className="w-3 h-3" />
+                                              {t("courseDetail.certificates.action.approve")}
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => openCertAction(cert, "reject")}
+                                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#DC2626] hover:bg-[#FEF2F2] rounded transition-colors me-1"
+                                            >
+                                              <UserX className="w-3 h-3" />
+                                              {t("courseDetail.certificates.action.reject")}
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => openCertAction(cert, "hold")}
+                                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#D97706] hover:bg-[#FFFBEB] rounded transition-colors"
+                                            >
+                                              <AlertTriangle className="w-3 h-3" />
+                                              {t("courseDetail.certificates.action.hold")}
+                                            </button>
+                                          </>
+                                        )}
+                                        {cert.status === "approved" && (
+                                          <>
+                                            {cert.certificateUrl && (
+                                              <a
+                                                href={cert.certificateUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded transition-colors me-1"
+                                              >
+                                                <Eye className="w-3 h-3" />
+                                                {t("courseDetail.certificates.action.view")}
+                                              </a>
+                                            )}
+                                            <button
+                                              type="button"
+                                              onClick={() => openCertAction(cert, "revoke")}
+                                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#DC2626] hover:bg-[#FEF2F2] rounded transition-colors"
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                              {t("courseDetail.certificates.action.revoke")}
+                                            </button>
+                                          </>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* ═══ AUDIT ═══ */}
+                    {activeTab === "audit" && (
+                      <div>
+                        {auditLoading ? (
+                          <div className="text-center py-8">
+                            <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin mx-auto mb-2" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
+                          </div>
+                        ) : auditError ? (
+                          <div className="text-center py-8">
+                            <AlertTriangle className="w-10 h-10 text-[#D97706] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{auditError}</p>
+                          </div>
+                        ) : auditLogs.length === 0 ? (
+                          <div className="text-center py-12">
+                            <History className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">
+                              {t("courseDetail.audit.emptyState")}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b border-[var(--color-border)]">
+                                  <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-48">
+                                    {t("courseDetail.audit.whenColumn")}
+                                  </th>
+                                  <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                                    {t("courseDetail.audit.whoColumn")}
+                                  </th>
+                                  <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                                    {t("courseDetail.audit.actionColumn")}
+                                  </th>
+                                  <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                                    {t("courseDetail.audit.detailsColumn")}
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {auditLogs.map((row) => {
+                                  const performerName = [row.performerFirstName, row.performerLastName]
+                                    .filter(Boolean)
+                                    .join(" ");
+                                  // Try translated action label first; fall back to raw action key.
+                                  const actionKey = `courseDetail.audit.actions.${row.action}`;
+                                  const actionLabel = (() => {
+                                    try {
+                                      const translated = t(actionKey as Parameters<typeof t>[0]);
+                                      // next-intl returns the key back when missing
+                                      return translated === actionKey ? row.action : translated;
+                                    } catch {
+                                      return row.action;
+                                    }
+                                  })();
+                                  // Metadata preview — render up to 3 key: value pairs inline.
+                                  const metadataPreview = row.metadata
+                                    ? Object.entries(row.metadata)
+                                        .filter(([, v]) => v !== null && v !== undefined && v !== "")
+                                        .slice(0, 4)
+                                        .map(
+                                          ([k, v]) =>
+                                            `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`,
+                                        )
+                                        .join(" · ")
+                                    : "";
+                                  return (
+                                    <tr key={row.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)] align-top">
+                                      <td className="px-3 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">
+                                        {formatDate(row.createdAt)}
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        <p className="text-sm text-[var(--color-text-primary)]">
+                                          {performerName || row.performerEmail || row.performedBy || "—"}
+                                        </p>
+                                        {performerName && row.performerEmail && (
+                                          <p className="text-[11px] text-[var(--color-text-secondary)]">
+                                            {row.performerEmail}
+                                          </p>
+                                        )}
+                                      </td>
+                                      <td className="px-3 py-3 text-sm text-[var(--color-text-primary)]">
+                                        {actionLabel}
+                                      </td>
+                                      <td className="px-3 py-3 text-xs text-[var(--color-text-secondary)] break-words max-w-md">
+                                        {metadataPreview || "—"}
+                                        {row.ipAddress && (
+                                          <span className="block text-[10px] text-[var(--color-text-secondary)] mt-1 font-mono">
+                                            IP: {row.ipAddress}
+                                          </span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ═══ SETTINGS ═══ */}
+                    {activeTab === "settings" && (
+                      <div className="space-y-6">
+                        <div className="border border-[var(--color-border)] rounded-lg p-5">
+                          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">{t("courseDetail.editCourseCta")}</h3>
+                          <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("courseDetail.editCourseDesc")}</p>
+                          <Link
+                            href={`${dashboardBase}/${course.id}/edit`}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                            {t("courseDetail.editCourseCta")}
+                          </Link>
+                        </div>
+
+                        <div className="border border-[#FCA5A5] rounded-lg p-5">
+                          <h3 className="text-sm font-semibold text-[#DC2626] mb-1">{t("courseDetail.dangerZone")}</h3>
+                          <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("courseDetail.dangerZoneDesc")}</p>
+                          <div className="flex items-center gap-3">
+                            {course.status === "draft" && (
+                              <button
+                                onClick={() => setShowDeleteConfirm(true)}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#FCA5A5] text-[#DC2626] text-sm font-medium rounded-lg hover:bg-[#FEF2F2] transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                {t("courseDetail.delete")}
+                              </button>
+                            )}
+                            {course.status === "active" && (
+                              <button
+                                onClick={handleDeactivate}
+                                disabled={updatingStatus}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
+                              >
+                                <Archive className="w-4 h-4" />
+                                {t("courseDetail.archive")}
+                              </button>
+                            )}
+                            {course.status === "archived" && (
+                              <button
+                                onClick={handleActivate}
+                                disabled={updatingStatus}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-lg hover:bg-[#15803D] transition-colors disabled:opacity-50"
+                              >
+                                <Play className="w-4 h-4" />
+                                {t("courseDetail.activate")}
+                              </button>
+                            )}
+                            {course.status !== "draft" && course.status !== "active" && course.status !== "archived" && (
+                              <p className="text-xs text-[var(--color-text-secondary)] italic">—</p>
                             )}
                           </div>
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="p-8 text-center">
-                      <FileText className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
-                      <p className="text-sm text-[var(--color-text-secondary)]">
-                        {t("courseDetail.noModules")}
-                      </p>
-                    </div>
-                  )}
-                </div>
-                )}
-
-                {/* Course Metadata */}
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
-                  <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">
-                    {t("courseDetail.courseInfo")}
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-[var(--color-text-secondary)]">{t("courseDetail.courseId")}:</span>{" "}
-                      <span className="text-[var(--color-text-primary)] font-mono text-xs">{course.id}</span>
-                    </div>
-                    <div>
-                      <span className="text-[var(--color-text-secondary)]">{t("courseDetail.createdAt")}:</span>{" "}
-                      <span className="text-[var(--color-text-primary)]">{formatDate(course.createdAt)}</span>
-                    </div>
-                    <div>
-                      <span className="text-[var(--color-text-secondary)]">{t("courseDetail.updatedAt")}:</span>{" "}
-                      <span className="text-[var(--color-text-primary)]">{formatDate(course.updatedAt)}</span>
-                    </div>
-                    <div>
-                      <span className="text-[var(--color-text-secondary)]">{t("courseDetail.instructorId")}:</span>{" "}
-                      <span className="text-[var(--color-text-primary)] font-mono text-xs">{course.instructorId}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Student Reviews — switch between Course reviews and Instructor reviews */}
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 mt-8">
-                  <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
-                    <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-                      {t("courseDetail.reviewsTitle")}
-                    </h2>
-                    {/* Course | Instructor switch */}
-                    <div className="inline-flex p-1 bg-[var(--color-border-subtle)] rounded-lg">
-                      {(
-                        [
-                          { key: "course" as const, label: isRTL ? "الدورة" : "Course" },
-                          { key: "instructor" as const, label: isRTL ? "المدرب" : "Instructor" },
-                        ]
-                      ).map((seg) => (
-                        <button
-                          key={seg.key}
-                          onClick={() => setReviewKind(seg.key)}
-                          className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
-                            reviewKind === seg.key
-                              ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
-                              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                          }`}
-                        >
-                          {seg.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-end mb-4">
-                    {reviews.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="flex items-center gap-0.5">
-                          {[1, 2, 3, 4, 5].map((s) => {
-                            const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-                            return (
-                              <Star
-                                key={s}
-                                className={`w-4 h-4 ${s <= Math.round(avg) ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)]"}`}
-                              />
-                            );
-                          })}
                         </div>
-                        <span className="font-medium text-[var(--color-text-primary)]">
-                          {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
-                        </span>
                       </div>
                     )}
                   </div>
-                  {reviewsLoading ? (
-                    <div className="text-center py-6 text-sm text-[var(--color-text-secondary)]">
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                      {t("courseDetail.reviewsLoading")}
-                    </div>
-                  ) : reviews.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Star className="w-10 h-10 text-[var(--color-star-border)] mx-auto mb-3" />
-                      <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noReviewsYet")}</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="space-y-3">
-                        {reviews.map((r) => (
-                          <div key={r.id} className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]">
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{r.studentName}</p>
-                                <p className="text-xs text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
-                              </div>
-                              <div className="flex items-center gap-0.5">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <Star
-                                    key={s}
-                                    className={`w-3.5 h-3.5 ${s <= r.rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)]"}`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            {r.reviewText && (
-                              <p dir="auto" className="text-sm text-[var(--color-text-secondary)] whitespace-pre-line">{r.reviewText}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-4 pt-4 border-t border-[var(--color-border)] flex items-center justify-center">
-                        <Link
-                          href={`${dashboardBase}/${courseId}/reviews`}
-                          className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
-                        >
-                          {isRTL ? "عرض كل المراجعات" : "View all reviews"}
-                          {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
-                        </Link>
-                      </div>
-                    </>
-                  )}
                 </div>
               </div>
             ) : null}
@@ -1217,6 +2405,278 @@ const CourseManagerCourseDetailContent = ({
           onClose={() => setPreviewAssessmentId(null)}
           submissionsHrefBase={`/${locale}/dashboard/${role === "admin" ? "admin" : "manager"}/courses/${courseId}/assessments`}
         />
+      )}
+
+      {/* Add Student Modal — searchable picker + mandatory reason */}
+      {addStudentOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--color-surface-card)] rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center">
+                  <UserPlus className="w-5 h-5 text-[var(--color-primary)]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                    {t("courseDetail.students.addStudentTitle")}
+                  </h3>
+                  <p className="text-xs text-[var(--color-text-secondary)]">
+                    {t("courseDetail.students.addStudentSubtitle")}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAddStudentOpen(false)}
+                className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative mb-3">
+              <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]`} />
+              <input
+                type="text"
+                value={studentPickerQuery}
+                onChange={(e) => setStudentPickerQuery(e.target.value)}
+                placeholder={t("courseDetail.students.searchPlaceholder")}
+                className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent`}
+                autoFocus
+              />
+            </div>
+
+            <div className="border border-[var(--color-border)] rounded-lg max-h-56 overflow-y-auto mb-4">
+              {studentPickerLoading ? (
+                <div className="text-center py-6">
+                  <Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-secondary)] mx-auto" />
+                </div>
+              ) : studentPickerResults.length === 0 ? (
+                <p className="text-center py-6 text-sm text-[var(--color-text-secondary)]">
+                  {t("courseDetail.students.noResults")}
+                </p>
+              ) : (
+                <ul className="divide-y divide-[var(--color-border-subtle)]">
+                  {studentPickerResults.map((s) => {
+                    const isSelected = selectedStudent?.id === s.id;
+                    return (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedStudent(s)}
+                          className={`w-full text-start px-3 py-2 hover:bg-[var(--color-border-subtle)] transition-colors ${isSelected ? "bg-[var(--color-border-subtle)]" : ""}`}
+                        >
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                            {[s.firstName, s.lastName].filter(Boolean).join(" ") || s.email}
+                          </p>
+                          <p className="text-[11px] text-[var(--color-text-secondary)]">
+                            {s.email}{s.scfhsNumber ? ` · ${s.scfhsNumber}` : ""}
+                          </p>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+              {t("courseDetail.students.reasonLabel")}
+            </label>
+            <textarea
+              value={manualEnrollReason}
+              onChange={(e) => setManualEnrollReason(e.target.value)}
+              placeholder={t("courseDetail.students.reasonPlaceholder")}
+              maxLength={500}
+              rows={3}
+              className="w-full border border-[var(--color-input-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+            />
+            <p className="text-[11px] text-[var(--color-text-secondary)] mt-1 text-end">
+              {manualEnrollReason.length}/500
+            </p>
+
+            <div className="flex items-center justify-end gap-3 mt-4">
+              <button
+                onClick={() => setAddStudentOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]"
+              >
+                {t("courseDetail.students.cancel")}
+              </button>
+              <button
+                onClick={submitManualEnroll}
+                disabled={
+                  manualEnrollSubmitting ||
+                  !selectedStudent ||
+                  manualEnrollReason.trim().length < 3
+                }
+                className="px-4 py-2 text-sm font-medium btn-gold text-[var(--color-button-text)] rounded-lg disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {manualEnrollSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t("courseDetail.students.addBtn")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Certificate Action Modal — approve is one-click; reject/hold/revoke require a note */}
+      {certActionRow && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--color-surface-card)] rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    certActionRow.action === "approve"
+                      ? "bg-[#DCFCE7]"
+                      : certActionRow.action === "hold"
+                        ? "bg-[#FEF3C7]"
+                        : "bg-[#FEE2E2]"
+                  }`}
+                >
+                  <Award
+                    className={`w-5 h-5 ${
+                      certActionRow.action === "approve"
+                        ? "text-[#16A34A]"
+                        : certActionRow.action === "hold"
+                          ? "text-[#D97706]"
+                          : "text-[#DC2626]"
+                    }`}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                    {t(`courseDetail.certificates.modal.${certActionRow.action}Title`)}
+                  </h3>
+                  <p className="text-xs text-[var(--color-text-secondary)]">
+                    {certActionRow.row.studentFirstName} {certActionRow.row.studentLastName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCertActionRow(null)}
+                className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {certActionRow.action !== "approve" ? (
+              <>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                  {t("courseDetail.certificates.modal.reasonLabel")}
+                </label>
+                <textarea
+                  value={certActionNote}
+                  onChange={(e) => setCertActionNote(e.target.value)}
+                  placeholder={t(`courseDetail.certificates.modal.${certActionRow.action}Placeholder`)}
+                  maxLength={500}
+                  rows={4}
+                  className="w-full border border-[var(--color-input-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                  autoFocus
+                />
+                <p className="text-[11px] text-[var(--color-text-secondary)] mt-1 text-end">
+                  {certActionNote.length}/500
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                {t("courseDetail.certificates.modal.approveConfirm")}
+              </p>
+            )}
+
+            <div className="flex items-center justify-end gap-3 mt-4">
+              <button
+                onClick={() => setCertActionRow(null)}
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]"
+              >
+                {t("courseDetail.students.cancel")}
+              </button>
+              <button
+                onClick={submitCertAction}
+                disabled={
+                  certActionSubmitting ||
+                  (certActionRow.action !== "approve" && certActionNote.trim().length < 3)
+                }
+                className={`px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 inline-flex items-center gap-2 ${
+                  certActionRow.action === "approve"
+                    ? "bg-[#16A34A] hover:bg-[#15803D]"
+                    : certActionRow.action === "hold"
+                      ? "bg-[#D97706] hover:bg-[#B45309]"
+                      : "bg-[#DC2626] hover:bg-[#B91C1C]"
+                }`}
+              >
+                {certActionSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t(`courseDetail.certificates.modal.${certActionRow.action}Confirm`)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Enrollment Modal — mandatory reason; finance decides refund */}
+      {removeEnrollment && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--color-surface-card)] rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
+                  <UserX className="w-5 h-5 text-[#DC2626]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                    {t("courseDetail.students.removeTitle")}
+                  </h3>
+                  <p className="text-xs text-[var(--color-text-secondary)]">
+                    {t("courseDetail.students.removeSubtitle", {
+                      name: `${removeEnrollment.studentFirstName} ${removeEnrollment.studentLastName}`.trim(),
+                    })}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRemoveEnrollment(null)}
+                className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+              {t("courseDetail.students.removeReasonLabel")}
+            </label>
+            <textarea
+              value={removeEnrollReason}
+              onChange={(e) => setRemoveEnrollReason(e.target.value)}
+              placeholder={t("courseDetail.students.removeReasonPlaceholder")}
+              maxLength={500}
+              rows={4}
+              className="w-full border border-[var(--color-input-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+            />
+            <p className="text-[11px] text-[var(--color-text-secondary)] mt-1 text-end">
+              {removeEnrollReason.length}/500
+            </p>
+            <p className="mt-3 text-xs text-[var(--color-text-secondary)] p-2 bg-[var(--color-border-subtle)] rounded">
+              {t("courseDetail.students.removeFinanceNote")}
+            </p>
+
+            <div className="flex items-center justify-end gap-3 mt-4">
+              <button
+                onClick={() => setRemoveEnrollment(null)}
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]"
+              >
+                {t("courseDetail.students.cancel")}
+              </button>
+              <button
+                onClick={submitRemoveEnrollment}
+                disabled={removeEnrollSubmitting || removeEnrollReason.trim().length < 3}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#DC2626] hover:bg-[#B91C1C] rounded-lg disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {removeEnrollSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t("courseDetail.students.removeBtn")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

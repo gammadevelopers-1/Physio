@@ -78,6 +78,7 @@ export default async function CoursesPage({
         filterPricingLabel={coursesPage?.filterPricingLabel || undefined}
         filterFreeLabel={coursesPage?.filterFreeLabel || undefined}
         filterPaidLabel={coursesPage?.filterPaidLabel || undefined}
+        filterOnSaleLabel={coursesPage?.filterOnSaleLabel || (locale === "ar" ? "بخصم" : "On sale")}
         filterAvailabilityLabel={coursesPage?.filterAvailabilityLabel || undefined}
         filterAvailOpenLabel={coursesPage?.filterAvailOpenLabel || undefined}
         filterAvailStartingSoonLabel={coursesPage?.filterAvailStartingSoonLabel || undefined}

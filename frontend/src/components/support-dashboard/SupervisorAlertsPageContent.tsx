@@ -373,7 +373,7 @@ const SupervisorAlertsPageContent = () => {
                             disabled={trail.page <= 1 || isRefreshing}
                             className="p-1.5 border border-[var(--color-border)] rounded-lg disabled:opacity-40 hover:bg-[var(--color-border-subtle)]"
                           >
-                            <ChevronLeft className="w-3.5 h-3.5" />
+                            {isRTL ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
                           </button>
                           <span className="text-[11px] text-[var(--color-text-secondary)] px-2 tabular-nums">
                             {trail.page} / {trail.totalPages}
@@ -388,7 +388,7 @@ const SupervisorAlertsPageContent = () => {
                             disabled={trail.page >= trail.totalPages || isRefreshing}
                             className="p-1.5 border border-[var(--color-border)] rounded-lg disabled:opacity-40 hover:bg-[var(--color-border-subtle)]"
                           >
-                            <ChevronRight className="w-3.5 h-3.5" />
+                            {isRTL ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                           </button>
                         </div>
                       </div>

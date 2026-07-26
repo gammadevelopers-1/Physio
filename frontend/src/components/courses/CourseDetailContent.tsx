@@ -24,8 +24,10 @@ import {
   AlertTriangle,
   X,
   Zap,
+  Sparkles,
 } from "lucide-react";
 import { CourseCard, MobileCourseCard } from "@/components/courses";
+import Select from "@/components/ui/Select";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
@@ -218,16 +220,18 @@ function AllReviewsModal({
           {/* Sort */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "الترتيب:" : "Sort:"}</span>
-            <select
+            <Select
               value={sort}
-              onChange={(e) => setSort(e.target.value as typeof sort)}
-              className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-page)]"
-            >
-              <option value="highest">{isRTL ? "الأعلى تقييماً" : "Highest rated"}</option>
-              <option value="lowest">{isRTL ? "الأقل تقييماً" : "Lowest rated"}</option>
-              <option value="newest">{isRTL ? "الأحدث" : "Newest"}</option>
-              <option value="oldest">{isRTL ? "الأقدم" : "Oldest"}</option>
-            </select>
+              onChange={(v) => setSort(v as typeof sort)}
+              size="sm"
+              className="min-w-[160px]"
+              options={[
+                { value: "highest", label: isRTL ? "الأعلى تقييماً" : "Highest rated" },
+                { value: "lowest", label: isRTL ? "الأقل تقييماً" : "Lowest rated" },
+                { value: "newest", label: isRTL ? "الأحدث" : "Newest" },
+                { value: "oldest", label: isRTL ? "الأقدم" : "Oldest" },
+              ]}
+            />
           </div>
 
           {/* Star filter chips */}
@@ -444,13 +448,13 @@ const CourseDetailContent = ({
     success: boolean;
     message: string;
   } | null>(null);
-  // Points redemption — populated once on mount when the user is logged in.
-  // null = not eligible / not loaded; object = redeemable for points.
-  const [redeemInfo, setRedeemInfo] = useState<{
-    costPoints: number;
-    affordable: boolean;
-  } | null>(null);
+  // Points redemption — the course-detail response now carries the
+  // enable/cost envelope directly (see courses.service.findOnePublic), so
+  // no follow-up round-trip is needed. Balance is fetched separately to
+  // decide whether the current user can afford it.
+  const [pointsBalance, setPointsBalance] = useState<number | null>(null);
   const [redeeming, setRedeeming] = useState(false);
+  const [redeemModalOpen, setRedeemModalOpen] = useState(false);
   const [shareTooltip, setShareTooltip] = useState(false);
   const [sessionFilterCity, setSessionFilterCity] = useState<string>("");
   const [sessionFilterMonth, setSessionFilterMonth] = useState<string>("");
@@ -507,13 +511,28 @@ const CourseDetailContent = ({
     }
   };
 
-  // Derive pricing/capacity from API data
+  // Derive pricing/capacity from API data. Precedence for "what the student
+  // actually pays" (top wins):
+  //   1. Auto-apply campaign discount (percentage or fixed) — `campaignDiscount.finalPrice`
+  //   2. Per-course sale — `effectivePrice`
+  //   3. Base price
   const apiPrice = apiCourse?.price ?? 0;
-  // Course-level sale: effectivePrice is what the student actually pays.
-  const apiOnSale = (apiCourse as { onSale?: boolean })?.onSale ?? false;
+  const apiPerCourseOnSale = (apiCourse as { onSale?: boolean })?.onSale ?? false;
   const apiSalePercent = (apiCourse as { salePercent?: number | null })?.salePercent ?? null;
-  const apiEffectivePrice = (apiCourse as { effectivePrice?: number })?.effectivePrice ?? apiPrice;
+  const apiSaleAmount = (apiCourse as { saleAmount?: number | null })?.saleAmount ?? null;
+  const apiPerCourseSalePrice =
+    (apiCourse as { effectivePrice?: number })?.effectivePrice ?? apiPrice;
+  const apiCampaignDiscount =
+    (apiCourse as { campaignDiscount?: {
+      campaignId: string; campaignName: string; campaignNameAr: string | null;
+      campaignType: 'standard' | 'early_bird';
+      discountType: 'percentage' | 'fixed'; discountValue: number;
+      amountOff: number; basePrice: number; finalPrice: number;
+    } | null })?.campaignDiscount ?? null;
+  const apiEffectivePrice = apiCampaignDiscount?.finalPrice ?? apiPerCourseSalePrice;
+  const apiOnSale = apiPerCourseOnSale || !!apiCampaignDiscount;
   const apiIsFree = apiEffectivePrice === 0;
+  const apiIsEarlyBirdCampaign = apiCampaignDiscount?.campaignType === "early_bird";
   const apiIsFull = apiCourse?.isFull ?? false;
   const apiRemainingSeats = apiCourse?.remainingSeats ?? null;
   const apiCmeAccredited = apiCourse?.isCmeAccredited ?? false;
@@ -612,27 +631,21 @@ const CourseDetailContent = ({
   // Once added, the secondary button flips to "Go to Cart".
   const goToCart = () => router.push(`/${locale}/cart`);
 
-  // Fetch redeem eligibility once when the course + auth state are ready.
-  // Skipped for guests, non-students, and free courses (no need to redeem).
+  // Fetch the student's point balance so the CTA can decide affordability
+  // client-side (backend already told us the pointsCost via
+  // apiCourse.redemption). Skipped for guests, non-students, and free
+  // courses (nothing to redeem toward).
   useEffect(() => {
     if (!apiCourse || !isStudent || apiIsFree) {
-      setRedeemInfo(null);
+      setPointsBalance(null);
       return;
     }
     let cancelled = false;
     pointsApi
-      .getRedeemableCourses()
+      .getBalance()
       .then((res) => {
         if (cancelled) return;
-        const match = res.courses.find((c) => c.id === apiCourse.id);
-        if (match) {
-          setRedeemInfo({
-            costPoints: match.costPoints,
-            affordable: match.affordable,
-          });
-        } else {
-          setRedeemInfo(null);
-        }
+        setPointsBalance(res.balance);
       })
       .catch(() => {
         // Silent — redemption is optional UX
@@ -690,19 +703,32 @@ const CourseDetailContent = ({
     };
   }, [apiCourse?.id, isAuthenticated, isStudent]);
 
-  // Trigger points-based redemption. Reuses enrollResult for UI feedback —
-  // a successful redemption ends in the same place (course unlocked) so
-  // sharing the success path is simpler than a parallel state.
+  // Trigger points-based redemption. On success, route the buyer straight
+  // to the freshly-unlocked course inside their student dashboard — this
+  // matches what a paid purchase does. The confirm modal already showed
+  // the "spending X points" language, so no extra confirmation toast.
   const handleRedeem = async () => {
     if (!apiCourse) return;
     setRedeeming(true);
     setEnrollResult(null);
     try {
       const res = await pointsApi.redeemCourse(apiCourse.id);
-      setEnrollResult({ success: true, message: t("enrollment.redeemSuccess") });
-      // Refresh local redemption info to reflect the new balance
-      setRedeemInfo({ costPoints: res.pointsUsed, affordable: false });
+      setPointsBalance(res.newBalance);
+      setEnrollResult({
+        success: true,
+        message: t("enrollment.redeemSuccess"),
+      });
+      setRedeemModalOpen(false);
+      // Small delay so the toast is visible before the navigation kicks in.
+      setTimeout(() => {
+        router.push(`/${locale}/dashboard/student/courses/${apiCourse.id}`);
+      }, 800);
     } catch (err) {
+      // Backend BadRequestException copies our friendly deficit message
+      // ("You need X more points to redeem this course") into the ApiError
+      // message field, so surfacing err.message is enough — no need to
+      // reformat the deficit client-side. ALREADY_ENROLLED comes through
+      // as its own message string too.
       const message = err instanceof Error ? err.message : t("enrollment.error");
       setEnrollResult({ success: false, message });
     } finally {
@@ -876,7 +902,7 @@ const CourseDetailContent = ({
 
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
-        <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold mb-4 ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold mb-4 text-start`}>
           {scheduleHeading || t("schedule") || "Schedule"}
         </h2>
 
@@ -888,18 +914,18 @@ const CourseDetailContent = ({
                 <label className="text-[12px] text-[var(--color-text-secondary)] font-medium">
                   {locale === "ar" ? "المدينة" : "City"}
                 </label>
-                <select
+                <Select
                   value={sessionFilterCity}
-                  onChange={(e) => setSessionFilterCity(e.target.value)}
-                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                >
-                  <option value="">{locale === "ar" ? "كل المدن" : "All cities"}</option>
-                  {uniqueCities.map((city) => (
-                    <option key={city} value={city}>
-                      {getCityLabel(city, locale)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSessionFilterCity}
+                  className="min-w-[160px]"
+                  options={[
+                    { value: "", label: locale === "ar" ? "كل المدن" : "All cities" },
+                    ...uniqueCities.map((city) => ({
+                      value: city,
+                      label: getCityLabel(city, locale),
+                    })),
+                  ]}
+                />
               </div>
             )}
             {showMonthFilter && (
@@ -907,18 +933,15 @@ const CourseDetailContent = ({
                 <label className="text-[12px] text-[var(--color-text-secondary)] font-medium">
                   {locale === "ar" ? "الشهر" : "Month"}
                 </label>
-                <select
+                <Select
                   value={sessionFilterMonth}
-                  onChange={(e) => setSessionFilterMonth(e.target.value)}
-                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                >
-                  <option value="">{locale === "ar" ? "كل الأشهر" : "All months"}</option>
-                  {uniqueMonths.map((m) => (
-                    <option key={m} value={m}>
-                      {monthLabel(m)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSessionFilterMonth}
+                  className="min-w-[160px]"
+                  options={[
+                    { value: "", label: locale === "ar" ? "كل الأشهر" : "All months" },
+                    ...uniqueMonths.map((m) => ({ value: m, label: monthLabel(m) })),
+                  ]}
+                />
               </div>
             )}
             {(sessionFilterCity || sessionFilterMonth) && (
@@ -945,7 +968,7 @@ const CourseDetailContent = ({
           ) : (
             filteredSessions.map((session) => (
               <div key={session.id} className={`flex items-center justify-between p-3 bg-[var(--color-border-subtle)] rounded-lg ${isRTL ? "flex-row-reverse" : ""}`}>
-                <div className={isRTL ? "text-right" : "text-left"}>
+                <div className="text-start">
                   <p className="font-medium text-[14px]">{session.title}</p>
                   <p className="text-[13px] text-[var(--color-text-secondary)]">
                     {formatPlatformDateReadable(session.scheduledAt, platformLocale, locale === "ar" ? "ar" : "en", { includeTime: true })}
@@ -1051,11 +1074,11 @@ const CourseDetailContent = ({
     });
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} text-start`}>
           {overviewHeading || t("overview") || "Overview"}
         </h2>
         <div
-          className={`course-overview-content text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}
+          className={`course-overview-content text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed text-start`}
           dir={isRTL ? "rtl" : "ltr"}
           dangerouslySetInnerHTML={{ __html: safeHtml }}
         />
@@ -1081,7 +1104,7 @@ const CourseDetailContent = ({
     if (items.length === 0) return null;
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} text-start`}>
           {isRTL ? "الأسئلة الشائعة" : "FAQs"}
         </h2>
         <Accordion items={items} />
@@ -1095,14 +1118,14 @@ const CourseDetailContent = ({
     if (!objectives.length) return null;
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} text-start`}>
           {objectivesHeading || t("whatYouWillLearn.title")}
         </h2>
         <div className={isMobile ? "space-y-3" : "space-y-4"}>
           {objectives.map((item, index) => (
             <div key={index} className={`flex items-start ${isMobile ? "gap-2.5" : "gap-3"}`}>
               <Check className={`${isMobile ? "w-4 h-4" : "w-5 h-5"} text-[var(--color-text-primary)] flex-shrink-0 mt-0.5`} />
-              <p className={`text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} ${isRTL ? "text-right" : "text-left"}`}>{item}</p>
+              <p className={`text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} text-start`}>{item}</p>
             </div>
           ))}
         </div>
@@ -1116,7 +1139,7 @@ const CourseDetailContent = ({
     if (!audience.length) return null;
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} text-start`}>
           {targetAudienceHeading || t("targetAudience") || "Target Audience"}
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -1138,10 +1161,10 @@ const CourseDetailContent = ({
     if (!showRequirements) return null;
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} text-start`}>
           {requirementsHeading || t("requirements") || "Requirements"}
         </h2>
-        <p className={`text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+        <p className={`text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed text-start`}>
           {getRequirements()}
         </p>
       </div>
@@ -1321,7 +1344,7 @@ const CourseDetailContent = ({
             <h3 className={`font-semibold text-[#92400E] ${isMobile ? "text-sm" : "text-base"} mb-1`}>
               {noticesHeading || t("notices") || "Important Notice"}
             </h3>
-            <p className={`text-[#92400E] ${isMobile ? "text-xs" : "text-sm"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+            <p className={`text-[#92400E] ${isMobile ? "text-xs" : "text-sm"} leading-relaxed text-start`}>
               {notices}
             </p>
           </div>
@@ -1495,13 +1518,13 @@ const CourseDetailContent = ({
 
                 {/* Title */}
                 <h1
-                  className={`font-bold text-[var(--color-text-primary)] mb-4 ${isRTL ? "text-right" : "text-left"}`}
+                  className={`font-bold text-[var(--color-text-primary)] mb-4 text-start`}
                   style={{ fontSize: "40px", lineHeight: "1.2" }}
                 >
                   {getTitle()}
                 </h1>
                 {getDescription() && (
-                  <p className={`text-[var(--color-text-secondary)] text-lg mb-6 ${isRTL ? "text-right" : "text-left"}`}>{getDescription()}</p>
+                  <p className={`text-[var(--color-text-secondary)] text-lg mb-6 text-start`}>{getDescription()}</p>
                 )}
 
                 {/* Language Tags */}
@@ -1550,13 +1573,13 @@ const CourseDetailContent = ({
 
                 {/* Course Details — placed in left column to fill space next to pricing card */}
                 <div className="bg-[var(--color-surface-card)] rounded-2xl p-8 mb-8 mt-6">
-                  <h2 className={`font-bold text-[var(--color-text-primary)] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
+                  <h2 className={`font-bold text-[var(--color-text-primary)] text-xl mb-6 text-start`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
 
                   <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                     {apiCourse.enrollmentDeadline && (
                       <div className="flex items-start gap-3">
                         <Calendar className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                        <div className={isRTL ? "text-right" : "text-left"}>
+                        <div className="text-start">
                           <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.registrationDeadline")}</p>
                           <p className="text-sm text-[var(--color-text-secondary)]">{formatDeadline(apiCourse.enrollmentDeadline)}</p>
                         </div>
@@ -1564,35 +1587,35 @@ const CourseDetailContent = ({
                     )}
                     <div className="flex items-start gap-3">
                       <Globe className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                      <div className={isRTL ? "text-right" : "text-left"}>
+                      <div className="text-start">
                         <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.language")}</p>
                         <p className="text-sm text-[var(--color-text-secondary)]">{getLanguageLabel()}</p>
                       </div>
                     </div>
                     {apiCourse.startDate && (
-                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                        <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
-                        <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.startDate)}</p>
+                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ps-5 overflow-hidden`}>
+                        <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
+                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] text-start`}>{t("courseDetails.startTime")}</p>
+                        <p className={`text-sm text-[var(--color-text-secondary)] text-start`}>{formatDate(apiCourse.startDate)}</p>
                       </div>
                     )}
                     {apiCourse.endDate && (
-                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                        <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
-                        <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.endDate)}</p>
+                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ps-5 overflow-hidden`}>
+                        <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
+                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] text-start`}>{t("courseDetails.endTime")}</p>
+                        <p className={`text-sm text-[var(--color-text-secondary)] text-start`}>{formatDate(apiCourse.endDate)}</p>
                       </div>
                     )}
                     <div className="flex items-start gap-3">
                       <Clock className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                      <div className={isRTL ? "text-right" : "text-left"}>
+                      <div className="text-start">
                         <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.duration")}</p>
                         <p className="text-sm text-[var(--color-text-secondary)]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Video className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                      <div className={isRTL ? "text-right" : "text-left"}>
+                      <div className="text-start">
                         <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
                         <p className="text-sm text-[var(--color-text-secondary)]">{getDeliveryLabel()}</p>
                       </div>
@@ -1600,23 +1623,23 @@ const CourseDetailContent = ({
                     {apiCmeAccredited && (
                       <div className="flex items-start gap-3">
                         <Award className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                        <div className={isRTL ? "text-right" : "text-left"}>
+                        <div className="text-start">
                           <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
                           <p className="text-sm text-[var(--color-text-secondary)]">{apiCmeHours} {t("courseDetails.hours")}</p>
                         </div>
                       </div>
                     )}
                     {showVenue && getVenue() && (
-                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                        <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
-                        <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{getVenue()}</p>
+                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ps-5 overflow-hidden`}>
+                        <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
+                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] text-start`}>{t("courseDetails.venue")}</p>
+                        <p className={`text-sm text-[var(--color-text-secondary)] text-start`}>{getVenue()}</p>
                       </div>
                     )}
                     {apiAccreditationNumber && (
                       <div className="flex items-start gap-3">
                         <Award className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                        <div className={isRTL ? "text-right" : "text-left"}>
+                        <div className="text-start">
                           <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                             {locale === "ar" ? "رقم الاعتماد" : "Accreditation Number"}
                           </p>
@@ -1630,7 +1653,7 @@ const CourseDetailContent = ({
 
                   {/* Target Audience — inline */}
                   {getTargetAudience().length > 0 && (
-                    <div className={`mt-6 pt-6 border-t border-[var(--color-border)] ${isRTL ? "text-right" : "text-left"}`}>
+                    <div className={`mt-6 pt-6 border-t border-[var(--color-border)] text-start`}>
                       <p className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
                         {targetAudienceHeading || t("targetAudience") || "Target Audience"}
                       </p>
@@ -1667,7 +1690,7 @@ const CourseDetailContent = ({
                   {/* Features in sidebar */}
                   {getFeatures().length > 0 && (
                     <div className="px-5 pt-5 pb-4">
-                      <h3 className={`text-[15px] font-semibold text-[var(--color-text-primary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
+                      <h3 className={`text-[15px] font-semibold text-[var(--color-text-primary)] mb-3 text-start`}>
                         {featuresHeading || (locale === "ar" ? "المميزات" : "Features")}
                       </h3>
                       <div className="flex flex-col gap-3">
@@ -1696,9 +1719,23 @@ const CourseDetailContent = ({
                               <span className="text-3xl font-bold text-[var(--color-text-primary)]">{apiEffectivePrice}</span>
                             </div>
                             <span className="text-lg text-[var(--color-text-secondary)] line-through">{apiPrice}</span>
-                            {apiSalePercent ? (
+                            {apiCampaignDiscount && apiIsEarlyBirdCampaign ? (
+                              <span className="text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded px-2 py-1">
+                                {tCourses("card.earlyBird")}
+                              </span>
+                            ) : apiCampaignDiscount ? (
+                              <span className="text-xs font-bold text-white bg-red-600 rounded px-2 py-1">
+                                {apiCampaignDiscount.discountType === "percentage"
+                                  ? t("pricingCard.percentOff", { percent: apiCampaignDiscount.discountValue })
+                                  : tCourses("card.amountOff", { amount: apiCampaignDiscount.discountValue })}
+                              </span>
+                            ) : apiSalePercent ? (
                               <span className="text-xs font-bold text-white bg-red-600 rounded px-2 py-1">
                                 {t("pricingCard.percentOff", { percent: apiSalePercent })}
+                              </span>
+                            ) : apiSaleAmount ? (
+                              <span className="text-xs font-bold text-white bg-red-600 rounded px-2 py-1">
+                                {tCourses("card.amountOff", { amount: apiSaleAmount })}
                               </span>
                             ) : null}
                           </div>
@@ -1878,39 +1915,29 @@ const CourseDetailContent = ({
                             {t("pricingCard.addToCart")}
                           </button>
                         )}
-                        {redeemInfo && (
-                          <div className="mb-3">
-                            <button
-                              onClick={handleRedeem}
-                              disabled={
-                                !redeemInfo.affordable ||
-                                redeeming ||
-                                enrollResult?.success
+                        {apiCourse.redemption?.enabled &&
+                          apiCourse.redemption.pointsCost > 0 && (
+                            <RedeemCta
+                              cost={apiCourse.redemption.pointsCost}
+                              balance={pointsBalance}
+                              isStudent={!!isStudent}
+                              isAuthenticated={isAuthenticated}
+                              redeeming={redeeming}
+                              enrollResult={enrollResult}
+                              onOpenConfirm={() => setRedeemModalOpen(true)}
+                              onSignInPrompt={() => {
+                                const returnUrl = pathname;
+                                router.push(
+                                  `/${locale}/signin?redirect=${encodeURIComponent(returnUrl)}`,
+                                );
+                              }}
+                              onEarnMore={() =>
+                                router.push(
+                                  `/${locale}/dashboard/student/invite-friends#earn`,
+                                )
                               }
-                              className={`w-full h-12 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${
-                                redeemInfo.affordable
-                                  ? "border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5"
-                                  : "border-2 border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-not-allowed"
-                              } disabled:opacity-60`}
-                            >
-                              {redeeming ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : null}
-                              {redeemInfo.affordable
-                                ? t("enrollment.redeemWithPoints", { points: redeemInfo.costPoints })
-                                : t("enrollment.needMorePoints", { points: redeemInfo.costPoints })}
-                            </button>
-                            {enrollResult && (
-                              <p
-                                className={`text-xs mt-1.5 text-center ${
-                                  enrollResult.success ? "text-[#16A34A]" : "text-[#DC2626]"
-                                }`}
-                              >
-                                {enrollResult.message}
-                              </p>
-                            )}
-                          </div>
-                        )}
+                            />
+                          )}
                       </>
                     )}
 
@@ -2017,13 +2044,13 @@ const CourseDetailContent = ({
         {/* Hero Section */}
         <section className="px-4 py-6">
           <h1
-            className={`font-bold text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : "text-left"}`}
+            className={`font-bold text-[var(--color-text-primary)] mb-2 text-start`}
             style={{ fontSize: "24px", lineHeight: "1.3" }}
           >
             {getTitle()}
           </h1>
           {getDescription() && (
-            <p className={`text-[var(--color-text-secondary)] text-sm mb-4 ${isRTL ? "text-right" : "text-left"}`}>{getDescription()}</p>
+            <p className={`text-[var(--color-text-secondary)] text-sm mb-4 text-start`}>{getDescription()}</p>
           )}
 
           {/* Language Tags */}
@@ -2034,11 +2061,11 @@ const CourseDetailContent = ({
           {/* Stats */}
           <div className="relative bg-[var(--color-surface-card)] rounded-xl overflow-hidden mb-6">
             <div
-              className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1`}
+              className={`absolute start-0 top-0 bottom-0 w-1`}
               style={{ background: "linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)" }}
             />
-            <div className={`flex items-center p-3 ${isRTL ? "pr-4" : "pl-4"}`}>
-              <div className={`flex-1 text-center ${isRTL ? "border-l" : "border-r"} border-[var(--color-border)]`}>
+            <div className={`flex items-center p-3 ps-4`}>
+              <div className={`flex-1 text-center border-e border-[var(--color-border)]`}>
                 <p className="font-bold text-[var(--color-text-secondary)]">{apiCourse.avgRating.toFixed(1)}</p>
                 <div className={`flex items-center justify-center gap-0.5 mb-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
                   {[...Array(5)].map((_, i) => (
@@ -2071,9 +2098,23 @@ const CourseDetailContent = ({
                       <span className="text-2xl font-bold text-[var(--color-text-primary)]">{apiEffectivePrice}</span>
                     </div>
                     <span className="text-base text-[var(--color-text-secondary)] line-through">{apiPrice}</span>
-                    {apiSalePercent ? (
+                    {apiCampaignDiscount && apiIsEarlyBirdCampaign ? (
+                      <span className="text-[11px] font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded px-2 py-1">
+                        {tCourses("card.earlyBird")}
+                      </span>
+                    ) : apiCampaignDiscount ? (
+                      <span className="text-[11px] font-bold text-white bg-red-600 rounded px-2 py-1">
+                        {apiCampaignDiscount.discountType === "percentage"
+                          ? t("pricingCard.percentOff", { percent: apiCampaignDiscount.discountValue })
+                          : tCourses("card.amountOff", { amount: apiCampaignDiscount.discountValue })}
+                      </span>
+                    ) : apiSalePercent ? (
                       <span className="text-[11px] font-bold text-white bg-red-600 rounded px-2 py-1">
                         {t("pricingCard.percentOff", { percent: apiSalePercent })}
+                      </span>
+                    ) : apiSaleAmount ? (
+                      <span className="text-[11px] font-bold text-white bg-red-600 rounded px-2 py-1">
+                        {tCourses("card.amountOff", { amount: apiSaleAmount })}
                       </span>
                     ) : null}
                   </div>
@@ -2113,7 +2154,7 @@ const CourseDetailContent = ({
             {/* Features */}
             {getFeatures().length > 0 && (
               <div className="mb-4 pb-4 border-b border-[var(--color-border)]">
-                <h3 className={`text-sm font-semibold text-[var(--color-text-primary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
+                <h3 className={`text-sm font-semibold text-[var(--color-text-primary)] mb-3 text-start`}>
                   {featuresHeading || (locale === "ar" ? "المميزات" : "Features")}
                 </h3>
                 <div className="flex flex-col gap-2.5">
@@ -2303,12 +2344,12 @@ const CourseDetailContent = ({
         {/* Course Details */}
         <section className="px-4 py-6">
           <div className="bg-[var(--color-surface-card)] rounded-xl p-4 mb-4">
-            <h2 className={`font-bold text-[var(--color-text-primary)] text-lg mb-4 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
+            <h2 className={`font-bold text-[var(--color-text-primary)] text-lg mb-4 text-start`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
             <div className="space-y-4">
               {apiCourse.enrollmentDeadline && (
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <div className={isRTL ? "text-right" : "text-left"}>
+                  <div className="text-start">
                     <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.registrationDeadline")}</p>
                     <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.enrollmentDeadline)}</p>
                   </div>
@@ -2316,21 +2357,21 @@ const CourseDetailContent = ({
               )}
               <div className="flex items-center gap-3">
                 <Globe className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                <div className={isRTL ? "text-right" : "text-left"}>
+                <div className="text-start">
                   <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.language")}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{getLanguageLabel()}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                <div className={isRTL ? "text-right" : "text-left"}>
+                <div className="text-start">
                   <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.duration")}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Video className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                <div className={isRTL ? "text-right" : "text-left"}>
+                <div className="text-start">
                   <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{getDeliveryLabel()}</p>
                 </div>
@@ -2338,7 +2379,7 @@ const CourseDetailContent = ({
               {apiCmeAccredited && (
                 <div className="flex items-center gap-3">
                   <Award className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <div className={isRTL ? "text-right" : "text-left"}>
+                  <div className="text-start">
                     <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
                     <p className="text-sm text-[var(--color-text-secondary)]">{apiCmeHours} {t("courseDetails.hours")}</p>
                   </div>
@@ -2347,7 +2388,7 @@ const CourseDetailContent = ({
               {showVenue && getVenue() && (
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <div className={isRTL ? "text-right" : "text-left"}>
+                  <div className="text-start">
                     <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.venue")}</p>
                     <p className="text-sm text-[var(--color-text-secondary)]">{getVenue()}</p>
                   </div>
@@ -2356,7 +2397,7 @@ const CourseDetailContent = ({
               {apiAccreditationNumber && (
                 <div className="flex items-center gap-3">
                   <Award className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <div className={isRTL ? "text-right" : "text-left"}>
+                  <div className="text-start">
                     <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
                       {locale === "ar" ? "رقم الاعتماد" : "Accreditation Number"}
                     </p>
@@ -2369,7 +2410,7 @@ const CourseDetailContent = ({
             </div>
             {/* Target Audience — inline in course details (mobile) */}
             {getTargetAudience().length > 0 && (
-              <div className={`mt-4 pt-4 border-t border-[var(--color-border)] ${isRTL ? "text-right" : "text-left"}`}>
+              <div className={`mt-4 pt-4 border-t border-[var(--color-border)] text-start`}>
                 <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2">
                   {targetAudienceHeading || t("targetAudience") || "Target Audience"}
                 </p>
@@ -2445,8 +2486,166 @@ const CourseDetailContent = ({
         />
       )}
 
+      {redeemModalOpen && apiCourse?.redemption?.enabled && (
+        <RedeemConfirmModal
+          cost={apiCourse.redemption.pointsCost}
+          courseTitle={getTitle()}
+          onClose={() => setRedeemModalOpen(false)}
+          onConfirm={handleRedeem}
+          redeeming={redeeming}
+        />
+      )}
+
     </>
   );
 };
+
+// ─── Points-redemption CTA + confirm modal ─────────────────────
+
+interface RedeemCtaProps {
+  cost: number;
+  balance: number | null;
+  isStudent: boolean;
+  isAuthenticated: boolean;
+  redeeming: boolean;
+  enrollResult: { success: boolean; message: string } | null;
+  onOpenConfirm: () => void;
+  onSignInPrompt: () => void;
+  onEarnMore: () => void;
+}
+
+/**
+ * Violet secondary CTA that sits under the primary Buy Now/Add to Cart
+ * pair. Three mutually-exclusive states:
+ *  • Unauthed → "Sign in to redeem" → login flow with redirect back
+ *  • Insufficient balance → "Need X more points" → routes to earn page
+ *  • Affordable → "Redeem for X points" → opens the confirm modal
+ * Non-students never see this CTA — the NonStudentEnrollmentNotice
+ * replaces the whole enroll block for them.
+ */
+function RedeemCta({
+  cost,
+  balance,
+  isStudent,
+  isAuthenticated,
+  redeeming,
+  enrollResult,
+  onOpenConfirm,
+  onSignInPrompt,
+  onEarnMore,
+}: RedeemCtaProps) {
+  const t = useTranslations("coursesPage.detail.redeemCta");
+  if (isAuthenticated && !isStudent) return null;
+
+  const affordable = typeof balance === "number" && balance >= cost;
+  const deficit = typeof balance === "number" ? Math.max(0, cost - balance) : cost;
+
+  let label: string;
+  let disabled = false;
+  let handler: () => void;
+  if (!isAuthenticated) {
+    label = t("signInPrompt");
+    handler = onSignInPrompt;
+  } else if (!affordable) {
+    label = t("needMore", { deficit });
+    handler = onEarnMore;
+  } else {
+    label = t("enabled", { points: cost });
+    handler = onOpenConfirm;
+  }
+  disabled = redeeming;
+
+  const activeStyle = affordable && isAuthenticated
+    ? "border-2 border-[#7C3AED] text-[#7C3AED] hover:bg-[#EDE9FE]"
+    : "border-2 border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]";
+
+  return (
+    <div className="mb-3">
+      <button
+        type="button"
+        onClick={handler}
+        disabled={disabled}
+        className={`w-full h-12 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${activeStyle} disabled:opacity-60`}
+      >
+        {redeeming ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Sparkles className="w-4 h-4" strokeWidth={2} />
+        )}
+        {label}
+      </button>
+      {enrollResult && (
+        <p
+          className={`text-xs mt-1.5 text-center ${
+            enrollResult.success ? "text-[#16A34A]" : "text-[#DC2626]"
+          }`}
+        >
+          {enrollResult.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface RedeemConfirmModalProps {
+  cost: number;
+  courseTitle: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  redeeming: boolean;
+}
+
+function RedeemConfirmModal({
+  cost,
+  courseTitle,
+  onClose,
+  onConfirm,
+  redeeming,
+}: RedeemConfirmModalProps) {
+  const t = useTranslations("coursesPage.detail.redeemModal");
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-6 max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-[#EDE9FE] flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-[#7C3AED]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+            {t("title")}
+          </h3>
+        </div>
+        <p className="text-sm text-[var(--color-text-secondary)] mb-1">
+          {t("body", { points: cost, course: courseTitle })}
+        </p>
+        <p className="text-xs text-[#DC2626] mb-5">{t("warning")}</p>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={redeeming}
+            className="px-4 py-2 text-sm font-medium rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+          >
+            {t("cancel")}
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={redeeming}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-[#7C3AED] text-white hover:bg-[#6D28D9] inline-flex items-center gap-2 disabled:opacity-60"
+          >
+            {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {t("confirm")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default CourseDetailContent;

@@ -183,9 +183,10 @@ function CategorySection({ category, templates, locale, t }: CategorySectionProp
           const isAr = locale === "ar";
           const name = isAr ? tpl.nameAr : tpl.nameEn;
           const desc = isAr ? tpl.descriptionAr : tpl.descriptionEn;
-          // For email, link to the EN editor by default; admin can flip
-          // to AR inside the editor. For WhatsApp same flow.
-          const editHref = `/${locale}/dashboard/admin/templates/${tpl.eventKey}/en`;
+          // Land the admin on the editor for the same locale their UI is
+          // in — an AR admin editing an AR customer email shouldn't have
+          // to click the toggle to see AR content first.
+          const editHref = `/${locale}/dashboard/admin/templates/${tpl.eventKey}/${isAr ? "ar" : "en"}`;
 
           return (
             <li

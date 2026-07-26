@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
+import { useLocale } from 'next-intl';
 import { AuthProvider, CartProvider } from '@/contexts';
 import { CalendarProvider } from '@/contexts/CalendarContext';
 import { FavouritesProvider } from '@/contexts/FavouritesContext';
@@ -17,6 +18,8 @@ interface ClientProvidersProps {
 }
 
 export function ClientProviders({ children, platformLocale, platformGeneral }: ClientProvidersProps) {
+  const locale = useLocale();
+  const isRTL = locale === 'ar';
   return (
     <AuthProvider>
       <PlatformLocaleProvider initial={platformLocale}>
@@ -31,7 +34,8 @@ export function ClientProviders({ children, platformLocale, platformGeneral }: C
         </PlatformGeneralProvider>
       </PlatformLocaleProvider>
       <Toaster
-        position="top-right"
+        position={isRTL ? 'top-left' : 'top-right'}
+        dir={isRTL ? 'rtl' : 'ltr'}
         richColors
         closeButton
         toastOptions={{

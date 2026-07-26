@@ -26,6 +26,7 @@ import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { courseManagerApi } from "@/lib/api";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable } from "@/lib/platform-locale";
+import Select from "@/components/admin-dashboard/Select";
 
 type Review = {
   id: string;
@@ -416,48 +417,53 @@ export default function ManagerAllReviewsContent() {
 
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "الدورة:" : "Course:"}</span>
-                    <select
+                    <Select
                       value={courseFilter}
-                      onChange={(e) => setCourseFilter(e.target.value)}
-                      className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-card)] max-w-[240px]"
-                    >
-                      <option value="">{isRTL ? "كل الدورات" : "All courses"}</option>
-                      {courseOptions.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {isRTL && c.titleAr ? c.titleAr : c.title}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setCourseFilter}
+                      options={[
+                        { value: "", label: isRTL ? "كل الدورات" : "All courses" },
+                        ...courseOptions.map((c) => ({
+                          value: c.id,
+                          label: isRTL && c.titleAr ? c.titleAr : c.title,
+                        })),
+                      ]}
+                      className="w-60"
+                      size="sm"
+                    />
                   </div>
 
                   {/* Publish filter only makes sense on "All" — on Pending it's always unpublished; on Approved/Rejected the per-row badge already shows state */}
                   {tab === "all" && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "النشر:" : "Published:"}</span>
-                      <select
+                      <Select
                         value={publishedFilter}
-                        onChange={(e) => setPublishedFilter(e.target.value as typeof publishedFilter)}
-                        className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-card)]"
-                      >
-                        <option value="all">{isRTL ? "الكل" : "All"}</option>
-                        <option value="published">{isRTL ? "منشورة" : "Published"}</option>
-                        <option value="unpublished">{isRTL ? "غير منشورة" : "Unpublished"}</option>
-                      </select>
+                        onChange={(v) => setPublishedFilter(v as typeof publishedFilter)}
+                        options={[
+                          { value: "all", label: isRTL ? "الكل" : "All" },
+                          { value: "published", label: isRTL ? "منشورة" : "Published" },
+                          { value: "unpublished", label: isRTL ? "غير منشورة" : "Unpublished" },
+                        ]}
+                        className="w-40"
+                        size="sm"
+                      />
                     </div>
                   )}
 
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "الترتيب:" : "Sort:"}</span>
-                    <select
+                    <Select
                       value={sort}
-                      onChange={(e) => setSort(e.target.value as SortOption)}
-                      className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-card)]"
-                    >
-                      <option value="newest">{isRTL ? "الأحدث" : "Newest"}</option>
-                      <option value="oldest">{isRTL ? "الأقدم" : "Oldest"}</option>
-                      <option value="highest">{isRTL ? "الأعلى تقييماً" : "Highest rated"}</option>
-                      <option value="lowest">{isRTL ? "الأقل تقييماً" : "Lowest rated"}</option>
-                    </select>
+                      onChange={(v) => setSort(v as SortOption)}
+                      options={[
+                        { value: "newest", label: isRTL ? "الأحدث" : "Newest" },
+                        { value: "oldest", label: isRTL ? "الأقدم" : "Oldest" },
+                        { value: "highest", label: isRTL ? "الأعلى تقييماً" : "Highest rated" },
+                        { value: "lowest", label: isRTL ? "الأقل تقييماً" : "Lowest rated" },
+                      ]}
+                      className="w-40"
+                      size="sm"
+                    />
                   </div>
                 </div>
               </div>

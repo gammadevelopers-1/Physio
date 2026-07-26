@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   AlertTriangle,
   ChevronDown,
@@ -58,6 +58,7 @@ function sevTheme(sev: "minor" | "major" | "critical") {
 export default function SupportActiveIncidentsBar() {
   const locale = useLocale();
   const isAr = locale === "ar";
+  const t = useTranslations("supportDashboard.activeIncidents");
   const [incidents, setIncidents] = useState<ActiveIncidentForLink[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [ticketsByIncident, setTicketsByIncident] = useState<
@@ -112,9 +113,7 @@ export default function SupportActiveIncidentsBar() {
       <div className="flex items-center gap-2">
         <AlertTriangle className="w-4 h-4 text-[#D97706]" />
         <span className="text-[11px] uppercase tracking-wide font-semibold text-[var(--color-text-secondary)]">
-          {isAr
-            ? `${incidents.length} حادث نشط`
-            : `${incidents.length} active incident${incidents.length === 1 ? "" : "s"}`}
+          {t("activeCount", { count: incidents.length })}
         </span>
       </div>
       <div className="space-y-2">
@@ -143,16 +142,16 @@ export default function SupportActiveIncidentsBar() {
                     <span
                       className={`text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded ${theme.icon} bg-white`}
                     >
-                      {inc.severity}
+                      {t(`severity.${inc.severity}`)}
                     </span>
                     <span className={`text-[10px] uppercase ${theme.meta}`}>
-                      · {inc.currentStatus.replace("_", " ")}
+                      · {t(`status.${inc.currentStatus}`)}
                     </span>
                     {inc.audience === "end_users" && (
                       <span
                         className={`text-[9px] uppercase tracking-wide font-semibold ${theme.meta}`}
                       >
-                        · end-user
+                        · {t("audience.endUser")}
                       </span>
                     )}
                     {typeof inc.linkedTicketsCount === "number" &&
@@ -160,8 +159,7 @@ export default function SupportActiveIncidentsBar() {
                         <span
                           className={`text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white border ${theme.border} ${theme.meta}`}
                         >
-                          {inc.linkedTicketsCount} ticket
-                          {inc.linkedTicketsCount === 1 ? "" : "s"}
+                          {t("ticketCount", { count: inc.linkedTicketsCount })}
                         </span>
                       )}
                   </div>
@@ -180,45 +178,43 @@ export default function SupportActiveIncidentsBar() {
                   {linked === "loading" && (
                     <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] py-2">
                       <Loader2 className="w-3 h-3 animate-spin" />
-                      {isAr ? "جارٍ التحميل…" : "Loading tickets…"}
+                      {t("loading")}
                     </div>
                   )}
                   {linked === "error" && (
                     <div className="text-xs text-[#DC2626] py-2">
-                      {isAr ? "تعذر التحميل" : "Couldn't load"}
+                      {t("loadFailed")}
                     </div>
                   )}
                   {Array.isArray(linked) && linked.length === 0 && (
                     <p className="text-xs text-[var(--color-text-secondary)] py-2">
-                      {isAr
-                        ? "لا توجد تذاكر مرتبطة بهذا الحادث بعد."
-                        : "No tickets linked to this incident yet."}
+                      {t("noLinkedTickets")}
                     </p>
                   )}
                   {Array.isArray(linked) && linked.length > 0 && (
                     <ul className="divide-y divide-[var(--color-border-subtle)]">
-                      {linked.map((t) => {
+                      {linked.map((tk) => {
                         const name =
-                          [t.studentFirstName, t.studentLastName]
+                          [tk.studentFirstName, tk.studentLastName]
                             .filter(Boolean)
                             .join(" ") || "—";
                         return (
-                          <li key={t.ticketId}>
+                          <li key={tk.ticketId}>
                             <a
-                              href={`/${locale}/dashboard/support/supervisor/tickets/${t.ticketId}`}
+                              href={`/${locale}/dashboard/support/supervisor/tickets/${tk.ticketId}`}
                               className="flex items-center gap-2 py-1.5 text-xs hover:bg-[var(--color-border-subtle)] rounded px-1"
                             >
                               <span className="font-mono text-[10px] text-[var(--color-text-secondary)]">
-                                {t.referenceNumber}
+                                {tk.referenceNumber}
                               </span>
                               <span className="flex-1 truncate text-[var(--color-text-primary)]">
-                                {t.subject}
+                                {tk.subject}
                               </span>
                               <span className="text-[10px] text-[var(--color-text-secondary)]">
                                 {name}
                               </span>
                               <span className="text-[10px] uppercase font-semibold text-[var(--color-primary)]">
-                                {t.status}
+                                {t(`ticketStatus.${tk.status}`)}
                               </span>
                               <ExternalLink className="w-3 h-3 text-[var(--color-text-secondary)]" />
                             </a>

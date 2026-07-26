@@ -122,6 +122,7 @@ if [ "$SKIP_BUILD" = false ]; then
     cd "${FRONTEND_DIR}"
 
     docker build \
+        --network=host \
         --platform linux/amd64 \
         --build-arg NEXT_PUBLIC_API_URL="${BACKEND_URL}/api" \
         --build-arg NEXT_PUBLIC_STRAPI_URL="${STRAPI_URL}" \

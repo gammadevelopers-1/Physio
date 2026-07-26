@@ -22,6 +22,8 @@ import {
 import { invoiceApi, refundApi, financeApi } from "@/lib/api";
 import { formatDateTime } from "@/components/finance-dashboard/shared/financeFormat";
 import Select from "@/components/admin-dashboard/Select";
+import InvoiceLanguageDialog from "@/components/ui/InvoiceLanguageDialog";
+import { useInvoiceLanguage } from "@/hooks/useInvoiceLanguage";
 
 interface Transaction {
   id: string;
@@ -147,10 +149,14 @@ const PaymentsInvoicesTable = ({
     refunded: "bg-[#FFEDD5] text-[#EA580C]",
   };
 
+  const { dialogProps: langDialogProps, promptForLocale } = useInvoiceLanguage();
+
   const handleDownload = async (tx: Transaction) => {
     if (!tx.invoiceId) return;
+    const chosen = await promptForLocale();
+    if (!chosen) return;
     try {
-      const result = await invoiceApi.getPdfUrl(tx.invoiceId);
+      const result = await invoiceApi.getPdfUrl(tx.invoiceId, chosen);
       if (result?.url) window.open(result.url, "_blank");
     } catch {
       toast.error(t("paymentsTable.actions.downloadError"));
@@ -159,8 +165,10 @@ const PaymentsInvoicesTable = ({
 
   const handleResend = async (tx: Transaction) => {
     if (!tx.invoiceId) return;
+    const chosen = await promptForLocale();
+    if (!chosen) return;
     try {
-      await invoiceApi.resend(tx.invoiceId);
+      await invoiceApi.resend(tx.invoiceId, chosen);
       toast.success(t("paymentsTable.actions.resendSuccess"));
     } catch {
       toast.error(t("paymentsTable.actions.resendError"));
@@ -244,7 +252,7 @@ const PaymentsInvoicesTable = ({
               </button>
               {showExportMenu && (
                 <div
-                  className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}
+                  className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 end-0`}
                 >
                   <button
                     onClick={() => { onExport?.(); setShowExportMenu(false); }}
@@ -299,14 +307,14 @@ const PaymentsInvoicesTable = ({
             />
             <div className="flex-1 relative">
               <Search
-                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
+                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] start-3`}
               />
               <input
                 type="text"
                 value={effectiveSearch}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder={t("paymentsTable.searchPlaceholder")}
-                className={`w-full py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                className={`w-full py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20 ps-9 pe-3`}
               />
             </div>
           </div>
@@ -317,25 +325,25 @@ const PaymentsInvoicesTable = ({
           <table className="w-full" aria-label={t("a11y.paymentsInvoicesTable")}>
             <thead>
               <tr className="border-b border-[var(--color-border)]">
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("paymentsTable.columns.invoice")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("paymentsTable.columns.date")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("paymentsTable.columns.customer")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell text-start`}>
                   {t("paymentsTable.columns.course")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("paymentsTable.columns.amount")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden lg:table-cell text-start`}>
                   {t("paymentsTable.columns.gateway")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase text-start`}>
                   {t("paymentsTable.columns.status")}
                 </th>
                 <th scope="col" className="py-3 px-4 w-10"></th>
@@ -395,7 +403,7 @@ const PaymentsInvoicesTable = ({
                       </button>
                       {openActionId === tx.id && (
                         <div
-                          className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[150px] z-20 ${isRTL ? "left-0" : "right-0"}`}
+                          className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[150px] z-20 end-0`}
                         >
                           <button
                             onClick={() => { setSelectedTx(tx); setOpenActionId(null); }}
@@ -569,7 +577,7 @@ const PaymentsInvoicesTable = ({
                 >
                   <dt className="text-[var(--color-text-secondary)] font-medium flex-shrink-0">{label}</dt>
                   <dd
-                    className={`text-[var(--color-text-primary)] ${isRTL ? "text-left" : "text-right"} break-all ${mono ? "font-mono text-[11px]" : ""} ${error ? "text-[#DC2626] bg-[#FEF2F2] px-1.5 py-0.5 rounded" : ""}`}
+                    className={`text-[var(--color-text-primary)] text-end break-all ${mono ? "font-mono text-[11px]" : ""} ${error ? "text-[#DC2626] bg-[#FEF2F2] px-1.5 py-0.5 rounded" : ""}`}
                   >
                     {value}
                   </dd>
@@ -651,6 +659,7 @@ const PaymentsInvoicesTable = ({
           </div>
         </div>
       )}
+      <InvoiceLanguageDialog {...langDialogProps} />
     </>
   );
 };

@@ -6,9 +6,10 @@ import { ThresholdEvaluationService } from './threshold-evaluation.service';
 import { TaDeactivationCronService } from './ta-deactivation.cron';
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 import { AdminSettingsModule } from '../admin-settings/admin-settings.module';
+import { ZoomModule } from '../zoom/zoom.module';
 
 @Module({
-  imports: [UserNotificationsModule, AdminSettingsModule],
+  imports: [UserNotificationsModule, AdminSettingsModule, ZoomModule],
   controllers: [CourseAssistantsController, TACoursesController],
   providers: [
     CourseAssistantsService,

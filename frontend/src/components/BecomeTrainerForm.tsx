@@ -344,11 +344,30 @@ const ComboBox = ({
   disabled?: boolean;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const filtered = value.trim()
-    ? options.filter((o) => o.label.toLowerCase().includes(value.trim().toLowerCase()))
-    : options;
+  // Filter by the input value ONLY while the user is actively typing.
+  // When they reopen the dropdown after having already picked / typed a
+  // value, show the full list — otherwise the "filter" collapses down
+  // to just the one option that matches what they already picked,
+  // making it impossible to switch to a different value without first
+  // clearing the input. (Reported by trainer signups seeing e.g. only
+  // "MBBS" in the Qualification dropdown after selecting MBBS.)
+  const [isTyping, setIsTyping] = useState(false);
+  useEffect(() => {
+    if (!isOpen) setIsTyping(false);
+  }, [isOpen]);
 
-  // Close the suggestion list when clicking outside
+  const trimmed = value.trim();
+  const filtered =
+    isTyping && trimmed
+      ? options.filter((o) =>
+          o.label.toLowerCase().includes(trimmed.toLowerCase()),
+        )
+      : options;
+
+  // Close the suggestion list when clicking outside. Uses mousedown so
+  // the click that lands on an option's onMouseDown handler fires
+  // BEFORE this handler tears down the popover. Scroll gestures don't
+  // fire mousedown so scrolling never closes the popover.
   useEffect(() => {
     if (!isOpen) return;
     const onClick = (e: MouseEvent) => {
@@ -372,32 +391,58 @@ const ComboBox = ({
             value={value}
             onChange={(e) => {
               onChange(field, e.target.value);
+              setIsTyping(true);
               if (!isOpen) onToggle();
             }}
-            onFocus={() => { if (!isOpen && !disabled) onToggle(); }}
+            onFocus={() => {
+              if (!isOpen && !disabled) onToggle();
+            }}
+            onClick={() => {
+              // Clicking the input while it already has a picked value
+              // means the user wants to browse again, not narrow-search
+              // by the current pick. Reset typing so all options show.
+              setIsTyping(false);
+              if (!isOpen && !disabled) onToggle();
+            }}
             placeholder={placeholder}
             disabled={disabled}
             className={`w-full h-12 px-4 pe-10 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? "text-right" : ""}`}
             style={{ fontSize: "16px" }}
           />
           <ChevronDown className={`pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--on-surface-variant)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
-          {isOpen && options.length > 0 && filtered.length > 0 && (
-            <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[var(--color-input-border)] rounded-lg shadow-lg z-20 max-h-72 overflow-y-auto">
-              {filtered.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    onChange(field, option.label);
-                    onToggle();
-                  }}
-                  className={`w-full px-4 py-2.5 hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
-                  style={{ fontSize: "16px" }}
+          {isOpen && options.length > 0 && (
+            <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[var(--color-input-border)] rounded-lg shadow-lg z-20 max-h-72 overflow-y-auto overscroll-contain">
+              {filtered.length > 0 ? (
+                filtered.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onChange(field, option.label);
+                      setIsTyping(false);
+                      onToggle();
+                    }}
+                    className={`w-full px-4 py-2.5 hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                    style={{ fontSize: "16px" }}
+                  >
+                    {option.label}
+                  </button>
+                ))
+              ) : (
+                // No option matches what the user is typing — show a
+                // hint so the field doesn't appear frozen. The value
+                // is still saved as free-text; no interaction needed
+                // to accept it.
+                <div
+                  className={`px-4 py-2.5 text-[var(--on-surface-variant)] italic ${isRTL ? "text-right" : "text-left"}`}
+                  style={{ fontSize: "14px" }}
                 >
-                  {option.label}
-                </button>
-              ))}
+                  {isRTL
+                    ? `سيتم حفظ "${trimmed}" كإدخال مخصص`
+                    : `"${trimmed}" will be saved as a custom entry`}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1574,10 +1619,15 @@ const BecomeTrainerForm = ({
                   <SearchableDropdown label={isRTL ? "المدينة" : "City"} field="cityName" required placeholder={isRTL ? "أدخل المدينة" : "Enter city"} options={[]} value={formData.cityName} isOpen={false} onToggle={() => {}} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.stateName} />
                 )}
 
-                {showProfession && <ComboBox label={labels.profession} field="profession" required placeholder={isRTL ? "اختر أو اكتب المهنة" : "Select or type profession"} options={professionOptions} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onChange={handleDropdownSelect} isRTL={isRTL} />}
-                {showSpecialty && <ComboBox label={labels.speciality} field="specialty" required placeholder={!formData.profession ? (isRTL ? "اختر المهنة أولاً" : "Pick a profession first") : (isRTL ? "اختر أو اكتب التخصص" : "Select or type specialty")} options={specialtyOptions} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onChange={handleDropdownSelect} isRTL={isRTL} disabled={!formData.profession} />}
-                {showQualification && <ComboBox label={labels.qualification} field="qualification" required placeholder={isRTL ? "اختر أو اكتب المؤهل" : "Select or type qualification"} options={qualificationOptions} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onChange={handleDropdownSelect} isRTL={isRTL} />}
-                {showAcademicRank && <ComboBox label={labels.rank} field="rank" required placeholder={isRTL ? "اختر أو اكتب الدرجة" : "Select or type rank"} options={rankOptions} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onChange={handleDropdownSelect} isRTL={isRTL} />}
+                {/* Profession / Speciality / Qualification / Rank are
+                    pure searchable dropdowns — pick-only, not writable.
+                    Client asked for real dropdowns after applicants typed
+                    garbage into the free-text ComboBox. Bank stays as
+                    ComboBox below because bank lists lag behind reality. */}
+                {showProfession && <SearchableDropdown label={labels.profession} field="profession" required placeholder={isRTL ? "اختر المهنة" : "Select profession"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={professionOptions} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} isRTL={isRTL} />}
+                {showSpecialty && <SearchableDropdown label={labels.speciality} field="specialty" required placeholder={!formData.profession ? (isRTL ? "اختر المهنة أولاً" : "Pick a profession first") : (isRTL ? "اختر التخصص" : "Select specialty")} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={specialtyOptions} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onSelect={handleDropdownSelect} isRTL={isRTL} disabled={!formData.profession} />}
+                {showQualification && <SearchableDropdown label={labels.qualification} field="qualification" required placeholder={isRTL ? "اختر المؤهل" : "Select qualification"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={qualificationOptions} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} isRTL={isRTL} />}
+                {showAcademicRank && <SearchableDropdown label={labels.rank} field="rank" required placeholder={isRTL ? "اختر الدرجة" : "Select rank"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={rankOptions} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} isRTL={isRTL} />}
 
                 {/* SCFHS Number Question */}
                 <div className="flex py-6 justify-between">
@@ -1813,10 +1863,10 @@ const BecomeTrainerForm = ({
                 <SearchableDropdown label={isRTL ? "المدينة" : "City"} field="cityName" required placeholder={isRTL ? "أدخل المدينة" : "Enter city"} options={[]} value={formData.cityName} isOpen={false} onToggle={() => {}} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.stateName} />
               )}
 
-              {showProfession && <ComboBox label={labels.profession} field="profession" required placeholder={isRTL ? "اختر أو اكتب المهنة" : "Select or type profession"} options={professionOptions} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onChange={handleDropdownSelect} isRTL={isRTL} />}
-              {showSpecialty && <ComboBox label={labels.speciality} field="specialty" required placeholder={!formData.profession ? (isRTL ? "اختر المهنة أولاً" : "Pick a profession first") : (isRTL ? "اختر أو اكتب التخصص" : "Select or type specialty")} options={specialtyOptions} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onChange={handleDropdownSelect} isRTL={isRTL} disabled={!formData.profession} />}
-              {showQualification && <ComboBox label={labels.qualification} field="qualification" required placeholder={isRTL ? "اختر أو اكتب المؤهل" : "Select or type qualification"} options={qualificationOptions} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onChange={handleDropdownSelect} isRTL={isRTL} />}
-              {showAcademicRank && <ComboBox label={labels.rank} field="rank" required placeholder={isRTL ? "اختر أو اكتب الدرجة" : "Select or type rank"} options={rankOptions} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onChange={handleDropdownSelect} isRTL={isRTL} />}
+              {showProfession && <SearchableDropdown label={labels.profession} field="profession" required placeholder={isRTL ? "اختر المهنة" : "Select profession"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={professionOptions} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} isRTL={isRTL} />}
+              {showSpecialty && <SearchableDropdown label={labels.speciality} field="specialty" required placeholder={!formData.profession ? (isRTL ? "اختر المهنة أولاً" : "Pick a profession first") : (isRTL ? "اختر التخصص" : "Select specialty")} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={specialtyOptions} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onSelect={handleDropdownSelect} isRTL={isRTL} disabled={!formData.profession} />}
+              {showQualification && <SearchableDropdown label={labels.qualification} field="qualification" required placeholder={isRTL ? "اختر المؤهل" : "Select qualification"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={qualificationOptions} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} isRTL={isRTL} />}
+              {showAcademicRank && <SearchableDropdown label={labels.rank} field="rank" required placeholder={isRTL ? "اختر الدرجة" : "Select rank"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={rankOptions} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} isRTL={isRTL} />}
 
               {/* SCFHS Number Question */}
               <div className="flex flex-col gap-3">

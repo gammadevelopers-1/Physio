@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
+import Select from "@/components/ui/Select";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDate, formatPlatformDateReadable } from "@/lib/platform-locale";
@@ -162,34 +163,32 @@ const CreateAssessmentModal = ({
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("assessments.course")}
             </label>
-            <select
+            <Select
               value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              required
-            >
-              {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
-                <option key={c.id} value={c.id}>
-                  {locale === "ar" && c.titleAr ? c.titleAr : c.title}
-                </option>
-              ))}
-            </select>
+              onChange={setCourseId}
+              className="w-full"
+              options={courses
+                .filter((c) => c.status !== "completed" && c.status !== "archived")
+                .map((c) => ({
+                  value: c.id,
+                  label: locale === "ar" && c.titleAr ? c.titleAr : c.title,
+                }))}
+            />
           </div>
           {courseModules.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.selectModule") || "Module"}
               </label>
-              <select
+              <Select
                 value={moduleId}
-                onChange={(e) => setModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="">{t("assessments.noModule") || "No module (general)"}</option>
-                {courseModules.map((m) => (
-                  <option key={m.id} value={m.id}>{m.title}</option>
-                ))}
-              </select>
+                onChange={setModuleId}
+                className="w-full"
+                options={[
+                  { value: "", label: t("assessments.noModule") || "No module (general)" },
+                  ...courseModules.map((m) => ({ value: m.id, label: m.title })),
+                ]}
+              />
             </div>
           )}
           <div>
@@ -210,15 +209,16 @@ const CreateAssessmentModal = ({
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.type")}
               </label>
-              <select
+              <Select
                 value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="quiz">{t("assessments.typeQuiz")}</option>
-                <option value="exam">{t("assessments.typeExam")}</option>
-                <option value="assignment">{t("assessments.typeAssignment")}</option>
-              </select>
+                onChange={setType}
+                className="w-full"
+                options={[
+                  { value: "quiz", label: t("assessments.typeQuiz") },
+                  { value: "exam", label: t("assessments.typeExam") },
+                  { value: "assignment", label: t("assessments.typeAssignment") },
+                ]}
+              />
             </div>
             {!isAssignment ? (
               <div>
@@ -429,16 +429,15 @@ const EditAssessmentModal = ({
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.selectModule") || "Module"}
               </label>
-              <select
+              <Select
                 value={editModuleId}
-                onChange={(e) => setEditModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="">{t("assessments.noModule") || "No module (general)"}</option>
-                {editCourseModules.map((m) => (
-                  <option key={m.id} value={m.id}>{m.title}</option>
-                ))}
-              </select>
+                onChange={setEditModuleId}
+                className="w-full"
+                options={[
+                  { value: "", label: t("assessments.noModule") || "No module (general)" },
+                  ...editCourseModules.map((m) => ({ value: m.id, label: m.title })),
+                ]}
+              />
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">
@@ -446,29 +445,31 @@ const EditAssessmentModal = ({
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.type")}
               </label>
-              <select
+              <Select
                 value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="quiz">{t("assessments.typeQuiz")}</option>
-                <option value="exam">{t("assessments.typeExam")}</option>
-                <option value="assignment">{t("assessments.typeAssignment")}</option>
-              </select>
+                onChange={setType}
+                className="w-full"
+                options={[
+                  { value: "quiz", label: t("assessments.typeQuiz") },
+                  { value: "exam", label: t("assessments.typeExam") },
+                  { value: "assignment", label: t("assessments.typeAssignment") },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.status")}
               </label>
-              <select
+              <Select
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="draft">{t("assessments.statusDraft")}</option>
-                <option value="published">{t("assessments.statusPublished")}</option>
-                <option value="closed">{t("assessments.statusClosed")}</option>
-              </select>
+                onChange={setStatus}
+                className="w-full"
+                options={[
+                  { value: "draft", label: t("assessments.statusDraft") },
+                  { value: "published", label: t("assessments.statusPublished") },
+                  { value: "closed", label: t("assessments.statusClosed") },
+                ]}
+              />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
@@ -706,30 +707,32 @@ const AddQuestionModal = ({
               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.questionType")}
               </label>
-              <select
+              <Select
                 value={qType}
-                onChange={(e) => setQType(e.target.value as QuestionType)}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="mcq">{t("assessments.typeMCQ")}</option>
-                <option value="true_false">{t("assessments.typeTrueFalse")}</option>
-                <option value="short_answer">{t("assessments.typeShortAnswer")}</option>
-                <option value="essay">{t("assessments.typeEssay")}</option>
-              </select>
+                onChange={(v) => setQType(v as QuestionType)}
+                className="w-full"
+                options={[
+                  { value: "mcq", label: t("assessments.typeMCQ") },
+                  { value: "true_false", label: t("assessments.typeTrueFalse") },
+                  { value: "short_answer", label: t("assessments.typeShortAnswer") },
+                  { value: "essay", label: t("assessments.typeEssay") },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.difficulty")}
               </label>
-              <select
+              <Select
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="easy">{t("assessments.difficultyEasy")}</option>
-                <option value="medium">{t("assessments.difficultyMedium")}</option>
-                <option value="hard">{t("assessments.difficultyHard")}</option>
-              </select>
+                onChange={(v) => setDifficulty(v as DifficultyLevel)}
+                className="w-full"
+                options={[
+                  { value: "easy", label: t("assessments.difficultyEasy") },
+                  { value: "medium", label: t("assessments.difficultyMedium") },
+                  { value: "hard", label: t("assessments.difficultyHard") },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
@@ -1009,30 +1012,32 @@ const EditQuestionModal = ({
               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.questionType")}
               </label>
-              <select
+              <Select
                 value={qType}
-                onChange={(e) => setQType(e.target.value as QuestionType)}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="mcq">{t("assessments.typeMCQ")}</option>
-                <option value="true_false">{t("assessments.typeTrueFalse")}</option>
-                <option value="short_answer">{t("assessments.typeShortAnswer")}</option>
-                <option value="essay">{t("assessments.typeEssay")}</option>
-              </select>
+                onChange={(v) => setQType(v as QuestionType)}
+                className="w-full"
+                options={[
+                  { value: "mcq", label: t("assessments.typeMCQ") },
+                  { value: "true_false", label: t("assessments.typeTrueFalse") },
+                  { value: "short_answer", label: t("assessments.typeShortAnswer") },
+                  { value: "essay", label: t("assessments.typeEssay") },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.difficulty")}
               </label>
-              <select
+              <Select
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="easy">{t("assessments.difficultyEasy")}</option>
-                <option value="medium">{t("assessments.difficultyMedium")}</option>
-                <option value="hard">{t("assessments.difficultyHard")}</option>
-              </select>
+                onChange={(v) => setDifficulty(v as DifficultyLevel)}
+                className="w-full"
+                options={[
+                  { value: "easy", label: t("assessments.difficultyEasy") },
+                  { value: "medium", label: t("assessments.difficultyMedium") },
+                  { value: "hard", label: t("assessments.difficultyHard") },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
@@ -1507,7 +1512,6 @@ const AssessmentsContent = () => {
   const t = useTranslations("instructorDashboard");
   const tToasts = useTranslations("toasts");
   const locale = useLocale();
-  const isRTL = locale === "ar";
   const platformLocale = usePlatformLocale();
 
   // Global state
@@ -2054,14 +2058,14 @@ const AssessmentsContent = () => {
                           <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-1">
                               <Search
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] start-3`}
                               />
                               <input
                                 type="text"
                                 placeholder={t("assessments.searchPlaceholder")}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent ps-10 pe-4`}
                               />
                             </div>
                             <button
@@ -2075,70 +2079,58 @@ const AssessmentsContent = () => {
                               />
                             </button>
                             <div className="hidden md:flex gap-3">
-                              <select
+                              <Select
                                 value={selectedCourse}
-                                onChange={(e) => setSelectedCourse(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                              >
-                                <option value="all">{t("assessments.allCourses")}</option>
-                                {courses.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {locale === "ar" && c.titleAr ? c.titleAr : c.title}
-                                  </option>
-                                ))}
-                              </select>
-                              <select
+                                onChange={setSelectedCourse}
+                                className="min-w-[180px]"
+                                options={[
+                                  { value: "all", label: t("assessments.allCourses") },
+                                  ...courses.map((c) => ({
+                                    value: c.id,
+                                    label: locale === "ar" && c.titleAr ? c.titleAr : c.title,
+                                  })),
+                                ]}
+                              />
+                              <Select
                                 value={selectedType}
-                                onChange={(e) => setSelectedType(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                              >
-                                {types.map((t_) => (
-                                  <option key={t_.id} value={t_.id}>{t_.name}</option>
-                                ))}
-                              </select>
-                              <select
+                                onChange={setSelectedType}
+                                className="min-w-[140px]"
+                                options={types.map((t_) => ({ value: t_.id, label: t_.name }))}
+                              />
+                              <Select
                                 value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                              >
-                                {statusOptions.map((s) => (
-                                  <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                              </select>
+                                onChange={setSelectedStatus}
+                                className="min-w-[140px]"
+                                options={statusOptions.map((s) => ({ value: s.id, label: s.name }))}
+                              />
                             </div>
                           </div>
                           {showFilters && (
                             <div className="md:hidden mt-4 pt-4 border-t border-[var(--color-border)] grid grid-cols-2 gap-3">
-                              <select
+                              <Select
                                 value={selectedCourse}
-                                onChange={(e) => setSelectedCourse(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                              >
-                                <option value="all">{t("assessments.allCourses")}</option>
-                                {courses.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {locale === "ar" && c.titleAr ? c.titleAr : c.title}
-                                  </option>
-                                ))}
-                              </select>
-                              <select
+                                onChange={setSelectedCourse}
+                                className="w-full"
+                                options={[
+                                  { value: "all", label: t("assessments.allCourses") },
+                                  ...courses.map((c) => ({
+                                    value: c.id,
+                                    label: locale === "ar" && c.titleAr ? c.titleAr : c.title,
+                                  })),
+                                ]}
+                              />
+                              <Select
                                 value={selectedType}
-                                onChange={(e) => setSelectedType(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                              >
-                                {types.map((t_) => (
-                                  <option key={t_.id} value={t_.id}>{t_.name}</option>
-                                ))}
-                              </select>
-                              <select
+                                onChange={setSelectedType}
+                                className="w-full"
+                                options={types.map((t_) => ({ value: t_.id, label: t_.name }))}
+                              />
+                              <Select
                                 value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                              >
-                                {statusOptions.map((s) => (
-                                  <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                              </select>
+                                onChange={setSelectedStatus}
+                                className="w-full"
+                                options={statusOptions.map((s) => ({ value: s.id, label: s.name }))}
+                              />
                             </div>
                           )}
                         </div>
@@ -2296,16 +2288,18 @@ const AssessmentsContent = () => {
                         {!selectedAssessmentForQ && (
                           <div className="space-y-3">
                             <div className="flex flex-col sm:flex-row gap-3">
-                              <select
+                              <Select
                                 value={qbCourseFilter}
-                                onChange={(e) => { setQbCourseFilter(e.target.value); setSelectedAssessmentForQ(""); }}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-w-[200px]"
-                              >
-                                <option value="">{t("assessments.allCourses")}</option>
-                                {courses.map((c) => (
-                                  <option key={c.id} value={c.id}>{locale === "ar" && c.titleAr ? c.titleAr : c.title}</option>
-                                ))}
-                              </select>
+                                onChange={(v) => { setQbCourseFilter(v); setSelectedAssessmentForQ(""); }}
+                                className="min-w-[200px]"
+                                options={[
+                                  { value: "", label: t("assessments.allCourses") },
+                                  ...courses.map((c) => ({
+                                    value: c.id,
+                                    label: locale === "ar" && c.titleAr ? c.titleAr : c.title,
+                                  })),
+                                ]}
+                              />
                               <div className="relative flex-1 min-w-[200px]">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                                 <input
@@ -2316,25 +2310,27 @@ const AssessmentsContent = () => {
                                   className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                                 />
                               </div>
-                              <select
+                              <Select
                                 value={qbStatusFilter}
-                                onChange={(e) => setQbStatusFilter(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                              >
-                                <option value="all">{t("assessments.allStatuses")}</option>
-                                <option value="draft">{t("assessments.statusDraft")}</option>
-                                <option value="published">{t("assessments.statusPublished")}</option>
-                              </select>
-                              <select
+                                onChange={setQbStatusFilter}
+                                className="min-w-[160px]"
+                                options={[
+                                  { value: "all", label: t("assessments.allStatuses") },
+                                  { value: "draft", label: t("assessments.statusDraft") },
+                                  { value: "published", label: t("assessments.statusPublished") },
+                                ]}
+                              />
+                              <Select
                                 value={qbTypeFilter}
-                                onChange={(e) => setQbTypeFilter(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                              >
-                                <option value="all">{t("assessments.allTypes")}</option>
-                                <option value="quiz">{t("assessments.typeQuiz")}</option>
-                                <option value="exam">{t("assessments.typeExam")}</option>
-                                <option value="assignment">{t("assessments.typeAssignment")}</option>
-                              </select>
+                                onChange={setQbTypeFilter}
+                                className="min-w-[160px]"
+                                options={[
+                                  { value: "all", label: t("assessments.allTypes") },
+                                  { value: "quiz", label: t("assessments.typeQuiz") },
+                                  { value: "exam", label: t("assessments.typeExam") },
+                                  { value: "assignment", label: t("assessments.typeAssignment") },
+                                ]}
+                              />
                             </div>
 
                             {/* Step 2: Assessment Cards List */}
@@ -2422,27 +2418,31 @@ const AssessmentsContent = () => {
                             <div className="flex items-center gap-2">
                               {!isQbAssignment && !selectedAssessmentForQ.startsWith("course:") && selectedAssessmentForQ && (
                                 <>
-                                  <select
+                                  <Select
                                     value={questionTypeFilter}
-                                    onChange={(e) => setQuestionTypeFilter(e.target.value)}
-                                    className="px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                                  >
-                                    <option value="all">{t("assessments.allTypes")}</option>
-                                    <option value="mcq">{t("assessments.typeMCQ")}</option>
-                                    <option value="true_false">{t("assessments.typeTrueFalse")}</option>
-                                    <option value="short_answer">{t("assessments.typeShortAnswer")}</option>
-                                    <option value="essay">{t("assessments.typeEssay")}</option>
-                                  </select>
-                                  <select
+                                    onChange={setQuestionTypeFilter}
+                                    size="sm"
+                                    className="min-w-[140px]"
+                                    options={[
+                                      { value: "all", label: t("assessments.allTypes") },
+                                      { value: "mcq", label: t("assessments.typeMCQ") },
+                                      { value: "true_false", label: t("assessments.typeTrueFalse") },
+                                      { value: "short_answer", label: t("assessments.typeShortAnswer") },
+                                      { value: "essay", label: t("assessments.typeEssay") },
+                                    ]}
+                                  />
+                                  <Select
                                     value={questionDifficultyFilter}
-                                    onChange={(e) => setQuestionDifficultyFilter(e.target.value)}
-                                    className="px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                                  >
-                                    <option value="all">{t("assessments.allDifficulties")}</option>
-                                    <option value="easy">{t("assessments.difficultyEasy")}</option>
-                                    <option value="medium">{t("assessments.difficultyMedium")}</option>
-                                    <option value="hard">{t("assessments.difficultyHard")}</option>
-                                  </select>
+                                    onChange={setQuestionDifficultyFilter}
+                                    size="sm"
+                                    className="min-w-[140px]"
+                                    options={[
+                                      { value: "all", label: t("assessments.allDifficulties") },
+                                      { value: "easy", label: t("assessments.difficultyEasy") },
+                                      { value: "medium", label: t("assessments.difficultyMedium") },
+                                      { value: "hard", label: t("assessments.difficultyHard") },
+                                    ]}
+                                  />
                                 </>
                               )}
                               {!isQbAssignment && !selectedAssessmentForQ.startsWith("course:") && selectedAssessmentForQ && (
@@ -2675,16 +2675,18 @@ const AssessmentsContent = () => {
                         {!selectedAssessmentForS && (
                           <div className="space-y-3">
                             <div className="flex flex-col sm:flex-row gap-3">
-                              <select
+                              <Select
                                 value={subCourseFilter}
-                                onChange={(e) => { setSubCourseFilter(e.target.value); }}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-w-[200px]"
-                              >
-                                <option value="">{t("assessments.allCourses")}</option>
-                                {courses.map((c) => (
-                                  <option key={c.id} value={c.id}>{locale === "ar" && c.titleAr ? c.titleAr : c.title}</option>
-                                ))}
-                              </select>
+                                onChange={setSubCourseFilter}
+                                className="min-w-[200px]"
+                                options={[
+                                  { value: "", label: t("assessments.allCourses") },
+                                  ...courses.map((c) => ({
+                                    value: c.id,
+                                    label: locale === "ar" && c.titleAr ? c.titleAr : c.title,
+                                  })),
+                                ]}
+                              />
                               <div className="relative flex-1 min-w-[200px]">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                                 <input
@@ -2755,16 +2757,18 @@ const AssessmentsContent = () => {
                                 )}
                               </div>
                             </div>
-                            <select
+                            <Select
                               value={submissionStatusFilter}
-                              onChange={(e) => setSubmissionStatusFilter(e.target.value)}
-                              className="px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                            >
-                              <option value="all">{t("assessments.filterByStatus")}</option>
-                              <option value="submitted">{t("assessments.submissionPending")}</option>
-                              <option value="graded">{t("assessments.submissionGraded")}</option>
-                              <option value="in_progress">{t("assessments.submissionInProgress")}</option>
-                            </select>
+                              onChange={setSubmissionStatusFilter}
+                              size="sm"
+                              className="min-w-[160px]"
+                              options={[
+                                { value: "all", label: t("assessments.filterByStatus") },
+                                { value: "submitted", label: t("assessments.submissionPending") },
+                                { value: "graded", label: t("assessments.submissionGraded") },
+                                { value: "in_progress", label: t("assessments.submissionInProgress") },
+                              ]}
+                            />
                           </div>
                         )}
 
@@ -2986,16 +2990,18 @@ const AssessmentsContent = () => {
                         {!selectedAssessmentForIA && (
                           <div className="space-y-3">
                             <div className="flex flex-col sm:flex-row gap-3">
-                              <select
+                              <Select
                                 value={iaCourseFilter}
-                                onChange={(e) => { setIaCourseFilter(e.target.value); }}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-w-[200px]"
-                              >
-                                <option value="">{t("assessments.allCourses") || "All Courses"}</option>
-                                {courses.map((c) => (
-                                  <option key={c.id} value={c.id}>{locale === "ar" && c.titleAr ? c.titleAr : c.title}</option>
-                                ))}
-                              </select>
+                                onChange={setIaCourseFilter}
+                                className="min-w-[200px]"
+                                options={[
+                                  { value: "", label: t("assessments.allCourses") || "All Courses" },
+                                  ...courses.map((c) => ({
+                                    value: c.id,
+                                    label: locale === "ar" && c.titleAr ? c.titleAr : c.title,
+                                  })),
+                                ]}
+                              />
                               <div className="relative flex-1 min-w-[200px]">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                                 <input

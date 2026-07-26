@@ -83,8 +83,8 @@ const SupportKPICards = ({ data }: SupportKPICardsProps) => {
           : "—",
       meta:
         (data.csatResponses ?? 0) > 0
-          ? `${data.csatResponses} responses`
-          : "No responses yet",
+          ? t("kpi.csatResponses", { count: data.csatResponses ?? 0 })
+          : t("kpi.csatNoResponses"),
       icon: Smile,
       iconBg: "bg-[#FEF3C7]",
       iconColor: "text-[#D97706]",

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { Copyright, Facebook, Linkedin, Twitter, Instagram } from "lucide-react";
+import NelcVerificationBadge from "./NelcVerificationBadge";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
@@ -91,7 +92,10 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
       className="hidden lg:block bg-[var(--color-footer-bg)] pt-20 pb-12"
       style={{ padding: "80px 64px 48px 64px" }}
     >
-      <div className="flex flex-col gap-12">
+      {/* Cap footer content at 1440px and center — matches the marketing
+          sections above so nothing stretches to the edges on ultra-wide
+          displays. Outer <footer> stays full-bleed for the bg color. */}
+      <div className="flex flex-col gap-12 max-w-[1440px] mx-auto">
         {/* Main Footer Content */}
         {hasMainRow && (
           <div className="flex items-start justify-between w-full gap-8 flex-wrap">
@@ -317,6 +321,11 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
               </div>
             )}
 
+            {/* Official NELC (SDAIA e-learning regulator) trust mark.
+                Rendered inline at the far end of the copyright row so
+                it lives with the other footer trust marks instead of
+                floating on top of the page content. */}
+            <NelcVerificationBadge />
           </div>
         )}
       </div>

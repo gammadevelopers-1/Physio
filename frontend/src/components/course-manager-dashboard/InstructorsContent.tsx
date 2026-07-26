@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import SkeletonCard from "@/components/shared/SkeletonCard";
 import ExportButton from "@/components/shared/ExportButton";
+import Select from "@/components/admin-dashboard/Select";
 
 interface RosterInstructor {
   id: string;
@@ -282,16 +283,18 @@ const InstructorsContent = () => {
                     className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent`}
                   />
                 </div>
-                <select
+                <Select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent outline-none"
-                >
-                  <option value="all">{t("instructorsPage.filters.allStatus")}</option>
-                  <option value="available">{t("instructorsPage.filters.available")}</option>
-                  <option value="busy">{t("instructorsPage.filters.busy")}</option>
-                  <option value="overloaded">{t("instructorsPage.filters.overloaded")}</option>
-                </select>
+                  onChange={(v) => setStatusFilter(v as typeof statusFilter)}
+                  options={[
+                    { value: "all", label: t("instructorsPage.filters.allStatus") },
+                    { value: "available", label: t("instructorsPage.filters.available") },
+                    { value: "busy", label: t("instructorsPage.filters.busy") },
+                    { value: "overloaded", label: t("instructorsPage.filters.overloaded") },
+                  ]}
+                  className="w-40"
+                  size="sm"
+                />
               </div>
 
               {loading && (

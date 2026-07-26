@@ -54,6 +54,16 @@ export interface StudentEnrolledCourse {
   originalStartDate?: string | null;
   enrollmentId: string;
   enrollmentStatus: string;
+  /**
+   * How this enrollment came to be. Drives the small provenance chip next
+   * to the course title on My Courses. `purchase` renders no chip.
+   */
+  enrollmentSource?:
+    | "purchase"
+    | "points_redemption"
+    | "reward"
+    | "admin_grant"
+    | "free_public";
   progress: number;
   enrolledAt: string;
   completedAt: string | null;

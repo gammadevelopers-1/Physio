@@ -381,9 +381,12 @@ export class ZoomWebhookService {
         emitRegisteredForXapi = true;
       }
     } else {
+      // Zoom webhook auto-enrol runs only for free webinars — capacity
+      // checks are skipped upstream because Zoom itself gates capacity.
+      // Tag as 'free_public' for report parity with the self-enrol path.
       const [created] = await db
         .insert(enrollments)
-        .values({ courseId: course.id, studentId: userId })
+        .values({ courseId: course.id, studentId: userId, source: 'free_public' })
         .returning({ id: enrollments.id });
       enrollmentIdForXapi = created.id;
       emitRegisteredForXapi = true;

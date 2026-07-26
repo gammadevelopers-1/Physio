@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -32,7 +32,13 @@ interface Props {
   ticketId: string;
 }
 
-function severityChip(sev: "minor" | "major" | "critical") {
+function SeverityChip({
+  sev,
+  label,
+}: {
+  sev: "minor" | "major" | "critical";
+  label: string;
+}) {
   const map: Record<string, { bg: string; text: string }> = {
     critical: { bg: "bg-[#FEE2E2]", text: "text-[#991B1B]" },
     major: { bg: "bg-[#FFFBEB]", text: "text-[#92400E]" },
@@ -43,7 +49,7 @@ function severityChip(sev: "minor" | "major" | "critical") {
     <span
       className={`text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded ${p.bg} ${p.text}`}
     >
-      {sev}
+      {label}
     </span>
   );
 }
@@ -51,6 +57,8 @@ function severityChip(sev: "minor" | "major" | "critical") {
 export default function TicketIncidentLinker({ ticketId }: Props) {
   const locale = useLocale();
   const isAr = locale === "ar";
+  const t = useTranslations("supportDashboard.incidentLinker");
+  const tInc = useTranslations("supportDashboard.activeIncidents");
   const [linked, setLinked] = useState<IncidentForTicket[]>([]);
   const [active, setActive] = useState<ActiveIncidentForLink[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,12 +96,12 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
     setAdding(true);
     try {
       await serviceStatusApi.linkTicketToIncident(pickedId, ticketId);
-      toast.success(isAr ? "تم ربط التذكرة" : "Ticket linked to incident");
+      toast.success(t("toasts.linked"));
       setPickerOpen(false);
       setPickedId("");
       await load();
     } catch (e: any) {
-      toast.error(e?.message || (isAr ? "تعذر الربط" : "Could not link"));
+      toast.error(e?.message || t("toasts.linkFailed"));
     } finally {
       setAdding(false);
     }
@@ -103,10 +111,10 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
     setUnlinkingId(incidentId);
     try {
       await serviceStatusApi.unlinkTicketFromIncident(incidentId, ticketId);
-      toast.success(isAr ? "تم إلغاء الربط" : "Unlinked");
+      toast.success(t("toasts.unlinked"));
       await load();
     } catch (e: any) {
-      toast.error(e?.message || (isAr ? "تعذر الإلغاء" : "Could not unlink"));
+      toast.error(e?.message || t("toasts.unlinkFailed"));
     } finally {
       setUnlinkingId(null);
     }
@@ -116,7 +124,7 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
     return (
       <div className="bg-white rounded-2xl border border-[var(--color-border)] p-3 flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        {isAr ? "جارٍ التحميل…" : "Loading incidents…"}
+        {t("loading")}
       </div>
     );
   }
@@ -126,7 +134,7 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
       <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--color-border-subtle)]">
         <Link2 className="w-4 h-4 text-[var(--color-primary)]" />
         <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-          {isAr ? "الحوادث المرتبطة" : "Linked incidents"}
+          {t("title")}
         </span>
         {linked.length > 0 && (
           <span className="text-[10px] text-[var(--color-text-secondary)] ms-auto">
@@ -138,9 +146,7 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
       <div className="p-3 space-y-2">
         {linked.length === 0 && !pickerOpen && (
           <p className="text-[11px] text-[var(--color-text-secondary)] leading-relaxed">
-            {isAr
-              ? "لا توجد حوادث مرتبطة. اربط هذه التذكرة بحادث نشط لإعلام صاحبها تلقائياً عند الحل."
-              : "No linked incidents. Link this ticket to an active incident so the requester is notified automatically on resolution."}
+            {t("emptyDescription")}
           </p>
         )}
 
@@ -152,9 +158,9 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
             <div className="flex items-start gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                  {severityChip(inc.severity)}
+                  <SeverityChip sev={inc.severity} label={tInc(`severity.${inc.severity}`)} />
                   <span className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)]">
-                    {inc.currentStatus.replace("_", " ")}
+                    {tInc(`status.${inc.currentStatus}`)}
                   </span>
                 </div>
                 <p className="text-xs font-medium text-[var(--color-text-primary)] line-clamp-2">
@@ -166,7 +172,7 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
                 onClick={() => handleUnlink(inc.incidentId)}
                 disabled={unlinkingId === inc.incidentId}
                 className="flex-shrink-0 w-6 h-6 rounded hover:bg-[var(--color-border-subtle)] flex items-center justify-center text-[var(--color-text-secondary)] disabled:opacity-50"
-                aria-label="Unlink"
+                aria-label={t("unlinkAria")}
               >
                 {unlinkingId === inc.incidentId ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -179,12 +185,12 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
               {inc.resolvedAt ? (
                 <>
                   <CheckCircle2 className="w-3 h-3 text-[#16A34A]" />
-                  {isAr ? "تم الحل" : "Resolved"}
+                  {t("resolvedLabel")}
                 </>
               ) : (
                 <>
                   <AlertTriangle className="w-3 h-3 text-[#D97706]" />
-                  {isAr ? "نشط" : "Active"}
+                  {t("activeLabel")}
                 </>
               )}
             </div>
@@ -195,7 +201,7 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
           <div className="border border-[var(--color-border-subtle)] rounded-lg p-2.5 space-y-2 bg-[var(--color-surface-page)]">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-wide font-semibold text-[var(--color-text-secondary)]">
-                {isAr ? "اختر حادثاً نشطاً" : "Pick active incident"}
+                {t("pickActive")}
               </span>
               <button
                 type="button"
@@ -204,16 +210,14 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
                   setPickedId("");
                 }}
                 className="w-5 h-5 rounded hover:bg-white flex items-center justify-center text-[var(--color-text-secondary)]"
-                aria-label="Close picker"
+                aria-label={t("closePickerAria")}
               >
                 <X className="w-3 h-3" />
               </button>
             </div>
             {linkableActive.length === 0 ? (
               <p className="text-[11px] text-[var(--color-text-secondary)] leading-relaxed">
-                {isAr
-                  ? "لا توجد حوادث نشطة متاحة للربط."
-                  : "No active incidents available to link."}
+                {t("noneAvailable")}
               </p>
             ) : (
               <>
@@ -221,10 +225,10 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
                   size="sm"
                   value={pickedId}
                   onChange={(v) => setPickedId(v)}
-                  placeholder={isAr ? "اختر…" : "Select…"}
+                  placeholder={t("selectPlaceholder")}
                   options={linkableActive.map((a) => ({
                     value: a.id,
-                    label: `${(isAr && a.titleAr ? a.titleAr : a.titleEn)} · ${a.severity}`,
+                    label: `${(isAr && a.titleAr ? a.titleAr : a.titleEn)} · ${tInc(`severity.${a.severity}`)}`,
                   }))}
                 />
                 <button
@@ -238,7 +242,7 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
                   ) : (
                     <Link2 className="w-3 h-3" />
                   )}
-                  {isAr ? "ربط" : "Link"}
+                  {t("linkButton")}
                 </button>
               </>
             )}
@@ -250,7 +254,7 @@ export default function TicketIncidentLinker({ ticketId }: Props) {
             className="w-full inline-flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-lg border border-dashed border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] text-[var(--color-text-secondary)] transition-colors"
           >
             <Plus className="w-3 h-3" />
-            {isAr ? "ربط بحادث نشط" : "Link to active incident"}
+            {t("linkToActive")}
           </button>
         )}
       </div>

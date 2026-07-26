@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
-import PDFDocument from 'pdfkit';
+import * as PDFDocument from 'pdfkit';
 import { eq, and, or, desc, asc, sql, ilike, count, inArray, notInArray, gte, lte, isNull, isNotNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../database';
@@ -97,6 +97,8 @@ import { RecaptchaService } from '../auth/recaptcha.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { StorageService } from '../storage/storage.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { ensureCsvBom } from '../../common/exports/csv.util';
+import { registerArabicFonts, writeText, hasArabic } from '../../common/exports/pdf.util';
 import { RoleRequestsService } from '../role-requests/role-requests.service';
 
 // Fallback auto-priority mapping for the 8 built-ins. Used only when the
@@ -132,19 +134,91 @@ const CATEGORY_PRIORITY_MAP: Record<string, string> = {
 // Size is enforced upstream by the upload endpoint (10MB cap in
 // storage.controller.ts); we can't re-check it here without a HEAD
 // request, which isn't worth the latency for a single chip.
-// Kept aligned with the /storage/upload MIME allowlist (PDF + JPEG/PNG/
-// WebP). If we ever broaden one we should broaden both — diverging would
-// either reject valid uploads at ticket-create time or accept files we
-// can't actually serve.
+// Kept aligned with the /storage/upload MIME allowlist. If we ever
+// broaden one we must broaden both — diverging would either reject
+// valid uploads at ticket-create time or accept files we can't
+// actually serve.
 export const TICKET_ATTACHMENT_ALLOWED_EXTENSIONS = [
   'pdf',
   'jpg',
   'jpeg',
   'png',
   'webp',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
 ] as const;
 
 export const TICKET_ATTACHMENT_MAX_URL_LENGTH = 500;
+
+/**
+ * Per-report-type column widths for the Support PDF export. Values sum
+ * to `contentWidth` (landscape A4 = 762pt). Long-content columns
+ * (subject, assignee, category) get more room; numeric/enum columns
+ * stay narrow so the table doesn't wrap or overlap. Falls back to an
+ * even split if the type isn't recognized.
+ */
+export function getSupportPdfColumnWidths(
+  type: string,
+  keys: string[],
+  contentWidth: number,
+): number[] {
+  // Base weights per key. Sum will be normalised to contentWidth.
+  const KEY_WEIGHT: Record<string, number> = {
+    referenceNumber: 55,
+    subject: 150,
+    priority: 45,
+    category: 65,
+    assignee: 100,
+    createdAt: 75,
+    firstResponseAt: 75,
+    resolvedAt: 75,
+    triggeredAt: 75,
+    frtMinutes: 55,
+    ttrMinutes: 55,
+    targetMinutes: 55,
+    ageMinutes: 55,
+    withinSla: 55,
+    status: 55,
+    count: 50,
+    breachKind: 60,
+    name: 130,
+    totalTickets: 55,
+    openTickets: 45,
+    resolvedTickets: 55,
+    avgFrtMinutes: 60,
+    csatAvgScore: 45,
+    frtBreaches: 55,
+    ttrBreaches: 55,
+    totalResolved: 90,
+    resolvedWithinSla: 90,
+    complianceRate: 90,
+    frtCompliance: 90,
+    ttrCompliance: 90,
+    eventType: 90,
+    notifiedCount: 60,
+  };
+  const weights = keys.map((k) => KEY_WEIGHT[k] ?? 80);
+  const total = weights.reduce((a, b) => a + b, 0);
+  if (total === 0 || keys.length === 0) {
+    // Defensive: unknown type → even split
+    return keys.map(() => Math.floor(contentWidth / Math.max(1, keys.length)));
+  }
+  const scale = contentWidth / total;
+  const widths = weights.map((w) => Math.floor(w * scale));
+  // Push any rounding leftover onto the widest column so the row
+  // exactly fills the content width (no white gap at the end).
+  const diff = contentWidth - widths.reduce((a, b) => a + b, 0);
+  if (diff !== 0) {
+    let widestIdx = 0;
+    for (let i = 1; i < widths.length; i++) {
+      if (widths[i] > widths[widestIdx]) widestIdx = i;
+    }
+    widths[widestIdx] += diff;
+  }
+  return widths;
+}
 
 export function validateTicketAttachmentUrl(
   url: string | null | undefined,
@@ -5188,7 +5262,7 @@ export class SupportService implements OnModuleInit {
 
     const baseName = (detail.referenceNumber || detail.id).replace(/[^a-zA-Z0-9-]/g, '_');
     return {
-      csv: lines.join('\n'),
+      csv: ensureCsvBom(lines.join('\r\n')),
       filename: `ticket_${baseName}_${now.toISOString().split('T')[0]}.csv`,
     };
   }
@@ -5451,7 +5525,7 @@ export class SupportService implements OnModuleInit {
       );
     });
 
-    return lines.join('\n');
+    return ensureCsvBom(lines.join('\r\n'));
   }
 
   private buildAuditTrailCsv(
@@ -5494,7 +5568,7 @@ export class SupportService implements OnModuleInit {
         );
       });
 
-    return lines.join('\n');
+    return ensureCsvBom(lines.join('\r\n'));
   }
 
   private buildSlaEventsCsv(
@@ -5538,7 +5612,7 @@ export class SupportService implements OnModuleInit {
       );
     });
 
-    return lines.join('\n');
+    return ensureCsvBom(lines.join('\r\n'));
   }
 
   // Avoid two attachments overwriting each other in the zip when
@@ -5603,7 +5677,7 @@ export class SupportService implements OnModuleInit {
     }
 
     return {
-      csv: csvRows.join('\n'),
+      csv: ensureCsvBom(csvRows.join('\r\n')),
       filename: `support_report_${type}_${now.toISOString().split('T')[0]}.csv`,
     };
   }
@@ -5981,6 +6055,7 @@ export class SupportService implements OnModuleInit {
     const columns = this.getReportColumns(type, 'pdf');
     const data = await this.fetchReportData(type, dateFrom, dateTo);
     const headers = columns.map(([label]) => label);
+    const keys = columns.map(([, key]) => key);
     const title = (() => {
       switch (type) {
         case 'volume':
@@ -6005,123 +6080,146 @@ export class SupportService implements OnModuleInit {
       }
     })();
 
+    // Landscape A4 content width = 842 - 2*40 = 762pt. Per-type column
+    // widths tuned so long-string columns (subject/assignee) get the
+    // room they need and numeric columns stay compact. Falls back to
+    // an even split for any unrecognized type (defensive).
+    const CONTENT_WIDTH = 762;
+    const colWidths = getSupportPdfColumnWidths(type, keys, CONTENT_WIDTH);
+    const colX: number[] = [];
+    {
+      let cursor = 40;
+      for (const w of colWidths) {
+        colX.push(cursor);
+        cursor += w;
+      }
+    }
+
+    // Compact ISO / long strings so cells don't overflow their column.
+    // Approx 4.2pt per character at fontSize 8 — same heuristic
+    // audit-logs uses. Dates are pre-formatted to "YYYY-MM-DD HH:MM"
+    // so they always fit in a 75pt column.
+    const compactDate = (iso: unknown): string => {
+      if (!iso) return '';
+      const s = String(iso);
+      // ISO strings — trim the T and seconds/ms/tz
+      if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+        return s.substring(0, 16).replace('T', ' ');
+      }
+      return s;
+    };
+    const DATE_KEYS = new Set(['createdAt', 'firstResponseAt', 'resolvedAt', 'triggeredAt']);
+    const truncate = (s: string, budget: number): string =>
+      s.length > budget ? s.substring(0, budget - 1) + '…' : s;
+    const charBudget = colWidths.map((w) => Math.max(6, Math.floor((w - 8) / 4.2)));
+
     const now = new Date();
     const filtersApplied = [
-      dateFrom ? `From: ${dateFrom}` : null,
-      dateTo ? `To: ${dateTo}` : null,
+      dateFrom ? `From: ${compactDate(dateFrom)}` : null,
+      dateTo ? `To: ${compactDate(dateTo)}` : null,
     ]
       .filter(Boolean)
-      .join(' | ');
+      .join('  |  ');
 
     return new Promise<Buffer>((resolve, reject) => {
       try {
         const doc = new PDFDocument({
           size: 'A4',
           margin: 40,
+          layout: 'landscape',
           info: {
             Title: title,
             Author: 'PhysioGuidance Support System',
             Subject: `${title} — Generated ${now.toISOString()}`,
           },
         });
+        registerArabicFonts(doc, this.logger);
 
         const chunks: Buffer[] = [];
         doc.on('data', (chunk: Buffer) => chunks.push(chunk));
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
 
-        // ─── Header ───────────────────────────────
-        doc
-          .fontSize(8)
-          .fillColor('#6B7280')
-          .text(
-            'PhysioGuidance eLearning Platform  |  Support Dashboard  |  Gamma Developers',
-            40,
-            25,
-          );
+        const drawHeaderRow = (y: number): number => {
+          doc.rect(40, y, CONTENT_WIDTH, 20).fill('#111827');
+          headers.forEach((h, i) => {
+            writeText(doc, h, {
+              bold: true, fontSize: 8, color: '#FFFFFF',
+              x: colX[i] + 4, y: y + 6,
+              textOptions: { width: colWidths[i] - 8, align: 'left' },
+            });
+          });
+          doc.fillColor('#000000');
+          return y + 20;
+        };
 
-        doc
-          .moveTo(40, 40)
-          .lineTo(555, 40)
-          .strokeColor('#E5E7EB')
-          .stroke();
+        // ─── Page header (once) ───────────────────
+        writeText(doc, 'PhysioGuidance eLearning Platform  |  Support Dashboard  |  Gamma Developers', {
+          fontSize: 8, color: '#6B7280', x: 40, y: 25,
+        });
+        doc.moveTo(40, 40).lineTo(802, 40).strokeColor('#E5E7EB').stroke();
 
-        // Title
-        doc.fontSize(18).fillColor('#111827').text(title, 40, 55);
-
-        // Meta
-        doc
-          .fontSize(9)
-          .fillColor('#6B7280')
-          .text(`Generated: ${now.toLocaleString()}`, 40, 80)
-          .text(
-            filtersApplied ? `Filters: ${filtersApplied}` : 'Filters: All time',
-            40,
-            93,
-          )
-          .text(`Report type: ${type}`, 40, 106);
-
-        doc
-          .moveTo(40, 122)
-          .lineTo(555, 122)
-          .strokeColor('#E5E7EB')
-          .stroke();
+        writeText(doc, title, {
+          bold: true, fontSize: 18, color: '#111827', x: 40, y: 55,
+        });
+        writeText(doc, `Generated: ${now.toISOString().replace('T', ' ').substring(0, 19)}`, {
+          fontSize: 9, color: '#6B7280', x: 40, y: 82,
+        });
+        writeText(doc, filtersApplied ? `Filters: ${filtersApplied}` : 'Filters: All time', {
+          fontSize: 9, color: '#6B7280', x: 40, y: 96,
+        });
+        writeText(doc, `Report type: ${type}  |  Rows: ${data.length}`, {
+          fontSize: 9, color: '#6B7280', x: 40, y: 110,
+        });
+        doc.moveTo(40, 126).lineTo(802, 126).strokeColor('#E5E7EB').stroke();
 
         // ─── Table ────────────────────────────────
-        const tableTop = 135;
-        const colWidth = Math.floor(515 / headers.length);
-        const rowHeight = 22;
+        const ROW_HEIGHT = 18;
+        const PAGE_BOTTOM = 540; // landscape A4 height = 595, keep margin for footer
+        let y = 138;
+        y = drawHeaderRow(y);
 
-        // Table header
-        doc.rect(40, tableTop, 515, rowHeight).fill('#111827');
-        headers.forEach((h, i) => {
-          doc
-            .fontSize(8)
-            .fillColor('#FFFFFF')
-            .text(h, 44 + i * colWidth, tableTop + 6, {
-              width: colWidth - 8,
-              align: 'left',
-            });
-        });
+        for (let ri = 0; ri < data.length; ri++) {
+          if (y + ROW_HEIGHT > PAGE_BOTTOM) {
+            doc.addPage({ size: 'A4', layout: 'landscape', margin: 40 });
+            y = drawHeaderRow(40);
+          }
 
-        // Table rows
-        data.forEach((row, rowIdx) => {
-          const y = tableTop + rowHeight + rowIdx * rowHeight;
-
-          if (y > 760) return; // page overflow guard (simple single-page)
-
-          if (rowIdx % 2 === 0) {
-            doc.rect(40, y, 515, rowHeight).fill('#F9FAFB');
+          const row = data[ri];
+          if (ri % 2 === 1) {
+            doc.rect(40, y, CONTENT_WIDTH, ROW_HEIGHT).fill('#FAFAFA');
+            doc.fillColor('#000000');
           }
 
           columns.forEach(([, key], colIdx) => {
-            const value = String(row[key] ?? '');
-            doc
-              .fontSize(8)
-              .fillColor('#374151')
-              .text(value, 44 + colIdx * colWidth, y + 6, {
-                width: colWidth - 8,
-                align: 'left',
-              });
+            const raw = row[key];
+            const value = DATE_KEYS.has(key)
+              ? compactDate(raw)
+              : String(raw ?? '');
+            const trimmed = truncate(value, charBudget[colIdx]);
+            writeText(doc, trimmed, {
+              fontSize: 8, color: '#374151',
+              x: colX[colIdx] + 4, y: y + 5,
+              textOptions: {
+                width: colWidths[colIdx] - 8,
+                align: hasArabic(trimmed) ? 'right' : 'left',
+              },
+            });
           });
-        });
+          y += ROW_HEIGHT;
+        }
 
-        // ─── Footer ───────────────────────────────
-        const footerY = 780;
-        doc
-          .moveTo(40, footerY)
-          .lineTo(555, footerY)
-          .strokeColor('#E5E7EB')
-          .stroke();
-        doc
-          .fontSize(7)
-          .fillColor('#9CA3AF')
-          .text(
-            `Confidential — Gamma Developers © ${now.getFullYear()}  |  report_generated_at: ${now.toISOString()}`,
-            40,
-            footerY + 5,
-            { align: 'center', width: 515 },
-          );
+        // ─── Footer (last page only) ──────────────
+        const footerY = 555;
+        doc.moveTo(40, footerY).lineTo(802, footerY).strokeColor('#E5E7EB').stroke();
+        writeText(
+          doc,
+          `Confidential — Gamma Developers © ${now.getFullYear()}  |  Total rows: ${data.length}`,
+          {
+            fontSize: 7, color: '#9CA3AF', x: 40, y: footerY + 5,
+            textOptions: { align: 'center', width: CONTENT_WIDTH },
+          },
+        );
 
         doc.end();
       } catch (err) {
@@ -12403,7 +12501,17 @@ export class SupportService implements OnModuleInit {
   async addCollaborator(
     actor: AuthenticatedUser,
     ticketId: string,
-    dto: { userId: string; department: TicketCollabDepartment | string },
+    dto: {
+      userId: string;
+      department: TicketCollabDepartment | string;
+      message?: string;
+      attachments?: {
+        url: string;
+        filename?: string | null;
+        mimeType?: string | null;
+        sizeBytes?: number | null;
+      }[];
+    },
   ) {
     const isSupportOrAdmin =
       actor.roles.includes(ROLE_NAMES.SUPPORT) ||
@@ -12478,24 +12586,57 @@ export class SupportService implements OnModuleInit {
       )
       .limit(1);
 
-    let rowId: string;
-    if (existing) {
-      // Active row: nothing to do.
-      if (existing.removedAt === null) {
-        return { id: existing.id, alreadyActive: true };
+    // Pre-validate any loop-in attachment URLs OUTSIDE the collab-row
+    // write so a 400 doesn't leave the collaborator half-added.
+    const trimmedLoopInMessage = (dto.message || '').trim();
+    const rawLoopInAtts = Array.isArray(dto.attachments) ? dto.attachments : [];
+    const loopInAttByUrl = new Map<
+      string,
+      {
+        url: string;
+        filename?: string | null;
+        mimeType?: string | null;
+        sizeBytes?: number | null;
       }
-      // Re-activate previously removed row.
-      const [updated] = await db
-        .update(ticketCollaborators)
-        .set({
-          removedAt: null,
-          addedBy: actor.id,
-          addedAt: new Date(),
-          department: dto.department,
-        })
-        .where(eq(ticketCollaborators.id, existing.id))
-        .returning({ id: ticketCollaborators.id });
-      rowId = updated!.id;
+    >();
+    for (const a of rawLoopInAtts) {
+      const safe = validateTicketAttachmentUrl(a.url);
+      if (!safe) continue;
+      if (loopInAttByUrl.has(safe)) continue;
+      loopInAttByUrl.set(safe, {
+        url: safe,
+        filename: a.filename ?? null,
+        mimeType: a.mimeType ?? null,
+        sizeBytes: a.sizeBytes ?? null,
+      });
+    }
+    const safeLoopInAtts = Array.from(loopInAttByUrl.values());
+    const shouldPostLoopInReply =
+      trimmedLoopInMessage.length > 0 || safeLoopInAtts.length > 0;
+
+    let rowId: string;
+    let alreadyActive = false;
+    if (existing) {
+      // Active row: no collaborator write to do, but we still post the
+      // context reply below (an agent re-pinging an existing collab
+      // with new supporting docs is a valid flow).
+      if (existing.removedAt === null) {
+        rowId = existing.id;
+        alreadyActive = true;
+      } else {
+        // Re-activate previously removed row.
+        const [updated] = await db
+          .update(ticketCollaborators)
+          .set({
+            removedAt: null,
+            addedBy: actor.id,
+            addedAt: new Date(),
+            department: dto.department,
+          })
+          .where(eq(ticketCollaborators.id, existing.id))
+          .returning({ id: ticketCollaborators.id });
+        rowId = updated!.id;
+      }
     } else {
       const [inserted] = await db
         .insert(ticketCollaborators)
@@ -12509,64 +12650,113 @@ export class SupportService implements OnModuleInit {
       rowId = inserted!.id;
     }
 
+    // Post the internal-context reply the actor sent with the loop-in.
+    // Skipped when nothing was supplied so legacy silent loop-ins keep
+    // behaving as before. Runs OUTSIDE the collab-row write so a
+    // reply-write failure doesn't roll back the loop-in itself.
+    if (shouldPostLoopInReply) {
+      try {
+        const [reply] = await db
+          .insert(ticketReplies)
+          .values({
+            ticketId,
+            userId: actor.id,
+            message: trimmedLoopInMessage || '',
+            isStaffReply: true,
+            isInternal: true,
+          })
+          .returning({ id: ticketReplies.id });
+        if (safeLoopInAtts.length > 0 && reply?.id) {
+          await db
+            .insert(ticketAttachments)
+            .values(
+              safeLoopInAtts.map((a) => ({
+                ticketId,
+                replyId: reply.id,
+                url: a.url,
+                uploadedBy: actor.id,
+                filename: a.filename ?? null,
+                mimeType: a.mimeType ?? null,
+                sizeBytes: a.sizeBytes != null ? a.sizeBytes : -1,
+              })),
+            )
+            .onConflictDoNothing();
+        }
+      } catch (e) {
+        this.logger.warn(
+          `Failed to persist loop-in context reply for ticket ${ticketId}: ${(e as Error).message}`,
+        );
+      }
+    }
+
     // Audit (IP captured via request-context middleware from Fix #10).
-    try {
-      await this.auditLogService.log({
-        entityType: 'ticket',
-        entityId: ticketId,
-        action: 'collaborator_added',
-        performedBy: actor.id,
-        metadata: {
-          ticketId,
-          userId: dto.userId,
-          department: dto.department,
-        },
-      });
-    } catch (e) {
-      this.logger.warn(`Failed to write collaborator_added audit: ${(e as Error).message}`);
+    // Skipped when the collab was already active — the row wasn't
+    // touched, so logging a fresh "collaborator_added" event would be
+    // misleading (a "context reply" is what actually happened, and it
+    // shows up in the ticket thread on its own).
+    if (!alreadyActive) {
+      try {
+        await this.auditLogService.log({
+          entityType: 'ticket',
+          entityId: ticketId,
+          action: 'collaborator_added',
+          performedBy: actor.id,
+          metadata: {
+            ticketId,
+            userId: dto.userId,
+            department: dto.department,
+          },
+        });
+      } catch (e) {
+        this.logger.warn(`Failed to write collaborator_added audit: ${(e as Error).message}`);
+      }
     }
 
     // Notify the target (email + in-app). Best-effort — don't fail the
-    // add if notify fails.
-    const targetName =
-      [target.firstName, target.lastName].filter(Boolean).join(' ').trim() ||
-      target.email;
-    try {
-      await this.notificationsService.create({
-        recipientId: dto.userId,
-        type: 'ticket_looped_in',
-        title: `You were looped into ticket ${ticket.referenceNumber}`,
-        message: ticket.subject,
-        link: `/dashboard/support/looped-in/${ticketId}`,
-        entityType: 'ticket',
-        entityId: ticketId,
-      });
-    } catch (e) {
-      this.logger.warn(`Failed to write looped-in notification: ${(e as Error).message}`);
-    }
-
-    try {
-      const emailSvc = this.emailService as unknown as {
-        sendTicketLoopedIn?: (
-          to: string,
-          name: string,
-          ref: string,
-          subject: string,
-        ) => Promise<unknown>;
-      };
-      if (target.email && typeof emailSvc.sendTicketLoopedIn === 'function') {
-        await emailSvc.sendTicketLoopedIn(
-          target.email,
-          targetName,
-          ticket.referenceNumber,
-          ticket.subject,
-        );
+    // add if notify fails. Also skipped for already-active collabs so
+    // we don't spam them with duplicate loop-in emails on a context
+    // re-ping.
+    if (!alreadyActive) {
+      const targetName =
+        [target.firstName, target.lastName].filter(Boolean).join(' ').trim() ||
+        target.email;
+      try {
+        await this.notificationsService.create({
+          recipientId: dto.userId,
+          type: 'ticket_looped_in',
+          title: `You were looped into ticket ${ticket.referenceNumber}`,
+          message: ticket.subject,
+          link: `/dashboard/support/looped-in/${ticketId}`,
+          entityType: 'ticket',
+          entityId: ticketId,
+        });
+      } catch (e) {
+        this.logger.warn(`Failed to write looped-in notification: ${(e as Error).message}`);
       }
-    } catch (e) {
-      this.logger.warn(`Failed to send looped-in email: ${(e as Error).message}`);
+
+      try {
+        const emailSvc = this.emailService as unknown as {
+          sendTicketLoopedIn?: (
+            to: string,
+            name: string,
+            ref: string,
+            subject: string,
+          ) => Promise<unknown>;
+        };
+        if (target.email && typeof emailSvc.sendTicketLoopedIn === 'function') {
+          await emailSvc.sendTicketLoopedIn(
+            target.email,
+            targetName,
+            ticket.referenceNumber,
+            ticket.subject,
+          );
+        }
+      } catch (e) {
+        this.logger.warn(`Failed to send looped-in email: ${(e as Error).message}`);
+      }
     }
 
-    return { id: rowId, alreadyActive: false };
+    return { id: rowId, alreadyActive };
   }
 
   /**
@@ -12819,6 +13009,12 @@ export class SupportService implements OnModuleInit {
       toDepartment: TicketCollabDepartment | string;
       userId?: string;
       noteToRequester?: string;
+      attachments?: {
+        url: string;
+        filename?: string | null;
+        mimeType?: string | null;
+        sizeBytes?: number | null;
+      }[];
     },
   ) {
     const isSupportOrAdmin =
@@ -12914,6 +13110,34 @@ export class SupportService implements OnModuleInit {
         .replace('{department}', friendlyDeptLabel)
         .replace('{categoryLabel}', newCategoryRow.nameEn);
 
+    // Pre-validate attachment URLs OUTSIDE the transaction so a 400
+    // from a bad URL doesn't roll back the transfer. Dedupe on URL
+    // so a double-submit doesn't unique-index-violate below.
+    const rawTransferAtts = Array.isArray(dto.attachments)
+      ? dto.attachments
+      : [];
+    const transferAttByUrl = new Map<
+      string,
+      {
+        url: string;
+        filename?: string | null;
+        mimeType?: string | null;
+        sizeBytes?: number | null;
+      }
+    >();
+    for (const a of rawTransferAtts) {
+      const safe = validateTicketAttachmentUrl(a.url);
+      if (!safe) continue;
+      if (transferAttByUrl.has(safe)) continue;
+      transferAttByUrl.set(safe, {
+        url: safe,
+        filename: a.filename ?? null,
+        mimeType: a.mimeType ?? null,
+        sizeBytes: a.sizeBytes ?? null,
+      });
+    }
+    const safeTransferAtts = Array.from(transferAttByUrl.values());
+
     // Perform the update + loop-in + system message in a single
     // transaction so a failure midway doesn't leave a half-applied
     // transfer (e.g. category changed but no collaborator added).
@@ -12960,15 +13184,36 @@ export class SupportService implements OnModuleInit {
         });
       }
 
-      // 3. Post the system message into the public thread.
-      await tx.insert(ticketReplies).values({
-        ticketId,
-        userId: actor.id,
-        message: systemMessage,
-        isStaffReply: false,
-        isInternal: false,
-        isSystem: true,
-      });
+      // 3. Post the system message into the public thread. .returning()
+      // so we can pin any supporting-doc attachments to this reply row.
+      const [systemReply] = await tx
+        .insert(ticketReplies)
+        .values({
+          ticketId,
+          userId: actor.id,
+          message: systemMessage,
+          isStaffReply: false,
+          isInternal: false,
+          isSystem: true,
+        })
+        .returning({ id: ticketReplies.id });
+
+      if (safeTransferAtts.length > 0) {
+        await tx
+          .insert(ticketAttachments)
+          .values(
+            safeTransferAtts.map((a) => ({
+              ticketId,
+              replyId: systemReply.id,
+              url: a.url,
+              uploadedBy: actor.id,
+              filename: a.filename ?? null,
+              mimeType: a.mimeType ?? null,
+              sizeBytes: a.sizeBytes != null ? a.sizeBytes : -1,
+            })),
+          )
+          .onConflictDoNothing();
+      }
     });
 
     // 4. Audit.

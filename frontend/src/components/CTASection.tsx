@@ -25,7 +25,14 @@ const CTASection = ({ data }: CTASectionProps) => {
   if (!title && !description && !buttonLabel && !ctaBackgroundImage) return null;
 
   return (
-    <section className="relative bg-[var(--color-surface-card)] px-4 lg:px-10 py-12 lg:py-20 overflow-hidden">
+    // Outer strip follows the page bg so it visually flows with the
+    // rest of the layout — the prior `surface-card` value stood out
+    // as an off-color band in themes where surface-page and
+    // surface-card differ (e.g. purple page + light card). The CTA
+    // still stands out via the background image + centered content;
+    // if a full-width accent color is needed later, add a distinct
+    // theme token rather than reusing surface-card.
+    <section className="relative bg-[var(--color-surface-page)] px-4 lg:px-10 py-12 lg:py-20 overflow-hidden">
       {ctaBackgroundImage && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className={`absolute w-[1440px] h-[1440px] ${isRTL ? "-scale-x-100" : ""}`}>
@@ -40,8 +47,10 @@ const CTASection = ({ data }: CTASectionProps) => {
         </div>
       )}
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col gap-8 items-center justify-center w-full">
+      {/* Content — capped at 1440px + centered so text/buttons don't
+          stretch to the edges on ultra-wide displays. The section
+          itself stays full-width for the theme background. */}
+      <div className="relative z-10 flex flex-col gap-8 items-center justify-center w-full max-w-[1440px] mx-auto">
         {title && (
           <h2
             className="text-[var(--on-surface-default)] font-semibold text-center leading-none tracking-[-0.24px] w-full lg:w-[600px]"

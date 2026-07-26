@@ -30,6 +30,9 @@ import { useActorRole, useIsAdminActor } from "./shared/ActorRoleContext";
 import { financePath } from "./shared/financeRoutes";
 import { FINANCE_COLORS } from "./shared/financeColors";
 import { invoiceApi, adminFinanceApi } from "@/lib/api";
+import { sanitizeCustomerName } from "@/lib/customer-name";
+import InvoiceLanguageDialog from "@/components/ui/InvoiceLanguageDialog";
+import { useInvoiceLanguage } from "@/hooks/useInvoiceLanguage";
 
 type Tab = "overview" | "items" | "audit" | "pdf";
 
@@ -74,6 +77,9 @@ const InvoiceDetailDrawer = ({
   >(null);
   const [showCancel, setShowCancel] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  // Tracks the last locale the admin regenerated with, so the PDF preview
+  // shows what they just produced instead of always falling back to EN.
+  const [previewLocale, setPreviewLocale] = useState<"en" | "ar">("en");
 
   const open = !!invoiceId;
 
@@ -105,18 +111,21 @@ const InvoiceDetailDrawer = ({
     }
   }, [invoiceId]);
 
-  const fetchPdf = useCallback(async () => {
-    if (!invoiceId) return;
-    setPdfLoading(true);
-    try {
-      const res = await invoiceApi.getPdfUrl(invoiceId);
-      setPdfUrl(res.url);
-    } catch {
-      setPdfUrl(null);
-    } finally {
-      setPdfLoading(false);
-    }
-  }, [invoiceId]);
+  const fetchPdf = useCallback(
+    async (loc?: "en" | "ar") => {
+      if (!invoiceId) return;
+      setPdfLoading(true);
+      try {
+        const res = await invoiceApi.getPdfUrl(invoiceId, loc || previewLocale);
+        setPdfUrl(res.url);
+      } catch {
+        setPdfUrl(null);
+      } finally {
+        setPdfLoading(false);
+      }
+    },
+    [invoiceId, previewLocale],
+  );
 
   useEffect(() => {
     if (invoiceId) {
@@ -147,10 +156,14 @@ const InvoiceDetailDrawer = ({
   const status = data?.invoice.status || "issued";
   const statusStyle = STATUS_PILL[status] || STATUS_PILL.issued;
 
+  const { dialogProps: langDialogProps, promptForLocale } = useInvoiceLanguage();
+
   const handleDownloadPdf = async () => {
     if (!invoiceId) return;
+    const chosen = await promptForLocale();
+    if (!chosen) return;
     try {
-      const res = await invoiceApi.getPdfUrl(invoiceId);
+      const res = await invoiceApi.getPdfUrl(invoiceId, chosen);
       if (res.url) window.open(res.url, "_blank");
     } catch {
       setActionState({ kind: "regen", status: "err", message: t("invoiceDetail.errors.pdfDownload") });
@@ -159,9 +172,11 @@ const InvoiceDetailDrawer = ({
 
   const handleResend = async () => {
     if (!invoiceId) return;
+    const chosen = await promptForLocale();
+    if (!chosen) return;
     setActionState({ kind: "resend", status: "running" });
     try {
-      await invoiceApi.resend(invoiceId);
+      await invoiceApi.resend(invoiceId, chosen);
       setActionState({ kind: "resend", status: "ok" });
     } catch {
       setActionState({ kind: "resend", status: "err" });
@@ -170,12 +185,17 @@ const InvoiceDetailDrawer = ({
 
   const handleRegen = async () => {
     if (!invoiceId) return;
+    const chosen = await promptForLocale();
+    if (!chosen) return;
     setActionState({ kind: "regen", status: "running" });
     try {
-      await invoiceApi.regeneratePdf(invoiceId);
+      await invoiceApi.regeneratePdf(invoiceId, chosen);
       setActionState({ kind: "regen", status: "ok" });
-      setPdfUrl(null); // force re-fetch with new URL
-      if (activeTab === "pdf") fetchPdf();
+      // Remember which locale the admin just regenerated so the preview
+      // renders it, not the stale EN default.
+      setPreviewLocale(chosen);
+      setPdfUrl(null);
+      if (activeTab === "pdf") fetchPdf(chosen);
       onChanged?.();
     } catch {
       setActionState({ kind: "regen", status: "err" });
@@ -214,7 +234,17 @@ const InvoiceDetailDrawer = ({
   const methodLabel = (m: string | null | undefined) =>
     !m ? "—" : KNOWN_METHODS.has(m) ? t(`reportsPage.methodLabels.${m}`) : m.replace(/_/g, " ");
   const REFUND_STATUSES = new Set(["pending", "approved", "processing", "completed", "rejected", "failed"]);
-  const REFUND_REASONS = new Set(["policy", "cancelled", "course_cancelled", "duplicate", "technical", "other"]);
+  const REFUND_REASONS = new Set([
+    "policy",
+    "cancelled",
+    "course_cancelled",
+    "duplicate",
+    "technical",
+    "other",
+    "description_mismatch",
+    "wrong_course",
+    "access_issue",
+  ]);
   const refundStatusLabel = (s: string | null | undefined) =>
     !s ? "—" : REFUND_STATUSES.has(s) ? t(`refundsPage.statusLabels.${s}`) : s.replace(/_/g, " ");
   const refundReasonLabel = (r: string | null | undefined) =>
@@ -237,14 +267,33 @@ const InvoiceDetailDrawer = ({
           label: tAdmin("invoice.resendEmail"),
           description: tAdmin("invoice.resendEmailDesc"),
           successToast: tAdmin("invoice.resendEmailToast"),
-          run: (reason) => adminFinanceApi.resendInvoiceEmail(invoiceId, { reason }),
+          run: async (reason) => {
+            const chosen = await promptForLocale();
+            if (!chosen) throw new Error("cancelled");
+            return adminFinanceApi.resendInvoiceEmail(invoiceId, {
+              reason,
+              locale: chosen,
+            });
+          },
         },
         {
           key: "regenerate-pdf",
           label: tAdmin("invoice.regeneratePdf"),
           description: tAdmin("invoice.regeneratePdfDesc"),
           successToast: tAdmin("invoice.regeneratePdfToast"),
-          run: (reason) => adminFinanceApi.regenerateInvoicePdf(invoiceId, { reason }),
+          run: async (reason) => {
+            const chosen = await promptForLocale();
+            if (!chosen) throw new Error("cancelled");
+            const result = await adminFinanceApi.regenerateInvoicePdf(
+              invoiceId,
+              { reason, locale: chosen },
+            );
+            // Sync the preview to what the admin just produced.
+            setPreviewLocale(chosen);
+            setPdfUrl(null);
+            if (activeTab === "pdf") fetchPdf(chosen);
+            return result;
+          },
         },
         {
           key: "force-cancel",
@@ -258,6 +307,7 @@ const InvoiceDetailDrawer = ({
     : [];
 
   return (
+    <>
     <Drawer
       open={open}
       onClose={onClose}
@@ -440,11 +490,14 @@ const InvoiceDetailDrawer = ({
             {activeTab === "overview" && (
               <>
                 <Card title={t("invoiceDetail.buyer")} icon={<User className="w-4 h-4" />} isRTL={isRTL}>
-                  <Row label={t("invoiceDetail.name")} value={data.buyer.name || "—"} isRTL={isRTL} />
+                  <Row
+                    label={t("invoiceDetail.name")}
+                    value={sanitizeCustomerName(data.buyer.name, data.buyer.email)}
+                    isRTL={isRTL}
+                  />
                   <Row label={t("invoiceDetail.email")} value={data.buyer.email || "—"} mono isRTL={isRTL} />
-                  {data.buyer.nationalId && (
-                    <Row label={t("invoiceDetail.nationalId")} value={data.buyer.nationalId} mono isRTL={isRTL} />
-                  )}
+                  {/* National ID intentionally hidden — sensitive PII, kept on the
+                      underlying invoice record for audit but never rendered here. */}
                 </Card>
 
                 <Card title={t("invoiceDetail.course")} icon={<BookOpen className="w-4 h-4" />} isRTL={isRTL}>
@@ -571,6 +624,28 @@ const InvoiceDetailDrawer = ({
 
             {activeTab === "pdf" && (
               <Card title={t("invoiceDetail.pdfPreview")} icon={<FileText className="w-4 h-4" />} isRTL={isRTL}>
+                {/* Locale toggle — flip preview between EN + AR without regenerating. */}
+                <div className="flex items-center gap-1 mb-3">
+                  {(["en", "ar"] as const).map((loc) => (
+                    <button
+                      key={loc}
+                      type="button"
+                      onClick={() => {
+                        if (loc === previewLocale) return;
+                        setPreviewLocale(loc);
+                        setPdfUrl(null);
+                        fetchPdf(loc);
+                      }}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                        previewLocale === loc
+                          ? "bg-[var(--color-primary)] text-white"
+                          : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      }`}
+                    >
+                      {loc === "en" ? "EN" : "AR"}
+                    </button>
+                  ))}
+                </div>
                 {pdfLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary)]" />
@@ -632,6 +707,8 @@ const InvoiceDetailDrawer = ({
         </>
       )}
     </Drawer>
+    <InvoiceLanguageDialog {...langDialogProps} />
+    </>
   );
 };
 

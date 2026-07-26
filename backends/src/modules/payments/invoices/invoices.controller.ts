@@ -13,7 +13,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { InvoiceService } from '../services/invoice.service';
+import { InvoiceService, InvoiceLocale } from '../services/invoice.service';
+
+function parseInvoiceLocale(input: string | undefined): InvoiceLocale {
+  return input === 'ar' ? 'ar' : 'en';
+}
 import { EmailService } from '../../email/email.service';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Public } from '../../auth/decorators/public.decorator';
@@ -125,6 +129,7 @@ export class InvoicesController {
   async getInvoicePdf(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Query('locale') locale?: string,
   ) {
     const isAdmin =
       user.roles.includes('FINANCE') ||
@@ -134,6 +139,7 @@ export class InvoicesController {
     return this.invoiceService.getInvoicePdfUrl(
       id,
       isAdmin ? undefined : user.id,
+      parseInvoiceLocale(locale),
     );
   }
 
@@ -199,9 +205,14 @@ export class InvoicesController {
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async regeneratePdf(
     @Param('id') id: string,
+    @Body() body: { locale?: string } | undefined,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.invoiceService.regeneratePdf(id, user.id);
+    return this.invoiceService.regeneratePdf(
+      id,
+      user.id,
+      parseInvoiceLocale(body?.locale),
+    );
   }
 
   @Post(':id/cancel')
@@ -220,15 +231,22 @@ export class InvoicesController {
 
   @Post(':id/resend')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
-  async resendInvoice(@Param('id') id: string) {
+  async resendInvoice(
+    @Param('id') id: string,
+    @Body() body: { locale?: string } | undefined,
+  ) {
     const invoice = await this.invoiceService.getInvoiceById(id);
     if (!invoice) {
       throw new NotFoundException('Invoice not found');
     }
+    const locale = parseInvoiceLocale(body?.locale);
 
     let pdfAttachment: { buffer: Buffer; filename: string } | undefined;
     try {
-      const pdf = await this.invoiceService.getInvoicePdfBuffer(invoice.paymentId);
+      const pdf = await this.invoiceService.getInvoicePdfBuffer(
+        invoice.paymentId,
+        locale,
+      );
       if (pdf) pdfAttachment = pdf;
     } catch (_) {}
 

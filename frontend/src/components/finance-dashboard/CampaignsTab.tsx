@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import Money from "./shared/Money";
 import Select from "@/components/admin-dashboard/Select";
 import DateTimePicker from "@/components/ui/DateTimePicker";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { discountApi } from "@/lib/api";
 
 /**
@@ -123,14 +124,25 @@ const CampaignsTab = () => {
     }
   };
 
-  const handleDeactivate = async (c: Campaign) => {
-    if (!confirm(t("discountsPage.campaigns.deactivateConfirm"))) return;
+  const [deactivateTarget, setDeactivateTarget] = useState<Campaign | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
+
+  const handleDeactivate = (c: Campaign) => {
+    setDeactivateTarget(c);
+  };
+
+  const confirmDeactivate = async () => {
+    if (!deactivateTarget) return;
+    setDeactivating(true);
     try {
-      await discountApi.deleteCampaign(c.id);
+      await discountApi.deleteCampaign(deactivateTarget.id);
       toast.success(t("discountsPage.campaigns.toasts.deactivated"));
       await fetchRows();
+      setDeactivateTarget(null);
     } catch (e: any) {
       toast.error(e?.message || t("discountsPage.campaigns.toasts.deactivateError"));
+    } finally {
+      setDeactivating(false);
     }
   };
 
@@ -403,6 +415,17 @@ const CampaignsTab = () => {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!deactivateTarget}
+        title={t("discountsPage.campaigns.deactivateTitle")}
+        message={t("discountsPage.campaigns.deactivateConfirm")}
+        confirmLabel={t("discountsPage.campaigns.deactivateConfirmLabel")}
+        cancelLabel={t("discountsPage.campaigns.cancel")}
+        loading={deactivating}
+        danger
+        onConfirm={confirmDeactivate}
+        onClose={() => !deactivating && setDeactivateTarget(null)}
+      />
     </div>
   );
 };

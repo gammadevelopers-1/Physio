@@ -152,7 +152,18 @@ export interface DashboardSummaryResponse {
   pendingSubmissions: DashboardPendingSubmission[];
   recentFeedback?: DashboardRecentFeedback;
   passFailStats?: DashboardPassFailStats;
-  notifications?: { id: string; title: string; message: string; type: string; read: boolean; date: string }[];
+  notifications?: {
+    id: string;
+    title: string;
+    message: string;
+    titleKey?: string | null;
+    titleParams?: Record<string, string | number> | null;
+    messageKey?: string | null;
+    messageParams?: Record<string, string | number> | null;
+    type: string;
+    read: boolean;
+    date: string;
+  }[];
 }
 
 // ─── Course Enrollments API Response ────────────────────────
@@ -170,6 +181,15 @@ export interface CourseEnrollment {
   studentLastName: string;
   studentEmail: string;
   studentScfhsNumber?: string | null;
+  // Admin/manager audit — populated only when the enrollment was
+  // created or removed by an admin/manager (not for self-service
+  // enrolments). Frontend uses these to show "Enrolled by …" and the
+  // removal reason on the finance/manager Students tab.
+  enrolledBy?: string | null;
+  enrollmentReason?: string | null;
+  removedBy?: string | null;
+  removedAt?: string | null;
+  removalReason?: string | null;
 }
 
 // ─── Assessment Files ────────────────────────────────────────
@@ -814,7 +834,28 @@ export interface PublicCourse {
   effectivePrice: number;
   onSale: boolean;
   salePercent: number | null;
+  saleAmount: number | null;
   saleAllowsCoupon: boolean;
+  /** Auto-apply campaign that covers this course (percentage or fixed,
+   * standard or early-bird). Present when the buyer would get this
+   * discount automatically at checkout without entering a code. Null when
+   * no active auto-apply campaign matches. */
+  campaignDiscount: {
+    campaignId: string;
+    campaignName: string;
+    /** Arabic display name. Null when finance didn't provide one — UI
+     * falls back to `campaignName`. */
+    campaignNameAr: string | null;
+    campaignType: 'standard' | 'early_bird';
+    discountType: 'percentage' | 'fixed';
+    discountValue: number;
+    /** SAR taken off the per-course-sale-effective price. */
+    amountOff: number;
+    /** Price the campaign discounts from (per-course-sale effective). */
+    basePrice: number;
+    /** What the buyer would pay after the campaign discount. */
+    finalPrice: number;
+  } | null;
   cmeHours: number;
   isCmeAccredited: boolean;
   enrollmentDeadline: string | null;
@@ -825,6 +866,16 @@ export interface PublicCourse {
   sessionCount: number;
   status?: string;
   availabilityStatus?: 'open' | 'completed' | 'full' | 'deadline_passed';
+  /**
+   * Points-redemption offer for this course. `null` when no row exists in
+   * course_redemption_settings OR the row is disabled. When present +
+   * `enabled=true`, the card renders an "or X points" pill; whether the
+   * CURRENT USER can afford it is decided client-side against their balance.
+   */
+  redemption?: {
+    enabled: boolean;
+    pointsCost: number;
+  } | null;
   // Content fields
   overview: string | null;
   overviewAr: string | null;

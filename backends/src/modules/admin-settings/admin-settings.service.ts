@@ -338,6 +338,32 @@ export class AdminSettingsService {
   }
 
   /**
+   * Sender identity for outgoing platform email. Admin-editable so
+   * marketing can change "PhysioGuidance <noreply@…>" without a code
+   * deploy. Falls back to env `MAIL_FROM` + hardcoded "PhysioGuidance"
+   * so existing behavior is preserved when nothing has been saved.
+   *
+   * IMPORTANT: `senderEmail` must be from a domain verified with the
+   * mail provider (Resend). Sending from an unverified address will
+   * be rejected by the provider — the UI shows a warning about this.
+   */
+  async getMailSettings(): Promise<{
+    senderEmail: string | null;
+    senderName: string | null;
+  }> {
+    const raw = await this.getCategory<{
+      senderEmail?: string;
+      senderName?: string;
+    }>('mail');
+    const clean = (v: string | undefined) =>
+      v && v.trim().length > 0 ? v.trim() : null;
+    return {
+      senderEmail: clean(raw.senderEmail),
+      senderName: clean(raw.senderName),
+    };
+  }
+
+  /**
    * Cheap accessor used by the maintenance middleware. We don't go
    * through the cache here — the middleware runs on every request
    * and the cache itself enforces TTL.

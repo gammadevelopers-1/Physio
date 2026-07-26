@@ -48,6 +48,22 @@ export class CoursesController {
   }
 
   /**
+   * POST /courses/:id/duplicate — Clone an existing course into a fresh
+   * draft. Copies all config + modules/materials/assessments/questions/
+   * assistants; drops dates, review audit, enrollments, and everything
+   * runtime-scoped. Manager still needs to fill in new startDate/endDate.
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/duplicate')
+  @HttpCode(HttpStatus.CREATED)
+  async duplicateCourse(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.duplicateCourse(courseId, user);
+  }
+
+  /**
    * GET /courses/public — List active courses (no auth required)
    */
   @Public()
@@ -59,6 +75,7 @@ export class CoursesController {
     @Query('cmeAccredited') cmeAccredited?: string,
     @Query('language') language?: string,
     @Query('availability') availability?: string,
+    @Query('onSale') onSale?: string,
     @Query('scope') scope?: string,
     @Query('sort') sort?: string,
     @Query('page') page?: string,
@@ -76,6 +93,7 @@ export class CoursesController {
             : undefined,
       language,
       availability,
+      onSale: onSale === 'true',
       scope: scope === 'archived' ? 'archived' : 'open',
       sort,
       page: page ? parseInt(page, 10) : undefined,
@@ -438,6 +456,33 @@ export class CoursesController {
   @Get(':id/ratings/stats')
   async getCourseRatingStats(@Param('id') courseId: string) {
     return this.coursesService.getCourseRatingStats(courseId);
+  }
+
+  /**
+   * GET /courses/:id/ratings/manager-view — Same shape as the public
+   * ratings endpoint but includes ALL moderation states (pending +
+   * approved + rejected). Managers need this on the course-detail
+   * Reviews tab so they can see reviews awaiting moderation, not just
+   * ones they've already published.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get(':id/ratings/manager-view')
+  async getCourseRatingsManagerView(
+    @Param('id') courseId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('rating') rating?: string,
+    @Query('sort') sort?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.coursesService.getCourseRatings(courseId, {
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      rating: rating ? Number(rating) : undefined,
+      sort: sort as 'newest' | 'oldest' | 'highest' | 'lowest' | undefined,
+      search: search || undefined,
+      onlyPublished: false,
+    });
   }
 
   /**

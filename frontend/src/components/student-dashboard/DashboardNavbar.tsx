@@ -30,6 +30,7 @@ import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import NotificationBell from "@/components/shared/NotificationBell";
 import IncidentBanner from "@/components/shared/IncidentBanner";
 import ScheduledMaintenanceBanner from "@/components/shared/ScheduledMaintenanceBanner";
+import ActiveCampaignBanner from "@/components/courses/ActiveCampaignBanner";
 import { STUDENT_NOTIFICATION_TYPES } from "@/components/shared/notification-types";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
 
@@ -332,6 +333,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
     </nav>
     <ScheduledMaintenanceBanner />
     <IncidentBanner />
+    <ActiveCampaignBanner />
     </>
   );
 };

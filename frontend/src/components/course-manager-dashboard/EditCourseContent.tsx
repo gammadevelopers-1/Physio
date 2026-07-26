@@ -25,7 +25,6 @@ import {
   X,
   AlertTriangle,
   RefreshCw,
-  ChevronDown,
   Search as SearchIcon,
 } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
@@ -33,12 +32,19 @@ import DateTimePicker from "@/components/ui/DateTimePicker";
 import { fromRiyadhLocal, toRiyadhLocal } from "@/lib/riyadh-time";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { normalizeAndValidateUrl } from "@/lib/url-validation";
+import Select from "@/components/admin-dashboard/Select";
 
 interface EditCourseContentProps {
   courseId: string;
   /** See CourseManagerCourseDetailContent — same role-prop contract. */
   role?: "manager" | "admin";
 }
+
+// ─── Tabs ──────────────────────────────────────────────────────
+type EditTabId = "basic" | "content" | "assignment" | "schedule" | "seo";
+
+const isValidEditTab = (v: string | null): v is EditTabId =>
+  v === "basic" || v === "content" || v === "assignment" || v === "schedule" || v === "seo";
 
 const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProps) => {
   const manager = useManagerProfile();
@@ -103,9 +109,8 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
   // after Zoom finishes processing it.
   const [recordingShareEnabled, setRecordingShareEnabled] = useState(false);
 
-  // Per-course SEO overrides (collapsed by default — empty values fall back
-  // to title / description / thumbnail in the metadata helper).
-  const [seoOpen, setSeoOpen] = useState(false);
+  // Per-course SEO overrides — empty values fall back to title /
+  // description / thumbnail in the metadata helper.
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
   const [seoKeywords, setSeoKeywords] = useState("");
@@ -120,6 +125,19 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
 
   // Submit
   const [submitting, setSubmitting] = useState(false);
+
+  // ─── Tabs ────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<EditTabId>(() => {
+    if (typeof window === "undefined") return "basic";
+    const p = new URLSearchParams(window.location.search).get("tab");
+    return isValidEditTab(p) ? p : "basic";
+  });
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", activeTab);
+    window.history.replaceState({}, "", url.toString());
+  }, [activeTab]);
 
   // Fetch course data and instructors on mount
   useEffect(() => {
@@ -482,6 +500,14 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
     );
   }
 
+  const EDIT_TABS: Array<{ id: EditTabId; label: string }> = [
+    { id: "basic", label: t("editCourse.tabs.basic") },
+    { id: "content", label: t("editCourse.tabs.content") },
+    { id: "assignment", label: t("editCourse.tabs.assignment") },
+    { id: "schedule", label: t("editCourse.tabs.schedule") },
+    { id: "seo", label: t("editCourse.tabs.seo") },
+  ];
+
   return (
     <>
       {isAdmin ? (
@@ -525,6 +551,31 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Tabs */}
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+                  <div className="flex border-b border-[var(--color-border)] overflow-x-auto" role="tablist">
+                    {EDIT_TABS.map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
+                        className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap relative transition-colors ${
+                          activeTab === tab.id ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                        }`}
+                      >
+                        {tab.label}
+                        {activeTab === tab.id && (
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)]" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {activeTab === "basic" && (
+                <>
                 {/* Basic Info */}
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
@@ -632,7 +683,11 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
                     </button>
                   )}
                 </div>
+                </>
+                )}
 
+                {activeTab === "content" && (
+                <>
                 {/* Course Content */}
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
@@ -1060,7 +1115,11 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
                     </div>
                   </div>
                 </div>
+                </>
+                )}
 
+                {activeTab === "assignment" && (
+                <>
                 {/* Instructor Assignment */}
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
@@ -1070,29 +1129,31 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
                     <label htmlFor="edit-instructor-select" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                       {t("createCourse.selectInstructor")} *
                     </label>
-                    <select
-                      id="edit-instructor-select"
+                    <Select
                       value={instructorId}
-                      onChange={(e) => setInstructorId(e.target.value)}
-                      className="w-full max-w-md px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-card)]"
-                      required
-                    >
-                      <option value="">
-                        {loadingInstructors
-                          ? t("createCourse.loadingInstructors")
-                          : t("createCourse.chooseInstructor")}
-                      </option>
-                      {instructors.map((inst) => (
-                        <option key={inst.id} value={inst.id}>
-                          {[inst.firstName, inst.lastName]
+                      onChange={setInstructorId}
+                      options={instructors.map((inst) => ({
+                        value: inst.id,
+                        label:
+                          [inst.firstName, inst.lastName]
                             .filter(Boolean)
-                            .join(" ") || inst.email}
-                        </option>
-                      ))}
-                    </select>
+                            .join(" ") || inst.email,
+                      }))}
+                      placeholder={
+                        loadingInstructors
+                          ? t("createCourse.loadingInstructors")
+                          : t("createCourse.chooseInstructor")
+                      }
+                      className="w-full max-w-md"
+                      size="default"
+                    />
                   </div>
                 </div>
+                </>
+                )}
 
+                {activeTab === "schedule" && (
+                <>
                 {/* Course Settings */}
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
@@ -1103,32 +1164,23 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
                       <label htmlFor="edit-delivery-type" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.deliveryType")}
                       </label>
-                      <select
-                        id="edit-delivery-type"
+                      <Select
                         value={deliveryType}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           setDeliveryType(
-                            e.target.value as "zoom" | "onsite" | "blended" | "self-paced" | "webinar"
+                            v as "zoom" | "onsite" | "blended" | "self-paced" | "webinar"
                           )
                         }
-                        className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-card)]"
-                      >
-                        <option value="zoom">
-                          {t("createCourse.deliveryZoom")}
-                        </option>
-                        <option value="onsite">
-                          {t("createCourse.deliveryOnsite")}
-                        </option>
-                        <option value="blended">
-                          {t("createCourse.deliveryBlended")}
-                        </option>
-                        <option value="self-paced">
-                          {t("createCourse.deliverySelfPaced")}
-                        </option>
-                        <option value="webinar">
-                          {t("createCourse.deliveryWebinar")}
-                        </option>
-                      </select>
+                        options={[
+                          { value: "zoom", label: t("createCourse.deliveryZoom") },
+                          { value: "onsite", label: t("createCourse.deliveryOnsite") },
+                          { value: "blended", label: t("createCourse.deliveryBlended") },
+                          { value: "self-paced", label: t("createCourse.deliverySelfPaced") },
+                          { value: "webinar", label: t("createCourse.deliveryWebinar") },
+                        ]}
+                        className="w-full"
+                        size="default"
+                      />
                       {deliveryType === "webinar" && (
                         <p className="mt-1.5 text-xs text-[var(--color-text-secondary)]">
                           {t("createCourse.deliveryWebinarHint")}
@@ -1304,16 +1356,17 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
                       <label htmlFor="edit-language" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.languageLabel")}
                       </label>
-                      <select
-                        id="edit-language"
+                      <Select
                         value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-card)]"
-                      >
-                        <option value="en">{t("createCourse.languageEn")}</option>
-                        <option value="ar">{t("createCourse.languageAr")}</option>
-                        <option value="both">{t("createCourse.languageBoth")}</option>
-                      </select>
+                        onChange={setLanguage}
+                        options={[
+                          { value: "en", label: t("createCourse.languageEn") },
+                          { value: "ar", label: t("createCourse.languageAr") },
+                          { value: "both", label: t("createCourse.languageBoth") },
+                        ]}
+                        className="w-full"
+                        size="default"
+                      />
                     </div>
                     {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                       <>
@@ -1349,128 +1402,125 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
                   </div>
                 </div>
 
-                {/* SEO (collapsible) — empty fields fall back to course
-                    title / description / thumbnail in the metadata helper. */}
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
-                  <button
-                    type="button"
-                    onClick={() => setSeoOpen((v) => !v)}
-                    className="w-full flex items-center justify-between px-5 py-4 text-left"
-                    aria-expanded={seoOpen}
-                  >
-                    <div className="flex items-center gap-2">
-                      <SearchIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                      <div>
-                        <div className="text-sm font-semibold text-[var(--color-text-primary)]">
-                          {t("createCourse.seoTitle")}
-                        </div>
-                        <div className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                          {t("createCourse.seoSubtitle")}
-                        </div>
-                      </div>
+                </>
+                )}
+
+                {activeTab === "seo" && (
+                <>
+                {/* SEO — empty fields fall back to course title /
+                    description / thumbnail in the metadata helper. */}
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <SearchIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                    <div>
+                      <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t("createCourse.seoTitle")}
+                      </h2>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                        {t("createCourse.seoSubtitle")}
+                      </p>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-[var(--color-text-secondary)] transition-transform ${seoOpen ? "rotate-180" : ""}`} />
-                  </button>
+                  </div>
 
-                  {seoOpen && (
-                    <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
-                        <label htmlFor="edit-seo-title" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                          {t("createCourse.seoMetaTitleLabel")}
-                        </label>
-                        <input
-                          id="edit-seo-title"
-                          type="text"
-                          value={seoTitle}
-                          onChange={(e) => setSeoTitle(e.target.value)}
-                          placeholder={t("createCourse.seoMetaTitlePlaceholder")}
-                          maxLength={150}
-                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        />
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                          {t("createCourse.seoMetaTitleHint")} ({seoTitle.length}/150)
-                        </p>
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label htmlFor="edit-seo-description" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                          {t("createCourse.seoMetaDescriptionLabel")}
-                        </label>
-                        <textarea
-                          id="edit-seo-description"
-                          value={seoDescription}
-                          onChange={(e) => setSeoDescription(e.target.value)}
-                          placeholder={t("createCourse.seoMetaDescriptionPlaceholder")}
-                          maxLength={300}
-                          rows={3}
-                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
-                        />
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                          {t("createCourse.seoMetaDescriptionHint")} ({seoDescription.length}/300)
-                        </p>
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label htmlFor="edit-seo-keywords" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                          {t("createCourse.seoKeywordsLabel")}
-                        </label>
-                        <input
-                          id="edit-seo-keywords"
-                          type="text"
-                          value={seoKeywords}
-                          onChange={(e) => setSeoKeywords(e.target.value)}
-                          placeholder={t("createCourse.seoKeywordsPlaceholder")}
-                          maxLength={500}
-                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                          dir="ltr"
-                        />
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                          {t("createCourse.seoKeywordsHint")}
-                        </p>
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label htmlFor="edit-seo-og-image" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                          {t("createCourse.seoOgImageLabel")}
-                        </label>
-                        <input
-                          id="edit-seo-og-image"
-                          type="url"
-                          value={seoOgImage}
-                          onChange={(e) => setSeoOgImage(e.target.value)}
-                          placeholder={t("createCourse.seoOgImagePlaceholder")}
-                          maxLength={500}
-                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                          dir="ltr"
-                        />
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                          {t("createCourse.seoOgImageHint")}
-                        </p>
-                      </div>
-
-                      <div className="md:col-span-2 flex items-start gap-3 pt-2">
-                        <input
-                          id="edit-seo-noindex"
-                          type="checkbox"
-                          checked={seoNoindex}
-                          onChange={(e) => setSeoNoindex(e.target.checked)}
-                          className="mt-1 w-4 h-4 accent-[var(--color-primary)]"
-                        />
-                        <label htmlFor="edit-seo-noindex" className="cursor-pointer">
-                          <span className="block text-sm font-medium text-[var(--color-text-primary)]">
-                            {t("createCourse.seoNoindexLabel")}
-                          </span>
-                          <span className="block text-xs text-[var(--color-text-secondary)] mt-0.5">
-                            {t("createCourse.seoNoindexHint")}
-                          </span>
-                        </label>
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label htmlFor="edit-seo-title" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                        {t("createCourse.seoMetaTitleLabel")}
+                      </label>
+                      <input
+                        id="edit-seo-title"
+                        type="text"
+                        value={seoTitle}
+                        onChange={(e) => setSeoTitle(e.target.value)}
+                        placeholder={t("createCourse.seoMetaTitlePlaceholder")}
+                        maxLength={150}
+                        className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                      />
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                        {t("createCourse.seoMetaTitleHint")} ({seoTitle.length}/150)
+                      </p>
                     </div>
-                  )}
+
+                    <div className="md:col-span-2">
+                      <label htmlFor="edit-seo-description" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                        {t("createCourse.seoMetaDescriptionLabel")}
+                      </label>
+                      <textarea
+                        id="edit-seo-description"
+                        value={seoDescription}
+                        onChange={(e) => setSeoDescription(e.target.value)}
+                        placeholder={t("createCourse.seoMetaDescriptionPlaceholder")}
+                        maxLength={300}
+                        rows={3}
+                        className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
+                      />
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                        {t("createCourse.seoMetaDescriptionHint")} ({seoDescription.length}/300)
+                      </p>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label htmlFor="edit-seo-keywords" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                        {t("createCourse.seoKeywordsLabel")}
+                      </label>
+                      <input
+                        id="edit-seo-keywords"
+                        type="text"
+                        value={seoKeywords}
+                        onChange={(e) => setSeoKeywords(e.target.value)}
+                        placeholder={t("createCourse.seoKeywordsPlaceholder")}
+                        maxLength={500}
+                        className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                        dir="ltr"
+                      />
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                        {t("createCourse.seoKeywordsHint")}
+                      </p>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label htmlFor="edit-seo-og-image" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                        {t("createCourse.seoOgImageLabel")}
+                      </label>
+                      <input
+                        id="edit-seo-og-image"
+                        type="url"
+                        value={seoOgImage}
+                        onChange={(e) => setSeoOgImage(e.target.value)}
+                        placeholder={t("createCourse.seoOgImagePlaceholder")}
+                        maxLength={500}
+                        className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                        dir="ltr"
+                      />
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                        {t("createCourse.seoOgImageHint")}
+                      </p>
+                    </div>
+
+                    <div className="md:col-span-2 flex items-start gap-3 pt-2">
+                      <input
+                        id="edit-seo-noindex"
+                        type="checkbox"
+                        checked={seoNoindex}
+                        onChange={(e) => setSeoNoindex(e.target.checked)}
+                        className="mt-1 w-4 h-4 accent-[var(--color-primary)]"
+                      />
+                      <label htmlFor="edit-seo-noindex" className="cursor-pointer">
+                        <span className="block text-sm font-medium text-[var(--color-text-primary)]">
+                          {t("createCourse.seoNoindexLabel")}
+                        </span>
+                        <span className="block text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          {t("createCourse.seoNoindexHint")}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
+                </>
+                )}
 
-                {/* Submit */}
-                <div className="flex justify-end gap-3">
+                {/* Sticky Save bar — always visible across tabs */}
+                <div className="sticky bottom-0 -mx-4 lg:-mx-6 px-4 lg:px-6 py-3 bg-[var(--color-surface-card)]/95 backdrop-blur border-t border-[var(--color-border)] z-20 flex justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => router.back()}

@@ -17,6 +17,7 @@ import {
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
+import Select from "@/components/ui/Select";
 import ComplianceScorecardDrawer from "./ComplianceScorecardDrawer";
 import { TableRowSkeleton } from "./AdminSkeletons";
 import { nelcComplianceApi } from "@/lib/api";
@@ -286,47 +287,53 @@ const ComplianceContent = () => {
                     <div className="px-5 py-4 flex flex-col sm:flex-row gap-3 border-b border-[var(--color-border)]">
                       <div className="relative flex-1">
                         <Search
-                          className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
+                          className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] start-3`}
                         />
                         <input
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
                           placeholder={t("searchPlaceholder")}
-                          className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)] focus:outline-none focus:border-[var(--color-primary)]`}
+                          className={`w-full ps-9 pe-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)] focus:outline-none focus:border-[var(--color-primary)]`}
                         />
                       </div>
-                      <select
+                      <Select
                         value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                        className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)]"
-                      >
-                        <option value="all">{t("filters.allStatuses")}</option>
-                        <option value="passed">{tShared("pass")}</option>
-                        <option value="review">{tShared("review")}</option>
-                        <option value="failed">{tShared("fail")}</option>
-                      </select>
-                      <select
+                        onChange={(v) => setStatusFilter(v as StatusFilter)}
+                        size="sm"
+                        className="min-w-[160px]"
+                        options={[
+                          { value: "all", label: t("filters.allStatuses") },
+                          { value: "passed", label: tShared("pass") },
+                          { value: "review", label: tShared("review") },
+                          { value: "failed", label: tShared("fail") },
+                        ]}
+                      />
+                      <Select
                         value={deliveryFilter}
-                        onChange={(e) => setDeliveryFilter(e.target.value as DeliveryFilter)}
-                        className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)]"
-                      >
-                        <option value="all">{t("filters.allDeliveries")}</option>
-                        <option value="zoom">{t("filters.deliveryZoom")}</option>
-                        <option value="webinar">{t("filters.deliveryWebinar")}</option>
-                        <option value="blended">{t("filters.deliveryBlended")}</option>
-                        <option value="onsite">{t("filters.deliveryOnsite")}</option>
-                        <option value="self-paced">{t("filters.deliverySelfPaced")}</option>
-                      </select>
-                      <select
+                        onChange={(v) => setDeliveryFilter(v as DeliveryFilter)}
+                        size="sm"
+                        className="min-w-[180px]"
+                        options={[
+                          { value: "all", label: t("filters.allDeliveries") },
+                          { value: "zoom", label: t("filters.deliveryZoom") },
+                          { value: "webinar", label: t("filters.deliveryWebinar") },
+                          { value: "blended", label: t("filters.deliveryBlended") },
+                          { value: "onsite", label: t("filters.deliveryOnsite") },
+                          { value: "self-paced", label: t("filters.deliverySelfPaced") },
+                        ]}
+                      />
+                      <Select
                         value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as SortKey)}
-                        className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)]"
-                      >
-                        <option value="latest">{t("filters.sortLatest")}</option>
-                        <option value="score">{t("filters.sortScore")}</option>
-                        <option value="title">{t("filters.sortTitle")}</option>
-                        <option value="instructor">{t("filters.sortInstructor")}</option>
-                      </select>
+                        onChange={(v) => setSortBy(v as SortKey)}
+                        size="sm"
+                        className="min-w-[160px]"
+                        options={[
+                          { value: "latest", label: t("filters.sortLatest") },
+                          { value: "score", label: t("filters.sortScore") },
+                          { value: "title", label: t("filters.sortTitle") },
+                          { value: "instructor", label: t("filters.sortInstructor") },
+                        ]}
+                      />
                     </div>
                   )}
 
@@ -349,19 +356,19 @@ const ComplianceContent = () => {
                         <table className="w-full text-sm">
                           <thead className="bg-[var(--color-surface-page)] text-xs uppercase text-[var(--color-text-secondary)]">
                             <tr>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.course")}
                               </th>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.instructor")}
                               </th>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.delivery")}
                               </th>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.score")}
                               </th>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.status")}
                               </th>
                             </tr>
@@ -441,22 +448,22 @@ const ComplianceContent = () => {
                         <table className="w-full text-sm">
                           <thead className="bg-[var(--color-surface-page)] text-xs uppercase text-[var(--color-text-secondary)]">
                             <tr>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.session")}
                               </th>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.course")}
                               </th>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.scheduled")}
                               </th>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.zoom")}
                               </th>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.recording")}
                               </th>
-                              <th className={`px-5 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`px-5 py-3 text-start`}>
                                 {t("table.status")}
                               </th>
                             </tr>

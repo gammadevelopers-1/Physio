@@ -677,6 +677,8 @@ function AddAgentModal({
 }) {
   const t = useTranslations("supportDashboard");
   const tPhone = useTranslations("commonSettings.phoneField");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const [mode, setMode] = useState<"existing" | "new">("existing");
   const [available, setAvailable] = useState<AvailableAgent[]>([]);
   const [loadingAvail, setLoadingAvail] = useState(true);
@@ -813,13 +815,13 @@ function AddAgentModal({
           {mode === "existing" ? (
             <div className="space-y-3">
               <div className="relative">
-                <Search className="absolute top-1/2 -translate-y-1/2 left-3 w-4 h-4 text-[var(--color-text-secondary)]" />
+                <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t("teamPage.modal.searchAvailable")}
-                  className="w-full h-10 pl-9 pr-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                  className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                 />
               </div>
               <div className="max-h-[280px] overflow-y-auto border border-[var(--color-border)] rounded-lg divide-y divide-[var(--color-border-subtle)]">
@@ -1002,6 +1004,8 @@ function MyRequestsSheet({
   onClose: () => void;
 }) {
   const t = useTranslations("supportDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const statusStyles: Record<string, string> = {
     pending: "bg-[#FEF9C3] text-[#A16207]",
     approved: "bg-[#DCFCE7] text-[#15803D]",
@@ -1011,7 +1015,7 @@ function MyRequestsSheet({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-[60]" onClick={onClose} />
-      <aside className="fixed right-0 top-0 h-full w-full max-w-md bg-[var(--color-surface-card)] z-[70] shadow-xl overflow-y-auto">
+      <aside className={`fixed top-0 h-full w-full max-w-md bg-[var(--color-surface-card)] z-[70] shadow-xl overflow-y-auto ${isRTL ? "left-0" : "right-0"}`}>
         <div className="sticky top-0 bg-[var(--color-surface-card)] border-b border-[var(--color-border)] px-5 py-4 flex items-center justify-between z-10">
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("teamPage.myRequests")}
@@ -1103,6 +1107,8 @@ function AgentDetailSheet({
   onRemoved: () => void;
 }) {
   const t = useTranslations("supportDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const [detail, setDetail] = useState<Awaited<ReturnType<typeof supportApi.getTeamMemberDetail>> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -1138,7 +1144,7 @@ function AgentDetailSheet({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-[60]" onClick={onClose} />
-      <aside className="fixed right-0 top-0 h-full w-full max-w-lg bg-[var(--color-surface-card)] z-[70] shadow-xl overflow-y-auto">
+      <aside className={`fixed top-0 h-full w-full max-w-lg bg-[var(--color-surface-card)] z-[70] shadow-xl overflow-y-auto ${isRTL ? "left-0" : "right-0"}`}>
         <div className="sticky top-0 bg-[var(--color-surface-card)] border-b border-[var(--color-border)] px-5 py-4 flex items-center justify-between z-10">
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("teamPage.detail.title")}

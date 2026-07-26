@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Plus, Trash2, Pencil, ChevronUp, ChevronDown, Video, FileText, HelpCircle, Layers } from "lucide-react";
 import type { WizardState, WizardAction, WizardModule } from "./CreateCourseWizard";
+import Select from "@/components/ui/Select";
 
 interface Step3Props {
   state: WizardState;
@@ -131,18 +132,14 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
             <label htmlFor="module-type" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("moduleType")}
             </label>
-            <select
-              id="module-type"
+            <Select
               value={form.type}
-              onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent bg-[var(--color-surface-card)]"
-            >
-              {MODULE_TYPES.map((mType) => (
-                <option key={mType} value={mType}>
-                  {t(`moduleTypes.${mType}`)}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setForm((f) => ({ ...f, type: v }))}
+              options={MODULE_TYPES.map((mType) => ({
+                value: mType,
+                label: t(`moduleTypes.${mType}`),
+              }))}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">

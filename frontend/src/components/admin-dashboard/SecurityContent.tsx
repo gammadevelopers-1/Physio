@@ -77,7 +77,6 @@ const SecurityContent = () => {
   const t = useTranslations("adminDashboard.securityPage");
   const admin = useAdminProfile();
   const locale = useLocale();
-  const isRTL = locale === "ar";
 
   const [tab, setTab] = useState<Tab>("overview");
   const [dashboard, setDashboard] = useState<AdminDashboardPayload | null>(null);
@@ -317,13 +316,13 @@ const SecurityContent = () => {
                       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
                         <div className="relative flex-1">
                           <Search
-                            className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
+                            className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] start-3`}
                           />
                           <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder={t("searchPlaceholder")}
-                            className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)] focus:outline-none focus:border-[var(--color-primary)]`}
+                            className={`w-full ps-9 pe-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)] focus:outline-none focus:border-[var(--color-primary)]`}
                           />
                         </div>
                         <span className="text-xs text-[var(--color-text-secondary)]">
@@ -350,19 +349,19 @@ const SecurityContent = () => {
                           <table className="w-full text-sm">
                             <thead className="bg-[var(--color-surface-page)] text-xs uppercase text-[var(--color-text-secondary)]">
                               <tr>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.user")}
                                 </th>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.device")}
                                 </th>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.ip")}
                                 </th>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.lastActive")}
                                 </th>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.actions")}
                                 </th>
                               </tr>
@@ -499,13 +498,13 @@ const SecurityContent = () => {
                           <table className="w-full text-sm">
                             <thead className="bg-[var(--color-surface-page)] text-xs uppercase text-[var(--color-text-secondary)]">
                               <tr>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.attemptedEmail")}
                                 </th>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.ip")}
                                 </th>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.time")}
                                 </th>
                               </tr>
@@ -572,13 +571,13 @@ const SecurityContent = () => {
                           <table className="w-full text-sm">
                             <thead className="bg-[var(--color-surface-page)] text-xs uppercase text-[var(--color-text-secondary)]">
                               <tr>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.ip")}
                                 </th>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.attempts")}
                                 </th>
-                                <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`px-4 py-3 text-start`}>
                                   {t("table.lastAttempt")}
                                 </th>
                               </tr>

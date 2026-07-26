@@ -18,6 +18,7 @@ import {
   courseAssistants,
   webinarRegistrations,
   NELC_EVENT_TYPE,
+  type EnrollmentSource,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
@@ -26,6 +27,7 @@ import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
 import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
@@ -49,6 +51,7 @@ export class EnrollmentsService {
 
   constructor(
     private readonly auditService: NelcAuditService,
+    private readonly auditLogService: AuditLogService,
     private readonly assistantsService: SessionAssistantsService,
     private readonly thresholdEvaluationService: ThresholdEvaluationService,
     private readonly userNotificationsService: UserNotificationsService,
@@ -84,7 +87,9 @@ export class EnrollmentsService {
     courseId: string,
     studentId: string,
     user: AuthenticatedUser,
+    options: { source?: EnrollmentSource } = {},
   ) {
+    const source: EnrollmentSource = options.source ?? 'free_public';
     // 1. Get course with dates and maxEnrollment
     const [course] = await db
       .select()
@@ -218,10 +223,13 @@ export class EnrollmentsService {
       if (existing.status === 'active') {
         throw new BadRequestException('Student is already enrolled in this course');
       }
-      // Re-activate if previously dropped/suspended
+      // Re-activate if previously dropped/suspended. Overwrite source to
+      // match the current flow — a student who was dropped from a paid
+      // enrollment and later re-enters via points should now show as
+      // 'points_redemption', not the stale 'purchase' tag.
       const [reactivated] = await db
         .update(enrollments)
-        .set({ status: 'active' })
+        .set({ status: 'active', source })
         .where(eq(enrollments.id, existing.id))
         .returning();
 
@@ -262,12 +270,16 @@ export class EnrollmentsService {
       return reactivated;
     }
 
-    // 6. Insert new enrollment
+    // 6. Insert new enrollment. Callers pass the source explicitly (points
+    //    redemption saga → 'points_redemption', student free-course endpoint
+    //    → 'free_public'). Reports + student UI read this to distinguish
+    //    unlock paths from paid enrollments.
     const [enrollment] = await db
       .insert(enrollments)
       .values({
         courseId,
         studentId,
+        source,
       })
       .returning();
 
@@ -307,6 +319,239 @@ export class EnrollmentsService {
     void this.xapiService.emitCourseEnrollment(studentId, courseId, enrollment.id);
 
     return enrollment;
+  }
+
+  /**
+   * POST /courses/:id/manual-enroll — admin/manager force-enrolls a student.
+   *
+   * Deliberately bypasses:
+   *   - the NELC capacity limit (managers may need to add one more student
+   *     even when the course is nominally full — capacity is a guideline
+   *     enforced against self-service enrolments, not against explicit
+   *     admin actions).
+   *   - the waitlist (an admin add IS the answer for that student —
+   *     there's no reason to route them through a waitlist).
+   *
+   * Still enforces:
+   *   - the lifecycle gate (`canEnroll`) — cannot enrol into a draft,
+   *     cancelled, or archived course. Admins/managers should reschedule
+   *     or reactivate first.
+   *   - the unique constraint on (courseId, studentId) — re-enrolling a
+   *     currently active student is a bad request; re-activating a
+   *     previously dropped student is allowed (parallels createEnrollment).
+   *
+   * Every manual enrolment writes:
+   *   - enrollments.enrolled_by = actor.id
+   *   - enrollments.enrollment_reason = mandatory reason
+   *   - audit_logs entry (entityType=enrollment, action=enrollment.manual_created)
+   *   - nelc_audit_logs entry (parity with the normal enrol path)
+   */
+  async manualEnroll(
+    courseId: string,
+    studentId: string,
+    reason: string,
+    actor: AuthenticatedUser,
+    ipAddress?: string,
+  ) {
+    // 1. Load + lifecycle gate. Reuse the same helper as createEnrollment.
+    const [course] = await db
+      .select()
+      .from(courses)
+      .where(and(eq(courses.id, courseId), isNull(courses.deletedAt)))
+      .limit(1);
+    if (!course) throw new NotFoundException('Course not found');
+
+    const gate = canEnroll(course);
+    if (!gate.ok) {
+      throw new BadRequestException(describeEnrollBlock(gate.reason));
+    }
+
+    // 2. Verify the student actually exists and is a student. Prevents
+    //    an admin from mistakenly enrolling e.g. another admin.
+    const [student] = await db
+      .select({ id: users.id, isActive: users.isActive })
+      .from(users)
+      .where(eq(users.id, studentId))
+      .limit(1);
+    if (!student) throw new NotFoundException('Student not found');
+    if (!student.isActive) {
+      throw new BadRequestException('Student account is inactive');
+    }
+
+    // 3. Check for existing enrollment. Re-activating a dropped student
+    //    is allowed and treated as a fresh manual enrollment (audit
+    //    trail overwrites the removal audit — the current row now
+    //    reflects who re-added them).
+    const [existing] = await db
+      .select({ id: enrollments.id, status: enrollments.status })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    let enrollmentRow;
+    let wasReactivated = false;
+
+    if (existing) {
+      if (existing.status === 'active') {
+        throw new BadRequestException(
+          'Student is already enrolled in this course',
+        );
+      }
+      const [reactivated] = await db
+        .update(enrollments)
+        .set({
+          status: 'active',
+          enrolledBy: actor.id,
+          enrollmentReason: reason,
+          source: 'admin_grant',
+          // Clear the removal audit — the student is being brought back.
+          removedBy: null,
+          removedAt: null,
+          removalReason: null,
+        })
+        .where(eq(enrollments.id, existing.id))
+        .returning();
+      enrollmentRow = reactivated;
+      wasReactivated = true;
+    } else {
+      const [inserted] = await db
+        .insert(enrollments)
+        .values({
+          courseId,
+          studentId,
+          enrolledBy: actor.id,
+          enrollmentReason: reason,
+          source: 'admin_grant',
+        })
+        .returning();
+      enrollmentRow = inserted;
+    }
+
+    // 4. Audit log — captures WHO, WHY, and the bypass context so
+    //    finance/compliance can trace every manual entry.
+    await this.auditLogService.log({
+      entityType: 'enrollment',
+      entityId: enrollmentRow.id,
+      action: 'enrollment.manual_created',
+      performedBy: actor.id,
+      ipAddress,
+      metadata: {
+        courseId,
+        studentId,
+        reason,
+        reactivated: wasReactivated,
+        bypassedCapacity: true,
+      },
+    });
+
+    // 5. NELC audit parity so the regulator-facing log includes this
+    //    enrolment too.
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.ENROLLMENT_CREATED,
+      entityType: 'enrollment',
+      entityId: enrollmentRow.id,
+      userId: actor.id,
+      metadata: {
+        courseId,
+        studentId,
+        source: 'manual',
+        reactivated: wasReactivated,
+      },
+    });
+
+    // 6. Fire the same downstream hooks a self-service enrol would.
+    await this.triggerTaReallocation(courseId);
+    this.autoRegisterStudentForWebinarCourse(courseId, studentId).catch((err) =>
+      this.logger.error('Webinar Course auto-register failed', err),
+    );
+    this.notifyStudentOfEnrollment(courseId, studentId).catch((err) =>
+      this.logger.error('Failed to send enrollment notification', err),
+    );
+    void this.xapiService.emitCourseEnrollment(
+      studentId,
+      courseId,
+      enrollmentRow.id,
+    );
+
+    return enrollmentRow;
+  }
+
+  /**
+   * DELETE /courses/:id/enrollments/:studentId — admin/manager removes
+   * a student from a course.
+   *
+   * Sets status='dropped' + populates the removal audit columns
+   * (removed_by/removed_at/removal_reason) so downstream systems can
+   * distinguish an admin removal from a student self-drop. Deliberately
+   * does NOT auto-refund — finance owns that decision and reads
+   * removal_reason to make it (per Amna's requirement).
+   */
+  async removeEnrollment(
+    courseId: string,
+    studentId: string,
+    reason: string,
+    actor: AuthenticatedUser,
+    ipAddress?: string,
+  ) {
+    // 1. Find the enrollment. Only consider ACTIVE ones — you can't
+    //    "remove" someone who's already dropped.
+    const [existing] = await db
+      .select()
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.studentId, studentId),
+        ),
+      )
+      .limit(1);
+    if (!existing) {
+      throw new NotFoundException('Enrollment not found');
+    }
+    if (existing.status === 'dropped') {
+      throw new BadRequestException(
+        'Student has already been removed from this course',
+      );
+    }
+
+    const previousStatus = existing.status;
+
+    const [updated] = await db
+      .update(enrollments)
+      .set({
+        status: 'dropped',
+        removedBy: actor.id,
+        removedAt: new Date(),
+        removalReason: reason,
+      })
+      .where(eq(enrollments.id, existing.id))
+      .returning();
+
+    // 2. Audit log — finance dashboards read this to see WHY a student
+    //    was removed and decide whether a refund is appropriate.
+    await this.auditLogService.log({
+      entityType: 'enrollment',
+      entityId: updated.id,
+      action: 'enrollment.removed_by_admin',
+      performedBy: actor.id,
+      ipAddress,
+      metadata: {
+        courseId,
+        studentId,
+        reason,
+        previousStatus,
+      },
+    });
+
+    // 3. Re-balance TA workload since a student is gone.
+    await this.triggerTaReallocation(courseId);
+
+    return updated;
   }
 
   /**
@@ -565,14 +810,24 @@ export class EnrollmentsService {
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
         studentEmail: users.email,
+        // Audit columns so the manager UI can render "Enrolled by …"
+        // and the removal-reason chip when relevant. Populated only
+        // for manual admin/manager enrolments and removals.
+        enrolledBy: enrollments.enrolledBy,
+        enrollmentReason: enrollments.enrollmentReason,
+        removedBy: enrollments.removedBy,
+        removedAt: enrollments.removedAt,
+        removalReason: enrollments.removalReason,
       })
       .from(enrollments)
       .innerJoin(users, eq(enrollments.studentId, users.id))
       .where(
         and(
           eq(enrollments.courseId, courseId),
-          // Active + completed students — dropped/suspended excluded
-          sql`${enrollments.status} IN ('active', 'completed')`,
+          // Include dropped rows too so the manager sees the removed
+          // audit + reason; the frontend filters them into their own
+          // section. Suspended stays hidden (rare, not a display case).
+          sql`${enrollments.status} IN ('active', 'completed', 'dropped')`,
         ),
       )
       .orderBy(desc(enrollments.enrolledAt));
@@ -1147,12 +1402,8 @@ export class EnrollmentsService {
     }
 
     const conditions: any[] = [eq(sessions.id, sessionId)];
-    if (isGlobalAdmin(user)) {
-      // No filter
-    } else if (isManager(user)) {
-      conditions.push(
-        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
-      );
+    if (isGlobalAdmin(user) || isManager(user)) {
+      // Managers and admins can access any session (platform-wide oversight)
     } else {
       conditions.push(eq(sessions.instructorId, user.id));
     }
@@ -1195,15 +1446,11 @@ export class EnrollmentsService {
     }
 
     // Verify session access
-    if (!isGlobalAdmin(user)) {
-      const sessionConditions: any[] = [eq(sessions.id, record.sessionId)];
-      if (isManager(user)) {
-        sessionConditions.push(
-          sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
-        );
-      } else {
-        sessionConditions.push(eq(sessions.instructorId, user.id));
-      }
+    if (!isGlobalAdmin(user) && !isManager(user)) {
+      const sessionConditions: any[] = [
+        eq(sessions.id, record.sessionId),
+        eq(sessions.instructorId, user.id),
+      ];
 
       const [session] = await db
         .select({ id: sessions.id })

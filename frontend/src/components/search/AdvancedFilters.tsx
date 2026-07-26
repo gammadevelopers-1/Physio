@@ -3,6 +3,7 @@
 import { useTranslations, useLocale } from "next-intl";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import Select from "@/components/ui/Select";
 
 export interface FilterState {
   contentType: "all" | "courses" | "blogs";
@@ -97,15 +98,12 @@ const AdvancedFilters = ({
           <span className="text-sm text-[var(--color-text-secondary)]">
             {t("sortByLabel")}
           </span>
-          <select
+          <Select
             value={filters.sortBy}
-            onChange={(e) => updateFilter("sortBy", e.target.value as FilterState["sortBy"])}
-            className="px-3 py-2 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-input-focus)] cursor-pointer"
-          >
-            {sortOptions.map(option => (
-              <option key={option.key} value={option.key}>{option.label}</option>
-            ))}
-          </select>
+            onChange={(v) => updateFilter("sortBy", v as FilterState["sortBy"])}
+            className="min-w-[160px]"
+            options={sortOptions.map((option) => ({ value: option.key, label: option.label }))}
+          />
         </div>
 
         {/* Clear All Button */}

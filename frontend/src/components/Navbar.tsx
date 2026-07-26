@@ -74,8 +74,11 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-[var(--color-navbar-bg)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
-      {/* Main container - dir="rtl" on html handles the RTL layout automatically */}
-      <div className="flex items-center justify-between w-full">
+      {/* Main container - dir="rtl" on html handles the RTL layout
+          automatically. Capped at 1440px + centered so logo/menu/actions
+          don't spread edge-to-edge on ultra-wide displays. Outer <nav>
+          keeps the sticky bg full-bleed. */}
+      <div className="flex items-center justify-between w-full max-w-[1440px] mx-auto">
         {/* Logo + Nav Links (appears on right side in RTL due to dir="rtl") */}
         <div className="flex items-center gap-8">
           {/* Logo — Strapi image, or site name text fallback, nothing hardcoded */}
@@ -154,16 +157,19 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
             )}
           </Link>
 
-          {/* User Menu or Get Started Button - Hidden on mobile/tablet */}
+          {/* User Menu (avatar dropdown) or Get Started button.
+              Always visible — on mobile users had to open the hamburger
+              to reach either, which buried the two most important actions
+              on the site (log in, sign up) two taps deep. Compact
+              styling below `lg:` keeps them fitting alongside the
+              hamburger + language toggle on narrow screens. */}
           {!isLoading && (
             isAuthenticated ? (
-              <div className="hidden lg:block">
-                <UserMenu />
-              </div>
+              <UserMenu />
             ) : (
               <Link
                 href={`/${locale}/signup`}
-                className="hidden lg:flex items-center justify-center h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium min-w-[80px]"
+                className="flex items-center justify-center h-9 lg:h-10 px-3 lg:px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-xs lg:text-sm font-medium whitespace-nowrap"
               >
                 {t("getStarted")}
               </Link>
@@ -228,22 +234,10 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
               </Link>
             </div>
 
-            {/* User Menu or Get Started Button */}
-            {!isLoading && (
-              isAuthenticated ? (
-                <div className="mt-4 pt-4 border-t border-[var(--outline-subtle)]">
-                  <UserMenu />
-                </div>
-              ) : (
-                <Link
-                  href={`/${locale}/signup`}
-                  className="mt-4 flex items-center justify-center h-11 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium w-full"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {t("getStarted")}
-                </Link>
-              )
-            )}
+            {/* Avatar / Get Started are now always visible in the main
+                navbar — no need to duplicate them inside the hamburger
+                overlay. Users tapping the hamburger want Strapi nav
+                links + Search/Cart shortcuts, not another login button. */}
           </div>
         </div>
       )}

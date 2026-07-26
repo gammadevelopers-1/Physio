@@ -1,41 +1,41 @@
 /**
- * Ticket resolved notification email template for learners.
- * Includes a one-click "Rate your experience" CTA + per-star
- * deep links so the recipient can rate from the inbox without
- * digging into the ticket detail page.
+ * Ticket resolved email — sent when an agent marks a ticket as resolved.
+ * Includes an inline star rating (deep-linked to the CSAT page) plus a
+ * "reopen ticket" fallback CTA. Bilingual (EN + AR).
  */
+import { EmailLocale, getEmailStrings, htmlAttrs, t as tt, textAlign } from '../email-i18n';
+
 export function getTicketResolvedHtml(
   learnerName: string,
   ticketId: string,
   surveyUrl: string | null,
+  locale: EmailLocale = 'en',
 ): string {
+  const s = getEmailStrings(locale);
   const ratingBlock = surveyUrl
     ? `
-          <!-- Rate-your-experience CTA. Stars deep-link with ?score=N
-               so the public CSAT page pre-selects the rating; user
-               only needs one confirm click. -->
           <tr>
             <td style="padding:0 32px 8px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fffbeb;border:1px solid #fde68a;border-radius:12px;">
                 <tr>
                   <td style="padding:18px 20px;text-align:center;">
-                    <p style="margin:0 0 6px;font-size:13px;color:#92400e;font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">How did we do?</p>
-                    <p style="margin:0 0 12px;font-size:13px;color:#78350f;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                      Tap a star to rate your support experience.
+                    <p style="margin:0 0 6px;font-size:13px;color:#92400e;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${s.ticketRatingTitle}</p>
+                    <p style="margin:0 0 12px;font-size:13px;color:#78350f;line-height:1.5;">
+                      ${s.ticketRatingBody}
                     </p>
                     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
                       <tr>
                         ${[1, 2, 3, 4, 5]
                           .map(
                             (n) => `<td style="padding:0 4px;">
-                          <a href="${surveyUrl}?score=${n}" style="display:inline-block;width:34px;height:34px;line-height:34px;background-color:#ffffff;border:1px solid #fde68a;border-radius:50%;color:#b45309;font-size:18px;text-decoration:none;text-align:center;font-family:Arial,sans-serif;" aria-label="Rate ${n} of 5">&#9733;</a>
+                          <a href="${surveyUrl}?score=${n}" style="display:inline-block;width:34px;height:34px;line-height:34px;background-color:#ffffff;border:1px solid #fde68a;border-radius:50%;color:#b45309;font-size:18px;text-decoration:none;text-align:center;font-family:Arial,sans-serif;" aria-label="${n}/5">&#9733;</a>
                         </td>`,
                           )
                           .join('')}
                       </tr>
                     </table>
-                    <p style="margin:14px 0 0;font-size:12px;color:#a16207;font-family:'DM Sans',Arial,sans-serif;">
-                      <a href="${surveyUrl}" style="color:#a16207;text-decoration:underline;">Rate your experience</a>
+                    <p style="margin:14px 0 0;font-size:12px;color:#a16207;">
+                      <a href="${surveyUrl}" style="color:#a16207;text-decoration:underline;">${s.ticketRatingLink}</a>
                     </p>
                   </td>
                 </tr>
@@ -44,39 +44,24 @@ export function getTicketResolvedHtml(
           </tr>
 `
     : '';
-
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ticket Resolved - PhysioGuidance</title>
+  <title>${s.ticketResolvedTitle} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
     <tr>
       <td align="center" style="padding:40px 16px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-
-          <!-- Header with brand gradient -->
           <tr>
             <td style="background:linear-gradient(135deg,#a37f49,#6b4e24);padding:32px 32px 24px;text-align:center;">
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
-                <tr>
-                  <td style="padding-bottom:4px;">
-                    <span style="font-size:24px;font-weight:700;color:#ffffff;font-family:'DM Sans',Arial,sans-serif;letter-spacing:-0.5px;">Physio</span><span style="font-size:24px;font-weight:700;color:#f5f0e8;font-family:'DM Sans',Arial,sans-serif;letter-spacing:-0.5px;">Guidance</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
-                  </td>
-                </tr>
-              </table>
+              <span style="font-size:24px;font-weight:700;color:#ffffff;">Physio</span><span style="font-size:24px;font-weight:700;color:#f5f0e8;">Guidance</span>
+              <br/><span style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
             </td>
           </tr>
-
-          <!-- Title -->
           <tr>
             <td style="padding:32px 32px 0;text-align:center;">
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
@@ -86,64 +71,46 @@ export function getTicketResolvedHtml(
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Ticket Resolved</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;">${s.ticketResolvedTitle}</h1>
             </td>
           </tr>
-
-          <!-- Message -->
           <tr>
             <td style="padding:0 32px 24px;">
-              <p style="margin:0 0 16px;font-size:14px;color:#4b5563;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:center;">
-                Hi ${learnerName},
+              <p style="margin:0 0 16px;font-size:14px;color:#4b5563;line-height:1.6;text-align:center;">
+                ${s.hi} ${learnerName},
               </p>
-              <p style="margin:0 0 24px;font-size:14px;color:#4b5563;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:center;">
-                Your support issue has been resolved. If your issue is not fully resolved, you can reopen this ticket within 48 hours.
+              <p style="margin:0 0 24px;font-size:14px;color:#4b5563;line-height:1.6;text-align:${textAlign(locale)};">
+                ${s.ticketResolvedBrief}
               </p>
             </td>
           </tr>
-
-          <!-- Green success box with checkmark -->
           <tr>
             <td style="padding:0 32px 24px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ecfdf5;border:1px solid #bbf7d0;border-radius:12px;">
                 <tr>
                   <td style="padding:16px 20px;text-align:center;">
                     <span style="font-size:20px;">&#9989;</span>
-                    <p style="margin:8px 0 0;font-size:14px;color:#166534;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">Ticket #${ticketId} has been resolved</p>
+                    <p style="margin:8px 0 0;font-size:14px;color:#166534;font-weight:600;">${tt(s.ticketResolvedBadge, { id: ticketId })}</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 ${ratingBlock}
-          <!-- Button -->
           <tr>
             <td style="padding:8px 32px 24px;text-align:center;">
-              <a href="https://physioguidance.org/en/dashboard/support" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;font-family:'DM Sans',Arial,sans-serif;">
-                Reopen Ticket
+              <a href="https://physioguidance.org/en/dashboard/support" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">
+                ${s.ticketResolvedReopenCta}
               </a>
             </td>
           </tr>
-
-          <!-- Divider -->
-          <tr>
-            <td style="padding:0 32px;">
-              <div style="height:1px;background-color:#e5e7eb;"></div>
-            </td>
-          </tr>
-
-          <!-- Footer -->
+          <tr><td style="padding:0 32px;"><div style="height:1px;background-color:#e5e7eb;"></div></td></tr>
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
-              <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-              </p>
-              <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
-              </p>
+              <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;">&copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}</p>
+              <p style="margin:0;font-size:11px;color:#9ca3af;">${s.nelcFooter}</p>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
@@ -156,19 +123,19 @@ export function getTicketResolvedText(
   learnerName: string,
   ticketId: string,
   surveyUrl: string | null,
+  locale: EmailLocale = 'en',
 ): string {
-  const ratingLine = surveyUrl
-    ? `\n\nRate your experience: ${surveyUrl}\n`
-    : '';
-  return `PhysioGuidance - Ticket Resolved
+  const s = getEmailStrings(locale);
+  const ratingLine = surveyUrl ? `\n\n${s.ticketRatingLink}: ${surveyUrl}\n` : '';
+  return `PhysioGuidance - ${s.ticketResolvedTitle}
 
-Hi ${learnerName},
+${s.hi} ${learnerName},
 
-Your support issue has been resolved. If your issue is not fully resolved, you can reopen this ticket within 48 hours.
+${s.ticketResolvedBrief}
 
-Ticket #${ticketId} has been resolved.${ratingLine}
-Reopen Ticket: https://physioguidance.org/en/dashboard/support
+${tt(s.ticketResolvedBadge, { id: ticketId })}.${ratingLine}
+${s.ticketResolvedReopenCta}: https://physioguidance.org/en/dashboard/support
 
-© ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited · Saudi Arabia`;
+© ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 }

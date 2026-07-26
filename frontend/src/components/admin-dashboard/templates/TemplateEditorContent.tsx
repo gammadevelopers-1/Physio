@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import AdminSidebar from "../AdminSidebar";
 import AdminMobileSidebar from "../AdminMobileSidebar";
 import AdminNavbar from "../AdminNavbar";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import {
   templatesApi,
@@ -82,15 +83,21 @@ export default function TemplateEditorContent({
     }
   };
 
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+
   const handleReset = async () => {
     if (!detail) return;
     if (!detail.hasOverride) return;
-    if (!confirm(t("confirmReset"))) return;
+    setConfirmResetOpen(true);
+  };
+
+  const confirmReset = async () => {
     setResetting(true);
     try {
       await templatesApi.reset(eventKey, templateLocale);
       toast.success(t("resetDone"));
       await load(templateLocale);
+      setConfirmResetOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("resetFailed"));
     } finally {
@@ -167,7 +174,13 @@ export default function TemplateEditorContent({
                   {t("loadFailed")}
                 </div>
               ) : detail.meta.channel === "email" ? (
+                // key on detail.locale forces a full unmount + remount when
+                // the admin flips EN↔AR, so Unlayer reloads the new locale's
+                // design and subject/preheader state re-initialise from the
+                // freshly fetched detail. Without this the canvas stays on
+                // whichever locale was first opened.
                 <EmailTemplateEditor
+                  key={detail.locale}
                   detail={detail}
                   saving={saving}
                   resetting={resetting}
@@ -176,6 +189,7 @@ export default function TemplateEditorContent({
                 />
               ) : (
                 <WhatsAppTemplateEditor
+                  key={detail.locale}
                   detail={detail}
                   saving={saving}
                   resetting={resetting}
@@ -187,6 +201,17 @@ export default function TemplateEditorContent({
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmResetOpen}
+        title={t("resetTitle")}
+        message={t("confirmReset")}
+        confirmLabel={t("resetConfirmLabel")}
+        cancelLabel={t("cancel")}
+        loading={resetting}
+        danger
+        onConfirm={confirmReset}
+        onClose={() => !resetting && setConfirmResetOpen(false)}
+      />
     </>
   );
 }

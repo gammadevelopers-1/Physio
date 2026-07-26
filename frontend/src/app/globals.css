@@ -129,7 +129,15 @@
    Semantic Tokens - Light Mode (default)
    ============================================ */
 :root {
-  --background: #ffffff;
+  /* Body/document background follows the Strapi-driven theme so
+     changing themeSurfacePage in the CMS actually recolors the whole
+     page — not just <main> wrappers. Prior to this the body was
+     hard-locked to #ffffff, so any surface that didn't explicitly
+     paint itself (e.g. undefined `bg-[var(--surface)]` fallbacks, or
+     narrow columns that don't fill the viewport) showed the old
+     hardcoded white through, and marketing users saw the theme
+     "not applying" in patches. */
+  --background: var(--color-surface-page);
   --foreground: #171717;
 
   /* Feedback */
@@ -175,6 +183,16 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+html,
+body {
+  /* Kill any horizontal scrollbar caused by stubborn overflowing
+     elements (absolute-positioned decorations, wide background art,
+     100vw quirks with vertical-scrollbar width). Individual sections
+     should still cap their own inner content, but this is the safety
+     net so the browser never shows an unwanted body-level x-scroll. */
+  overflow-x: hidden;
 }
 
 body {

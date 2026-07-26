@@ -15,7 +15,15 @@ import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
-import { instructorApi, materialsApi } from "@/lib/api";
+import { instructorApi, materialsApi, UploadError } from "@/lib/api";
+import Select from "@/components/ui/Select";
+import {
+  ALL_ALLOWED_MIMES,
+  detectMaterialType,
+  formatFileSize,
+  validateUploadFile,
+  type UploadValidationError,
+} from "@/lib/upload-limits";
 import { toast } from "sonner";
 import CaptionEditor from "./CaptionEditor";
 import VersionHistoryPanel from "./VersionHistoryPanel";
@@ -60,48 +68,41 @@ import {
 } from "lucide-react";
 
 // ─── Helpers ───────────────────────────────────────────────
+// formatFileSize / detectMaterialType / ALLOWED_MIMES moved to
+// @/lib/upload-limits so the backend size + type limits are kept in
+// one place (with a comment referencing the backend constant).
 
-function formatFileSize(bytes: number | string): string {
-  const b = typeof bytes === "string" ? parseInt(bytes, 10) : bytes;
-  if (!b || isNaN(b)) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  let i = 0;
-  let size = b;
-  while (size >= 1024 && i < units.length - 1) {
-    size /= 1024;
-    i++;
+/**
+ * Map a validation or upload error into the correct localized message.
+ * Both flows (pre-upload File check + post-upload XHR error) end up
+ * here, so the UI stays consistent regardless of which layer catches.
+ */
+function localizeUploadError(
+  err: UploadValidationError | UploadError,
+  t: (key: string, values?: Record<string, string | number>) => string,
+): string {
+  if (err instanceof UploadError) {
+    if (err.code === 'too_large' && err.sizeMB && err.limitMB) {
+      return t('content.uploadErrorTooLarge', { size: err.sizeMB, limit: err.limitMB });
+    }
+    if (err.code === 'too_large') return t('content.uploadErrorTooLargeGeneric');
+    if (err.code === 'unsupported_type') return t('content.uploadErrorType');
+    if (err.code === 'network') return t('content.uploadErrorNetwork');
+    if (err.code === 'unauthorized' || err.code === 'forbidden') {
+      return t('content.uploadErrorForbidden');
+    }
+    if (err.code === 'processing') return t('content.uploadErrorProcessing');
+    // Fall through to server's own message when it has one, else generic.
+    return err.serverMessage || t('content.uploadError');
   }
-  return `${size.toFixed(size < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
+  // Validation error (pre-upload).
+  if (err.code === 'too_large') {
+    return t('content.uploadErrorTooLarge', { size: err.sizeMB, limit: err.limitMB });
+  }
+  if (err.code === 'unsupported_type') return t('content.uploadErrorType');
+  if (err.code === 'type_mismatch') return t('content.typeMismatch');
+  return t('content.uploadError');
 }
-
-function detectMaterialType(file: File): MaterialType | null {
-  const mime = file.type;
-  if (mime.startsWith("video/")) return "video";
-  if (mime === "application/pdf") return "pdf";
-  if (mime.startsWith("image/")) return "image";
-  if (
-    mime.includes("msword") ||
-    mime.includes("wordprocessingml") ||
-    mime.includes("ms-excel") ||
-    mime.includes("spreadsheetml") ||
-    mime.includes("ms-powerpoint") ||
-    mime.includes("presentationml")
-  )
-    return "document";
-  return null;
-}
-
-const ALLOWED_MIMES = [
-  "video/mp4", "video/mpeg", "video/webm", "video/quicktime", "video/x-msvideo",
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "image/jpeg", "image/png", "image/webp", "image/gif",
-];
 
 // ─── Actions Dropdown ─────────────────────────────────────
 
@@ -184,14 +185,16 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
   }, [selectedCourseId]);
 
   const handleFileSelect = (f: File) => {
-    if (!ALLOWED_MIMES.includes(f.type)) {
-      setError(t("content.unsupportedType"));
+    const result = validateUploadFile(f);
+    if (!result.ok) {
+      const msg = localizeUploadError(result.error, t as unknown as (k: string, v?: Record<string, string | number>) => string);
+      setError(msg);
+      toast.error(msg);
       return;
     }
     setFile(f);
     setError("");
-    const type = detectMaterialType(f);
-    setDetectedType(type);
+    setDetectedType(result.materialType);
     if (!title) {
       setTitle(f.name.replace(/\.[^.]+$/, ""));
     }
@@ -227,9 +230,12 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
       toast.success(t("content.uploadSuccess"));
       onUploaded();
       onClose();
-    } catch {
-      setError(t("content.uploadError"));
-      toast.error(t("content.uploadError"));
+    } catch (err) {
+      const msg = err instanceof UploadError
+        ? localizeUploadError(err, t as unknown as (k: string, v?: Record<string, string | number>) => string)
+        : t("content.uploadError");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setUploading(false);
     }
@@ -260,7 +266,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               ref={fileInputRef}
               type="file"
               className="hidden"
-              accept={ALLOWED_MIMES.join(",")}
+              accept={ALL_ALLOWED_MIMES.join(",")}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleFileSelect(f);
@@ -307,31 +313,29 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
           {/* Course */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.selectCourse")}</label>
-            <select
+            <Select
               value={selectedCourseId}
-              onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-            >
-              {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
-                <option key={c.id} value={c.id}>{c.title}</option>
-              ))}
-            </select>
+              onChange={setSelectedCourseId}
+              className="w-full"
+              options={courses
+                .filter((c) => c.status !== "completed" && c.status !== "archived")
+                .map((c) => ({ value: c.id, label: c.title }))}
+            />
           </div>
 
           {/* Module (optional) */}
           {courseModules.length > 0 && (
             <div className="mt-4">
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.selectModule")}</label>
-              <select
+              <Select
                 value={selectedModuleId}
-                onChange={(e) => setSelectedModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-              >
-                <option value="">{t("content.noModule")}</option>
-                {courseModules.map((m) => (
-                  <option key={m.id} value={m.id}>{m.title}</option>
-                ))}
-              </select>
+                onChange={setSelectedModuleId}
+                className="w-full"
+                options={[
+                  { value: "", label: t("content.noModule") },
+                  ...courseModules.map((m) => ({ value: m.id, label: m.title })),
+                ]}
+              />
             </div>
           )}
 
@@ -424,9 +428,11 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (f: File) => {
-    const detectedType = detectMaterialType(f);
-    if (detectedType !== material.type) {
-      setError(t("content.typeMismatch"));
+    const result = validateUploadFile(f, { expectedType: material.type });
+    if (!result.ok) {
+      const msg = localizeUploadError(result.error, t as unknown as (k: string, v?: Record<string, string | number>) => string);
+      setError(msg);
+      toast.error(msg);
       return;
     }
     setFile(f);
@@ -443,9 +449,12 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
       toast.success(t("content.replaceSuccess"));
       onReplaced();
       onClose();
-    } catch {
-      setError(t("content.replaceError"));
-      toast.error(t("content.replaceError"));
+    } catch (err) {
+      const msg = err instanceof UploadError
+        ? localizeUploadError(err, t as unknown as (k: string, v?: Record<string, string | number>) => string)
+        : t("content.replaceError");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setUploading(false);
     }
@@ -483,7 +492,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
               ref={fileInputRef}
               type="file"
               className="hidden"
-              accept={ALLOWED_MIMES.join(",")}
+              accept={ALL_ALLOWED_MIMES.join(",")}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleFileSelect(f);
@@ -1256,68 +1265,54 @@ const ContentManagementContent = () => {
 
                       {/* Desktop Filters */}
                       <div className="hidden md:flex gap-3">
-                        <select
+                        <Select
                           value={selectedCourse}
-                          onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          <option value="all">{t("content.allCourses")}</option>
-                          {courses.map((c) => (
-                            <option key={c.id} value={c.id}>{c.title}</option>
-                          ))}
-                        </select>
-                        <select
+                          onChange={handleCourseChange}
+                          className="min-w-[180px]"
+                          options={[
+                            { value: "all", label: t("content.allCourses") },
+                            ...courses.map((c) => ({ value: c.id, label: c.title })),
+                          ]}
+                        />
+                        <Select
                           value={selectedType}
-                          onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {types.map((t) => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
-                          ))}
-                        </select>
-                        <select
+                          onChange={(v) => { setSelectedType(v); setCurrentPage(1); }}
+                          className="min-w-[140px]"
+                          options={types.map((ty) => ({ value: ty.id, label: ty.name }))}
+                        />
+                        <Select
                           value={selectedStatus}
-                          onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {statuses.map((s) => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                          ))}
-                        </select>
+                          onChange={(v) => { setSelectedStatus(v); setCurrentPage(1); }}
+                          className="min-w-[140px]"
+                          options={statuses.map((s) => ({ value: s.id, label: s.name }))}
+                        />
                       </div>
                     </div>
 
                     {/* Mobile Filters */}
                     {showFilters && (
                       <div className="md:hidden mt-4 pt-4 border-t border-[var(--color-border)] grid grid-cols-3 gap-3">
-                        <select
+                        <Select
                           value={selectedCourse}
-                          onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          <option value="all">{t("content.allCourses")}</option>
-                          {courses.map((c) => (
-                            <option key={c.id} value={c.id}>{c.title}</option>
-                          ))}
-                        </select>
-                        <select
+                          onChange={handleCourseChange}
+                          className="w-full"
+                          options={[
+                            { value: "all", label: t("content.allCourses") },
+                            ...courses.map((c) => ({ value: c.id, label: c.title })),
+                          ]}
+                        />
+                        <Select
                           value={selectedType}
-                          onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {types.map((t) => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
-                          ))}
-                        </select>
-                        <select
+                          onChange={(v) => { setSelectedType(v); setCurrentPage(1); }}
+                          className="w-full"
+                          options={types.map((ty) => ({ value: ty.id, label: ty.name }))}
+                        />
+                        <Select
                           value={selectedStatus}
-                          onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                        >
-                          {statuses.map((s) => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                          ))}
-                        </select>
+                          onChange={(v) => { setSelectedStatus(v); setCurrentPage(1); }}
+                          className="w-full"
+                          options={statuses.map((s) => ({ value: s.id, label: s.name }))}
+                        />
                       </div>
                     )}
                   </div>

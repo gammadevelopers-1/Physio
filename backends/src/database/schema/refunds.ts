@@ -59,7 +59,7 @@ export const refunds = pgTable(
     index('refunds_requested_by_idx').on(table.requestedBy),
     check(
       'refunds_reason_check',
-      sql`${table.reason} IN ('policy', 'cancelled', 'technical', 'duplicate', 'other', 'course_cancelled')`,
+      sql`${table.reason} IN ('policy', 'cancelled', 'technical', 'duplicate', 'other', 'course_cancelled', 'description_mismatch', 'wrong_course', 'access_issue')`,
     ),
     check(
       'refunds_status_check',
@@ -104,6 +104,8 @@ export const REFUND_STATUS = {
 export type RefundStatus = (typeof REFUND_STATUS)[keyof typeof REFUND_STATUS];
 
 export const REFUND_REASON = {
+  /** Legacy — kept for historical rows only; the buyer-facing modal no
+   *  longer offers this option. */
   POLICY: 'policy',
   /** Buyer-initiated cancellation ("changed my mind"). */
   CANCELLED: 'cancelled',
@@ -114,6 +116,12 @@ export const REFUND_REASON = {
    *  `cancelled` so the finance UI labels the reason honestly instead
    *  of showing "Buyer Changed Mind" for admin-initiated refunds. */
   COURSE_CANCELLED: 'course_cancelled',
+  /** Buyer says the course content does not match the marketing copy. */
+  DESCRIPTION_MISMATCH: 'description_mismatch',
+  /** Buyer bought the wrong course (intended a different SKU). */
+  WRONG_COURSE: 'wrong_course',
+  /** Buyer can't access the course (enrollment, permissions, etc). */
+  ACCESS_ISSUE: 'access_issue',
 } as const;
 
 export type RefundReason = (typeof REFUND_REASON)[keyof typeof REFUND_REASON];

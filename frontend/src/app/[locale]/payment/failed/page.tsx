@@ -72,7 +72,7 @@ export default function PaymentFailedPage() {
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
 
   return (
-    <div className="min-h-screen bg-[#EEF3F7] flex flex-col" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-[var(--color-surface-page)] flex flex-col" dir={isRTL ? "rtl" : "ltr"}>
       <Navbar />
       <main className="flex-1 flex items-center justify-center px-4 py-20" aria-label={t("title")}>
         <div role="alert" className="bg-white rounded-2xl shadow-sm p-8 max-w-lg w-full text-center">

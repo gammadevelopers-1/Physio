@@ -225,11 +225,21 @@ export default function CheckoutPageClient({
   // Coupon stacking: blocked if ANY cart line is on sale without
   // saleAllowsCoupon. In cart mode, we don't know per-line stacking from
   // the localStorage snapshot, so any on-sale line conservatively blocks
-  // coupon entry. Express mode reads the authoritative server flag.
-  const couponBlocked = items.some(
+  // coupon entry. Express mode reads the authoritative server flag. The
+  // `couponBlocked` override below trusts a fresh autoApply campaign
+  // over a stale cart snapshot so a finance edit (e.g. flipping
+  // allowsCoupon on) takes effect without the buyer re-adding the item.
+  const staleCouponBlocked = items.some(
     (it) => it.onSale && !it.saleAllowsCoupon,
   );
-  const showCouponField = !couponBlocked;
+  // If the whole cart is free (every line's effective price is 0), a coupon
+  // is meaningless — % off zero is zero. Hide the field entirely so the
+  // buyer isn't prompted to enter something that will be rejected by the
+  // backend validateDiscount guard.
+  const cartIsFree = items.length > 0 && items.every((it) => (it.effectivePrice ?? it.price ?? 0) <= 0);
+  // NOTE: `showCouponField` is computed below the campaign-direct state
+  // declarations so we can incorporate the "campaign-direct without
+  // stacking" gate.
 
   // Gateway state
   const [gateway, setGateway] = useState<
@@ -241,7 +251,17 @@ export default function CheckoutPageClient({
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Discount state
+  // Discount state — SPLIT into two independent buckets so a direct-
+  // campaign discount (no coupon row) never gets pasted into the
+  // buyer's coupon input.
+  //
+  // `discountCode` / `discountResult` / `isAutoApplied` are RESERVED
+  // for real coupon codes (typed or code-based auto-apply where the
+  // backend returned a non-null `.code`).
+  //
+  // `campaignDirect` holds a direct-campaign auto-apply match — kept
+  // completely off the coupon input so clearing the input can't clear
+  // the campaign.
   const [discountCode, setDiscountCode] = useState("");
   const [discountResult, setDiscountResult] = useState<{
     valid: boolean;
@@ -250,13 +270,32 @@ export default function CheckoutPageClient({
     error?: string;
   } | null>(null);
   const [validatingDiscount, setValidatingDiscount] = useState(false);
-  /** True when the active discount came from the auto-apply endpoint
-   * (early-bird), false when the user typed it manually. Controls the
-   * "Auto-applied" pill. */
+  /** True when the active coupon came from the auto-apply endpoint
+   * (code-based early-bird), false when the user typed it manually.
+   * Controls the "Auto-applied" pill. */
   const [isAutoApplied, setIsAutoApplied] = useState(false);
-  /** Tracks the campaign name (if any) attached to the active code so
+  /** Tracks the campaign name (if any) attached to the active coupon so
    * we can surface "Part of <campaign>" in the breakdown. */
   const [autoAppliedCampaign, setAutoAppliedCampaign] = useState<string | null>(null);
+  /** Direct-campaign discount (no coupon row). When set, the summary
+   * renders a distinct campaign line and — if `allowsCoupon` is true —
+   * the coupon input stays available for stacking. */
+  const [campaignDirect, setCampaignDirect] = useState<{
+    amount: number;
+    campaignId: string;
+    campaignName: string | null;
+    allowsCoupon: boolean;
+  } | null>(null);
+
+  // Compute the coupon-field visibility. A live campaign-direct discount
+  // with allowsCoupon=false hides the coupon input — the buyer is already
+  // discounted; stacking is disallowed. If a fresh campaign-direct
+  // discount arrives with `allowsCoupon=true`, we override any stale
+  // cart snapshot that would otherwise block coupons.
+  const campaignBlocksCoupon = !!campaignDirect && !campaignDirect.allowsCoupon;
+  const couponBlocked =
+    staleCouponBlocked && !(campaignDirect && campaignDirect.allowsCoupon);
+  const showCouponField = !couponBlocked && !cartIsFree && !campaignBlocksCoupon;
 
   // VAT rate from public tax-display endpoint (finance-manager controlled).
   const [vatRate, setVatRate] = useState<number>(DEFAULT_VAT_RATE);
@@ -295,12 +334,18 @@ export default function CheckoutPageClient({
     status: "checking",
   });
 
-  // Totals
+  // Totals — additive stacking of the two discount buckets, clamped so
+  // the combined discount never exceeds the subtotal (matches backend).
   const originalSubtotal = items.reduce((s, it) => s + it.price, 0);
   const subtotal = items.reduce((s, it) => s + it.effectivePrice, 0);
   const saleDiscount = Math.max(0, originalSubtotal - subtotal);
   const couponDiscount = discountResult?.valid ? discountResult.discountAmount : 0;
-  const taxableAmount = Math.max(0, subtotal - couponDiscount);
+  const campaignDiscount = campaignDirect?.amount ?? 0;
+  const combinedDiscount = Math.min(
+    subtotal,
+    Math.round((couponDiscount + campaignDiscount) * 100) / 100,
+  );
+  const taxableAmount = Math.max(0, subtotal - combinedDiscount);
   const effectiveVatRate = vatEnabled ? vatRate / 100 : 0;
   const vat = Math.round(taxableAmount * effectiveVatRate * 100) / 100;
   const total = Math.round((taxableAmount + vat) * 100) / 100;
@@ -323,6 +368,7 @@ export default function CheckoutPageClient({
         .tabbyPreScore({
           courseIds: items.map((it) => it.id),
           discountCode: discountResult?.valid ? discountCode : undefined,
+          applyActiveCampaign: !!campaignDirect,
           locale: locale as "ar" | "en",
         })
         .then((res) => {
@@ -349,7 +395,7 @@ export default function CheckoutPageClient({
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartIdsKey, total, discountResult?.valid]);
+  }, [cartIdsKey, total, discountResult?.valid, !!campaignDirect]);
 
   const handleValidateDiscount = async () => {
     if (!discountCode.trim() || items.length === 0) return;
@@ -378,26 +424,44 @@ export default function CheckoutPageClient({
 
   // Auto-apply early-bird discount on cart load. Runs once when items
   // first populate. Skipped if the user has already typed a code.
+  //
+  // Two shapes come back from /discounts/auto-apply:
+  //   (a) Coupon-based early-bird — `.code` is a real code, `.isCampaignDirect`
+  //       is falsy. Populate the coupon fields as before.
+  //   (b) Direct-campaign discount — `.code` is `null`, `.isCampaignDirect`
+  //       is true. Populate `campaignDirect` ONLY; never touch discountCode
+  //       (the buyer's coupon input must stay empty).
   useEffect(() => {
     if (items.length === 0) return;
-    if (discountCode || discountResult) return;
+    if (discountCode || discountResult || campaignDirect) return;
     let cancelled = false;
     (async () => {
       try {
         const best = await discountApi.autoApply(items.map((i) => i.id));
         // `best` can be `null` (no match) OR `{}` (when the backend returns
         // 201 with empty body — Express tags that as text/html, and the
-        // fetch wrapper coerces to `{}`). Require `.code` so we never call
-        // `.trim()` / `.toUpperCase()` on undefined later.
-        if (cancelled || !best || !best.code) return;
-        setDiscountCode(best.code);
-        setDiscountResult({
-          valid: true,
-          discountAmount: best.discountAmount,
-          discountId: best.discountId,
-        });
-        setIsAutoApplied(true);
-        setAutoAppliedCampaign(best.campaign?.name || null);
+        // fetch wrapper coerces to `{}`). Bail if no discountId either way.
+        if (cancelled || !best || !best.discountId) return;
+        if (best.isCampaignDirect) {
+          // Direct-campaign path — no coupon row. Store separately so
+          // clearing the coupon input can't wipe this out.
+          setCampaignDirect({
+            amount: best.discountAmount,
+            campaignId: best.campaign?.id || best.discountId,
+            campaignName: best.campaign?.name || null,
+            allowsCoupon: best.campaign?.allowsCoupon !== false,
+          });
+        } else if (best.code) {
+          // Real coupon code — populate the coupon input + result.
+          setDiscountCode(best.code);
+          setDiscountResult({
+            valid: true,
+            discountAmount: best.discountAmount,
+            discountId: best.discountId,
+          });
+          setIsAutoApplied(true);
+          setAutoAppliedCampaign(best.campaign?.name || null);
+        }
       } catch {
         /* silent — auto-apply is best-effort */
       }
@@ -410,9 +474,12 @@ export default function CheckoutPageClient({
 
   // Debounced live re-validation when user edits the code (after the
   // first manual Apply). Keeps preview in sync without forcing a click.
+  // NOTE: clearing the coupon input only drops COUPON state; the
+  // direct-campaign discount lives in `campaignDirect` and stays.
   useEffect(() => {
     if (!discountCode.trim()) {
-      // Cleared: drop the result too
+      // Cleared: drop coupon result + flags only. Campaign-direct is
+      // untouched — it never rode in this input to begin with.
       if (discountResult) setDiscountResult(null);
       setIsAutoApplied(false);
       setAutoAppliedCampaign(null);
@@ -448,6 +515,9 @@ export default function CheckoutPageClient({
       if (discountResult?.valid && discountCode) {
         params.set("discountCode", discountCode);
       }
+      // Round-trip the campaign opt-in through the URL so the draft page
+      // re-quotes with the same discount stack the buyer just saw.
+      if (campaignDirect) params.set("applyCampaign", "1");
       if (isExpressMode) params.set("isExpress", "true");
       router.push(`/${locale}/payment/bank-transfer/draft?${params.toString()}`);
       return;
@@ -459,6 +529,7 @@ export default function CheckoutPageClient({
         gateway,
         paymentMethod,
         discountCode: discountResult?.valid ? discountCode : undefined,
+        applyActiveCampaign: !!campaignDirect,
         locale: locale as "ar" | "en",
       });
 
@@ -495,6 +566,10 @@ export default function CheckoutPageClient({
     if (isExpressMode) return; // express mode has exactly one item
     removeItem(id);
     if (discountResult) setDiscountResult(null); // re-validate after change
+    // Drop the campaign-direct discount too — the remaining cart may not
+    // qualify anymore. The auto-apply effect re-runs when items.length
+    // changes and re-populates whichever bucket still matches.
+    if (campaignDirect) setCampaignDirect(null);
   };
 
   // ────────────────────────── render guards ──────────────────────────
@@ -899,6 +974,29 @@ export default function CheckoutPageClient({
                   <h2 className="text-lg font-semibold text-[var(--on-surface-default)] mb-3">
                     {t("discount.title")}
                   </h2>
+                  {/* Direct-campaign banner — shown when a live campaign
+                      (no coupon row) is stacked. No fake CAMPAIGN:xxx
+                      token is ever pasted anywhere; the buyer sees the
+                      campaign's real name + the SAR saved. */}
+                  {campaignDirect && (
+                    <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-[12px] text-amber-800 leading-snug">
+                        <p className="font-semibold">
+                          {t("discount.campaignAppliedTitle", {
+                            campaign:
+                              campaignDirect.campaignName ||
+                              t("discount.campaignFallback"),
+                          })}
+                        </p>
+                        <p>
+                          {t("discount.campaignAppliedBody", {
+                            amount: campaignDirect.amount.toFixed(2),
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {isAutoApplied && discountResult?.valid && (
                     <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 flex items-start gap-2">
                       <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -1174,9 +1272,25 @@ export default function CheckoutPageClient({
                       <span className="text-sm font-medium text-green-600">- SAR {saleDiscount.toFixed(2)}</span>
                     </div>
                   )}
+                  {campaignDiscount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-green-600">
+                        {t("discount.campaignLine", {
+                          campaign:
+                            campaignDirect?.campaignName ||
+                            t("discount.campaignFallback"),
+                        })}
+                      </span>
+                      <span className="text-sm font-medium text-green-600">- SAR {campaignDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
                   {couponDiscount > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-green-600">{t("discount.discountLabel")}</span>
+                      <span className="text-sm text-green-600">
+                        {discountCode
+                          ? t("discount.couponLine", { code: discountCode })
+                          : t("discount.discountLabel")}
+                      </span>
                       <span className="text-sm font-medium text-green-600">- SAR {couponDiscount.toFixed(2)}</span>
                     </div>
                   )}

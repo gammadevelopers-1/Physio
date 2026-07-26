@@ -26,6 +26,11 @@ import {
  *
  *   progress    = round(numerator / denominator * 100)   ← clamped [0, 100]
  *
+ * Webinar Courses branch: attendance-only per product spec. Modules and
+ * assessments MAY exist as supplementary content but do NOT feed
+ * progress% or CME eligibility — only session attendance drives the
+ * numerator/denominator for delivery_type='webinar'.
+ *
  * Called from any path that flips one of those signals:
  *   - module marked complete
  *   - session finalized (status → completed) + attendance recorded
@@ -77,6 +82,16 @@ export async function recomputeEnrollmentProgress(
   const prior = Number(priorRow?.progress ?? 0);
   const enrolledAt = priorRow?.enrolledAt ?? null;
 
+  // Webinar Courses are attendance-only per product spec: modules and
+  // assessments MAY exist as supplementary content but do NOT feed
+  // progress% or CME eligibility. Only session attendance drives progress.
+  const [deliveryRow] = await db
+    .select({ deliveryType: courses.deliveryType })
+    .from(courses)
+    .where(eq(courses.id, courseId))
+    .limit(1);
+  const isWebinarCourse = deliveryRow?.deliveryType === 'webinar';
+
   // ── DENOMINATOR ────────────────────────────────────────────
   const [moduleTotalRow] = await db
     .select({ c: count() })
@@ -119,7 +134,9 @@ export async function recomputeEnrollmentProgress(
   const totalModules = Number(moduleTotalRow?.c ?? 0);
   const totalSessions = Number(sessionTotalRow?.c ?? 0);
   const totalAssessments = Number(assessmentTotalRow?.c ?? 0);
-  const denominator = totalModules + totalSessions + totalAssessments;
+  const denominator = isWebinarCourse
+    ? totalSessions
+    : totalModules + totalSessions + totalAssessments;
 
   if (denominator === 0) {
     await db
@@ -219,7 +236,9 @@ export async function recomputeEnrollmentProgress(
   const modulesDone = Number(moduleDoneRow?.c ?? 0);
   const sessionsDone = Number(attendanceDoneRow?.c ?? 0);
   const assessmentsDone = doneAssessmentIds.size;
-  const numerator = modulesDone + sessionsDone + assessmentsDone;
+  const numerator = isWebinarCourse
+    ? sessionsDone
+    : modulesDone + sessionsDone + assessmentsDone;
 
   const progress = Math.min(
     100,

@@ -140,10 +140,6 @@ const StudentCourseDetailContent = () => {
   // CTA. Otherwise, the next session that's still in the future drives a
   // disabled "Starts in 2h 15m" countdown state.
   const isZoom = data?.course.deliveryType === "zoom";
-  // Webinar Courses are attendance-only: no modules, no assessments. The
-  // dashboard, /learn page, and certificate panel all branch on this so
-  // empty tabs/sections don't show up.
-  const isWebinarCourse = data?.course.deliveryType === "webinar";
   // A session is "joinable from our app" when it has either a meeting link
   // OR is a webinar (auto-registration produces the join URL on demand).
   const canDispatchJoin = (s: { zoomLink: string | null; isWebinar?: boolean | null }) =>
@@ -520,12 +516,10 @@ const StudentCourseDetailContent = () => {
 
                   {/* Stat tiles — each is a deep-link into the /learn
                       workspace (or scrolls to the assessments section) so
-                      students can jump straight to what they care about.
-                      Webinar Courses drop the Modules + Assessments tiles
-                      (the layout adapts to a 2-tile grid). */}
-                  <div className={`grid grid-cols-2 ${isWebinarCourse ? "lg:grid-cols-2" : "lg:grid-cols-4"} gap-4 mb-4`}>
-                    {/* Modules → /learn?tab=modules (hidden for Webinar Courses) */}
-                    {!isWebinarCourse && (data.modules.length > 0 ? (
+                      students can jump straight to what they care about. */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    {/* Modules → /learn?tab=modules */}
+                    {data.modules.length > 0 ? (
                       <Link
                         href={learnUrl("modules")}
                         className="group bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 hover:border-[var(--color-primary)] hover:shadow-sm transition-all cursor-pointer"
@@ -559,7 +553,7 @@ const StudentCourseDetailContent = () => {
                           </div>
                         </div>
                       </div>
-                    ))}
+                    )}
 
                     {/* Attendance → /learn?tab=lectures (hidden for self-paced) */}
                     {data.course.deliveryType !== "self-paced" && (
@@ -609,39 +603,37 @@ const StudentCourseDetailContent = () => {
                       </Link>
                     )}
 
-                    {/* Assessments → scroll-to-section (hidden for Webinar Courses) */}
-                    {!isWebinarCourse && (
-                      <button
-                        type="button"
-                        onClick={scrollToAssessments}
-                        disabled={data.assessments.length === 0}
-                        className="group text-start bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 hover:border-[var(--color-primary)] hover:shadow-sm transition-all cursor-pointer disabled:cursor-default disabled:hover:border-[var(--color-border)] disabled:hover:shadow-none"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center">
-                            <ClipboardCheck className="w-5 h-5 text-[#D4A520]" />
-                          </div>
-                          <div>
-                            <p className="text-xs text-[var(--color-text-secondary)]">
-                              {t("courseDetail.assessments")}
-                            </p>
-                            <p className="text-lg font-semibold text-[var(--color-text-primary)]">
-                              {data.assessmentSummary
-                                ? `${data.assessmentSummary.completed}/${data.assessmentSummary.total}`
-                                : `${data.assessments.length}`}
-                            </p>
-                            {data.assessmentSummary &&
-                              data.assessmentSummary.completed > 0 && (
-                                <p className="text-xs text-[var(--color-text-secondary)]">
-                                  {t("courseDetail.averageScore", {
-                                    score: Math.round(data.assessmentSummary.averageScore),
-                                  })}
-                                </p>
-                              )}
-                          </div>
+                    {/* Assessments → scroll-to-section */}
+                    <button
+                      type="button"
+                      onClick={scrollToAssessments}
+                      disabled={data.assessments.length === 0}
+                      className="group text-start bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 hover:border-[var(--color-primary)] hover:shadow-sm transition-all cursor-pointer disabled:cursor-default disabled:hover:border-[var(--color-border)] disabled:hover:shadow-none"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center">
+                          <ClipboardCheck className="w-5 h-5 text-[#D4A520]" />
                         </div>
-                      </button>
-                    )}
+                        <div>
+                          <p className="text-xs text-[var(--color-text-secondary)]">
+                            {t("courseDetail.assessments")}
+                          </p>
+                          <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                            {data.assessmentSummary
+                              ? `${data.assessmentSummary.completed}/${data.assessmentSummary.total}`
+                              : `${data.assessments.length}`}
+                          </p>
+                          {data.assessmentSummary &&
+                            data.assessmentSummary.completed > 0 && (
+                              <p className="text-xs text-[var(--color-text-secondary)]">
+                                {t("courseDetail.averageScore", {
+                                  score: Math.round(data.assessmentSummary.averageScore),
+                                })}
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                    </button>
 
                     {/* Status — display only */}
                     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">

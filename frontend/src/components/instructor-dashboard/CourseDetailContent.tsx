@@ -1042,12 +1042,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
   // ─── Tabs ─────────────────────────────────────────────────
   const isSelfPaced = course?.deliveryType === "self-paced";
-  // Webinar Courses have no modules — drop that tab entirely.
+  // Webinar Courses now support optional modules/assessments (attendance
+  // still drives CME); keep the Modules tab for every delivery type.
   const isWebinarCourse = course?.deliveryType === "webinar";
 
   const tabs = [
     { id: "overview" as const, label: t("courseDetail.tabs.overview") },
-    ...(!isWebinarCourse ? [{ id: "modules" as const, label: t("courseDetail.tabs.modules") }] : []),
+    { id: "modules" as const, label: t("courseDetail.tabs.modules") },
     { id: "students" as const, label: t("courseDetail.tabs.students") },
     ...(!isSelfPaced ? [{ id: "sessions" as const, label: t("courseDetail.tabs.sessions") }] : []),
     { id: "analytics" as const, label: t("courseDetail.tabs.analytics") },

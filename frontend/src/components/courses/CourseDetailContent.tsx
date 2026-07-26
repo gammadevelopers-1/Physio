@@ -772,7 +772,10 @@ const CourseDetailContent = ({
   // (the webinar event itself). Zoom-only meeting courses hide the lectures
   // list because the manager's drip schedule is internal.
   const showSessions = dt === "onsite" || dt === "blended" || isWebinarCourse;
-  const showModules = (dt === "self-paced" || dt === "blended") && apiCourse?.showContents !== false;
+  // Modules are supplementary content for any delivery type that has them.
+  // The manager can hide them per-course via the showContents toggle; otherwise
+  // if the course actually has modules, we render them.
+  const showModules = apiCourse?.showContents !== false;
   const showVenue = dt === "onsite" || dt === "blended";
   const showRequirements = (dt === "onsite" || dt === "blended") && !!getRequirements();
 

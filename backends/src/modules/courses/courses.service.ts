@@ -3774,18 +3774,6 @@ export class CoursesService {
   ) {
     await this.verifyCourseAccess(courseId, user);
 
-    // Webinar Courses are attendance-only — modules are not allowed.
-    const [course] = await db
-      .select({ deliveryType: courses.deliveryType })
-      .from(courses)
-      .where(eq(courses.id, courseId))
-      .limit(1);
-    if (course?.deliveryType === 'webinar') {
-      throw new BadRequestException(
-        'Webinar courses cannot contain modules. Add a webinar lecture instead.',
-      );
-    }
-
     // If no orderIndex provided, append at the end
     let orderIndex = dto.orderIndex;
     if (orderIndex === undefined || orderIndex === null) {

@@ -111,13 +111,6 @@ export class AssessmentsService {
       .where(eq(courses.id, dto.courseId))
       .limit(1);
 
-    // Webinar Courses are attendance-only — assessments are not allowed.
-    if (course?.deliveryType === 'webinar') {
-      throw new BadRequestException(
-        'Webinar courses cannot contain assessments. Eligibility is attendance-based only.',
-      );
-    }
-
     // Enforce 1 attempt for quiz/exam
     const attemptsAllowed =
       dto.type === 'quiz' || dto.type === 'exam'

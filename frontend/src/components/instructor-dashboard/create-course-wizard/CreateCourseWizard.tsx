@@ -115,7 +115,6 @@ const CreateCourseWizard = () => {
   const t = useTranslations("instructorDashboard.createCourse");
 
   const isSelfPaced = state.deliveryType === "self-paced";
-  const isWebinarCourse = state.deliveryType === "webinar";
 
   const handleNext = () => {
     if (state.step === 1) {
@@ -143,8 +142,6 @@ const CreateCourseWizard = () => {
       let nextStep = (state.step + 1) as 1 | 2 | 3 | 4;
       // Skip Step 2 (Schedule) for self-paced courses
       if (isSelfPaced && nextStep === 2) nextStep = 3;
-      // Skip Step 3 (Modules) for webinar courses — modules are not allowed
-      if (isWebinarCourse && nextStep === 3) nextStep = 4;
       dispatch({ type: "SET_STEP", step: nextStep });
     }
   };
@@ -154,8 +151,6 @@ const CreateCourseWizard = () => {
       let prevStep = (state.step - 1) as 1 | 2 | 3 | 4;
       // Skip Step 2 (Schedule) for self-paced courses
       if (isSelfPaced && prevStep === 2) prevStep = 1;
-      // Skip Step 3 (Modules) for webinar courses
-      if (isWebinarCourse && prevStep === 3) prevStep = 2;
       dispatch({ type: "SET_STEP", step: prevStep });
     } else {
       router.back();
@@ -187,22 +182,21 @@ const CreateCourseWizard = () => {
         courseData as Parameters<typeof instructorApi.createCourse>[0]
       );
 
-      // Add modules sequentially — skip entirely for webinar courses
-      // (the backend rejects modules on webinar courses anyway).
+      // Add modules sequentially. Modules are optional for every delivery
+      // type — for webinars they're supplementary content that doesn't count
+      // toward CME (attendance-only), so an empty state.modules array is fine.
       let modulesFailed = false;
-      if (!isWebinarCourse) {
-        for (const mod of state.modules) {
-          try {
-            const moduleData: { title: string; type: string; titleAr?: string; durationMinutes?: number } = {
-              title: mod.title.trim(),
-              type: mod.type,
-            };
-            if (mod.titleAr.trim()) moduleData.titleAr = mod.titleAr.trim();
-            if (mod.durationMinutes) moduleData.durationMinutes = Number(mod.durationMinutes);
-            await instructorApi.addModule(course.id, moduleData);
-          } catch {
-            modulesFailed = true;
-          }
+      for (const mod of state.modules) {
+        try {
+          const moduleData: { title: string; type: string; titleAr?: string; durationMinutes?: number } = {
+            title: mod.title.trim(),
+            type: mod.type,
+          };
+          if (mod.titleAr.trim()) moduleData.titleAr = mod.titleAr.trim();
+          if (mod.durationMinutes) moduleData.durationMinutes = Number(mod.durationMinutes);
+          await instructorApi.addModule(course.id, moduleData);
+        } catch {
+          modulesFailed = true;
         }
       }
 
@@ -233,7 +227,7 @@ const CreateCourseWizard = () => {
       <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6">{t("title")}</h1>
 
       {/* Step Indicator */}
-      <WizardStepIndicator currentStep={state.step} skipStep2={isSelfPaced} skipStep3={isWebinarCourse} />
+      <WizardStepIndicator currentStep={state.step} skipStep2={isSelfPaced} />
 
       {/* Step Content */}
       {state.step === 1 && <Step1BasicInfo state={state} dispatch={dispatch} />}

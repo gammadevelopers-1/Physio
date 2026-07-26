@@ -814,7 +814,7 @@ const CourseManagerCourseDetailContent = ({
 
   const tabs: Array<{ id: TabId; label: string }> = [
     { id: "overview", label: t("courseDetail.tabs.overview") },
-    ...(!isWebinarCourse ? [{ id: "modules" as const, label: t("courseDetail.tabs.modules") }] : []),
+    { id: "modules" as const, label: t("courseDetail.tabs.modules") },
     ...(!isSelfPaced && !isWebinarCourse ? [{ id: "sessions" as const, label: t("courseDetail.tabs.sessions") }] : []),
     { id: "assessments", label: t("courseDetail.tabs.assessments") },
     { id: "students", label: t("courseDetail.tabs.students") },
@@ -1185,7 +1185,7 @@ const CourseManagerCourseDetailContent = ({
                     )}
 
                     {/* ═══ MODULES ═══ */}
-                    {activeTab === "modules" && course.deliveryType !== "webinar" && (
+                    {activeTab === "modules" && (
                       <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
                         <div className="p-4 border-b border-[var(--color-border)] flex items-center justify-between">
                           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">

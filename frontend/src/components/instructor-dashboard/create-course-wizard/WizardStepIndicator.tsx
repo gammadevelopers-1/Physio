@@ -6,10 +6,9 @@ import { Check } from "lucide-react";
 interface WizardStepIndicatorProps {
   currentStep: 1 | 2 | 3 | 4;
   skipStep2?: boolean;
-  skipStep3?: boolean;
 }
 
-const WizardStepIndicator = ({ currentStep, skipStep2, skipStep3 }: WizardStepIndicatorProps) => {
+const WizardStepIndicator = ({ currentStep, skipStep2 }: WizardStepIndicatorProps) => {
   const t = useTranslations("instructorDashboard.createCourse");
 
   const allSteps = [
@@ -19,9 +18,7 @@ const WizardStepIndicator = ({ currentStep, skipStep2, skipStep3 }: WizardStepIn
     { number: 4, label: t("wizardStep4") },
   ];
 
-  const steps = allSteps.filter(
-    (s) => !(skipStep2 && s.number === 2) && !(skipStep3 && s.number === 3),
-  );
+  const steps = allSteps.filter((s) => !(skipStep2 && s.number === 2));
 
   return (
     <div className="flex items-center justify-between mb-8">

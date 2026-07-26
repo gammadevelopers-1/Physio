@@ -2057,18 +2057,14 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    // Managers (non-admin) are still locked to draft-only deletes — this
-    // matches the prior hard-delete behavior. Admins can delete draft or
-    // cancelled courses (Amna's Phase B spec: cancel-then-delete is the
-    // only path for a course with enrolments; a fully-cancelled course
-    // has already been refunded and can safely be removed).
-    const adminDeletable: string[] = [COURSE_STATUS.DRAFT, COURSE_STATUS.CANCELLED];
-    if (!isGlobalAdmin(user) && existing.status !== COURSE_STATUS.DRAFT) {
-      throw new BadRequestException(
-        'Only draft courses can be deleted',
-      );
-    }
-    if (isGlobalAdmin(user) && !adminDeletable.includes(existing.status)) {
+    // Both managers (scoped to their own courses via the check above) and
+    // admins can delete DRAFT or CANCELLED courses. Amna's Phase B spec:
+    // cancel-then-delete is the only path for a course with enrolments;
+    // a fully-cancelled course has already been refunded and can safely
+    // be removed. Manager parity confirmed 2026-07-26 — managers now
+    // drive the same destructive flow on courses they own.
+    const deletableStatuses: string[] = [COURSE_STATUS.DRAFT, COURSE_STATUS.CANCELLED];
+    if (!deletableStatuses.includes(existing.status)) {
       throw new BadRequestException(
         'Only draft or cancelled courses can be deleted. Cancel the course first — this refunds every buyer, notifies students, and cleans up sessions — then delete becomes available.',
       );

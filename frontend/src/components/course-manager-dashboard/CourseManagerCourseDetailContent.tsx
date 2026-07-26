@@ -12,7 +12,8 @@ import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { toast } from "sonner";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
-import { courseManagerApi } from "@/lib/api";
+import { adminApi, courseManagerApi, type CourseDeleteImpact } from "@/lib/api";
+import DatePicker from "@/components/ui/DatePicker";
 import type {
   CourseDetailResponse,
   CourseModule,
@@ -54,6 +55,9 @@ import {
   Image as ImageIcon,
   File,
   X,
+  XCircle,
+  CalendarClock,
+  Ban,
   Eye,
   ClipboardCheck,
   Award,
@@ -146,6 +150,11 @@ const CourseManagerCourseDetailContent = ({
   role = "manager",
 }: CourseManagerCourseDetailContentProps) => {
   const t = useTranslations("courseManagerDashboard");
+  // Admin-only modals reuse the translation keys already authored under
+  // adminDashboard.coursesPage.* — the same ones AdminCoursesContent
+  // uses on the list page, so wording stays in sync between the two
+  // surfaces. Only referenced from admin-gated branches.
+  const tAdmin = useTranslations("adminDashboard");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
   const platformLocale = usePlatformLocale();
@@ -164,12 +173,28 @@ const CourseManagerCourseDetailContent = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
-  const [deleting, setDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showRequestChanges, setShowRequestChanges] = useState(false);
   const [requestChangesNote, setRequestChangesNote] = useState("");
   const [requestingChanges, setRequestingChanges] = useState(false);
+
+  // Unified confirm modal state for cancel / delete / reschedule —
+  // ported from AdminCoursesContent so the shared detail component has
+  // the same destructive-action flow as the admin list page. Available
+  // to both admin and manager (backend enforces manager-scope + Phase B
+  // status rules).
+  type AdminConfirmKind = "delete" | "cancel" | "reschedule" | null;
+  const [confirmKind, setConfirmKind] = useState<AdminConfirmKind>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [deleteImpact, setDeleteImpact] = useState<CourseDeleteImpact | null>(null);
+  const [deleteImpactLoading, setDeleteImpactLoading] = useState(false);
+  const [deleteImpactError, setDeleteImpactError] = useState<string | null>(null);
+  const [deleteTypedTitle, setDeleteTypedTitle] = useState("");
+  const [deleteReason, setDeleteReason] = useState("");
+  const [cancelReason, setCancelReason] = useState("");
+  const [rescheduleReason, setRescheduleReason] = useState("");
+  const [rescheduleNewStartDate, setRescheduleNewStartDate] = useState("");
+  const [rescheduleNewEndDate, setRescheduleNewEndDate] = useState("");
 
   // Module materials
   interface MaterialItem {
@@ -564,22 +589,174 @@ const CourseManagerCourseDetailContent = ({
     fetchCourse();
   }, [fetchCourse]);
 
-  const handleDelete = async () => {
+  // ─── Unified cancel / delete / reschedule flow ──────────────────
+  // Ported from AdminCoursesContent so /admin/courses/[id] has the
+  // same destructive-action surface as the admin list page.
+
+  const openAdminConfirm = (kind: Exclude<AdminConfirmKind, null>) => {
     if (!course) return;
-    setDeleting(true);
-    try {
-      await courseManagerApi.deleteCourse(course.id);
-      toast.success(t("courseDetail.deleteSuccess"));
-      router.push(dashboardBase);
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : t("courseDetail.deleteError")
-      );
-    } finally {
-      setDeleting(false);
-      setShowDeleteConfirm(false);
+    setConfirmKind(kind);
+    setDeleteImpact(null);
+    setDeleteImpactError(null);
+    setDeleteTypedTitle("");
+    setDeleteReason("");
+    setCancelReason("");
+    setRescheduleReason("");
+    // Reschedule pre-fills with current dates — the common case is
+    // shifting the window by a few days, so starting from the current
+    // pair beats an empty picker.
+    setRescheduleNewStartDate(course.startDate ?? "");
+    setRescheduleNewEndDate(course.endDate ?? "");
+    // Delete + Cancel both benefit from the impact preview.
+    if (kind === "delete" || kind === "cancel") {
+      setDeleteImpactLoading(true);
+      adminApi
+        .getCourseDeleteImpact(course.id)
+        .then((res) => setDeleteImpact(res.impact))
+        .catch((err) =>
+          setDeleteImpactError(
+            err instanceof Error ? err.message : "Failed to load impact preview",
+          ),
+        )
+        .finally(() => setDeleteImpactLoading(false));
     }
   };
+
+  const closeAdminConfirm = () => {
+    if (confirmBusy) return;
+    setConfirmKind(null);
+    setDeleteImpact(null);
+    setDeleteImpactError(null);
+    setDeleteTypedTitle("");
+    setDeleteReason("");
+    setCancelReason("");
+    setRescheduleReason("");
+    setRescheduleNewStartDate("");
+    setRescheduleNewEndDate("");
+  };
+
+  const handleAdminConfirm = async () => {
+    if (!course || !confirmKind) return;
+    setConfirmBusy(true);
+    try {
+      if (confirmKind === "cancel") {
+        const result = await adminApi.cancelCourse(course.id, cancelReason.trim());
+        if (result.variant === "post_start") {
+          toast.success(
+            tAdmin("coursesPage.confirmCancel.successPostStart", {
+              queued: result.refundsIssued,
+              manual: result.refundsPendingBankTransfer,
+              certs: result.certificatesRevoked,
+            }),
+          );
+        } else {
+          toast.success(
+            tAdmin("coursesPage.confirmCancel.success", {
+              queued: result.refundsIssued,
+              manual: result.refundsPendingBankTransfer,
+            }),
+          );
+        }
+        closeAdminConfirm();
+        fetchCourse();
+      } else if (confirmKind === "reschedule") {
+        const result = await adminApi.rescheduleCourse(course.id, {
+          reason: rescheduleReason.trim(),
+          newStartDate: rescheduleNewStartDate,
+          newEndDate: rescheduleNewEndDate || undefined,
+        });
+        if (result.variant === "revive") {
+          toast.success(
+            tAdmin("coursesPage.confirmReschedule.successRevive", {
+              dropped: result.droppedEnrollmentsPreserved,
+              date: result.newStartDate,
+            }),
+          );
+        } else {
+          toast.success(
+            tAdmin("coursesPage.confirmReschedule.successShift", {
+              sessions: result.sessionsShifted,
+              students: result.studentsNotified,
+              date: result.newStartDate,
+            }),
+          );
+        }
+        closeAdminConfirm();
+        fetchCourse();
+      } else {
+        // delete
+        await adminApi.deleteCourse(course.id, deleteReason.trim() || undefined);
+        toast.success(tAdmin("coursesPage.toasts.deleted"));
+        // Course is now soft-deleted; navigate away from the detail page.
+        router.push(dashboardBase);
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : tAdmin(
+              confirmKind === "cancel"
+                ? "coursesPage.confirmCancel.failure"
+                : confirmKind === "reschedule"
+                  ? "coursesPage.confirmReschedule.failure"
+                  : "coursesPage.toasts.deleteFailed",
+            ),
+      );
+    } finally {
+      setConfirmBusy(false);
+    }
+  };
+
+  // ─── Admin confirm gates ────────────────────────────────────────
+  // Draft courses skip the type-to-confirm gate — they're low-risk
+  // (no enrollments, no live content).
+  const deleteNeedsTitleConfirm =
+    confirmKind === "delete" && course !== null && course.status !== "draft";
+  const deleteBlockedByPendingCerts =
+    confirmKind === "delete" &&
+    deleteImpact !== null &&
+    deleteImpact.pendingCertificates > 0;
+  const deleteBlockedByCompliance =
+    confirmKind === "delete" &&
+    deleteImpact !== null &&
+    (deleteImpact.approvedCertificates > 0 ||
+      deleteImpact.completedEnrollments > 0 ||
+      deleteImpact.awardedPoints > 0);
+  const deleteConfirmOk =
+    confirmKind === "delete" &&
+    course !== null &&
+    !deleteBlockedByPendingCerts &&
+    !deleteBlockedByCompliance &&
+    (!deleteNeedsTitleConfirm ||
+      deleteTypedTitle.trim() === (course.title || "").trim());
+  const cancelConfirmOk =
+    confirmKind === "cancel" && course !== null && cancelReason.trim().length >= 3;
+  const cancelIsPostStart =
+    confirmKind === "cancel" &&
+    course?.startDate != null &&
+    new Date(course.startDate).getTime() <= Date.now();
+  const rescheduleReasonOk = rescheduleReason.trim().length >= 3;
+  const rescheduleStartOk = (() => {
+    if (!rescheduleNewStartDate) return false;
+    const ts = new Date(rescheduleNewStartDate).getTime();
+    if (Number.isNaN(ts)) return false;
+    return ts >= Date.now();
+  })();
+  const rescheduleEndOk = (() => {
+    if (!rescheduleNewEndDate) return true;
+    const startT = new Date(rescheduleNewStartDate).getTime();
+    const endT = new Date(rescheduleNewEndDate).getTime();
+    if (Number.isNaN(endT)) return false;
+    return endT >= startT;
+  })();
+  const rescheduleConfirmOk =
+    confirmKind === "reschedule" &&
+    course !== null &&
+    rescheduleReasonOk &&
+    rescheduleStartOk &&
+    rescheduleEndOk;
+  const rescheduleIsRevive =
+    confirmKind === "reschedule" && course?.status === "cancelled";
 
   const handleActivate = async () => {
     if (!course) return;
@@ -979,13 +1156,20 @@ const CourseManagerCourseDetailContent = ({
                           <Edit className="w-4 h-4" />
                           {t("courseDetail.editCourse")}
                         </Link>
-                        {course.status === "draft" && (
+                        {/* Header Cancel button — statuses that make sense
+                            to cancel. Rich Delete + Reschedule live in the
+                            Danger Zone. Available to both admin and
+                            manager (manager is scoped to their own
+                            courses at the backend). */}
+                        {(course.status === "active" ||
+                          course.status === "pending_review" ||
+                          course.status === "changes_requested") && (
                           <button
-                            onClick={() => setShowDeleteConfirm(true)}
+                            onClick={() => openAdminConfirm("cancel")}
                             className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#FCA5A5] text-[#DC2626] text-sm font-medium rounded-lg hover:bg-[#FEF2F2] transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
-                            {t("courseDetail.delete")}
+                            <Ban className="w-4 h-4" />
+                            {tAdmin("coursesPage.cancelCourse")}
                           </button>
                         )}
                       </div>
@@ -2218,17 +2402,46 @@ const CourseManagerCourseDetailContent = ({
                         <div className="border border-[#FCA5A5] rounded-lg p-5">
                           <h3 className="text-sm font-semibold text-[#DC2626] mb-1">{t("courseDetail.dangerZone")}</h3>
                           <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("courseDetail.dangerZoneDesc")}</p>
-                          <div className="flex items-center gap-3">
-                            {course.status === "draft" && (
+                          <div className="flex flex-wrap items-center gap-3">
+                            {/* Danger Zone — same buttons for admin AND
+                                manager. Manager parity confirmed by Amna
+                                2026-07-26. Backend enforces manager-scope
+                                (managers can only touch their own courses)
+                                and Phase B status rules (delete requires
+                                draft or cancelled; cancel requires an
+                                active/pending status). Modal blockers
+                                (pending certs, NELC compliance) prevent
+                                any submit that would 400. */}
+
+                            {/* Cancel — statuses that can still be cancelled */}
+                            {(course.status === "active" ||
+                              course.status === "pending_review" ||
+                              course.status === "changes_requested") && (
                               <button
-                                onClick={() => setShowDeleteConfirm(true)}
+                                onClick={() => openAdminConfirm("cancel")}
                                 className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#FCA5A5] text-[#DC2626] text-sm font-medium rounded-lg hover:bg-[#FEF2F2] transition-colors"
                               >
-                                <Trash2 className="w-4 h-4" />
-                                {t("courseDetail.delete")}
+                                <Ban className="w-4 h-4" />
+                                {tAdmin("coursesPage.cancelCourse")}
                               </button>
                             )}
-                            {course.status === "active" && (
+
+                            {/* Reschedule — cancelled (revive) or active (shift dates) */}
+                            {(course.status === "cancelled" ||
+                              course.status === "active") && (
+                              <button
+                                onClick={() => openAdminConfirm("reschedule")}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#BFDBFE] text-[#1E40AF] text-sm font-medium rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                              >
+                                <CalendarClock className="w-4 h-4" />
+                                {tAdmin("coursesPage.actions.reschedule")}
+                              </button>
+                            )}
+
+                            {/* Archive — active or completed (moves out of
+                                catalog while preserving compliance rows) */}
+                            {(course.status === "active" ||
+                              course.status === "completed") && (
                               <button
                                 onClick={handleDeactivate}
                                 disabled={updatingStatus}
@@ -2238,6 +2451,8 @@ const CourseManagerCourseDetailContent = ({
                                 {t("courseDetail.archive")}
                               </button>
                             )}
+
+                            {/* Activate — bring an archived course back */}
                             {course.status === "archived" && (
                               <button
                                 onClick={handleActivate}
@@ -2248,8 +2463,21 @@ const CourseManagerCourseDetailContent = ({
                                 {t("courseDetail.activate")}
                               </button>
                             )}
-                            {course.status !== "draft" && course.status !== "active" && course.status !== "archived" && (
-                              <p className="text-xs text-[var(--color-text-secondary)] italic">—</p>
+
+                            {/* Delete — every non-active status. Modal's
+                                compliance / pending-cert blockers disable
+                                submit when the course has NELC records;
+                                the backend Phase B guard ("only draft or
+                                cancelled") is the ultimate safety net.
+                                Active courses go via Cancel first. */}
+                            {course.status !== "active" && (
+                              <button
+                                onClick={() => openAdminConfirm("delete")}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#FCA5A5] text-[#DC2626] text-sm font-medium rounded-lg hover:bg-[#FEF2F2] transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                {tAdmin("coursesPage.actions.delete")}
+                              </button>
                             )}
                           </div>
                         </div>
@@ -2310,41 +2538,6 @@ const CourseManagerCourseDetailContent = ({
               >
                 {removeLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t("courseDetail.removeMaterialBtn")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-[var(--color-surface-card)] rounded-xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-[#DC2626]" />
-              </div>
-              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                {t("courseDetail.confirmDelete")}
-              </h3>
-            </div>
-            <p className="text-sm text-[var(--color-text-secondary)] mb-6">
-              {t("courseDetail.confirmDeleteDesc")}
-            </p>
-            <div className="flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]"
-              >
-                {t("courseDetail.cancel")}
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] disabled:opacity-50 inline-flex items-center gap-2"
-              >
-                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {t("courseDetail.confirmDeleteBtn")}
               </button>
             </div>
           </div>
@@ -2674,6 +2867,447 @@ const CourseManagerCourseDetailContent = ({
                 {removeEnrollSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t("courseDetail.students.removeBtn")}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Unified destructive-action modal ═══════════════════════
+          Kind ∈ {delete, cancel, reschedule}. Ported from the admin
+          list-page modal — impact preview, refund + compliance blockers,
+          mandatory reasons, type-to-confirm for non-draft delete, date
+          pickers for reschedule. Available to both admin AND manager
+          (backend enforces manager-scope + Phase B rules). */}
+      {confirmKind && course && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={closeAdminConfirm}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-lg"
+          >
+            <button
+              type="button"
+              onClick={closeAdminConfirm}
+              aria-label="Close"
+              className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--color-surface-card)] rounded-full shadow flex items-center justify-center hover:bg-[var(--color-border-subtle)] transition-colors z-10"
+            >
+              <X className="w-4 h-4 text-[var(--color-text-secondary)]" />
+            </button>
+
+            <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full p-6 max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+                {confirmKind === "cancel"
+                  ? tAdmin("coursesPage.confirmCancel.title")
+                  : confirmKind === "reschedule"
+                    ? tAdmin(
+                        rescheduleIsRevive
+                          ? "coursesPage.confirmReschedule.titleRevive"
+                          : "coursesPage.confirmReschedule.titleShift",
+                      )
+                    : tAdmin("coursesPage.confirmDelete.title")}
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+                {confirmKind === "cancel"
+                  ? tAdmin(
+                      cancelIsPostStart
+                        ? "coursesPage.confirmCancel.bodyPostStart"
+                        : "coursesPage.confirmCancel.bodyPreStart",
+                      {
+                        title:
+                          locale === "ar" && course.titleAr
+                            ? course.titleAr
+                            : course.title,
+                      },
+                    )
+                  : confirmKind === "reschedule"
+                    ? tAdmin(
+                        rescheduleIsRevive
+                          ? "coursesPage.confirmReschedule.bodyRevive"
+                          : "coursesPage.confirmReschedule.bodyShift",
+                        {
+                          title:
+                            locale === "ar" && course.titleAr
+                              ? course.titleAr
+                              : course.title,
+                        },
+                      )
+                    : tAdmin("coursesPage.confirmDelete.body", {
+                        title:
+                          locale === "ar" && course.titleAr
+                            ? course.titleAr
+                            : course.title,
+                      })}
+              </p>
+
+              {confirmKind === "delete" && (
+                <>
+                  <div className="bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg p-3 mb-4">
+                    <p className="text-xs font-medium text-[var(--color-text-primary)] mb-2">
+                      {tAdmin("coursesPage.confirmDelete.impactTitle")}
+                    </p>
+                    {deleteImpactLoading && (
+                      <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        {tAdmin("coursesPage.confirmDelete.impactLoading")}
+                      </div>
+                    )}
+                    {deleteImpactError && (
+                      <p className="text-xs text-[#DC2626]">{deleteImpactError}</p>
+                    )}
+                    {deleteImpact && (
+                      <ul className="grid grid-cols-2 gap-1 text-xs text-[var(--color-text-secondary)]">
+                        <li>
+                          <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.modules}</span>{" "}
+                          {tAdmin("coursesPage.confirmDelete.impactModules")}
+                        </li>
+                        <li>
+                          <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.materials}</span>{" "}
+                          {tAdmin("coursesPage.confirmDelete.impactMaterials")}
+                        </li>
+                        <li>
+                          <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.enrollments}</span>{" "}
+                          {tAdmin("coursesPage.confirmDelete.impactEnrollments")}
+                        </li>
+                        <li>
+                          <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.sessions}</span>{" "}
+                          {tAdmin("coursesPage.confirmDelete.impactSessions")}
+                        </li>
+                        <li>
+                          <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.upcomingSessions}</span>{" "}
+                          {tAdmin("coursesPage.confirmDelete.impactUpcomingSessions")}
+                        </li>
+                        <li>
+                          <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.assessments}</span>{" "}
+                          {tAdmin("coursesPage.confirmDelete.impactAssessments")}
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+
+                  {deleteBlockedByPendingCerts && deleteImpact && (
+                    <div className="bg-[#FEE2E2] border border-[#FECACA] rounded-lg p-3 mb-4 flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-[#DC2626] mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-[#991B1B] leading-relaxed">
+                        {tAdmin("coursesPage.confirmDelete.pendingCertsBlocker", {
+                          count: deleteImpact.pendingCertificates,
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {deleteBlockedByCompliance && deleteImpact && (
+                    <div className="bg-[#FEE2E2] border border-[#FECACA] rounded-lg p-3 mb-4">
+                      <div className="flex items-start gap-2 mb-2">
+                        <XCircle className="w-4 h-4 text-[#DC2626] mt-0.5 flex-shrink-0" />
+                        <p className="text-xs font-semibold text-[#991B1B] leading-relaxed">
+                          {tAdmin("coursesPage.confirmDelete.complianceBlockerTitle")}
+                        </p>
+                      </div>
+                      <ul className="ms-6 space-y-0.5 text-xs text-[#991B1B] leading-relaxed">
+                        {deleteImpact.approvedCertificates > 0 && (
+                          <li>
+                            · {tAdmin("coursesPage.confirmDelete.complianceIssuedCerts", {
+                              count: deleteImpact.approvedCertificates,
+                            })}
+                          </li>
+                        )}
+                        {deleteImpact.completedEnrollments > 0 && (
+                          <li>
+                            · {tAdmin("coursesPage.confirmDelete.complianceCompletions", {
+                              count: deleteImpact.completedEnrollments,
+                            })}
+                          </li>
+                        )}
+                        {deleteImpact.awardedPoints > 0 && (
+                          <li>
+                            · {tAdmin("coursesPage.confirmDelete.complianceAwardedPoints", {
+                              count: deleteImpact.awardedPoints,
+                            })}
+                          </li>
+                        )}
+                      </ul>
+                      <p className="mt-2 text-xs text-[#991B1B] leading-relaxed">
+                        {tAdmin("coursesPage.confirmDelete.complianceBlockerCta")}
+                      </p>
+                    </div>
+                  )}
+
+                  {!deleteBlockedByPendingCerts && (
+                    <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
+                      <p className="text-xs text-[#1E40AF] leading-relaxed">
+                        {tAdmin("coursesPage.confirmDelete.softDeleteNote")}
+                      </p>
+                    </div>
+                  )}
+
+                  {!deleteBlockedByPendingCerts &&
+                    deleteImpact &&
+                    deleteImpact.upcomingSessions > 0 && (
+                      <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-3 mb-4 flex items-start gap-2">
+                        <XCircle className="w-4 h-4 text-[#D97706] mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-[#92400E] leading-relaxed">
+                          {tAdmin("coursesPage.confirmDelete.upcomingSessionsWarning", {
+                            count: deleteImpact.upcomingSessions,
+                          })}
+                        </p>
+                      </div>
+                    )}
+
+                  <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                    {tAdmin("coursesPage.confirmDelete.reasonLabel")}
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    placeholder={tAdmin("coursesPage.confirmDelete.reasonPlaceholder")}
+                    disabled={confirmBusy}
+                    className="w-full px-3 h-10 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-4 disabled:opacity-50"
+                  />
+
+                  {deleteNeedsTitleConfirm && (
+                    <>
+                      <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                        {tAdmin("coursesPage.confirmDelete.typeToConfirmLabel", {
+                          title: course.title,
+                        })}
+                      </label>
+                      <input
+                        type="text"
+                        value={deleteTypedTitle}
+                        onChange={(e) => setDeleteTypedTitle(e.target.value)}
+                        placeholder={course.title}
+                        disabled={confirmBusy}
+                        className="w-full px-3 h-10 text-sm font-mono border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-4 disabled:opacity-50"
+                      />
+                    </>
+                  )}
+                </>
+              )}
+
+              {confirmKind === "cancel" && (
+                <>
+                  <div className="bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg p-3 mb-4">
+                    <p className="text-xs font-medium text-[var(--color-text-primary)] mb-2">
+                      {tAdmin("coursesPage.confirmCancel.impactTitle")}
+                    </p>
+                    {deleteImpactLoading && (
+                      <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        {tAdmin("coursesPage.confirmDelete.impactLoading")}
+                      </div>
+                    )}
+                    {deleteImpactError && (
+                      <p className="text-xs text-[#DC2626]">{deleteImpactError}</p>
+                    )}
+                    {deleteImpact && (
+                      <ul className="space-y-1 text-xs text-[var(--color-text-secondary)]">
+                        <li className="flex items-start gap-2">
+                          <span className="font-mono text-[var(--color-text-primary)] shrink-0">
+                            {deleteImpact.enrollments}
+                          </span>
+                          <span>{tAdmin("coursesPage.confirmCancel.impactEnrollments")}</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="font-mono text-[var(--color-text-primary)] shrink-0">
+                            {deleteImpact.upcomingSessions}
+                          </span>
+                          <span>{tAdmin("coursesPage.confirmCancel.impactSessions")}</span>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+
+                  {!cancelIsPostStart ? (
+                    <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
+                      <ul className="space-y-1 text-xs text-[#1E3A8A] leading-relaxed">
+                        {deleteImpact && deleteImpact.paidPayments > 0 && (
+                          <li>
+                            · {tAdmin("coursesPage.confirmCancel.impactRefundsQueued", {
+                              count: deleteImpact.paidPayments,
+                            })}
+                          </li>
+                        )}
+                        <li>· {tAdmin("coursesPage.confirmCancel.impactWaitlist")}</li>
+                        <li>· {tAdmin("coursesPage.confirmCancel.impactCoupons")}</li>
+                      </ul>
+                    </div>
+                  ) : (
+                    <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-3 mb-4">
+                      <ul className="space-y-1 text-xs text-[#78350F] leading-relaxed">
+                        <li>· {tAdmin("coursesPage.confirmCancel.impactAttendance")}</li>
+                        <li>· {tAdmin("coursesPage.confirmCancel.impactCerts")}</li>
+                        <li>· {tAdmin("coursesPage.confirmCancel.impactPoints")}</li>
+                        {deleteImpact && deleteImpact.paidPayments > 0 && (
+                          <li>
+                            · {tAdmin("coursesPage.confirmCancel.impactRefundsQueued", {
+                              count: deleteImpact.paidPayments,
+                            })}
+                          </li>
+                        )}
+                        <li>· {tAdmin("coursesPage.confirmCancel.impactWaitlist")}</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {deleteImpact && deleteImpact.bankTransferPaidPayments > 0 && (
+                    <div className="bg-[#FEF2F2] border-2 border-[#FCA5A5] rounded-lg p-3 mb-4">
+                      <p className="text-xs font-bold text-[#991B1B] leading-relaxed mb-1">
+                        {tAdmin("coursesPage.confirmCancel.bankTransferWarningTitle", {
+                          count: deleteImpact.bankTransferPaidPayments,
+                        })}
+                      </p>
+                      <p className="text-xs text-[#7F1D1D] leading-relaxed">
+                        {tAdmin("coursesPage.confirmCancel.bankTransferWarningBody")}
+                      </p>
+                    </div>
+                  )}
+
+                  <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                    {tAdmin("coursesPage.confirmCancel.reasonLabel")}
+                  </label>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder={tAdmin("coursesPage.confirmCancel.reasonPlaceholder")}
+                    disabled={confirmBusy}
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-4 disabled:opacity-50 resize-none"
+                  />
+                  {cancelReason.trim().length > 0 && cancelReason.trim().length < 3 && (
+                    <p className="text-xs text-[#DC2626] mb-2">
+                      {tAdmin("coursesPage.confirmCancel.reasonRequired")}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {confirmKind === "reschedule" && (
+                <>
+                  {rescheduleIsRevive && (
+                    <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-3 mb-4">
+                      <ul className="space-y-1 text-xs text-[#78350F] leading-relaxed">
+                        <li>· {tAdmin("coursesPage.confirmReschedule.reviveImpactEnrollments")}</li>
+                        <li>· {tAdmin("coursesPage.confirmReschedule.reviveImpactRefunds")}</li>
+                        <li>· {tAdmin("coursesPage.confirmReschedule.reviveImpactCerts")}</li>
+                        <li>· {tAdmin("coursesPage.confirmReschedule.reviveImpactNotify")}</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {!rescheduleIsRevive && (
+                    <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
+                      <ul className="space-y-1 text-xs text-[#1E3A8A] leading-relaxed">
+                        <li>· {tAdmin("coursesPage.confirmReschedule.shiftImpactSessions")}</li>
+                        <li>· {tAdmin("coursesPage.confirmReschedule.shiftImpactZoom")}</li>
+                        <li>· {tAdmin("coursesPage.confirmReschedule.shiftImpactNotify")}</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {course.startDate && (
+                    <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+                      {tAdmin("coursesPage.confirmReschedule.currentDatesLabel")}{" "}
+                      <span className="font-mono text-[var(--color-text-primary)]">
+                        {course.startDate}
+                        {course.endDate ? ` → ${course.endDate}` : ""}
+                      </span>
+                    </p>
+                  )}
+
+                  <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                    {tAdmin("coursesPage.confirmReschedule.newStartDateLabel")}
+                  </label>
+                  <div className="mb-1">
+                    <DatePicker
+                      value={rescheduleNewStartDate}
+                      onChange={setRescheduleNewStartDate}
+                      disabled={confirmBusy}
+                    />
+                  </div>
+                  {rescheduleNewStartDate && !rescheduleStartOk && (
+                    <p className="text-xs text-[#DC2626] mb-3">
+                      {tAdmin("coursesPage.confirmReschedule.startInPast")}
+                    </p>
+                  )}
+                  {rescheduleStartOk && <div className="mb-3" />}
+
+                  <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                    {tAdmin("coursesPage.confirmReschedule.newEndDateLabel")}
+                  </label>
+                  <div className="mb-1">
+                    <DatePicker
+                      value={rescheduleNewEndDate}
+                      onChange={setRescheduleNewEndDate}
+                      disabled={confirmBusy}
+                      min={rescheduleNewStartDate || undefined}
+                    />
+                  </div>
+                  {!rescheduleEndOk && (
+                    <p className="text-xs text-[#DC2626] mb-3">
+                      {tAdmin("coursesPage.confirmReschedule.endBeforeStart")}
+                    </p>
+                  )}
+                  {rescheduleEndOk && <div className="mb-3" />}
+
+                  <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                    {tAdmin("coursesPage.confirmReschedule.reasonLabel")}
+                  </label>
+                  <textarea
+                    value={rescheduleReason}
+                    onChange={(e) => setRescheduleReason(e.target.value)}
+                    placeholder={tAdmin("coursesPage.confirmReschedule.reasonPlaceholder")}
+                    disabled={confirmBusy}
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-4 disabled:opacity-50 resize-none"
+                  />
+                  {rescheduleReason.trim().length > 0 &&
+                    rescheduleReason.trim().length < 3 && (
+                      <p className="text-xs text-[#DC2626] mb-2">
+                        {tAdmin("coursesPage.confirmReschedule.reasonRequired")}
+                      </p>
+                    )}
+                </>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={closeAdminConfirm}
+                  disabled={confirmBusy}
+                  className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
+                >
+                  {confirmKind === "cancel"
+                    ? tAdmin("coursesPage.confirmCancel.cancel")
+                    : confirmKind === "reschedule"
+                      ? tAdmin("coursesPage.confirmReschedule.cancel")
+                      : tAdmin("coursesPage.confirmArchive.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAdminConfirm}
+                  disabled={
+                    confirmBusy ||
+                    (confirmKind === "delete" && !deleteConfirmOk) ||
+                    (confirmKind === "cancel" && !cancelConfirmOk) ||
+                    (confirmKind === "reschedule" && !rescheduleConfirmOk)
+                  }
+                  className={
+                    confirmKind === "reschedule"
+                      ? "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#2563EB] rounded-lg hover:bg-[#1D4ED8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      : "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  }
+                >
+                  {confirmBusy && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {confirmKind === "cancel"
+                    ? tAdmin("coursesPage.confirmCancel.confirm")
+                    : confirmKind === "reschedule"
+                      ? tAdmin("coursesPage.confirmReschedule.confirm")
+                      : tAdmin("coursesPage.confirmDelete.confirm")}
+                </button>
+              </div>
             </div>
           </div>
         </div>

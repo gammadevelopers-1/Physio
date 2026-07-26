@@ -349,9 +349,10 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
           </div>
         )}
 
-        {/* View Profile Button */}
+        {/* View Profile Button — lands on the Profile tab of Settings for
+            both agents and supervisors (agents only see the Profile tab). */}
         <Link
-          href={isSupervisor ? `${basePath}/settings` : `${basePath}/my-tickets`}
+          href={`${basePath}/settings`}
           className="block w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors text-center"
         >
           {t("sidebar.viewProfile")}

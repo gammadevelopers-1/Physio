@@ -311,10 +311,14 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
           </div>
         </div>
 
-        {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors">
+        {/* View Profile Button — routes to Settings, where admin manages
+            their own account (My Security → password, 2FA, sessions). */}
+        <Link
+          href={`/${locale}/dashboard/admin/settings`}
+          className="block w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors text-center"
+        >
           {t("sidebar.viewProfile")}
-        </button>
+        </Link>
       </div>
 
       {/* Navigation Card */}

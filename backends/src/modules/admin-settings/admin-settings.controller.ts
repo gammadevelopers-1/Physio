@@ -136,7 +136,19 @@ export class AdminSettingsController {
       value = { senderEmail: rawEmail, senderName: rawName };
     }
 
-    return this.settingsService.updateCategory(category, value, user.id);
+    const saved = await this.settingsService.updateCategory(category, value, user.id);
+    // Match the GET projection: the write response must NEVER return
+    // encrypted secret ciphertext to the browser. Without this the FE
+    // would put "v1:..." back into its draft state, and a second save
+    // would trip the "refusing already-encrypted secret" guard and
+    // 500 out.
+    if (category === 'payments') {
+      return {
+        ...saved,
+        value: stripPaymentsSecrets(saved.value as Record<string, unknown>),
+      };
+    }
+    return saved;
   }
 
   // ─── Notification Templates ─────────────────────────────────────

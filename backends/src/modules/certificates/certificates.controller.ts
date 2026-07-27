@@ -123,8 +123,14 @@ export class CertificatesController {
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
     @Res() res: Response,
+    @Query('lang') lang?: string,
   ) {
-    const { buffer, filename } = await this.certificatesService.downloadCertificate(id, user);
+    // Certificate is a legal artifact — the buyer picks the language
+    // (name script + course title + labels). Whitelist here; anything
+    // else falls through to the platform default (no lang → cached URL).
+    const langNorm =
+      lang === 'ar' || lang === 'en' ? (lang as 'ar' | 'en') : undefined;
+    const { buffer, filename } = await this.certificatesService.downloadCertificate(id, user, langNorm);
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${filename}"`,

@@ -306,8 +306,11 @@ export class StudentController {
     @Param('id') certId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Res() res: Response,
+    @Query('lang') lang?: string,
   ) {
-    const { buffer, filename } = await this.studentService.downloadStudentCertificate(certId, user.id);
+    const langNorm =
+      lang === 'ar' || lang === 'en' ? (lang as 'ar' | 'en') : undefined;
+    const { buffer, filename } = await this.studentService.downloadStudentCertificate(certId, user.id, langNorm);
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${filename}"`,

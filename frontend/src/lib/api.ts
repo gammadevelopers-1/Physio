@@ -1971,9 +1971,11 @@ export const instructorApi = {
   batchCertificates: (ids: string[], action: 'approve' | 'reject' | 'hold', note?: string) =>
     api.post<BatchCertificateResult>('/certificates/batch', { ids, action, note }),
 
-  downloadCertificate: async (certId: string) => {
-    const blob = await fetchBlob(`/certificates/${certId}/download`);
-    downloadBlob(blob, `certificate-${certId.slice(0, 8)}.pdf`);
+  downloadCertificate: async (certId: string, lang?: 'en' | 'ar') => {
+    const q = lang ? `?lang=${lang}` : '';
+    const suffix = lang ? `-${lang}` : '';
+    const blob = await fetchBlob(`/certificates/${certId}/download${q}`);
+    downloadBlob(blob, `certificate-${certId.slice(0, 8)}${suffix}.pdf`);
   },
 
   batchDownloadCertificates: async (ids: string[]) => {
@@ -4529,9 +4531,11 @@ export const courseManagerApi = {
   batchCertificates: (ids: string[], action: 'approve' | 'reject' | 'hold', note?: string) =>
     api.post<BatchCertificateResult>('/certificates/batch', { ids, action, note }),
 
-  downloadCertificate: async (certId: string) => {
-    const blob = await fetchBlob(`/certificates/${certId}/download`);
-    downloadBlob(blob, `certificate-${certId.slice(0, 8)}.pdf`);
+  downloadCertificate: async (certId: string, lang?: 'en' | 'ar') => {
+    const q = lang ? `?lang=${lang}` : '';
+    const suffix = lang ? `-${lang}` : '';
+    const blob = await fetchBlob(`/certificates/${certId}/download${q}`);
+    downloadBlob(blob, `certificate-${certId.slice(0, 8)}${suffix}.pdf`);
   },
 
   batchDownloadCertificates: async (ids: string[]) => {
@@ -5140,9 +5144,11 @@ export const studentApi = {
   requestCertificate: (courseId: string) =>
     api.post<{ id: string; status: string }>('/certificates', { courseId }),
 
-  downloadCertificate: async (certId: string) => {
-    const blob = await fetchBlob(`/student/certificates/${certId}/download`);
-    downloadBlob(blob, `certificate-${certId.slice(0, 8)}.pdf`);
+  downloadCertificate: async (certId: string, lang?: 'en' | 'ar') => {
+    const q = lang ? `?lang=${lang}` : '';
+    const suffix = lang ? `-${lang}` : '';
+    const blob = await fetchBlob(`/student/certificates/${certId}/download${q}`);
+    downloadBlob(blob, `certificate-${certId.slice(0, 8)}${suffix}.pdf`);
   },
 
   recordWatchEvents: (materialId: string, events: { eventType: string; position: number; fromPosition?: number }[]) =>

@@ -1026,11 +1026,18 @@ export class CertificatesService {
    * Generate a certificate PDF with QR code using PDFKit.
    * QR code links to the public verification endpoint.
    */
-  private async generatePlaceholderPdf(
+  /**
+   * Build the certificate PDF in memory. Returns just the bytes so callers
+   * can either upload it once (for the persisted approval flow) or serve
+   * it inline (for language-specific downloads that shouldn't overwrite
+   * the stored default).
+   */
+  private async generatePlaceholderPdfBuffer(
     requestId: string,
     courseId: string,
     studentId: string,
-  ): Promise<string> {
+    lang: 'en' | 'ar' = 'en',
+  ): Promise<Buffer> {
     const platformLocale = await this.getPlatformLocale();
     const [student] = await db
       .select({
@@ -1063,11 +1070,24 @@ export class CertificatesService {
       `${student?.firstNameAr || ''} ${student?.lastNameAr || ''}`.trim() || '';
     // Check if the English name actually contains Arabic characters
     const hasArabicChars = (text: string) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
-    // Show Arabic name if available, or English name if it contains Arabic chars
-    const rawDisplayName = studentNameAr || studentNameEn;
-    const nameIsArabic = !!(studentNameAr) || hasArabicChars(studentNameEn);
-    const displayName = rawDisplayName;
-    const courseTitle = course?.title || 'Course';
+    // Name display: prefer the buyer's own script by requested language.
+    // AR: use Arabic name when available; fall back to whatever's on the row.
+    // EN: use Latin name; fall back to Arabic ONLY when no Latin name exists.
+    // Never render a name in a font that can't shape its script \u2014 track
+    // nameIsArabic off the ACTUAL displayed string, not off availability.
+    const displayName =
+      lang === 'ar'
+        ? studentNameAr || studentNameEn
+        : studentNameEn || studentNameAr;
+    const nameIsArabic = hasArabicChars(displayName);
+    // Course title: prefer the requested language, fall back to whichever
+    // is populated. Instructors sometimes leave titleAr empty; showing the
+    // English title on an AR cert beats showing "Course" or blank.
+    const courseTitle =
+      lang === 'ar'
+        ? course?.titleAr || course?.title || 'Course'
+        : course?.title || course?.titleAr || 'Course';
+    const courseTitleIsArabic = hasArabicChars(courseTitle);
     const cmeHours = course?.cmeHours || 0;
     const issuedDate = new Date();
     // Long-form readable date (e.g. "24 DECEMBER 2026"). Apply admin's
@@ -1116,15 +1136,47 @@ export class CertificatesService {
       logoBuffer = (this as any)._logoCacheBuffer;
     }
 
-    // Load Arabic font buffer from embedded base64
+    // Load Arabic font when any rendered string needs Arabic glyphs — name,
+    // course title, or the localized body labels themselves (when lang=ar).
+    // Previous code loaded it only for the name; a long AR course title on
+    // an EN cert would tofu-box in Helvetica-Bold.
+    const needsArabicFont = nameIsArabic || courseTitleIsArabic || lang === 'ar';
     let arabicFontBuf: Buffer | null = null;
-    if (nameIsArabic) {
+    if (needsArabicFont) {
       if (!(this as any)._arabicFontBuf) {
         const { AMIRI_BOLD_BASE64 } = require('./amiri-bold-font');
         (this as any)._arabicFontBuf = Buffer.from(AMIRI_BOLD_BASE64, 'base64');
       }
       arabicFontBuf = (this as any)._arabicFontBuf;
     }
+
+    // Locale-aware labels — the certificate is not just a name display but
+    // a legal document; when lang=ar the entire template speaks Arabic.
+    const L = lang === 'ar'
+      ? {
+          title: 'شهادة',
+          subtitle: 'حضور',
+          awardedTo: 'ممنوحة بكل فخر إلى',
+          forAttending: 'لحضور',
+          accreditedBy: 'هذا النشاط معتمد من الهيئة السعودية للتخصصات الصحية',
+          numberDate: (n: string, d: string) => `رقم الاعتماد ${n}   التاريخ: ${d}`,
+          courseAccreditation: (n: string) => `اعتماد الدورة: ${n}`,
+          cmeHours: (h: number) => `${h} ساعات معتمدة CME/PD`,
+          cmeBadge: 'ساعات معتمدة',
+          scanToVerify: 'امسح للتحقق',
+        }
+      : {
+          title: 'CERTIFICATE',
+          subtitle: 'OF ATTENDANCE',
+          awardedTo: 'PROUDLY AWARDED TO',
+          forAttending: 'FOR ATTENDING',
+          accreditedBy: 'This activity has been accredited by the Saudi Commission for Health Specialties',
+          numberDate: (n: string, d: string) => `with accreditation number ${n}   Date: ${d}`,
+          courseAccreditation: (n: string) => `Course Accreditation: ${n}`,
+          cmeHours: (h: number) => `${h} CME/PD Credit Hours`,
+          cmeBadge: 'CME HOURS',
+          scanToVerify: 'Scan to verify',
+        };
 
     // Generate QR as buffer for PDFKit
     const qrBuffer = await QRCode.toBuffer(verifyUrl, {
@@ -1161,80 +1213,133 @@ export class CertificatesService {
         if (logoBuffer) { doc.image(logoBuffer, 45, 40, { height: 45 }); }
         else { doc.font('Helvetica-Bold').fontSize(14).fillColor(navy).text('PHYSIOGUIDANCE', 50, 48); }
 
+        // Register Arabic font once for the whole document if needed.
+        if (arabicFontBuf) {
+          doc.registerFont('Amiri-Bold', arabicFontBuf);
+        }
+        // Font selectors — Amiri covers Arabic script only. For Latin text
+        // in an AR document we still fall back to Helvetica; for Arabic text
+        // in an EN document we use Amiri where the glyphs live.
+        const arFontAvailable = !!arabicFontBuf;
+        const fontForText = (text: string, bold = true): string => {
+          if (arFontAvailable && hasArabicChars(text))
+            return bold ? 'Amiri-Bold' : 'Amiri-Bold';
+          return bold ? 'Helvetica-Bold' : 'Helvetica';
+        };
+        // rtla feature is per-string, not per-document — enable only when
+        // the specific string contains Arabic to preserve English layout.
+        // (Cast keeps pdfkit's stricter OpenTypeFeatures union happy.)
+        const featuresFor = (text: string): any =>
+          hasArabicChars(text) ? ['rtla'] : undefined;
+
         // CME badge top-right
         if (cmeHours > 0) {
           const bx = W - 130, by = 42, br = 32;
           doc.circle(bx + br, by + br, br).lineWidth(2.5).stroke(navy);
           doc.circle(bx + br, by + br, br - 4).lineWidth(0.8).stroke(gold);
           doc.font('Helvetica-Bold').fontSize(24).fillColor(navy).text(String(cmeHours), bx, by + 12, { width: br * 2, align: 'center' });
-          doc.font('Helvetica').fontSize(6.5).fillColor(gray).text('CME HOURS', bx, by + 38, { width: br * 2, align: 'center' });
+          doc.font(fontForText(L.cmeBadge, false)).fontSize(6.5).fillColor(gray).text(L.cmeBadge, bx, by + 38, { width: br * 2, align: 'center', features: featuresFor(L.cmeBadge) });
         }
 
         // Title
         let y = 105;
-        doc.font('Helvetica-Bold').fontSize(38).fillColor(navy).text('CERTIFICATE', 0, y, { align: 'center' });
+        doc.font(fontForText(L.title)).fontSize(38).fillColor(navy).text(L.title, 0, y, { align: 'center', features: featuresFor(L.title) });
         y += 40;
-        doc.font('Helvetica-Bold').fontSize(20).fillColor(gold).text('OF ATTENDANCE', 0, y, { align: 'center' });
+        doc.font(fontForText(L.subtitle)).fontSize(20).fillColor(gold).text(L.subtitle, 0, y, { align: 'center', features: featuresFor(L.subtitle) });
 
         // Pills + name
         y += 38;
         doc.roundedRect(cx - 120, y, 240, 28, 14).fill(gold);
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF').text('PROUDLY AWARDED TO', cx - 120, y + 8, { width: 240, align: 'center' });
+        doc.font(fontForText(L.awardedTo)).fontSize(11).fillColor('#FFFFFF').text(L.awardedTo, cx - 120, y + 8, { width: 240, align: 'center', features: featuresFor(L.awardedTo) });
 
-        // Student name — register Arabic font if needed
+        // Student name
         y += 40;
-        if (arabicFontBuf && nameIsArabic) {
-          doc.registerFont('Amiri-Bold', arabicFontBuf);
-          doc.font('Amiri-Bold').fontSize(30).fillColor(dark)
-            .text(displayName, 0, y, { align: 'center', features: ['rtla'] });
-        } else {
-          doc.font('Helvetica-Bold').fontSize(30).fillColor(dark)
-            .text(displayName, 0, y, { align: 'center' });
-        }
+        doc.font(fontForText(displayName)).fontSize(30).fillColor(dark)
+          .text(displayName, 0, y, { align: 'center', features: featuresFor(displayName) });
 
         // FOR ATTENDING pill
         y += 44;
         doc.roundedRect(cx - 90, y, 180, 28, 14).fill(navy);
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF').text('FOR ATTENDING', cx - 90, y + 8, { width: 180, align: 'center' });
+        doc.font(fontForText(L.forAttending)).fontSize(11).fillColor('#FFFFFF').text(L.forAttending, cx - 90, y + 8, { width: 180, align: 'center', features: featuresFor(L.forAttending) });
 
-        // Course title
+        // Course title — MEASURE the actual rendered height before placing
+        // the date pill so a two-line title cannot overlap. Also scale the
+        // font down when the title is very long so we don't spill more than
+        // two lines into the accreditation block.
         y += 38;
-        doc.font('Helvetica-Bold').fontSize(20).fillColor(dark).text(courseTitle, 80, y, { align: 'center', width: W - 160 });
+        const titleWidth = W - 160;
+        const shrinkTitle = courseTitle.length > 80 ? 16 : courseTitle.length > 50 ? 18 : 20;
+        const titleFont = fontForText(courseTitle);
+        doc.font(titleFont).fontSize(shrinkTitle);
+        const titleHeight = doc.heightOfString(courseTitle, {
+          width: titleWidth,
+          align: 'center',
+          features: featuresFor(courseTitle),
+        });
+        doc.fillColor(dark).text(courseTitle, 80, y, {
+          align: 'center',
+          width: titleWidth,
+          features: featuresFor(courseTitle),
+        });
+        // Advance y by the actual height PLUS a small padding — never by a
+        // fixed 36. This is what stops the long-title overlap: the date pill
+        // now sits below whatever height the title actually consumed.
+        y += Math.max(titleHeight, 22) + 12;
 
         // Date pill
-        y += 36;
         doc.roundedRect(cx - 120, y, 240, 28, 14).fill(gold);
         doc.font('Helvetica-Bold').fontSize(12).fillColor('#FFFFFF').text(dateFormatted, cx - 120, y + 8, { width: 240, align: 'center' });
 
         // Accreditation
         y += 42;
-        doc.font('Helvetica').fontSize(11).fillColor(gray).text('This activity has been accredited by the Saudi Commission for Health Specialties', 0, y, { align: 'center' });
+        doc.font(fontForText(L.accreditedBy, false)).fontSize(11).fillColor(gray).text(L.accreditedBy, 0, y, { align: 'center', features: featuresFor(L.accreditedBy) });
         y += 16;
         const regNumber = decryptPII(student?.scfhsNumber) || certificateId;
-        doc.font('Helvetica').fontSize(10).fillColor(gray).text(`with accreditation number ${regNumber}   Date: ${fmtPlatformDate(issuedDate, platformLocale)}`, 0, y, { align: 'center' });
+        const numDateStr = L.numberDate(regNumber, fmtPlatformDate(issuedDate, platformLocale));
+        doc.font(fontForText(numDateStr, false)).fontSize(10).fillColor(gray).text(numDateStr, 0, y, { align: 'center', features: featuresFor(numDateStr) });
         // Optional course-level accreditation number — only rendered when set.
         // Distinct from the SCFHS practitioner number above; this is the
         // accrediting body's registration ID for this specific course.
         if (course?.accreditationNumber) {
           y += 16;
-          doc.font('Helvetica-Bold').fontSize(10).fillColor(navy)
-            .text(`Course Accreditation: ${course.accreditationNumber}`, 0, y, { align: 'center' });
+          const courseAccStr = L.courseAccreditation(course.accreditationNumber);
+          doc.font(fontForText(courseAccStr)).fontSize(10).fillColor(navy)
+            .text(courseAccStr, 0, y, { align: 'center', features: featuresFor(courseAccStr) });
         }
         if (cmeHours > 0) {
           y += 16;
-          doc.font('Helvetica-Bold').fontSize(11).fillColor(navy).text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });
+          const cmeStr = L.cmeHours(cmeHours);
+          doc.font(fontForText(cmeStr)).fontSize(11).fillColor(navy).text(cmeStr, 0, y, { align: 'center', features: featuresFor(cmeStr) });
         }
 
         // QR code
         doc.image(qrBuffer, W - 95, H - 105, { width: 55 });
-        doc.font('Helvetica').fontSize(5).fillColor(lightGray).text('Scan to verify', W - 95, H - 105 + 57, { width: 55, align: 'center' });
+        doc.font(fontForText(L.scanToVerify, false)).fontSize(5).fillColor(lightGray).text(L.scanToVerify, W - 95, H - 105 + 57, { width: 55, align: 'center', features: featuresFor(L.scanToVerify) });
 
         doc.end();
       } catch (err) { reject(err); }
     });
 
-    const filename = `certificates/${requestId}.pdf`;
+    return pdfBuffer;
+  }
 
+  /**
+   * Persist the certificate PDF to public storage on approval. The stored
+   * URL is the "canonical" copy — no lang param, since it goes into the
+   * DB. Callers that want a specific language use the buffer helper above
+   * and stream the bytes directly without touching storage.
+   */
+  private async generatePlaceholderPdf(
+    requestId: string,
+    courseId: string,
+    studentId: string,
+  ): Promise<string> {
+    const pdfBuffer = await this.generatePlaceholderPdfBuffer(
+      requestId,
+      courseId,
+      studentId,
+    );
+    const filename = `certificates/${requestId}.pdf`;
     try {
       const url = await this.storageService.uploadPublic(
         pdfBuffer,
@@ -1370,11 +1475,26 @@ export class CertificatesService {
   async downloadCertificate(
     certId: string,
     user: AuthenticatedUser,
+    lang?: 'en' | 'ar',
   ): Promise<{ buffer: Buffer; filename: string }> {
     const request = await this.findOne(certId, user);
 
     if (request.status !== 'approved') {
       throw new BadRequestException('Certificate is not approved');
+    }
+
+    // Language-specific downloads always regenerate in memory — we don't
+    // want to permanently cache-flip the stored certificateUrl (each lang
+    // is a valid legal artifact for that student). The default download
+    // (no lang) keeps using the cached URL for speed.
+    if (lang) {
+      const buffer = await this.generatePlaceholderPdfBuffer(
+        request.id,
+        request.courseId,
+        request.studentId,
+        lang,
+      );
+      return { buffer, filename: `certificate-${certId.slice(0, 8)}-${lang}.pdf` };
     }
 
     let pdfUrl = request.certificateUrl;
@@ -1441,6 +1561,7 @@ export class CertificatesService {
   async downloadStudentCertificate(
     certId: string,
     studentId: string,
+    lang?: 'en' | 'ar',
   ): Promise<{ buffer: Buffer; filename: string }> {
     const [request] = await db
       .select()
@@ -1456,6 +1577,18 @@ export class CertificatesService {
 
     if (!request) {
       throw new NotFoundException('Certificate not found');
+    }
+
+    // Same lang policy as the admin/instructor download path — bypass the
+    // stored URL cache when a specific language was asked for.
+    if (lang) {
+      const buffer = await this.generatePlaceholderPdfBuffer(
+        request.id,
+        request.courseId,
+        request.studentId,
+        lang,
+      );
+      return { buffer, filename: `certificate-${certId.slice(0, 8)}-${lang}.pdf` };
     }
 
     let pdfUrl = request.certificateUrl;

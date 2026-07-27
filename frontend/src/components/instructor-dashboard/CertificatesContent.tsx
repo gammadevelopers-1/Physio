@@ -496,10 +496,10 @@ const CertificatesContent = () => {
   const [downloading, setDownloading] = useState<string | null>(null);
   const [batchDownloading, setBatchDownloading] = useState(false);
 
-  const handleDownload = async (certId: string) => {
+  const handleDownload = async (certId: string, lang: 'en' | 'ar') => {
     setDownloading(certId);
     try {
-      await instructorApi.downloadCertificate(certId);
+      await instructorApi.downloadCertificate(certId, lang);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("certificates.downloadFailed");
       toast.error(msg);
@@ -881,12 +881,20 @@ const CertificatesContent = () => {
                                       {cert.status === "approved" && (
                                         <>
                                           <button
-                                            onClick={() => handleDownload(cert.id)}
+                                            onClick={() => handleDownload(cert.id, 'en')}
                                             disabled={downloading === cert.id}
-                                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50"
-                                            title={t("certificates.download")}
+                                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50 text-[10px] font-semibold"
+                                            title={t("certificates.downloadCertificateEn")}
                                           >
-                                            {downloading === cert.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                            {downloading === cert.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Download className="w-4 h-4 inline" /> EN</>}
+                                          </button>
+                                          <button
+                                            onClick={() => handleDownload(cert.id, 'ar')}
+                                            disabled={downloading === cert.id}
+                                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50 text-[10px] font-semibold"
+                                            title={t("certificates.downloadCertificateAr")}
+                                          >
+                                            {downloading === cert.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Download className="w-4 h-4 inline" /> AR</>}
                                           </button>
                                           <button onClick={() => setRevokingCert(cert)} className="p-2 text-[var(--color-text-secondary)] hover:text-[#991B1B] hover:bg-[#FEE2E2] rounded-lg transition-colors" title={t("certificates.revoke")}>
                                             <ShieldOff className="w-4 h-4" />
@@ -1007,12 +1015,22 @@ const CertificatesContent = () => {
                             {cert.status === "approved" && (
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => handleDownload(cert.id)}
+                                  onClick={() => handleDownload(cert.id, 'en')}
                                   disabled={downloading === cert.id}
-                                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-dark)] text-sm font-medium disabled:opacity-50"
+                                  className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-dark)] text-sm font-medium disabled:opacity-50"
+                                  title={t("certificates.downloadCertificateEn")}
                                 >
                                   {downloading === cert.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                  {t("certificates.downloadCertificate")}
+                                  {t("certificates.downloadEn")}
+                                </button>
+                                <button
+                                  onClick={() => handleDownload(cert.id, 'ar')}
+                                  disabled={downloading === cert.id}
+                                  className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-dark)] text-sm font-medium disabled:opacity-50"
+                                  title={t("certificates.downloadCertificateAr")}
+                                >
+                                  {downloading === cert.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                  {t("certificates.downloadAr")}
                                 </button>
                                 <button onClick={() => setRevokingCert(cert)} className="flex items-center justify-center px-3 py-2 bg-[#991B1B] text-white rounded-lg hover:bg-[#7F1D1D]" title={t("certificates.revoke")}>
                                   <ShieldOff className="w-4 h-4" />

@@ -3067,8 +3067,9 @@ export class StudentService {
   async downloadStudentCertificate(
     certId: string,
     studentId: string,
+    lang?: 'en' | 'ar',
   ): Promise<{ buffer: Buffer; filename: string }> {
-    return this.certificatesService.downloadStudentCertificate(certId, studentId);
+    return this.certificatesService.downloadStudentCertificate(certId, studentId, lang);
   }
 
   // ─── Calendar Events ───────────────────────────────────

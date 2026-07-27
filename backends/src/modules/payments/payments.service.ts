@@ -21,6 +21,7 @@ import {
   reconciliationEscalations,
   auditLogs,
   couponCampaigns,
+  systemSettings,
   PAYMENT_STATUS,
   COURSE_STATUS,
   ENROLLMENT_STATUS,
@@ -352,14 +353,37 @@ export class PaymentsService {
    * missing key in the DB blob defaults to true (backward-compat on
    * rollout). Consumed by the checkout page to hide radio options that
    * admin has toggled off in Settings → Payments.
+   *
+   * Reads DIRECTLY from Postgres each call, bypassing the credentials
+   * cache. Cloud Run has multiple instances and the credentials cache
+   * (30s TTL, in-process only) means an admin toggle on instance A
+   * takes up to 30s to reach an instance B serving the checkout page.
+   * The row is one JSONB read — the round-trip cost is well worth the
+   * "toggle → student sees it immediately" UX.
    */
-  getVisibleGateways(): {
+  async getVisibleGateways(): Promise<{
     moyasar: boolean;
     tamara: boolean;
     tabby: boolean;
     bank_transfer: boolean;
-  } {
-    return this.gatewayCredentials.getEnabledMap();
+  }> {
+    const [row] = await db
+      .select({ value: systemSettings.value })
+      .from(systemSettings)
+      .where(eq(systemSettings.category, 'payments'))
+      .limit(1);
+    const v = (row?.value ?? {}) as {
+      moyasar?: { enabled?: boolean };
+      tamara?: { enabled?: boolean };
+      tabby?: { enabled?: boolean };
+      bankTransfer?: { enabled?: boolean };
+    };
+    return {
+      moyasar: v.moyasar?.enabled !== false,
+      tamara: v.tamara?.enabled !== false,
+      tabby: v.tabby?.enabled !== false,
+      bank_transfer: v.bankTransfer?.enabled !== false,
+    };
   }
 
   /**

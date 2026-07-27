@@ -180,7 +180,15 @@ const INVOICE_LABELS = {
         case 'stcpay':
         case 'stc_pay':
           return 'STC Pay';
+        case 'bank_transfer':
+        case 'banktransfer':
+          return 'حوالة بنكية';
+        case 'bnpl':
+          return 'تقسيط';
         default:
+          // Fallback returns Latin — the render site MUST route through
+          // fontFor() so pdfkit picks Helvetica for this, not NotoArabic
+          // (which has no Latin glyphs → .notdef squares).
           return m.replace(/_/g, ' ').toUpperCase();
       }
     },
@@ -193,13 +201,21 @@ const INVOICE_LABELS = {
         case 'live':
           return 'مباشر';
         case 'hybrid':
-          return 'مختلط';
+        case 'blended':
+          return 'مدمج';
+        case 'zoom':
+          return 'زووم';
+        case 'onsite':
+        case 'on_site':
+        case 'on-site':
+          return 'حضوري';
         case 'webinar':
           return 'ندوة';
         case 'instructor_led':
         case 'instructor-led':
           return 'بإشراف مدرب';
         default:
+          // Latin fallback — see methodName comment above.
           return d.toUpperCase();
       }
     },
@@ -900,12 +916,12 @@ export class InvoiceService {
             features: rtl ? (['rtla'] as any) : undefined,
             baseline: 'alphabetic' as any,
           });
-          // Value
-          const valueFont = isRef
-            ? 'Helvetica'
-            : rtl
-              ? 'NotoArabicBold'
-              : 'Helvetica-Bold';
+          // Value — pick the font by the actual script of `v` so that
+          // Latin fallbacks (e.g. AR methodName without a case for the
+          // input like the legacy path did for bank_transfer) render as
+          // real text instead of tofu boxes from NotoSansArabic.
+          const valueFont = isRef ? 'Helvetica' : fontFor(v, true);
+          const valueIsArabic = hasArabicChars(v);
           doc
             .font(valueFont)
             .fontSize(isRef ? 8 : 10)
@@ -914,7 +930,7 @@ export class InvoiceService {
           const valueX = rtl ? payInteriorLeft : payInteriorRight - valueW;
           doc.text(v, valueX, rowBaseline, {
             lineBreak: false,
-            features: rtl && !isRef ? (['rtla'] as any) : undefined,
+            features: valueIsArabic && !isRef ? (['rtla'] as any) : undefined,
             baseline: 'alphabetic' as any,
           });
           pY += 18;
@@ -983,14 +999,19 @@ export class InvoiceService {
           }
           let rowExtra = 0;
           if (item.deliveryType) {
+            // Delivery type may fall back to Latin (e.g. legacy types
+            // with no AR label). Route through fontFor() so Latin text
+            // renders in Helvetica — not tofu from the Arabic-only font.
+            const dtLabel = L.deliveryType(item.deliveryType);
+            const dtIsArabic = hasArabicChars(dtLabel);
             doc
-              .font(rtl ? 'NotoArabic' : 'Helvetica')
+              .font(fontFor(dtLabel))
               .fontSize(8)
               .fillColor(MUTED)
-              .text(L.deliveryType(item.deliveryType), colDescX, y + 14, {
+              .text(dtLabel, colDescX, y + 14, {
                 width: colDescW,
                 align: rtl ? 'right' : 'left',
-                features: rtl ? ['rtla'] : undefined,
+                features: dtIsArabic ? ['rtla'] : undefined,
               });
             rowExtra += 12;
           }
@@ -1659,15 +1680,18 @@ export class InvoiceService {
             features: rtl ? (['rtla'] as any) : undefined,
             baseline: 'alphabetic' as any,
           });
+          // Value — font by actual script of `v` (Latin fallbacks for
+          // AR labels would tofu-box in NotoArabicBold otherwise).
+          const valueIsArabic = hasArabicChars(v);
           doc
-            .font(rtl ? 'NotoArabicBold' : 'Helvetica-Bold')
+            .font(fontFor(v, true))
             .fontSize(10)
             .fillColor('#111827');
           const valueW = doc.widthOfString(v);
           const valueX = rtl ? payInteriorLeft : payInteriorRight - valueW;
           doc.text(v, valueX, rowBaseline, {
             lineBreak: false,
-            features: rtl ? (['rtla'] as any) : undefined,
+            features: valueIsArabic ? (['rtla'] as any) : undefined,
             baseline: 'alphabetic' as any,
           });
           pY += 18;
@@ -1720,14 +1744,19 @@ export class InvoiceService {
           }
           let rowExtra = 0;
           if (item.deliveryType) {
+            // Delivery type may fall back to Latin (e.g. legacy types
+            // with no AR label). Route through fontFor() so Latin text
+            // renders in Helvetica — not tofu from the Arabic-only font.
+            const dtLabel = L.deliveryType(item.deliveryType);
+            const dtIsArabic = hasArabicChars(dtLabel);
             doc
-              .font(rtl ? 'NotoArabic' : 'Helvetica')
+              .font(fontFor(dtLabel))
               .fontSize(8)
               .fillColor(MUTED)
-              .text(L.deliveryType(item.deliveryType), colDescX, y + 14, {
+              .text(dtLabel, colDescX, y + 14, {
                 width: colDescW,
                 align: rtl ? 'right' : 'left',
-                features: rtl ? ['rtla'] : undefined,
+                features: dtIsArabic ? ['rtla'] : undefined,
               });
             rowExtra += 12;
           }

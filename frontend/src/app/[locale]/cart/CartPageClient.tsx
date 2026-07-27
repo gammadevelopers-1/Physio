@@ -10,7 +10,7 @@ import { useCart, CartItem } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import NonStudentEnrollmentNotice from "@/components/courses/NonStudentEnrollmentNotice";
 import BnplPromoWidgets from "@/components/courses/BnplPromoWidgets";
-import { studentApi, publicTaxApi } from "@/lib/api";
+import { paymentApi, studentApi, publicTaxApi } from "@/lib/api";
 import {
   ShoppingCart,
   Trash2,
@@ -77,9 +77,10 @@ export default function CartPageClient({
   // course id; unknown ids default to "not enrolled" so the regular
   // line item renders as-is.
   const [enrolledMap, setEnrolledMap] = useState<Record<string, boolean>>({});
-  // VAT rate fetched from the public tax-display endpoint. Default value
-  // is only used until the fetch resolves (or as a fallback if it fails)
-  // so the buyer never sees a flicker of 0% VAT.
+  // VAT rate fetched from the public tax-display endpoint. Used as the
+  // optimistic fallback while (or if guest) the authoritative quote is
+  // unavailable. Guests always see optimistic — the quote endpoint
+  // requires auth; logged-in students get the ground truth below.
   const [vatRate, setVatRate] = useState<number>(DEFAULT_VAT_RATE);
   const [vatEnabled, setVatEnabled] = useState<boolean>(true);
   useEffect(() => {
@@ -98,6 +99,49 @@ export default function CartPageClient({
       cancelled = true;
     };
   }, []);
+
+  // Authoritative totals from `/payments/quote` (same source of truth as
+  // charging). Respects per-course vatTreatment — an `exempt` course
+  // shows no VAT line, a `zero_rated` course shows a 0% line for ZATCA.
+  // Only fetched for authenticated students; guests fall back to the
+  // client-side compute below.
+  const [quoteTotals, setQuoteTotals] = useState<{
+    taxAmount: number;
+    taxRate: number;
+    vatTreatment: "standard" | "exempt" | "zero_rated";
+    totalAmount: number;
+    subtotal: number;
+  } | null>(null);
+  const cartIdsKey = items.map((it) => it.id).join(",");
+  useEffect(() => {
+    if (!isAuthenticated || !isStudent) {
+      setQuoteTotals(null);
+      return;
+    }
+    if (items.length === 0) {
+      setQuoteTotals(null);
+      return;
+    }
+    let cancelled = false;
+    paymentApi
+      .quote({ courseIds: items.map((it) => it.id) })
+      .then((res) => {
+        if (cancelled) return;
+        setQuoteTotals({
+          taxAmount: res.totals.taxAmount,
+          taxRate: res.totals.taxRate ?? 0,
+          vatTreatment: res.totals.vatTreatment ?? "standard",
+          totalAmount: res.totals.totalAmount,
+          subtotal: res.totals.subtotal,
+        });
+      })
+      .catch(() => {
+        /* fall back to optimistic client compute */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cartIdsKey, isAuthenticated, isStudent, items]);
   // Course ids in the cart that the buyer has ALREADY initiated a bank
   // transfer for (status pending or awaiting_approval). The value is the
   // payment id so the badge can deep-link back to the existing payment.
@@ -164,22 +208,30 @@ export default function CartPageClient({
     return item.title;
   };
 
-  // Cart totals — all numbers shown to the buyer before the gateway redirect.
+  // Cart totals — quote-based when the buyer is signed in (respects per-
+  // course exempt / zero_rated), optimistic client compute otherwise.
   const totals = useMemo(() => {
     const subtotal = items.reduce((sum, it) => sum + lineFor(it), 0);
     const originalSubtotal = items.reduce((sum, it) => sum + it.price, 0);
     const saleDiscount = Math.max(0, originalSubtotal - subtotal);
     const effectiveRate = vatEnabled ? vatRate / 100 : 0;
-    const vat = subtotal * effectiveRate;
-    const total = subtotal + vat;
+    const optimisticVat = subtotal * effectiveRate;
+    const optimisticTotal = subtotal + optimisticVat;
+    const vat = quoteTotals ? quoteTotals.taxAmount : optimisticVat;
+    const total = quoteTotals ? quoteTotals.totalAmount : optimisticTotal;
+    const activeRate = quoteTotals ? quoteTotals.taxRate : vatRate;
+    const treatment: "standard" | "exempt" | "zero_rated" = quoteTotals
+      ? quoteTotals.vatTreatment
+      : "standard";
     return {
       subtotal: Math.round(subtotal * 100) / 100,
       saleDiscount: Math.round(saleDiscount * 100) / 100,
       vat: Math.round(vat * 100) / 100,
       total: Math.round(total * 100) / 100,
-      vatRate,
+      vatRate: activeRate,
+      treatment,
     };
-  }, [items, vatEnabled, vatRate]);
+  }, [items, vatEnabled, vatRate, quoteTotals]);
 
   const handleProceedToCheckout = () => {
     if (!isAuthenticated) {
@@ -493,12 +545,23 @@ export default function CartPageClient({
                         </span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#6B7280]">{t("vatLabel", { rate: totals.vatRate })}</span>
-                      <span className="font-medium text-[#1F2937]">
-                        SAR {totals.vat.toFixed(2)}
-                      </span>
-                    </div>
+                    {/* VAT line — driven by the course's vatTreatment.
+                        exempt → hidden (ZATCA out of scope).
+                        zero_rated → "Zero-rated (0%)" for ZATCA disclosure.
+                        standard → normal "VAT (rate%)" line. */}
+                    {totals.treatment === "zero_rated" ? (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#6B7280]">{t("zeroRatedLabel")}</span>
+                        <span className="font-medium text-[#1F2937]">SAR 0.00</span>
+                      </div>
+                    ) : totals.treatment === "standard" ? (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#6B7280]">{t("vatLabel", { rate: totals.vatRate })}</span>
+                        <span className="font-medium text-[#1F2937]">
+                          SAR {totals.vat.toFixed(2)}
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="h-px bg-[#E5E7EB]" />

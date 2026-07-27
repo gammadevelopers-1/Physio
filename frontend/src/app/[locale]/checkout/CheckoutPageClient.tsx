@@ -297,7 +297,10 @@ export default function CheckoutPageClient({
     staleCouponBlocked && !(campaignDirect && campaignDirect.allowsCoupon);
   const showCouponField = !couponBlocked && !cartIsFree && !campaignBlocksCoupon;
 
-  // VAT rate from public tax-display endpoint (finance-manager controlled).
+  // Global VAT rate (finance-manager controlled) — used only as the
+  // optimistic fallback while the authoritative quote is loading. The
+  // real numbers below come from `/payments/quote`, which is the same
+  // source of truth the backend uses when it actually charges.
   const [vatRate, setVatRate] = useState<number>(DEFAULT_VAT_RATE);
   const [vatEnabled, setVatEnabled] = useState<boolean>(true);
   useEffect(() => {
@@ -316,6 +319,19 @@ export default function CheckoutPageClient({
       cancelled = true;
     };
   }, []);
+
+  // Authoritative totals from `POST /payments/quote` — respects per-course
+  // vatTreatment (`standard` → global rate, `exempt` → 0 VAT and no VAT
+  // line, `zero_rated` → 0 VAT with a "Zero-rated" line for ZATCA). Same
+  // pipeline the backend uses when charging. Populated as soon as cart /
+  // coupon / campaign settles; falls back to the client-side compute
+  // below while loading or on error.
+  const [quoteTotals, setQuoteTotals] = useState<{
+    taxAmount: number;
+    taxRate: number;
+    vatTreatment: "standard" | "exempt" | "zero_rated";
+    totalAmount: number;
+  } | null>(null);
 
   // Tabby background pre-scoring — per their docs we run an eligibility
   // check before the buyer clicks Pay Now. Three terminal states:
@@ -346,9 +362,19 @@ export default function CheckoutPageClient({
     Math.round((couponDiscount + campaignDiscount) * 100) / 100,
   );
   const taxableAmount = Math.max(0, subtotal - combinedDiscount);
+  // Optimistic client-side compute — used only while the authoritative
+  // quote is loading. Assumes standard treatment @ global rate.
   const effectiveVatRate = vatEnabled ? vatRate / 100 : 0;
-  const vat = Math.round(taxableAmount * effectiveVatRate * 100) / 100;
-  const total = Math.round((taxableAmount + vat) * 100) / 100;
+  const optimisticVat = Math.round(taxableAmount * effectiveVatRate * 100) / 100;
+  const optimisticTotal = Math.round((taxableAmount + optimisticVat) * 100) / 100;
+  // Authoritative values from the quote — respects per-course treatment.
+  // Falls back to optimistic while the quote is in flight.
+  const vat = quoteTotals ? quoteTotals.taxAmount : optimisticVat;
+  const total = quoteTotals ? quoteTotals.totalAmount : optimisticTotal;
+  const activeVatRate = quoteTotals ? quoteTotals.taxRate : vatRate;
+  const activeTreatment: "standard" | "exempt" | "zero_rated" = quoteTotals
+    ? quoteTotals.vatTreatment
+    : "standard";
 
   // Pre-score Tabby after the cart settles. Debounce so changing the
   // discount field doesn't fire 5 calls in 2 seconds. Re-running the
@@ -396,6 +422,42 @@ export default function CheckoutPageClient({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartIdsKey, total, discountResult?.valid, !!campaignDirect]);
+
+  // Fetch the authoritative quote whenever the cart, coupon, or campaign
+  // toggle changes. This is the same endpoint the backend uses when
+  // actually charging, so its `taxAmount` / `totalAmount` / `vatTreatment`
+  // are the ground truth — respects per-course exempt / zero_rated even
+  // though the global vatRate is non-zero.
+  useEffect(() => {
+    if (items.length === 0) {
+      setQuoteTotals(null);
+      return;
+    }
+    let cancelled = false;
+    paymentApi
+      .quote({
+        courseIds: items.map((it) => it.id),
+        discountCode: discountResult?.valid ? discountCode : undefined,
+        applyActiveCampaign: !!campaignDirect,
+      })
+      .then((res) => {
+        if (cancelled) return;
+        setQuoteTotals({
+          taxAmount: res.totals.taxAmount,
+          taxRate: res.totals.taxRate ?? 0,
+          vatTreatment: res.totals.vatTreatment ?? "standard",
+          totalAmount: res.totals.totalAmount,
+        });
+      })
+      .catch(() => {
+        /* keep optimistic client-side compute — checkout still works,
+           final charge is always the backend's authoritative amount */
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartIdsKey, discountResult?.valid, discountCode, !!campaignDirect]);
 
   const handleValidateDiscount = async () => {
     if (!discountCode.trim() || items.length === 0) return;
@@ -1294,10 +1356,21 @@ export default function CheckoutPageClient({
                       <span className="text-sm font-medium text-green-600">- SAR {couponDiscount.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-sm text-[var(--on-surface-variant)]">{t("vatLabel", { rate: vatRate })}</span>
-                    <span className="text-sm font-medium">SAR {vat.toFixed(2)}</span>
-                  </div>
+                  {/* VAT line — per-course treatment drives what shows:
+                      exempt → hidden entirely (ZATCA out of scope).
+                      zero_rated → "Zero-rated (0%)" line for ZATCA disclosure.
+                      standard → "VAT (rate%)" line with the computed amount. */}
+                  {activeTreatment === "zero_rated" ? (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-[var(--on-surface-variant)]">{t("zeroRatedLabel")}</span>
+                      <span className="text-sm font-medium">SAR 0.00</span>
+                    </div>
+                  ) : activeTreatment === "standard" ? (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-[var(--on-surface-variant)]">{t("vatLabel", { rate: activeVatRate })}</span>
+                      <span className="text-sm font-medium">SAR {vat.toFixed(2)}</span>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between pt-2 border-t border-[#e5e5e5]">
                     <span className="font-semibold">{t("discount.total")}</span>
                     <span className="font-semibold text-lg">SAR {total.toFixed(2)}</span>

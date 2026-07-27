@@ -7920,6 +7920,11 @@ export const paymentApi = {
         campaignName: string | null;
         taxAmount: number;
         taxRate?: number;
+        // Per-course treatment applied by the backend. 'exempt' and
+        // 'zero_rated' both mean taxAmount === 0; 'standard' means the
+        // global vatRate applied. UI uses this to render either "VAT
+        // (rate%)", "Zero-rated (0%)", or omit the line entirely.
+        vatTreatment?: 'standard' | 'exempt' | 'zero_rated';
         totalAmount: number;
         currency: string;
       };

@@ -2464,22 +2464,29 @@ const CourseManagerCourseDetailContent = ({
                               </button>
                             )}
 
-                            {/* Delete — every non-active status. Modal's
-                                compliance / pending-cert blockers disable
-                                submit when the course has NELC records;
-                                the backend Phase B guard ("only draft or
-                                cancelled") is the ultimate safety net.
-                                Active courses go via Cancel first. */}
-                            {course.status !== "active" && (
-                              <button
-                                onClick={() => openAdminConfirm("delete")}
-                                className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#FCA5A5] text-[#DC2626] text-sm font-medium rounded-lg hover:bg-[#FEF2F2] transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                {tAdmin("coursesPage.actions.delete")}
-                              </button>
-                            )}
+                            {/* Delete — hidden for active (must Cancel
+                                first) AND for completed (backend blocks;
+                                students earned outcomes — archive only). */}
+                            {course.status !== "active" &&
+                              course.status !== "completed" && (
+                                <button
+                                  onClick={() => openAdminConfirm("delete")}
+                                  className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#FCA5A5] text-[#DC2626] text-sm font-medium rounded-lg hover:bg-[#FEF2F2] transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  {tAdmin("coursesPage.actions.delete")}
+                                </button>
+                              )}
                           </div>
+
+                          {/* Explain to the user why Delete is missing on
+                              completed — students earned CME / certificates
+                              and those records must be preserved. */}
+                          {course.status === "completed" && (
+                            <p className="mt-3 text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                              {t("courseDetail.completedCannotDelete")}
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}

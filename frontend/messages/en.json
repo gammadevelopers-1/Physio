@@ -1227,6 +1227,7 @@
     "subtotalLabel": "Subtotal ({count, plural, =1 {1 item} other {# items}})",
     "saleDiscountLabel": "Sale discount",
     "vatLabel": "VAT ({rate}%)",
+    "zeroRatedLabel": "Zero-rated (0%)",
     "totalLabel": "Total",
     "vatDisclaimer": "Final amount including VAT is calculated at checkout. Discount codes can be applied on the next step.",
     "secureNote": "Secure & encrypted checkout",
@@ -1292,6 +1293,7 @@
     "buyerEmail": "Email",
     "buyerPhone": "Phone",
     "vatLabel": "VAT ({rate}%)",
+    "zeroRatedLabel": "Zero-rated (0%)",
     "profile": {
       "title": "Complete profile",
       "alert": "Fill all required profile information",
@@ -5411,6 +5413,7 @@
       "reassignInstructor": "Reassign",
       "dangerZone": "Danger Zone",
       "dangerZoneDesc": "These actions are irreversible. Proceed with caution.",
+      "completedCannotDelete": "Completed courses cannot be deleted — students have earned certificates and CME credit that must be preserved. Archive the course to remove it from active listings while keeping the compliance record intact.",
       "editCourseCta": "Edit Course",
       "editCourseDesc": "Update course content, schedule, and settings.",
       "studentsSearchPlaceholder": "Search students...",

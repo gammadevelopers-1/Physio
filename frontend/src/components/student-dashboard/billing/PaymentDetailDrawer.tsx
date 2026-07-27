@@ -432,16 +432,29 @@ function DrawerBody({
         )}
 
         {/* Course link — deep-link into the student's enrolled course
-            view, not the public marketing page. */}
-        {payment.courseId && (
-          <a
-            href={`/${locale}/dashboard/student/courses/${payment.courseId}`}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-[var(--color-primary)] hover:underline"
-          >
-            <ExternalLink className="w-4 h-4" />
-            {t("drawer.viewCourse")}
-          </a>
-        )}
+            view, not the public marketing page. Hidden once the enrolment
+            for THIS course has been dropped (full refund, per-line refund,
+            or any other drop) so a refunded student cannot reach the
+            workspace via the invoice drawer. Backend also 404s the
+            workspace API, but hiding the button avoids a dead click. */}
+        {payment.courseId && (() => {
+          const line = lineItems.find((li) => li.courseId === payment.courseId);
+          const courseDropped = line
+            ? line.enrollmentStatus === "dropped" ||
+              Boolean(line.alreadyRefundedByRefundId)
+            : payment.status === "refunded" ||
+              payment.status === "partially_refunded";
+          if (courseDropped) return null;
+          return (
+            <a
+              href={`/${locale}/dashboard/student/courses/${payment.courseId}`}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-[var(--color-primary)] hover:underline"
+            >
+              <ExternalLink className="w-4 h-4" />
+              {t("drawer.viewCourse")}
+            </a>
+          );
+        })()}
       </section>
 
       {/* Refund eligibility / action */}

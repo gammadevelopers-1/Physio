@@ -1164,10 +1164,18 @@ export class RefundService {
       // 1. Drop every enrollment tied to this payment (multi-line cart
       // payments have one per line, single-line gateway payments have one
       // on payment.enrollmentId). Either path feeds enrollmentIdsToDrop.
+      // Populate the removal-audit columns so downstream (reports, audit
+      // log, future access checks) can distinguish a refund-drop from an
+      // admin drop or self-drop without joining `refunds`.
       if (enrollmentIdsToDrop.length > 0) {
         await tx
           .update(enrollments)
-          .set({ status: ENROLLMENT_STATUS.DROPPED })
+          .set({
+            status: ENROLLMENT_STATUS.DROPPED,
+            removedAt: new Date(),
+            removalReason: 'refund',
+            removedBy: refund.processedBy || null,
+          })
           .where(inArray(enrollments.id, enrollmentIdsToDrop));
         cascade.enrollmentDropped = true;
       }

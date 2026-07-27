@@ -735,27 +735,39 @@ export class StudentService {
   // ─── Course Detail (for Learning Page) ──────────────────
 
   async getEnrolledCourseDetail(studentId: string, courseId: string) {
-    // Verify student is (or was) enrolled. `dropped` is included so a
-    // student whose enrolment was cleared by a course cancellation
-    // (Phase B/C) can still open the detail page and see the cancelled
-    // banner + refund status. The page itself gates every CTA on
-    // enrollment.status === 'active', so a dropped student sees the
-    // course info + banner but cannot access lectures/assessments.
-    const [enrollment] = await db
-      .select()
+    // Verify student is (or was) enrolled. Mirrors the My Courses list
+    // rule: allow `dropped` ONLY when the course itself is active and
+    // was rescheduled (Phase D reopened-course case, so the student can
+    // still see the "re-enroll?" banner). Every other `dropped` path —
+    // refund, self-drop, admin removal — is fully blocked from the
+    // workspace so a refunded student cannot deep-link back in via the
+    // invoice drawer's "View course" link.
+    const [row] = await db
+      .select({
+        enrollment: enrollments,
+      })
       .from(enrollments)
+      .innerJoin(courses, eq(courses.id, enrollments.courseId))
       .where(
         and(
           eq(enrollments.studentId, studentId),
           eq(enrollments.courseId, courseId),
-          inArray(enrollments.status, ['active', 'completed', 'dropped']),
+          sql`(
+            ${enrollments.status} IN ('active', 'completed')
+            OR (
+              ${enrollments.status} = 'dropped'
+              AND ${courses.status} = 'active'
+              AND ${courses.rescheduledAt} IS NOT NULL
+            )
+          )`,
         ),
       )
       .limit(1);
 
-    if (!enrollment) {
+    if (!row) {
       throw new NotFoundException('You are not enrolled in this course');
     }
+    const enrollment = row.enrollment;
 
     // Get course with instructor info
     const [course] = await db

@@ -29,6 +29,7 @@ import { isNull } from 'drizzle-orm';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { GatewayFactory } from './gateways/gateway.factory';
+import { GatewayCredentialsService } from './gateways/gateway-credentials.service';
 import { TabbyGateway } from './gateways/tabby.gateway';
 import { DiscountService } from './services/discount.service';
 import { InvoiceService } from './services/invoice.service';
@@ -97,6 +98,7 @@ export class PaymentsService {
   constructor(
     private readonly configService: ConfigService,
     private readonly gatewayFactory: GatewayFactory,
+    private readonly gatewayCredentials: GatewayCredentialsService,
     private readonly discountService: DiscountService,
     private readonly auditLogService: AuditLogService,
     private readonly invoiceService: InvoiceService,
@@ -235,6 +237,14 @@ export class PaymentsService {
       locale?: 'ar' | 'en';
     },
   ): Promise<{ eligible: boolean; reason?: string; message?: string }> {
+    // If admin has disabled Tabby at checkout, skip the (expensive) upstream
+    // pre-score call entirely — the FE hides the radio via the visibility
+    // endpoint, but we still might land here on stale state. Report
+    // ineligible so nothing renders it as available.
+    if (!this.gatewayCredentials.isEnabled('tabby')) {
+      return { eligible: false, reason: 'gateway_disabled' };
+    }
+
     try {
       const quote = await this.quotePayment(user, {
         courseIds: dto.courseIds,
@@ -335,6 +345,21 @@ export class PaymentsService {
       );
       return { eligible: true };
     }
+  }
+
+  /**
+   * Public checkout-visibility snapshot for the four payment gateways —
+   * missing key in the DB blob defaults to true (backward-compat on
+   * rollout). Consumed by the checkout page to hide radio options that
+   * admin has toggled off in Settings → Payments.
+   */
+  getVisibleGateways(): {
+    moyasar: boolean;
+    tamara: boolean;
+    tabby: boolean;
+    bank_transfer: boolean;
+  } {
+    return this.gatewayCredentials.getEnabledMap();
   }
 
   /**
@@ -590,6 +615,20 @@ export class PaymentsService {
   }
 
   async initiatePayment(user: AuthenticatedUser, dto: InitiatePaymentDto, ipAddress?: string) {
+    // Admin can disable a gateway from Settings → Payments. Reject BEFORE we
+    // touch the DB so a hidden gateway (bypassed via a crafted request) can't
+    // create rows. Mock is exempt — dev/test only. Bank-transfer goes through
+    // submitDraft instead, but we still gate here for the /initiate path's
+    // 'mock' fallback in local dev.
+    if (
+      dto.gateway !== 'mock' &&
+      !this.gatewayCredentials.isEnabled(dto.gateway as any)
+    ) {
+      throw new BadRequestException(
+        'This payment method is currently unavailable. Please choose another option.',
+      );
+    }
+
     // De-duplicate courseIds defensively — UI shouldn't send duplicates, but a
     // duplicate would crash the unique-per-payment constraint mid-transaction.
     const courseIds = Array.from(new Set(dto.courseIds));

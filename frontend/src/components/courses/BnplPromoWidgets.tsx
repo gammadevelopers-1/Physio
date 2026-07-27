@@ -3,6 +3,7 @@
 import { createElement, useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { useLocale } from "next-intl";
+import { paymentApi } from "@/lib/api";
 
 interface BnplPromoWidgetsProps {
   /** Final price the buyer would pay (post-sale). Widgets show the
@@ -96,8 +97,36 @@ export default function BnplPromoWidgets({
   // widget). Suffixing with `only` prevents id collisions.
   const tabbyMountId = `tabby-promo-${source}${only ? `-${only}` : ""}`;
   const tabbyInstantiatedRef = useRef(false);
-  const showTabby = !only || only === "tabby";
-  const showTamara = !only || only === "tamara";
+
+  // Admin-controlled per-gateway visibility. Missing → true (fail open so
+  // rendering doesn't stall on network hiccups; backend still rejects
+  // charges on disabled gateways). `null` while loading — during that
+  // interval we render optimistically; disabling later hides the widget
+  // on the next fetch.
+  const [visibleGateways, setVisibleGateways] = useState<{
+    tabby: boolean;
+    tamara: boolean;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    paymentApi
+      .getVisibleGateways()
+      .then((v) => {
+        if (!cancelled)
+          setVisibleGateways({ tabby: v.tabby, tamara: v.tamara });
+      })
+      .catch(() => {
+        if (!cancelled) setVisibleGateways({ tabby: true, tamara: true });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const gwTabbyOn = visibleGateways?.tabby !== false;
+  const gwTamaraOn = visibleGateways?.tamara !== false;
+  const showTabby = (!only || only === "tabby") && gwTabbyOn;
+  const showTamara = (!only || only === "tamara") && gwTamaraOn;
 
   const showWidgets = price >= 50 && currency === "SAR";
 
@@ -246,6 +275,8 @@ export default function BnplPromoWidgets({
   }, [price, lang, currency, source, showWidgets, showTamara]);
 
   if (!showWidgets) return null;
+  // Nothing to show — both requested gateways are hidden by admin.
+  if (!showTabby && !showTamara) return null;
 
   return (
     <div className={`flex flex-col gap-2 ${className}`} aria-label="Buy now, pay later options">

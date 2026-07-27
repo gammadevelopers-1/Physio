@@ -251,6 +251,70 @@ export default function CheckoutPageClient({
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Which gateways admin has enabled at Settings → Payments. `null` while
+  // the fetch is in flight (treat as "loading — show all", so the skeleton
+  // + Tabby-eligibility flow still runs). On error we fail OPEN — showing
+  // every radio is safer than blocking checkout when the visibility endpoint
+  // hiccups; the backend still rejects requests to disabled gateways.
+  const [visibleGateways, setVisibleGateways] = useState<{
+    moyasar: boolean;
+    tamara: boolean;
+    tabby: boolean;
+    bank_transfer: boolean;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    paymentApi
+      .getVisibleGateways()
+      .then((v) => {
+        if (!cancelled) setVisibleGateways(v);
+      })
+      .catch(() => {
+        // Fail open — backend still enforces the enable state on charge.
+        if (!cancelled)
+          setVisibleGateways({
+            moyasar: true,
+            tamara: true,
+            tabby: true,
+            bank_transfer: true,
+          });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // If the currently-selected gateway is disabled by admin, fall through to
+  // the first enabled gateway. Runs whenever visibility flips (initial load
+  // or admin toggle refresh). If NOTHING is enabled, leave `gateway` at
+  // moyasar — the render layer shows a "no payment methods available"
+  // empty state and disables the Pay Now button.
+  useEffect(() => {
+    if (!visibleGateways) return;
+    if (visibleGateways[gateway as "moyasar" | "tamara" | "tabby" | "bank_transfer"]) {
+      return;
+    }
+    const priority: Array<"moyasar" | "tamara" | "tabby" | "bank_transfer"> = [
+      "moyasar",
+      "tabby",
+      "tamara",
+      "bank_transfer",
+    ];
+    const next = priority.find((g) => visibleGateways[g]);
+    if (next && next !== gateway) {
+      handleGatewayChange(next);
+    }
+    // handleGatewayChange is stable-enough for our purposes here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleGateways, gateway]);
+
+  // Convenience booleans for the render layer.
+  const gwMoyasarOn = visibleGateways?.moyasar !== false;
+  const gwTabbyOn = visibleGateways?.tabby !== false;
+  const gwTamaraOn = visibleGateways?.tamara !== false;
+  const gwBankOn = visibleGateways?.bank_transfer !== false;
+  const anyGatewayEnabled = gwMoyasarOn || gwTabbyOn || gwTamaraOn || gwBankOn;
+
   // Discount state — SPLIT into two independent buckets so a direct-
   // campaign discount (no coupon row) never gets pasted into the
   // buyer's coupon input.
@@ -404,10 +468,17 @@ export default function CheckoutPageClient({
           } else {
             setTabbyEligibility({ status: "rejected", message: res.message });
             // If the buyer was already on Tabby and just got rejected,
-            // bump them onto a usable method so they can't submit.
+            // bump them onto the FIRST enabled non-Tabby gateway so they
+            // can't submit. Hardcoding moyasar breaks setups where admin
+            // has disabled Moyasar and only kept e.g. bank transfer on.
             if (gateway === "tabby") {
-              setGateway("moyasar");
-              setPaymentMethod("card");
+              const priority: Array<
+                "moyasar" | "tamara" | "bank_transfer"
+              > = ["moyasar", "tamara", "bank_transfer"];
+              const next = priority.find(
+                (g) => visibleGateways?.[g] !== false,
+              );
+              if (next) handleGatewayChange(next);
             }
           }
         })
@@ -1185,9 +1256,17 @@ export default function CheckoutPageClient({
                         </div>
                       ))}
                     </>
+                  ) : !anyGatewayEnabled ? (
+                    <div className="border border-[#F59E0B] bg-[#FFFBEB] rounded-xl p-4 text-[13px] text-[#92400E]">
+                      {t("payment.noGatewaysEnabled")}
+                    </div>
                   ) : (
                     <>
-                  {/* Moyasar */}
+                  {/* Moyasar — hidden when admin has toggled it off in
+                      Settings → Payments. Backend re-validates on
+                      /initiate so a stale visibility fetch can't force a
+                      disabled gateway through. */}
+                  {gwMoyasarOn && (
                   <div
                     role="radio"
                     aria-checked={gateway === "moyasar"}
@@ -1207,6 +1286,7 @@ export default function CheckoutPageClient({
                       </div>
                     </div>
                   </div>
+                  )}
 
                   {/* Tabby — three render states driven by background
                       pre-scoring (see [[tabbyEligibility]]):
@@ -1220,6 +1300,7 @@ export default function CheckoutPageClient({
                                     pre-scoring-check). The outer ternary
                       already excludes 'checking', so this branch only
                       sees eligible / rejected. */}
+                  {gwTabbyOn && (
                   <div
                     role="radio"
                     aria-checked={gateway === "tabby"}
@@ -1269,8 +1350,10 @@ export default function CheckoutPageClient({
                       )}
                     </div>
                   </div>
+                  )}
 
                   {/* Tamara — 3 monthly instalments, interest-free */}
+                  {gwTamaraOn && (
                   <div
                     role="radio"
                     aria-checked={gateway === "tamara"}
@@ -1301,8 +1384,10 @@ export default function CheckoutPageClient({
                       )}
                     </div>
                   </div>
+                  )}
 
                   {/* Bank Transfer */}
+                  {gwBankOn && (
                   <div
                     role="radio"
                     aria-checked={gateway === "bank_transfer"}
@@ -1318,6 +1403,7 @@ export default function CheckoutPageClient({
                       </div>
                     </div>
                   </div>
+                  )}
                     </>
                   )}
                 </div>
@@ -1396,7 +1482,12 @@ export default function CheckoutPageClient({
                     net if a buyer somehow bypasses the disabled state. */}
                 <button
                   onClick={handleSubmit}
-                  disabled={processing || hasEnrolledItems || hasPendingItems}
+                  disabled={
+                    processing ||
+                    hasEnrolledItems ||
+                    hasPendingItems ||
+                    !anyGatewayEnabled
+                  }
                   aria-busy={processing}
                   aria-label={processing ? (isRTL ? "جاري المعالجة" : "Processing payment") : `${t("payment.payNow")} SAR ${total.toFixed(2)}`}
                   title={
@@ -1404,6 +1495,8 @@ export default function CheckoutPageClient({
                       ? t("alreadyEnrolled.partialBody")
                       : hasPendingItems
                       ? t("pendingPayment.partialBody")
+                      : !anyGatewayEnabled
+                      ? t("payment.noGatewaysEnabled")
                       : undefined
                   }
                   className="w-full h-12 rounded-xl text-white font-medium btn-gold hover:opacity-90 transition-opacity mb-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus-ring"

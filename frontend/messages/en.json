@@ -1332,7 +1332,8 @@
       "processing": "Processing...",
       "securePaymentThrough": "Secure payment through",
       "tabbyInstallmentPreview": "4 interest-free payments of SAR {monthly}",
-      "tamaraInstallmentPreview": "3 interest-free monthly payments of SAR {monthly}"
+      "tamaraInstallmentPreview": "3 interest-free monthly payments of SAR {monthly}",
+      "noGatewaysEnabled": "No payment methods are currently available. Please contact support to complete your purchase."
     },
     "discount": {
       "title": "Discount Code",
@@ -8142,6 +8143,10 @@
         "currency": "Currency",
         "credentialsTitle": "Credentials",
         "credentialsHelp": "Secret keys are stored as references — the actual value lives in GCP Secret Manager and is rotated via gcloud, not edited here.",
+        "gatewayToggleTitle": "Show on checkout",
+        "gatewayToggleHint": "When off, this payment method is hidden from the checkout page and cannot be selected. In-flight payments (refunds, receipts, callbacks) continue to complete regardless.",
+        "gatewayEnabled": "Enabled",
+        "gatewayDisabled": "Disabled",
         "publishableKey": "Publishable Key",
         "publishableKeyHelp": "Safe to expose to the browser. Used on the checkout page.",
         "secretKey": "Secret Key",
@@ -11397,6 +11402,8 @@
         "active": "Active",
         "configured": "Configured",
         "notConfigured": "Not configured",
+        "checkoutEnabled": "Shown at checkout",
+        "checkoutDisabled": "Hidden from checkout",
         "notSet": "Not set",
         "modeLive": "Live",
         "modeTest": "Test",

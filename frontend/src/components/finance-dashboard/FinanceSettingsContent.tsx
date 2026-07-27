@@ -243,6 +243,7 @@ export const GatewaysReadOnlyView = () => {
     keyLabel: string;
     keyValue: string | null;
     hasSecret: boolean;
+    enabled: boolean;
   }> = [
     {
       key: "moyasar",
@@ -250,6 +251,7 @@ export const GatewaysReadOnlyView = () => {
       keyLabel: t("publishableKey"),
       keyValue: data.moyasar.publishableKey,
       hasSecret: data.moyasar.hasSecret,
+      enabled: data.moyasar.enabled,
     },
     {
       key: "tamara",
@@ -257,6 +259,7 @@ export const GatewaysReadOnlyView = () => {
       keyLabel: t("merchantToken"),
       keyValue: data.tamara.merchantTokenMasked,
       hasSecret: data.tamara.hasSecret,
+      enabled: data.tamara.enabled,
     },
     {
       key: "tabby",
@@ -264,6 +267,7 @@ export const GatewaysReadOnlyView = () => {
       keyLabel: t("publicKey"),
       keyValue: data.tabby.publicKey,
       hasSecret: data.tabby.hasSecret,
+      enabled: data.tabby.enabled,
     },
   ];
 
@@ -357,17 +361,28 @@ export const GatewaysReadOnlyView = () => {
                       </span>
                     )}
                   </div>
-                  {configured ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#15803D]">
-                      <CheckCircle className="w-3 h-3" />
-                      {t("configured")}
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                        gw.enabled
+                          ? "bg-[#DCFCE7] text-[#15803D]"
+                          : "bg-[#FEE2E2] text-[#B91C1C]"
+                      }`}
+                    >
+                      {gw.enabled ? t("checkoutEnabled") : t("checkoutDisabled")}
                     </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#CA8A04]">
-                      <AlertCircle className="w-3 h-3" />
-                      {t("notConfigured")}
-                    </span>
-                  )}
+                    {configured ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#15803D]">
+                        <CheckCircle className="w-3 h-3" />
+                        {t("configured")}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#CA8A04]">
+                        <AlertCircle className="w-3 h-3" />
+                        {t("notConfigured")}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 gap-1.5">
                   <div className="flex items-center justify-between text-[12px]">
@@ -408,17 +423,30 @@ export const GatewaysReadOnlyView = () => {
                   </span>
                 )}
               </div>
-              {isBankTransferConfigured ? (
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#15803D]">
-                  <CheckCircle className="w-3 h-3" />
-                  {t("configured")}
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                    data.bankTransfer.enabled
+                      ? "bg-[#DCFCE7] text-[#15803D]"
+                      : "bg-[#FEE2E2] text-[#B91C1C]"
+                  }`}
+                >
+                  {data.bankTransfer.enabled
+                    ? t("checkoutEnabled")
+                    : t("checkoutDisabled")}
                 </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#CA8A04]">
-                  <AlertCircle className="w-3 h-3" />
-                  {t("notConfigured")}
-                </span>
-              )}
+                {isBankTransferConfigured ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#15803D]">
+                    <CheckCircle className="w-3 h-3" />
+                    {t("configured")}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#CA8A04]">
+                    <AlertCircle className="w-3 h-3" />
+                    {t("notConfigured")}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-1 gap-1.5">
               <div className="flex items-center justify-between text-[12px]">

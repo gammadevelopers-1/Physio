@@ -7949,6 +7949,15 @@ export const paymentApi = {
       data,
     ),
 
+  /**
+   * Which payment gateways admin has enabled at checkout right now.
+   * Returns booleans for each of the four gateways. Missing key on the
+   * server → true (backward-compat). Consumed by CheckoutPageClient on
+   * mount and by BnplPromoWidgets to gate widget rendering.
+   */
+  getVisibleGateways: () =>
+    api.get<VisibleGatewaysResponse>('/payments/gateways/visible'),
+
   verify: (paymentId: string) =>
     api.post<{ status: string; paymentId: string; amount?: string; currency?: string; gateway?: string; paidAt?: string; failureReason?: string }>(`/payments/verify/${paymentId}`),
 
@@ -9436,9 +9445,9 @@ export interface GatewaySettingsView {
   activeGateway: 'moyasar' | 'tamara' | 'tabby' | 'bank_transfer' | null;
   testMode: boolean;
   currency: string;
-  moyasar: { publishableKey: string | null; hasSecret: boolean };
-  tamara: { merchantTokenMasked: string | null; hasSecret: boolean };
-  tabby: { publicKey: string | null; hasSecret: boolean };
+  moyasar: { publishableKey: string | null; hasSecret: boolean; enabled: boolean };
+  tamara: { merchantTokenMasked: string | null; hasSecret: boolean; enabled: boolean };
+  tabby: { publicKey: string | null; hasSecret: boolean; enabled: boolean };
   bankTransfer: {
     bankNameEn: string;
     bankNameAr: string;
@@ -9449,6 +9458,7 @@ export interface GatewaySettingsView {
     swiftCode: string;
     instructionsEn: string;
     instructionsAr: string;
+    enabled: boolean;
   };
   hasWebhookSecret: boolean;
   invoiceFooterEn: string;
@@ -9456,6 +9466,16 @@ export interface GatewaySettingsView {
   autoSendReceipt: boolean;
   updatedAt: string | null;
   updatedBy: { id: string; name: string; email: string | null } | null;
+}
+
+/** Which gateways are visible on the checkout radios — reflects admin
+ *  Settings → Payments toggles. Missing key defaults to true server-side
+ *  (backward-compat rollout). Consumed by CheckoutPageClient + BnplPromoWidgets. */
+export interface VisibleGatewaysResponse {
+  moyasar: boolean;
+  tamara: boolean;
+  tabby: boolean;
+  bank_transfer: boolean;
 }
 
 export type RefundGatewayKey = 'moyasar' | 'tamara' | 'tabby' | 'bank_transfer' | 'mock';

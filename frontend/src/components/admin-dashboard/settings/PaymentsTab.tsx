@@ -32,9 +32,16 @@ interface PaymentsSettings extends Record<string, unknown> {
   // SAR is the only supported currency platform-wide. Kept on the type so
   // existing JSONB rows that have `currency: "SAR"` deserialize cleanly.
   currency: "SAR";
-  moyasar: { publishableKey: string; secretKeyRef: string };
-  tamara: { merchantToken: string; secretKeyRef: string; mode?: TamaraMode };
-  tabby: { publicKey: string; secretKeyRef: string };
+  // Per-gateway `enabled` gates checkout visibility. Missing key on load
+  // is treated as `true` (backward-compat) via the FALLBACK defaults.
+  moyasar: { publishableKey: string; secretKeyRef: string; enabled?: boolean };
+  tamara: {
+    merchantToken: string;
+    secretKeyRef: string;
+    mode?: TamaraMode;
+    enabled?: boolean;
+  };
+  tabby: { publicKey: string; secretKeyRef: string; enabled?: boolean };
   bankTransfer: {
     // Legacy single-locale fields — kept for backward compat with prior data.
     bankName?: string;
@@ -49,6 +56,7 @@ interface PaymentsSettings extends Record<string, unknown> {
     swiftCode: string;
     instructionsEn: string;
     instructionsAr: string;
+    enabled?: boolean;
   };
   webhookSecretRef: string;
   invoiceFooterEn: string;
@@ -60,9 +68,9 @@ const FALLBACK: PaymentsSettings = {
   currency: "SAR",
   // Secret fields default to empty strings — the load endpoint strips
   // encrypted secret values, and empty-on-save means "preserve existing".
-  moyasar: { publishableKey: "", secretKeyRef: "" },
-  tamara: { merchantToken: "", secretKeyRef: "", mode: undefined },
-  tabby: { publicKey: "", secretKeyRef: "" },
+  moyasar: { publishableKey: "", secretKeyRef: "", enabled: true },
+  tamara: { merchantToken: "", secretKeyRef: "", mode: undefined, enabled: true },
+  tabby: { publicKey: "", secretKeyRef: "", enabled: true },
   bankTransfer: {
     bankNameEn: "",
     bankNameAr: "",
@@ -73,6 +81,7 @@ const FALLBACK: PaymentsSettings = {
     swiftCode: "",
     instructionsEn: "",
     instructionsAr: "",
+    enabled: true,
   },
   webhookSecretRef: "",
   invoiceFooterEn: "",
@@ -260,6 +269,29 @@ export default function PaymentsTab() {
       {/* Gateway-specific credentials */}
       {viewGateway !== "bank_transfer" && (
         <div className="border border-[var(--color-border)] rounded-lg p-4 space-y-4">
+          <GatewayEnableToggle
+            enabled={
+              (draft[viewGateway as "moyasar" | "tamara" | "tabby"] as
+                | { enabled?: boolean }
+                | undefined)?.enabled !== false
+            }
+            onToggle={(next) =>
+              setDraft((d) => {
+                const key = viewGateway as "moyasar" | "tamara" | "tabby";
+                return {
+                  ...d,
+                  [key]: { ...d[key], enabled: next },
+                } as PaymentsSettings;
+              })
+            }
+            labels={{
+              title: t("payments.gatewayToggleTitle"),
+              hint: t("payments.gatewayToggleHint"),
+              enabled: t("payments.gatewayEnabled"),
+              disabled: t("payments.gatewayDisabled"),
+            }}
+          />
+
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -425,6 +457,22 @@ export default function PaymentsTab() {
       {/* Bank transfer config — shown to students on the public checkout page */}
       {viewGateway === "bank_transfer" && (
         <div className="border border-[var(--color-border)] rounded-lg p-4 space-y-4">
+          <GatewayEnableToggle
+            enabled={draft.bankTransfer.enabled !== false}
+            onToggle={(next) =>
+              setDraft((d) => ({
+                ...d,
+                bankTransfer: { ...d.bankTransfer, enabled: next },
+              }))
+            }
+            labels={{
+              title: t("payments.gatewayToggleTitle"),
+              hint: t("payments.gatewayToggleHint"),
+              enabled: t("payments.gatewayEnabled"),
+              disabled: t("payments.gatewayDisabled"),
+            }}
+          />
+
           <div>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               {t("payments.bankTransferDetails")}
@@ -679,6 +727,55 @@ export default function PaymentsTab() {
 }
 
 // ─── Helper field components ────────────────────────────────────
+
+function GatewayEnableToggle({
+  enabled,
+  onToggle,
+  labels,
+}: {
+  enabled: boolean;
+  onToggle: (next: boolean) => void;
+  labels: { title: string; hint: string; enabled: string; disabled: string };
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 pb-3 border-b border-[var(--color-border-subtle)]">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+          {labels.title}
+        </p>
+        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+          {labels.hint}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span
+          className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+            enabled
+              ? "bg-[#DCFCE7] text-[#15803D]"
+              : "bg-[#FEE2E2] text-[#B91C1C]"
+          }`}
+        >
+          {enabled ? labels.enabled : labels.disabled}
+        </span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          onClick={() => onToggle(!enabled)}
+          className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${
+            enabled ? "bg-[#22C55E]" : "bg-[#D1D5DB]"
+          }`}
+        >
+          <div
+            className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${
+              enabled ? "ms-auto" : ""
+            }`}
+          />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function CredField({
   label,

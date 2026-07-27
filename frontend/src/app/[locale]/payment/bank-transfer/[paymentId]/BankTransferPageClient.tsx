@@ -162,6 +162,22 @@ export default function BankTransferPageClient({
         setLoading(false);
         return;
       }
+      // Draft mode only: if admin has disabled bank transfer since the
+      // buyer clicked through from checkout, kick them back rather than
+      // let them upload a receipt we'll reject at submit. Existing
+      // (non-draft) payments still complete regardless of new visibility
+      // state — that gate lives inside the /submit-draft path, not here.
+      paymentApi
+        .getVisibleGateways()
+        .then((v) => {
+          if (cancelled) return;
+          if (v.bank_transfer === false) {
+            router.replace(`/${locale}/checkout`);
+          }
+        })
+        .catch(() => {
+          /* fail open — proceed with normal load */
+        });
       Promise.all([
         bankTransferApi.getDetails(),
         paymentApi.quote({

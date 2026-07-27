@@ -18,6 +18,8 @@ import { decryptSecret, modeFromKeyPrefix } from './payments-secrets.util';
 export type GatewaySource = 'db' | 'env' | 'mixed' | 'empty';
 export type GatewayMode = 'test' | 'live';
 
+export type GatewayName = 'moyasar' | 'tamara' | 'tabby' | 'bank_transfer';
+
 export interface MoyasarCredentials {
   secretKey: string;
   publishableKey: string;
@@ -68,18 +70,33 @@ export interface BankTransferCredentials {
   source: 'db' | 'env' | 'empty';
 }
 
+/** Admin-controlled per-gateway visibility at checkout. Missing key → true
+ *  (backward-compat: rollout of this flag must not hide gateways that were
+ *  serving customers before it existed). Toggling only affects new charges
+ *  — in-flight verify/refund/webhook paths do not read this. */
+export type GatewayEnabledMap = Record<GatewayName, boolean>;
+
 interface DbPaymentsSettings {
   gateway?: string;
   testMode?: boolean;
   currency?: string;
-  moyasar?: { publishableKey?: string; secretKeyRef?: string | null };
+  moyasar?: {
+    publishableKey?: string;
+    secretKeyRef?: string | null;
+    enabled?: boolean;
+  };
   tamara?: {
     merchantToken?: string;
     secretKeyRef?: string | null;
     /** Admin-saved mode for Tamara — drives URL choice (sandbox vs prod). */
     mode?: 'test' | 'live';
+    enabled?: boolean;
   };
-  tabby?: { publicKey?: string; secretKeyRef?: string | null };
+  tabby?: {
+    publicKey?: string;
+    secretKeyRef?: string | null;
+    enabled?: boolean;
+  };
   bankTransfer?: {
     bankNameEn?: string;
     bankNameAr?: string;
@@ -90,6 +107,7 @@ interface DbPaymentsSettings {
     swiftCode?: string;
     instructionsEn?: string;
     instructionsAr?: string;
+    enabled?: boolean;
   };
   webhookSecretRef?: string | null;
 }
@@ -111,6 +129,14 @@ export class GatewayCredentialsService implements OnModuleInit {
   private tamara!: TamaraCredentials;
   private tabby!: TabbyCredentials;
   private bankTransfer!: BankTransferCredentials;
+  /** Per-gateway checkout visibility. Missing key → true; only initiate/
+   *  submit-draft consult this — refund/verify/webhook stay ungated. */
+  private enabled: GatewayEnabledMap = {
+    moyasar: true,
+    tamara: true,
+    tabby: true,
+    bank_transfer: true,
+  };
   private expiresAt = 0;
   private refreshPromise: Promise<void> | null = null;
 
@@ -153,6 +179,24 @@ export class GatewayCredentialsService implements OnModuleInit {
   getBankTransfer(): BankTransferCredentials {
     this.maybeRefreshInBackground();
     return this.bankTransfer;
+  }
+
+  /**
+   * Read-only view of per-gateway checkout visibility. Missing key → true
+   * so a tenant that never touched the toggle keeps all gateways on. Read
+   * this in code paths that create NEW charges (initiate, submit-draft,
+   * prescore) — never in verify/refund/webhook, which must complete
+   * regardless of what admin toggled after the fact.
+   */
+  isEnabled(name: GatewayName): boolean {
+    this.maybeRefreshInBackground();
+    return this.enabled[name] !== false;
+  }
+
+  /** Snapshot of the full map (for public /gateways/visible + finance read). */
+  getEnabledMap(): GatewayEnabledMap {
+    this.maybeRefreshInBackground();
+    return { ...this.enabled };
   }
 
   /**
@@ -252,6 +296,16 @@ export class GatewayCredentialsService implements OnModuleInit {
   }
 
   private applyDbOverrides(db: DbPaymentsSettings): void {
+    // ─── Enabled flags ──────────────────────────────────────────
+    // Missing key → true. Reset the whole map from DB on every refresh so
+    // toggling ON at admin then OFF cleanly picks the OFF, and vice-versa.
+    this.enabled = {
+      moyasar: db.moyasar?.enabled !== false,
+      tamara: db.tamara?.enabled !== false,
+      tabby: db.tabby?.enabled !== false,
+      bank_transfer: db.bankTransfer?.enabled !== false,
+    };
+
     // ─── Moyasar ──────────────────────────────────────────────────
     // Publishable key is plain (safe to expose). Secret + webhook are
     // decrypted via decryptSecret (no-op for legacy plaintext rows).

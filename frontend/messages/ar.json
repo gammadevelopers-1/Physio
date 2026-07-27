@@ -1332,7 +1332,8 @@
       "processing": "جاري المعالجة...",
       "securePaymentThrough": "الدفع الآمن من خلال",
       "tabbyInstallmentPreview": "٤ دفعات بدون فوائد، كل دفعة {monthly} ر.س.",
-      "tamaraInstallmentPreview": "٣ دفعات شهرية بدون فوائد، كل دفعة {monthly} ر.س."
+      "tamaraInstallmentPreview": "٣ دفعات شهرية بدون فوائد، كل دفعة {monthly} ر.س.",
+      "noGatewaysEnabled": "لا تتوفر حالياً أي وسيلة دفع. يُرجى التواصل مع الدعم لإتمام عملية الشراء."
     },
     "discount": {
       "title": "رمز الخصم",
@@ -8142,6 +8143,10 @@
         "currency": "العملة",
         "credentialsTitle": "بيانات الاعتماد",
         "credentialsHelp": "تُخزَّن المفاتيح السرية كمراجع — القيمة الحقيقية محفوظة في GCP Secret Manager وتُدار عبر gcloud وليس من هنا.",
+        "gatewayToggleTitle": "إظهار في صفحة الدفع",
+        "gatewayToggleHint": "عند الإيقاف، تُخفى وسيلة الدفع هذه من صفحة الدفع ولا يمكن اختيارها. لا يؤثر ذلك على الدفعات الجارية (المبالغ المُستَردَّة، الإيصالات، والاسترجاعات) — تكتمل بشكل طبيعي.",
+        "gatewayEnabled": "مفعّلة",
+        "gatewayDisabled": "معطّلة",
         "publishableKey": "المفتاح العام",
         "publishableKeyHelp": "آمن لإظهاره في المتصفّح. يُستخدم في صفحة الدفع.",
         "secretKey": "المفتاح السرّي",
@@ -11397,6 +11402,8 @@
         "active": "نشطة",
         "configured": "مُهيّأة",
         "notConfigured": "غير مُهيّأة",
+        "checkoutEnabled": "تظهر في الدفع",
+        "checkoutDisabled": "مخفيّة عن الدفع",
         "notSet": "غير محددة",
         "modeLive": "مباشر",
         "modeTest": "اختبار",

@@ -63,10 +63,22 @@ interface PaymentsSettings {
   gateway?: 'moyasar' | 'tamara' | 'tabby' | 'bank_transfer';
   testMode?: boolean;
   currency?: string;
-  moyasar?: { publishableKey?: string; secretKeyRef?: string | null };
-  tamara?: { merchantToken?: string; secretKeyRef?: string | null };
-  tabby?: { publicKey?: string; secretKeyRef?: string | null };
-  bankTransfer?: BankTransferBlock;
+  moyasar?: {
+    publishableKey?: string;
+    secretKeyRef?: string | null;
+    enabled?: boolean;
+  };
+  tamara?: {
+    merchantToken?: string;
+    secretKeyRef?: string | null;
+    enabled?: boolean;
+  };
+  tabby?: {
+    publicKey?: string;
+    secretKeyRef?: string | null;
+    enabled?: boolean;
+  };
+  bankTransfer?: BankTransferBlock & { enabled?: boolean };
   webhookSecretRef?: string | null;
   invoiceFooterEn?: string;
   invoiceFooterAr?: string;
@@ -124,17 +136,20 @@ export class FinanceSettingsController {
         publishableKey: s.moyasar?.publishableKey?.trim() || null,
         hasSecret: truthy(s.moyasar?.secretKeyRef),
         secretMasked: maskStoredSecret(s.moyasar?.secretKeyRef),
+        enabled: s.moyasar?.enabled !== false,
       },
       tamara: {
         hasMerchantToken: truthy(s.tamara?.merchantToken),
         merchantTokenMasked: maskStoredSecret(s.tamara?.merchantToken),
         hasSecret: truthy(s.tamara?.secretKeyRef),
         secretMasked: maskStoredSecret(s.tamara?.secretKeyRef),
+        enabled: s.tamara?.enabled !== false,
       },
       tabby: {
         publicKey: s.tabby?.publicKey?.trim() || null,
         hasSecret: truthy(s.tabby?.secretKeyRef),
         secretMasked: maskStoredSecret(s.tabby?.secretKeyRef),
+        enabled: s.tabby?.enabled !== false,
       },
       bankTransfer: {
         bankNameEn: bt.bankNameEn ?? bt.bankName ?? '',
@@ -146,6 +161,7 @@ export class FinanceSettingsController {
         swiftCode: bt.swiftCode ?? '',
         instructionsEn: bt.instructionsEn ?? '',
         instructionsAr: bt.instructionsAr ?? '',
+        enabled: (s.bankTransfer as { enabled?: boolean })?.enabled !== false,
       },
       hasWebhookSecret: truthy(s.webhookSecretRef),
       invoiceFooterEn: s.invoiceFooterEn ?? '',

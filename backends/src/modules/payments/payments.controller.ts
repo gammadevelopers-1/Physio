@@ -131,6 +131,22 @@ export class PaymentsController {
     return this.gatewayFactory.healthCheckAll();
   }
 
+  /**
+   * Which gateways are currently visible on checkout — reflects the admin
+   * enable/disable toggles under Settings → Payments. Missing key defaults
+   * to true so a fresh tenant sees all four options.
+   *
+   * Public: guests browse the cart + course-detail page (which mount the
+   * BNPL widgets) before ever authenticating. The payload is four
+   * booleans, no secrets. Backend still enforces the enable state on
+   * /initiate + /submit-draft, so publishing this doesn't unlock anything.
+   */
+  @Get('gateways/visible')
+  @Public()
+  async getVisibleGateways() {
+    return this.paymentsService.getVisibleGateways();
+  }
+
   @Post('dev/mock-state')
   @Public()
   async setMockState(

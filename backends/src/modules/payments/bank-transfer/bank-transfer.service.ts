@@ -35,6 +35,7 @@ import { PaymentsService } from '../payments.service';
 import { XapiService } from '../../xapi/xapi.service';
 import { EnrollmentsService } from '../../enrollments/enrollments.service';
 import { PaymentAdminNotifierService } from '../services/payment-admin-notifier.service';
+import { GatewayCredentialsService } from '../gateways/gateway-credentials.service';
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -82,6 +83,7 @@ export class BankTransferService {
     private readonly xapiService: XapiService,
     private readonly enrollmentsService: EnrollmentsService,
     private readonly paymentAdminNotifier: PaymentAdminNotifierService,
+    private readonly gatewayCredentials: GatewayCredentialsService,
   ) {}
 
   /**
@@ -358,6 +360,15 @@ export class BankTransferService {
     dto: SubmitDraftDto,
     ipAddress?: string,
   ): Promise<{ paymentId: string; receiptId: string; paymentStatus: string }> {
+    // Bank transfer doesn't go through /payments/initiate, so gate it here.
+    // Reject before we upload the file to GCS or open a transaction. Doesn't
+    // affect in-flight approvals — those live on payment rows already.
+    if (!this.gatewayCredentials.isEnabled('bank_transfer')) {
+      throw new BadRequestException(
+        'Bank transfer is currently unavailable. Please choose another payment method.',
+      );
+    }
+
     if (!file?.buffer) {
       throw new BadRequestException('Receipt file is required');
     }

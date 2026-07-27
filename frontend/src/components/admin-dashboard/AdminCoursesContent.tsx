@@ -786,10 +786,9 @@ const AdminCoursesContent = () => {
               <Archive className="w-4 h-4" />
               {t("coursesPage.actions.archive")}
             </button>
-            <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
-              <Trash2 className="w-4 h-4" />
-              {t("coursesPage.actions.delete")}
-            </button>
+            {/* Delete intentionally omitted for completed courses — students
+                earned CME / certificates; the record must be preserved. Use
+                Archive to remove from active listings. */}
           </>
         )}
 

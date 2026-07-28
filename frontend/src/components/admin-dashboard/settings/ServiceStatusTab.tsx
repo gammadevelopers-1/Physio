@@ -783,7 +783,7 @@ function CreateIncidentModal({
             email + in-app fan-out. Roles auto-suggest from the
             component picks above until the admin overrides. */}
         <div className="border-t border-[var(--color-border)] pt-3 space-y-3">
-          <Field label="Audience">
+          <Field label={t("incidents.fields.audience")}>
             <Select
               size="sm"
               value={audience}
@@ -791,11 +791,11 @@ function CreateIncidentModal({
               options={[
                 {
                   value: "internal",
-                  label: "Internal only (ops / dev)",
+                  label: t("incidents.audienceOptions.internal"),
                 },
                 {
                   value: "end_users",
-                  label: "End users (banner + email + in-app)",
+                  label: t("incidents.audienceOptions.endUsers"),
                 },
               ]}
             />

@@ -3794,6 +3794,8 @@
       "deliveryType": "Delivery Type",
       "deliverySelfPaced": "Self-paced",
       "deliveryWebinar": "Webinar",
+      "deliveryOnsite": "On-site",
+      "deliveryBlended": "Blended",
       "deliveryWebinarHint": "Webinar courses earn the certificate through attendance only — trainees must attend at least 75% of the webinar(s). Modules and assessments may be added as supplementary content but do not affect eligibility.",
       "shareRecordingLabel": "Share webinar recording with enrolled students",
       "shareRecordingDesc": "When enabled, the webinar recording is surfaced in students' dashboards after Zoom finishes processing it (typically 5–60 minutes after the event ends).",
@@ -8559,7 +8561,12 @@
             "initialStatus": "Initial status",
             "status": "Status",
             "messageEn": "Message (English)",
-            "messageAr": "Message (Arabic)"
+            "messageAr": "Message (Arabic)",
+            "audience": "Audience"
+          },
+          "audienceOptions": {
+            "internal": "Internal only (ops / dev)",
+            "endUsers": "End users (banner + email + in-app)"
           },
           "errors": {
             "required": "Title and English message are required."
@@ -15614,5 +15621,12 @@
     "tag": "Promotion",
     "prev": "Previous promotion",
     "next": "Next promotion"
+  },
+  "exportButton": {
+    "trigger": "Export",
+    "ariaLabel": "Export options",
+    "csv": "CSV",
+    "pdf": "PDF",
+    "excel": "Excel"
   }
 }

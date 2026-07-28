@@ -475,6 +475,7 @@ interface AttendanceEntry {
 
 const SessionsContent = () => {
   const t = useTranslations("courseManagerDashboard");
+  const tExport = useTranslations("exportButton");
   const locale = useLocale();
   const isRTL = locale === "ar";
   // Global preference still drives the list-view date formatting. The
@@ -1731,7 +1732,7 @@ const SessionsContent = () => {
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors whitespace-nowrap"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  Export
+                  {tExport("trigger")}
                 </button>
               </div>
             )}

@@ -108,8 +108,8 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             className="w-full max-w-xs"
             options={[
               { value: "zoom", label: "Zoom" },
-              { value: "onsite", label: "On-site" },
-              { value: "blended", label: "Blended" },
+              { value: "onsite", label: t("deliveryOnsite") },
+              { value: "blended", label: t("deliveryBlended") },
               { value: "self-paced", label: t("deliverySelfPaced") },
               { value: "webinar", label: t("deliveryWebinar") },
             ]}

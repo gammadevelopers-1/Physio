@@ -1050,8 +1050,8 @@ const AssessmentsContent = () => {
                               options={[
                                 { value: "all", label: t("assessmentsPage.filters.allStatus") },
                                 { value: "draft", label: t("assessmentsPage.filters.draft") },
-                                { value: "published", label: "Published" },
-                                { value: "closed", label: "Closed" },
+                                { value: "published", label: t("assessmentsPage.status.published") },
+                                { value: "closed", label: t("assessmentsPage.status.closed") },
                               ]}
                               className="w-40"
                               size="sm"

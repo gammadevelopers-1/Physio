@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Download, Loader2 } from "lucide-react";
 import { getAccessToken, getDeviceId } from "@/lib/api";
 
@@ -12,7 +13,9 @@ interface ExportButtonProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
-const ExportButton = ({ tableType, filters, label = "Export" }: ExportButtonProps) => {
+const ExportButton = ({ tableType, filters, label }: ExportButtonProps) => {
+  const t = useTranslations("exportButton");
+  const triggerLabel = label ?? t("trigger");
   const [exporting, setExporting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -97,7 +100,7 @@ const ExportButton = ({ tableType, filters, label = "Export" }: ExportButtonProp
         onClick={() => setIsOpen(!isOpen)}
         disabled={exporting}
         className="inline-flex items-center gap-2 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] transition-colors disabled:opacity-50"
-        aria-label="Export options"
+        aria-label={t("ariaLabel")}
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
@@ -106,7 +109,7 @@ const ExportButton = ({ tableType, filters, label = "Export" }: ExportButtonProp
         ) : (
           <Download className="w-4 h-4" />
         )}
-        {label}
+        {triggerLabel}
       </button>
       {isOpen && (
         <div className="absolute right-0 top-full mt-1 bg-white rounded-lg border border-[var(--color-border)] shadow-lg py-1 z-10 min-w-[120px]" role="menu">
@@ -115,21 +118,21 @@ const ExportButton = ({ tableType, filters, label = "Export" }: ExportButtonProp
             className="w-full px-4 py-2 text-left text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
             role="menuitem"
           >
-            CSV
+            {t("csv")}
           </button>
           <button
             onClick={() => handleExport("pdf")}
             className="w-full px-4 py-2 text-left text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
             role="menuitem"
           >
-            PDF
+            {t("pdf")}
           </button>
           <button
             onClick={() => handleExport("xlsx")}
             className="w-full px-4 py-2 text-left text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
             role="menuitem"
           >
-            Excel
+            {t("excel")}
           </button>
         </div>
       )}

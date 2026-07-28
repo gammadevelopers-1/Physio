@@ -212,7 +212,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                   role="menuitem"
                 >
                   <User className="w-4 h-4" />
-                  Dashboard
+                  {tDashboard("sidebar.dashboard")}
                 </Link>
                 <Link
                   href={`/${locale}/dashboard/student/settings`}
@@ -221,13 +221,13 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                   role="menuitem"
                 >
                   <Settings className="w-4 h-4" />
-                  Settings
+                  {tDashboard("sidebar.settings")}
                 </Link>
                 <RoleSwitcherDropdownItems onSwitch={() => setIsUserMenuOpen(false)} />
                 <div className="border-t border-[var(--outline-subtle)] my-1" />
                 <button onClick={logout} role="menuitem" className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
                   <LogOut className="w-4 h-4" />
-                  Logout
+                  {tDashboard("sidebar.logout")}
                 </button>
               </div>
             )}

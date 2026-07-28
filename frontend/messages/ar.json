@@ -2489,6 +2489,7 @@
       },
       "drawer": {
         "title": "تفاصيل الدفعة",
+        "close": "إغلاق",
         "paymentMethod": "طريقة الدفع",
         "gateway": "البوابة",
         "transactionId": "رقم العملية",
@@ -2501,7 +2502,22 @@
         "multiCourseSummary": "{count} دورات",
         "lineItemsTitle": "الدورات في هذه الدفعة",
         "lineRefunded": "تم استرداده",
-        "lineRefundInProgress": "طلب استرداد"
+        "lineRefundInProgress": "طلب استرداد",
+        "refundBlockedReason": {
+          "bank_transfer_under_review": "لا يمكن الاسترداد أثناء مراجعة التحويل البنكي.",
+          "not_paid": "لا يمكن طلب استرداد إلا للمدفوعات المكتملة.",
+          "already_refunded": "تم استرداد هذه الدفعة بالكامل بالفعل.",
+          "refund_in_progress": "لديك بالفعل طلب استرداد قيد المعالجة لهذه الدفعة.",
+          "refund_rejected": "تم رفض طلب استرداد سابق لهذه الدفعة. يرجى التواصل مع الدعم إذا كنت تعتقد أن هذا القرار يستحق إعادة النظر."
+        },
+        "enrollmentStatus": {
+          "pending_payment": "في انتظار الدفع",
+          "active": "نشطة",
+          "completed": "مكتملة",
+          "dropped": "منسحبة",
+          "suspended": "موقوفة",
+          "expired": "منتهية"
+        }
       },
       "policy": {
         "title": "سياسة الاسترداد باختصار",

@@ -145,7 +145,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose, policy: _policy }: Props) => 
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-md hover:bg-[#F3F4F6]"
-            aria-label="Close"
+            aria-label={t("drawer.close")}
           >
             <X className="w-4 h-4 text-[#6B7280]" />
           </button>
@@ -321,8 +321,8 @@ function DrawerBody({
                         {t("drawer.lineRefundInProgress")}
                       </p>
                     ) : li.enrollmentStatus ? (
-                      <p className="text-[11px] text-[#6B7280] mt-0.5 capitalize">
-                        {li.enrollmentStatus.replace(/_/g, " ")}
+                      <p className="text-[11px] text-[#6B7280] mt-0.5">
+                        {enrollmentStatusLabel(li.enrollmentStatus, t)}
                       </p>
                     ) : null}
                   </div>
@@ -477,7 +477,7 @@ function DrawerBody({
           <p className="text-xs text-[#6B7280] flex items-start gap-1.5">
             <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
             <span>
-              {refundability.reason ?? t("drawer.refundIneligible")}
+              {refundBlockedLabel(refundability.blockedBy, refundability.reason, t)}
             </span>
           </p>
         )}
@@ -554,4 +554,49 @@ function knownGatewayLabel(
 ): string {
   const known = new Set(["moyasar", "tamara", "tabby", "bank_transfer", "mock"]);
   return known.has(raw) ? t(`gateway.${raw}`) : raw;
+}
+
+// Backend returns `refundability.reason` as English fallback text alongside
+// a machine-friendly `blockedBy` code. Prefer the localized string keyed on
+// that code so Arabic users see Arabic copy; fall back to the backend's
+// English `reason` for unknown codes, then to the generic ineligibility
+// message. Keep in sync with student-finance.controller.ts refundBlockedBy.
+const KNOWN_REFUND_BLOCKED_CODES = new Set([
+  "bank_transfer_under_review",
+  "not_paid",
+  "already_refunded",
+  "refund_in_progress",
+  "refund_rejected",
+]);
+function refundBlockedLabel(
+  blockedBy: string | null,
+  reason: string | null,
+  t: (k: string) => string,
+): string {
+  if (blockedBy && KNOWN_REFUND_BLOCKED_CODES.has(blockedBy)) {
+    return t(`drawer.refundBlockedReason.${blockedBy}`);
+  }
+  return reason ?? t("drawer.refundIneligible");
+}
+
+// Same defensive pattern for enrollment status. Unknown statuses fall back
+// to a humanized capitalisation of the raw string (existing behavior) so
+// a schema change doesn't render an empty pill.
+const KNOWN_ENROLLMENT_STATUSES = new Set([
+  "pending_payment",
+  "active",
+  "completed",
+  "dropped",
+  "suspended",
+  "expired",
+]);
+function enrollmentStatusLabel(
+  raw: string,
+  t: (k: string) => string,
+): string {
+  if (KNOWN_ENROLLMENT_STATUSES.has(raw)) {
+    return t(`drawer.enrollmentStatus.${raw}`);
+  }
+  const humanized = raw.replace(/_/g, " ");
+  return humanized.charAt(0).toUpperCase() + humanized.slice(1);
 }

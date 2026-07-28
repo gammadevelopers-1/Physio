@@ -2489,6 +2489,7 @@
       },
       "drawer": {
         "title": "Payment details",
+        "close": "Close",
         "paymentMethod": "Payment method",
         "gateway": "Gateway",
         "transactionId": "Transaction ID",
@@ -2501,7 +2502,22 @@
         "multiCourseSummary": "{count} courses",
         "lineItemsTitle": "Courses in this payment",
         "lineRefunded": "Refunded",
-        "lineRefundInProgress": "Refund requested"
+        "lineRefundInProgress": "Refund requested",
+        "refundBlockedReason": {
+          "bank_transfer_under_review": "Refund unavailable while bank transfer is under review.",
+          "not_paid": "Only paid payments can be refunded.",
+          "already_refunded": "This payment has already been fully refunded.",
+          "refund_in_progress": "You already have a refund request in progress for this payment.",
+          "refund_rejected": "A previous refund request for this payment was rejected. Please contact support if you believe this decision should be reconsidered."
+        },
+        "enrollmentStatus": {
+          "pending_payment": "Pending payment",
+          "active": "Active",
+          "completed": "Completed",
+          "dropped": "Dropped",
+          "suspended": "Suspended",
+          "expired": "Expired"
+        }
       },
       "policy": {
         "title": "Refund policy at a glance",

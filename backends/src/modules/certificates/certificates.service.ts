@@ -1116,24 +1116,49 @@ export class CertificatesService {
       errorCorrectionLevel: 'M',
     });
 
-    // Fetch logo from frontend
+    // Fetch the certificate assets — primary logo (JPEG/PNG) + secondary
+    // Saudi Commission accreditation mark (SVG). Both come from the
+    // frontend static bucket. Cached per process. Missing assets are
+    // non-fatal; the render skips them.
+    const httpProto = frontendUrl.startsWith('https://')
+      ? require('https')
+      : require('http');
+    const tryFetch = (url: string): Promise<Buffer> =>
+      new Promise((res, rej) => {
+        httpProto.get(url, (resp: any) => {
+          if (resp.statusCode !== 200) { rej(new Error(`Asset HTTP ${resp.statusCode}`)); return; }
+          const chunks: Buffer[] = [];
+          resp.on('data', (c: Buffer) => chunks.push(c));
+          resp.on('end', () => res(Buffer.concat(chunks)));
+          resp.on('error', rej);
+        }).on('error', rej);
+      });
+
     let logoBuffer: Buffer | null = null;
-    if (!(this as any)._logoCacheBuffer) {
+    if (!(this as any)._certLogoCacheBuffer) {
       try {
-        const https = require('https');
-        logoBuffer = await new Promise<Buffer>((res, rej) => {
-          https.get(`${frontendUrl}/images/logo.png`, (resp: any) => {
-            if (resp.statusCode !== 200) { rej(new Error(`Logo HTTP ${resp.statusCode}`)); return; }
-            const chunks: Buffer[] = [];
-            resp.on('data', (c: Buffer) => chunks.push(c));
-            resp.on('end', () => res(Buffer.concat(chunks)));
-            resp.on('error', rej);
-          }).on('error', rej);
-        });
-        (this as any)._logoCacheBuffer = logoBuffer;
-      } catch { /* logo is optional */ }
+        logoBuffer = await tryFetch(`${frontendUrl}/logo-certificate.jpeg`);
+      } catch {
+        try {
+          // Fallback keeps the render working across environments where
+          // the cert-branded asset isn't deployed yet.
+          logoBuffer = await tryFetch(`${frontendUrl}/images/logo.png`);
+        } catch { /* logo is optional */ }
+      }
+      if (logoBuffer) (this as any)._certLogoCacheBuffer = logoBuffer;
     } else {
-      logoBuffer = (this as any)._logoCacheBuffer;
+      logoBuffer = (this as any)._certLogoCacheBuffer;
+    }
+
+    let secondaryLogoSvg: string | null = null;
+    if (!(this as any)._secondaryLogoCacheSvg) {
+      try {
+        const buf = await tryFetch(`${frontendUrl}/saudi-health.svg`);
+        secondaryLogoSvg = buf.toString('utf8');
+        (this as any)._secondaryLogoCacheSvg = secondaryLogoSvg;
+      } catch { /* secondary logo is optional */ }
+    } else {
+      secondaryLogoSvg = (this as any)._secondaryLogoCacheSvg;
     }
 
     // Load Arabic font when any rendered string needs Arabic glyphs — name,
@@ -1185,8 +1210,71 @@ export class CertificatesService {
       errorCorrectionLevel: 'M',
     });
 
-    // Build PDF with PDFKit
-    const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
+    const pdfBuffer = await this.renderCertificatePdfBuffer({
+      displayName,
+      courseTitle,
+      cmeHours,
+      regNumber: decryptPII(student?.scfhsNumber) || certificateId,
+      dateFormatted,
+      accreditationDate: fmtPlatformDate(issuedDate, platformLocale),
+      courseAccreditationNumber: course?.accreditationNumber ?? null,
+      logoBuffer,
+      secondaryLogoSvg,
+      qrBuffer,
+      arabicFontBuf,
+      lang,
+      L,
+      hasArabicChars,
+    });
+
+    return pdfBuffer;
+  }
+
+  /**
+   * PURE PDF render — takes all data as inputs, no DB / no storage.
+   * Kept public-ish (private, but has a stable signature) so the sample
+   * generator script in scripts/ can call the exact same code path we
+   * ship to production. Any layout change here shows up in both the
+   * approval sample and the real download.
+   */
+  private async renderCertificatePdfBuffer(input: {
+    displayName: string;
+    courseTitle: string;
+    cmeHours: number;
+    regNumber: string;
+    dateFormatted: string;
+    accreditationDate: string;
+    courseAccreditationNumber: string | null;
+    logoBuffer: Buffer | null;
+    /** Second brand logo alongside the primary one (e.g. Saudi Commission
+     *  accreditation mark). SVG string — pdfkit needs svg-to-pdfkit to
+     *  render vector content. Optional; skipped when absent. */
+    secondaryLogoSvg: string | null;
+    qrBuffer: Buffer;
+    arabicFontBuf: Buffer | null;
+    lang: 'en' | 'ar';
+    L: {
+      title: string;
+      subtitle: string;
+      awardedTo: string;
+      forAttending: string;
+      accreditedBy: string;
+      numberDate: (n: string, d: string) => string;
+      courseAccreditation: (n: string) => string;
+      cmeHours: (h: number) => string;
+      cmeBadge: string;
+      scanToVerify: string;
+    };
+    hasArabicChars: (s: string | null | undefined) => boolean;
+  }): Promise<Buffer> {
+    const {
+      displayName, courseTitle, cmeHours, regNumber, dateFormatted,
+      accreditationDate, courseAccreditationNumber,
+      logoBuffer, secondaryLogoSvg, qrBuffer, arabicFontBuf, L, hasArabicChars,
+    } = input;
+    const SVGtoPDF = require('svg-to-pdfkit');
+
+    return new Promise<Buffer>((resolve, reject) => {
       try {
         const chunks: Buffer[] = [];
         const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 0 });
@@ -1195,132 +1283,294 @@ export class CertificatesService {
         doc.on('error', reject);
 
         const W = doc.page.width, H = doc.page.height, cx = W / 2;
-        const navy = '#002D87', gold = '#D4A520', gray = '#4B5563', lightGray = '#9CA3AF', dark = '#1F2937';
+        // Palette matches the reference sample — deeper navy, muted gold,
+        // pale-blue pill fills. Kept centralized so a future Strapi color
+        // pipeline can override in one place.
+        const navy = '#0B2A5B';
+        const navyDeep = '#001B4E';
+        const gold = '#C69214';
+        const lightBlue = '#BFDBFE';
+        const gray = '#4B5563';
+        const lightGray = '#9CA3AF';
+        const dark = '#1F2937';
 
-        // Background + borders
+        // Background
         doc.rect(0, 0, W, H).fill('#FFFFFF');
-        doc.rect(24, 24, W - 48, H - 48).lineWidth(2.5).stroke(navy);
-        doc.rect(30, 30, W - 60, H - 60).lineWidth(0.8).stroke(gold);
+        // Top decorative strip — solid navy band with a thin gold accent
+        // underneath. Mirrors the sample's blue-on-blue header treatment.
+        doc.rect(0, 0, W, 14).fill(navy);
+        doc.rect(0, 14, W, 3).fill(gold);
+        // Bottom strip — reciprocates the header for a framed feel.
+        doc.rect(0, H - 10, W, 10).fill(navy);
 
-        // Watermark
+        // Watermark — faint centered logo (original design). Falls back
+        // to a text watermark when the logo asset is missing so the
+        // sheet never renders bare.
         doc.save();
         doc.opacity(0.05);
-        if (logoBuffer) { doc.image(logoBuffer, cx - 160, H / 2 - 110, { width: 320 }); }
-        else { doc.font('Helvetica-Bold').fontSize(100).fillColor(navy).text('PHYSIOGUIDANCE', 0, H / 2 - 50, { align: 'center' }); }
+        if (logoBuffer) {
+          const wmW = 320;
+          doc.image(logoBuffer, cx - wmW / 2, H / 2 - 110, { width: wmW });
+        } else {
+          doc.font('Helvetica-Bold').fontSize(90).fillColor(navy)
+            .text('CERTIFICATE', 0, H / 2 - 60, { align: 'center', width: W });
+        }
         doc.restore();
 
-        // Logo top-left
-        if (logoBuffer) { doc.image(logoBuffer, 45, 40, { height: 45 }); }
-        else { doc.font('Helvetica-Bold').fontSize(14).fillColor(navy).text('PHYSIOGUIDANCE', 50, 48); }
+        // RTL layout mirroring — in AR the reading direction flips, so
+        // the brand-logo pair moves to the RIGHT edge and the CME badge
+        // moves to the LEFT edge. QR at the bottom likewise mirrors from
+        // bottom-right to bottom-left. The center block stays centered
+        // (align:'center' handles that regardless).
+        const rtl = input.lang === 'ar';
+
+        // Logo pair — actual rendered widths matter here, not slot
+        // estimates. Primary logo is square (1024×1024 source) so at
+        // height 55 it renders 55 wide. Secondary is the SCFHS SVG
+        // (195×80 viewBox); we scale it to the same height and derive
+        // width from the aspect ratio so preserveAspectRatio doesn't
+        // leave dead padding inside the drawn box.
+        const logoY = 44;
+        const logoH = 55;
+        const primaryW = 55;                              // square
+        const secondaryLogoW = Math.round(logoH * 195 / 80); // ~134
+        const logoGap = 14;
+        const pairW = primaryW + logoGap + secondaryLogoW;
+        // LTR: pair sits at the left edge. RTL: mirrored to the right,
+        // with the primary logo staying on the "reading-first" side.
+        const pairStartX = rtl ? W - 40 - pairW : 40;
+        const primaryX = rtl
+          ? pairStartX + secondaryLogoW + logoGap
+          : pairStartX;
+        const secondaryX = rtl
+          ? pairStartX
+          : pairStartX + primaryW + logoGap;
+        if (logoBuffer) {
+          doc.image(logoBuffer, primaryX, logoY, { height: logoH });
+        }
+        if (secondaryLogoSvg) {
+          try {
+            // Fit the SVG to its natural aspect ratio inside the box —
+            // no leftover padding at the sides since box matches source.
+            SVGtoPDF(doc, secondaryLogoSvg, secondaryX, logoY, {
+              width: secondaryLogoW,
+              height: logoH,
+              preserveAspectRatio: 'xMidYMid meet',
+            });
+          } catch {
+            // Bad SVG → skip silently rather than break the whole cert.
+          }
+        }
 
         // Register Arabic font once for the whole document if needed.
         if (arabicFontBuf) {
           doc.registerFont('Amiri-Bold', arabicFontBuf);
         }
-        // Font selectors — Amiri covers Arabic script only. For Latin text
-        // in an AR document we still fall back to Helvetica; for Arabic text
-        // in an EN document we use Amiri where the glyphs live.
         const arFontAvailable = !!arabicFontBuf;
+        // Amiri covers Arabic only; Helvetica covers Latin. Route per-string
+        // so an AR document with a Latin fallback (or vice versa) never
+        // renders .notdef tofu boxes.
         const fontForText = (text: string, bold = true): string => {
-          if (arFontAvailable && hasArabicChars(text))
-            return bold ? 'Amiri-Bold' : 'Amiri-Bold';
+          if (arFontAvailable && hasArabicChars(text)) return 'Amiri-Bold';
           return bold ? 'Helvetica-Bold' : 'Helvetica';
         };
-        // rtla feature is per-string, not per-document — enable only when
-        // the specific string contains Arabic to preserve English layout.
-        // (Cast keeps pdfkit's stricter OpenTypeFeatures union happy.)
         const featuresFor = (text: string): any =>
           hasArabicChars(text) ? ['rtla'] : undefined;
 
-        // CME badge top-right
-        if (cmeHours > 0) {
-          const bx = W - 130, by = 42, br = 32;
-          doc.circle(bx + br, by + br, br).lineWidth(2.5).stroke(navy);
-          doc.circle(bx + br, by + br, br - 4).lineWidth(0.8).stroke(gold);
-          doc.font('Helvetica-Bold').fontSize(24).fillColor(navy).text(String(cmeHours), bx, by + 12, { width: br * 2, align: 'center' });
-          doc.font(fontForText(L.cmeBadge, false)).fontSize(6.5).fillColor(gray).text(L.cmeBadge, bx, by + 38, { width: br * 2, align: 'center', features: featuresFor(L.cmeBadge) });
+        // Bidi shim — pdfkit's rtla feature reverses the entire string
+        // character-by-character, including Latin digit runs embedded in
+        // Arabic sentences. That's why "23456" in "رقم الاعتماد 23456"
+        // would render as "65432". Pre-reversing each Latin run cancels
+        // out pdfkit's naive reversal so digits + English fragments read
+        // in their natural left-to-right order within the RTL flow.
+        //
+        // No-op on pure Arabic or pure Latin strings — only mixed
+        // strings need the treatment. We apply it right before rendering
+        // instead of at label-definition time so the labels stay readable
+        // in source.
+        const preserveLatinRuns = (s: string): string => {
+          if (!hasArabicChars(s)) return s;
+          return s.replace(/[A-Za-z0-9\-/.:_@#()]+/g, (run) =>
+            run.split('').reverse().join(''),
+          );
+        };
+
+        // Accreditation seal — two concentric rings with "Accredited /
+        // N CME Hours" text stacked in the center. Clean, no background
+        // artwork. Sits opposite the logo pair (top-RIGHT in LTR,
+        // top-LEFT in RTL).
+        {
+          const cx0 = rtl ? 72 : W - 72;
+          const cy0 = 78;
+          const r = 52;
+          // Outer ring — slightly thicker to give the seal weight.
+          doc.circle(cx0, cy0, r).lineWidth(1.6).stroke(navy);
+          // Inner ring — thin accent, matches the reference sample's
+          // double-line rim.
+          doc.circle(cx0, cy0, r - 5).lineWidth(0.5).stroke(navy);
+
+          // Center stack — "Accredited" larger + "N CME Hours" below.
+          const lineTop = 'Accredited';
+          const lineBottom = cmeHours > 0
+            ? `${cmeHours} CME Hours`
+            : 'CME Hours';
+          const topSize = 14;
+          const bottomSize = 10;
+          const gapY = 3;
+          const blockH = topSize + gapY + bottomSize;
+          const topY = cy0 - blockH / 2;
+          const bottomY = topY + topSize + gapY;
+          doc.font('Helvetica-Bold').fontSize(topSize).fillColor(navy)
+            .text(lineTop, cx0 - r, topY, {
+              width: r * 2,
+              align: 'center',
+              lineBreak: false,
+            });
+          doc.font('Helvetica-Bold').fontSize(bottomSize).fillColor(navy)
+            .text(lineBottom, cx0 - r, bottomY, {
+              width: r * 2,
+              align: 'center',
+              lineBreak: false,
+            });
         }
 
-        // Title
-        let y = 105;
-        doc.font(fontForText(L.title)).fontSize(38).fillColor(navy).text(L.title, 0, y, { align: 'center', features: featuresFor(L.title) });
-        y += 40;
-        doc.font(fontForText(L.subtitle)).fontSize(20).fillColor(gold).text(L.subtitle, 0, y, { align: 'center', features: featuresFor(L.subtitle) });
+        // ── CENTERED MAIN SECTION ──────────────────────────────────
+        // Title. characterSpacing MUST stay 0 for Arabic — inserting
+        // extra letter spacing breaks the cursive joining rules
+        // (each Arabic glyph's shape depends on its neighbours), so
+        // letters render as isolated forms and look "cut apart" like
+        // the reference bug report showed.
+        let y = 118;
+        const titleIsArabic = hasArabicChars(L.title);
+        doc.font(fontForText(L.title)).fontSize(44).fillColor(navy)
+          .text(L.title, 0, y, {
+            align: 'center',
+            width: W,
+            features: featuresFor(L.title),
+            characterSpacing: titleIsArabic ? 0 : 3,
+          });
+        y += 50;
+        const subtitleIsArabic = hasArabicChars(L.subtitle);
+        doc.font(fontForText(L.subtitle)).fontSize(22).fillColor(navy)
+          .text(L.subtitle, 0, y, {
+            align: 'center',
+            width: W,
+            features: featuresFor(L.subtitle),
+            characterSpacing: subtitleIsArabic ? 0 : 4,
+          });
 
-        // Pills + name
-        y += 38;
-        doc.roundedRect(cx - 120, y, 240, 28, 14).fill(gold);
-        doc.font(fontForText(L.awardedTo)).fontSize(11).fillColor('#FFFFFF').text(L.awardedTo, cx - 120, y + 8, { width: 240, align: 'center', features: featuresFor(L.awardedTo) });
+        // Helper — draws a rounded pill sized tightly to the text it
+        // contains (plus a small horizontal padding). Previous version
+        // used fixed widths (260/180/220) that left too much dead space
+        // around short labels. Text is centered inside the pill and the
+        // whole pill is centered on the page.
+        const drawFittedPill = (
+          text: string,
+          yPos: number,
+          fill: string,
+          textColor: string,
+          fontSize = 11,
+          padX = 22,
+          height = 26,
+        ) => {
+          doc.font(fontForText(text)).fontSize(fontSize);
+          const textW = doc.widthOfString(text);
+          const pillW = Math.ceil(textW) + padX * 2;
+          const pillX = Math.round(cx - pillW / 2);
+          doc.roundedRect(pillX, yPos, pillW, height, height / 2).fill(fill);
+          doc.fillColor(textColor).text(text, pillX, yPos + (height - fontSize) / 2 - 1, {
+            width: pillW,
+            align: 'center',
+            features: featuresFor(text),
+            lineBreak: false,
+          });
+        };
+
+        // PROUDLY AWARDED TO — pale-blue pill with navy text (matches
+        // the reference sample where light pills accent the flow rather
+        // than heavier gold-fill pills).
+        y += 36;
+        drawFittedPill(L.awardedTo, y, lightBlue, navy);
 
         // Student name
-        y += 40;
+        y += 38;
         doc.font(fontForText(displayName)).fontSize(30).fillColor(dark)
-          .text(displayName, 0, y, { align: 'center', features: featuresFor(displayName) });
+          .text(displayName, 0, y, { align: 'center', width: W, features: featuresFor(displayName) });
 
-        // FOR ATTENDING pill
-        y += 44;
-        doc.roundedRect(cx - 90, y, 180, 28, 14).fill(navy);
-        doc.font(fontForText(L.forAttending)).fontSize(11).fillColor('#FFFFFF').text(L.forAttending, cx - 90, y + 8, { width: 180, align: 'center', features: featuresFor(L.forAttending) });
+        // Thin gold hairline divider — the sample's signature separator
+        // between the name block and the course block.
+        y += 42;
+        doc.moveTo(cx - 210, y).lineTo(cx + 210, y).lineWidth(0.8).stroke(gold);
+
+        // FOR ATTENDING — same pale-blue treatment
+        y += 14;
+        drawFittedPill(L.forAttending, y, lightBlue, navy);
 
         // Course title — MEASURE the actual rendered height before placing
         // the date pill so a two-line title cannot overlap. Also scale the
-        // font down when the title is very long so we don't spill more than
-        // two lines into the accreditation block.
-        y += 38;
+        // font down when the title is very long.
+        y += 36;
         const titleWidth = W - 160;
-        const shrinkTitle = courseTitle.length > 80 ? 16 : courseTitle.length > 50 ? 18 : 20;
-        const titleFont = fontForText(courseTitle);
-        doc.font(titleFont).fontSize(shrinkTitle);
+        const shrinkTitle = courseTitle.length > 80 ? 16 : courseTitle.length > 50 ? 18 : 22;
+        doc.font(fontForText(courseTitle)).fontSize(shrinkTitle);
         const titleHeight = doc.heightOfString(courseTitle, {
           width: titleWidth,
           align: 'center',
           features: featuresFor(courseTitle),
         });
-        doc.fillColor(dark).text(courseTitle, 80, y, {
+        doc.fillColor(navy).text(courseTitle, 80, y, {
           align: 'center',
           width: titleWidth,
           features: featuresFor(courseTitle),
         });
-        // Advance y by the actual height PLUS a small padding — never by a
-        // fixed 36. This is what stops the long-title overlap: the date pill
-        // now sits below whatever height the title actually consumed.
-        y += Math.max(titleHeight, 22) + 12;
+        y += Math.max(titleHeight, 24) + 10;
 
-        // Date pill
-        doc.roundedRect(cx - 120, y, 240, 28, 14).fill(gold);
-        doc.font('Helvetica-Bold').fontSize(12).fillColor('#FFFFFF').text(dateFormatted, cx - 120, y + 8, { width: 240, align: 'center' });
+        // Date pill — DARK navy fill (sample uses the deeper shade to
+        // anchor this pill visually vs the pale awarded-to/for-attending).
+        // Route through preserveLatinRuns for AR dates containing month
+        // names alongside Latin digits.
+        drawFittedPill(preserveLatinRuns(dateFormatted), y, navyDeep, '#FFFFFF');
 
-        // Accreditation
+        // Accreditation paragraph — mixed Arabic + Latin digits, so we
+        // route the visible string through preserveLatinRuns() to keep
+        // digit sequences right-side-up.
         y += 42;
-        doc.font(fontForText(L.accreditedBy, false)).fontSize(11).fillColor(gray).text(L.accreditedBy, 0, y, { align: 'center', features: featuresFor(L.accreditedBy) });
+        {
+          const s = preserveLatinRuns(L.accreditedBy);
+          doc.font(fontForText(L.accreditedBy, false)).fontSize(11).fillColor(gray)
+            .text(s, 0, y, { align: 'center', width: W, features: featuresFor(L.accreditedBy) });
+        }
         y += 16;
-        const regNumber = decryptPII(student?.scfhsNumber) || certificateId;
-        const numDateStr = L.numberDate(regNumber, fmtPlatformDate(issuedDate, platformLocale));
-        doc.font(fontForText(numDateStr, false)).fontSize(10).fillColor(gray).text(numDateStr, 0, y, { align: 'center', features: featuresFor(numDateStr) });
-        // Optional course-level accreditation number — only rendered when set.
-        // Distinct from the SCFHS practitioner number above; this is the
-        // accrediting body's registration ID for this specific course.
-        if (course?.accreditationNumber) {
+        {
+          const s = preserveLatinRuns(L.numberDate(regNumber, accreditationDate));
+          doc.font(fontForText(s, false)).fontSize(10).fillColor(gray)
+            .text(s, 0, y, { align: 'center', width: W, features: featuresFor(s) });
+        }
+        if (courseAccreditationNumber) {
           y += 16;
-          const courseAccStr = L.courseAccreditation(course.accreditationNumber);
-          doc.font(fontForText(courseAccStr)).fontSize(10).fillColor(navy)
-            .text(courseAccStr, 0, y, { align: 'center', features: featuresFor(courseAccStr) });
+          const s = preserveLatinRuns(L.courseAccreditation(courseAccreditationNumber));
+          doc.font(fontForText(s)).fontSize(10).fillColor(navy)
+            .text(s, 0, y, { align: 'center', width: W, features: featuresFor(s) });
         }
         if (cmeHours > 0) {
           y += 16;
-          const cmeStr = L.cmeHours(cmeHours);
-          doc.font(fontForText(cmeStr)).fontSize(11).fillColor(navy).text(cmeStr, 0, y, { align: 'center', features: featuresFor(cmeStr) });
+          const s = preserveLatinRuns(L.cmeHours(cmeHours));
+          doc.font(fontForText(s)).fontSize(11).fillColor(navy)
+            .text(s, 0, y, { align: 'center', width: W, features: featuresFor(s) });
         }
 
-        // QR code
-        doc.image(qrBuffer, W - 95, H - 105, { width: 55 });
-        doc.font(fontForText(L.scanToVerify, false)).fontSize(5).fillColor(lightGray).text(L.scanToVerify, W - 95, H - 105 + 57, { width: 55, align: 'center', features: featuresFor(L.scanToVerify) });
+        // QR code — bottom-right in LTR, bottom-left in RTL so it stays
+        // on the "closing" side of the reading direction (matches where
+        // the eye lands last on the sheet).
+        const qrX = rtl ? 40 : W - 95;
+        const qrCaptionX = rtl ? 35 : W - 100;
+        doc.image(qrBuffer, qrX, H - 100, { width: 55 });
+        doc.font(fontForText(L.scanToVerify, false)).fontSize(6).fillColor(lightGray)
+          .text(L.scanToVerify, qrCaptionX, H - 42, { width: 65, align: 'center', features: featuresFor(L.scanToVerify) });
 
         doc.end();
       } catch (err) { reject(err); }
     });
-
-    return pdfBuffer;
   }
 
   /**

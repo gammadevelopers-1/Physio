@@ -1556,13 +1556,18 @@ export class CoursesService {
         .orderBy(asc(sessions.scheduledAt));
     }
 
-    // Fetch modules for self-paced and blended courses
+    // Fetch modules for any delivery type that has them — self-paced / blended
+    // have always used them for the primary curriculum, but onsite / webinar /
+    // zoom courses also frequently upload supplementary modules (prep videos,
+    // slide decks, handouts) that the manager wants surfaced on the public
+    // detail page. The manager's per-course `showContents` toggle is the
+    // authoritative visibility switch; delivery type is not.
     let modulesList: Array<{
       id: string; title: string; titleAr: string | null;
       orderIndex: number; type: string; durationMinutes: number | null;
       materials?: Array<{ id: string; title: string; type: string; orderIndex: number }>;
     }> = [];
-    if ((data.deliveryType === 'self-paced' || data.deliveryType === 'blended') && data.showContents !== false) {
+    if (data.showContents !== false) {
       modulesList = await db
         .select({
           id: courseModules.id,

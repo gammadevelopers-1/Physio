@@ -2062,16 +2062,29 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    // Both managers (scoped to their own courses via the check above) and
-    // admins can delete DRAFT or CANCELLED courses. Amna's Phase B spec:
-    // cancel-then-delete is the only path for a course with enrolments;
-    // a fully-cancelled course has already been refunded and can safely
-    // be removed. Manager parity confirmed 2026-07-26 — managers now
-    // drive the same destructive flow on courses they own.
-    const deletableStatuses: string[] = [COURSE_STATUS.DRAFT, COURSE_STATUS.CANCELLED];
+    // Delete allow-list (Amna spec 2026-07 course-lifecycle rework):
+    //   - DRAFT      → never seen by students; safe to hard-hide
+    //   - CANCELLED  → cancel cascade already queued refunds + notified
+    //                  students; delete is a bookkeeping cleanup
+    //   - ENDED      → auto-cron transitioned active→ended after end date,
+    //                  no fanout fired yet; delete internally reuses the
+    //                  cancelCourse cascade (refunds queued, students
+    //                  notified, sessions torn down) then soft-deletes
+    //   - ARCHIVED   → post-completion admin cleanup; row hidden from
+    //                  admin/manager/instructor lists but student cert +
+    //                  CME lookups continue to resolve via the
+    //                  hide_from_admin_only flag
+    // Anything else (active, pending_review, completed) requires an
+    // intermediate transition first.
+    const deletableStatuses: string[] = [
+      COURSE_STATUS.DRAFT,
+      COURSE_STATUS.CANCELLED,
+      COURSE_STATUS.ENDED,
+      COURSE_STATUS.ARCHIVED,
+    ];
     if (!deletableStatuses.includes(existing.status)) {
       throw new BadRequestException(
-        'Only draft or cancelled courses can be deleted. Cancel the course first — this refunds every buyer, notifies students, and cleans up sessions — then delete becomes available.',
+        'Only draft, cancelled, ended, or archived courses can be deleted. For an active course, cancel it first (refunds every buyer). For a completed course, archive it first.',
       );
     }
 
@@ -2120,13 +2133,19 @@ export class CoursesService {
 
     // Phase E compliance gate. Once the course has produced NELC records
     // (issued certificates, completed enrollments, or awarded CME points),
-    // even a soft delete is unacceptable — the admin loses that course
-    // from every listing where compliance queries live. Archive keeps
-    // the row visible and searchable while marking it out-of-catalog.
+    // a full soft-delete is unacceptable — the admin loses that course
+    // from every listing where compliance queries live.
+    //
+    // EXCEPTION (Amna spec 2026-07 course-lifecycle rework): deleting
+    // an ARCHIVED course intentionally hides it from admin/manager/
+    // instructor listings but keeps student certificate + verification
+    // routes resolving via the hide_from_admin_only flag. That's why
+    // this gate now only applies to non-archived deletes.
     if (
-      impact.approvedCertificates > 0 ||
-      impact.completedEnrollments > 0 ||
-      impact.awardedPoints > 0
+      existing.status !== COURSE_STATUS.ARCHIVED &&
+      (impact.approvedCertificates > 0 ||
+        impact.completedEnrollments > 0 ||
+        impact.awardedPoints > 0)
     ) {
       const parts: string[] = [];
       if (impact.approvedCertificates > 0) {
@@ -2143,23 +2162,50 @@ export class CoursesService {
       );
     }
 
+    // ── ENDED delete path (Amna Rule 2) ────────────────────────────────
+    // Auto-cron flipped active→ended at the end date and NO compliance
+    // fanout ran. Deleting from here needs to notify students, drop
+    // enrolments, and queue pending refunds for every paid buyer —
+    // exactly what cancelCourse() does — plus revoke any stray cert
+    // requests as a safety net (there shouldn't be any yet, but guard).
+    // Reuse cancelCourse() rather than duplicate the plumbing.
+    if (existing.status === COURSE_STATUS.ENDED) {
+      const deleteReason =
+        reason && reason.trim().length > 0
+          ? `Course deleted after end date: ${reason.trim()}`
+          : 'Course deleted after end date by administrator';
+      await this.cancelCourse(
+        courseId,
+        { reason: deleteReason } as any,
+        user,
+        ip,
+      );
+      // cancelCourse has now: flipped status to cancelled, dropped
+      // enrolments, queued refund rows, notified students, cancelled
+      // upcoming sessions, audited to NELC. Soft-delete the row on top
+      // so it disappears from admin lists in the next step.
+    }
+
+    // ── Actual soft delete ─────────────────────────────────────────────
+    // ARCHIVED path sets hideFromAdminOnly=true so student cert routes
+    // still resolve. Every other path leaves it false (fully hidden).
+    const isArchivedDelete = existing.status === COURSE_STATUS.ARCHIVED;
     await db
       .update(courses)
       .set({
         deletedAt: new Date(),
         deletedBy: user.id,
+        hideFromAdminOnly: isArchivedDelete,
         updatedAt: new Date(),
       })
       .where(eq(courses.id, courseId));
 
-    // Cascade-cancel every upcoming session for this course. Each
-    // session gets its Zoom resource torn down, status flipped to
-    // cancelled, individual session audit entry, AND a notification
-    // to the enrolled students explaining why. Failures per-session
-    // are logged but do not roll back the course soft-delete — the
-    // course is gone from every UI surface either way; missed
-    // cancellations get re-tried by the session-reminder cron's
-    // `deletedAt IS NULL` filter as defense-in-depth.
+    // Cascade-cancel upcoming sessions. For ENDED-path deletes this was
+    // already done inside cancelCourse() above — calling again is a
+    // cheap no-op since sessionsService filters by upcoming-only status.
+    // For DRAFT / CANCELLED / ARCHIVED it does the actual work (draft
+    // won't have sessions; cancelled already cancelled them; archived
+    // shouldn't have future sessions either).
     const cancelReason =
       reason && reason.trim().length > 0
         ? `Course deleted: ${reason.trim()}`
@@ -2173,6 +2219,30 @@ export class CoursesService {
         );
         return { cancelled: 0, failed: impact.upcomingSessions };
       });
+
+    // NELC audit — separate event codes so the compliance stream shows
+    // which delete flavor happened even after the row is soft-deleted.
+    if (
+      existing.status === COURSE_STATUS.ENDED ||
+      existing.status === COURSE_STATUS.ARCHIVED
+    ) {
+      await this.auditService
+        .log({
+          eventType:
+            existing.status === COURSE_STATUS.ENDED
+              ? NELC_EVENT_TYPE.COURSE_DELETED_FROM_ENDED
+              : NELC_EVENT_TYPE.COURSE_DELETED_FROM_ARCHIVE,
+          entityType: 'course',
+          entityId: courseId,
+          userId: user.id,
+          metadata: {
+            courseTitle: existing.title,
+            reason: reason ?? null,
+            hideFromAdminOnly: isArchivedDelete,
+          },
+        })
+        .catch(() => {});
+    }
 
     await this.auditLogService
       .log({
@@ -2191,6 +2261,7 @@ export class CoursesService {
           impact,
           sessionsCancelled: cascade.cancelled,
           sessionsCancelFailed: cascade.failed,
+          hideFromAdminOnly: isArchivedDelete,
         },
       })
       .catch(() => {});
@@ -4135,6 +4206,15 @@ export class CoursesService {
    * Only MANAGER and ADMIN can complete a course.
    */
   async complete(courseId: string, user: AuthenticatedUser) {
+    // Manager/admin only. Instructors don't own the compliance-releasing
+    // action (Amna spec 2026-07 — Mark Completed unlocks certificates,
+    // CME awards, xAPI course-completed, student reviews).
+    if (!isManagerOrAbove(user)) {
+      throw new ForbiddenException(
+        'Only managers and admins can mark a course completed',
+      );
+    }
+
     const [course] = await db
       .select({ id: courses.id, status: courses.status, title: courses.title, instructorId: courses.instructorId })
       .from(courses)
@@ -4145,9 +4225,20 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    if (course.status !== COURSE_STATUS.ACTIVE) {
+    // Two valid entry points:
+    //   - `ended`  — the normal path. Cron flipped active→ended when the
+    //                end date passed and now the manager/admin is
+    //                releasing certificates + CME by clicking Mark Completed.
+    //   - `active` — early-manual completion. Manager wants to close the
+    //                course before its calendar end date (e.g. the cohort
+    //                finished ahead of schedule). Same downstream fanout.
+    // Anything else is terminal or wrong-state.
+    if (
+      course.status !== COURSE_STATUS.ENDED &&
+      course.status !== COURSE_STATUS.ACTIVE
+    ) {
       throw new BadRequestException(
-        'Only active courses can be marked as completed',
+        'Only active or ended courses can be marked as completed',
       );
     }
 
@@ -4186,13 +4277,18 @@ export class CoursesService {
     // Finalize all active enrollments → completed
     await this.finalizeEnrollments(courseId);
 
-    // Log NELC audit event
+    // Log NELC audit event — records who released the compliance
+    // artefacts (cert requests + CME + xAPI) so we can trace who unlocked
+    // completion for any given course.
     await this.auditService.log({
-      eventType: NELC_EVENT_TYPE.COURSE_DEACTIVATED,
+      eventType: NELC_EVENT_TYPE.COURSE_COMPLETED_MANUAL,
       entityType: 'course',
       entityId: courseId,
       userId: user.id,
-      metadata: { courseTitle: course.title, action: 'completed' },
+      metadata: {
+        courseTitle: course.title,
+        fromStatus: course.status,
+      },
     });
 
     // Notify instructor

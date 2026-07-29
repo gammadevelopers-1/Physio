@@ -687,6 +687,13 @@
       "when": 1784966400000,
       "tag": "0112_ta_panelist_join_url",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1785715200000,
+      "tag": "0113_course_ended_and_hide_from_admin_only",
+      "breakpoints": true
     }
   ]
 }

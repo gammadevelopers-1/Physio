@@ -145,6 +145,13 @@ export const courses = pgTable(
     originalStartDate: date('original_start_date'),
     deletedAt: timestamp('deleted_at'),
     deletedBy: uuid('deleted_by').references(() => users.id),
+    // When true, a soft-deleted course row is hidden from admin / manager /
+    // instructor listings but STILL resolvable by student-facing certificate
+    // and verification routes. Set by the archive-then-delete path so that
+    // learners keep working certificates + CME records for compliance even
+    // after admins clean the course out of their views. Not set (false) by
+    // any other delete path — ended-course deletion fully hides the row.
+    hideFromAdminOnly: boolean('hide_from_admin_only').notNull().default(false),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -160,7 +167,7 @@ export const courses = pgTable(
     ),
     check(
       'courses_status_check',
-      sql`${table.status} IN ('draft', 'pending_review', 'changes_requested', 'active', 'completed', 'archived', 'cancelled')`,
+      sql`${table.status} IN ('draft', 'pending_review', 'changes_requested', 'active', 'ended', 'completed', 'archived', 'cancelled')`,
     ),
     check(
       'courses_vat_treatment_check',
@@ -190,6 +197,14 @@ export const COURSE_STATUS = {
   PENDING_REVIEW: 'pending_review',
   CHANGES_REQUESTED: 'changes_requested',
   ACTIVE: 'active',
+  // ENDED — auto-set by course-completion.cron once endDate has passed
+  // (or manually by manager/admin). A transitional "done teaching but not
+  // yet reviewed" state. NO fanout fires here — certificates, CME awards,
+  // xAPI completion, and student reviews all stay locked until a
+  // manager/admin explicitly clicks Mark Completed to move ended → completed.
+  // This lets managers decide when compliance artefacts get generated
+  // instead of the calendar deciding for them.
+  ENDED: 'ended',
   COMPLETED: 'completed',
   ARCHIVED: 'archived',
   CANCELLED: 'cancelled',

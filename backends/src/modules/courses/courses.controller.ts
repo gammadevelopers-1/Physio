@@ -190,9 +190,13 @@ export class CoursesController {
   }
 
   /**
-   * POST /courses/:id/complete — Mark an active course as completed
+   * POST /courses/:id/complete — Mark an active or ended course as completed.
+   *
+   * Manager + admin only (Amna 2026-07). Instructors don't own the
+   * compliance-releasing action — Mark Completed fires cert requests,
+   * CME awards, xAPI course-completed, and unlocks student reviews.
    */
-  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Post(':id/complete')
   @HttpCode(HttpStatus.OK)
   async complete(

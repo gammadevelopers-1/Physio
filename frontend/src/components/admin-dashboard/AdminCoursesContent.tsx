@@ -490,11 +490,20 @@ const AdminCoursesContent = () => {
     deleteImpact !== null &&
     deleteImpact.pendingCertificates > 0;
   // Phase E compliance block: once the course has produced NELC records
-  // (issued certs, completed enrollments, or awarded CME points), even
-  // a soft delete is refused — the admin must Archive instead.
+  // (issued certs, completed enrollments, or awarded CME points), a
+  // soft delete is refused for most statuses — the admin must Archive.
+  //
+  // EXCEPTION (Amna 2026-07 lifecycle rework): deleting an ARCHIVED
+  // course intentionally hides the row from admin/manager/instructor
+  // lists while keeping student certificate + CME + verification
+  // records visible (backend flips hide_from_admin_only=true). So the
+  // gate must NOT fire for the archived-delete path — otherwise the
+  // permanent-delete button that we advertise on archived rows sits
+  // permanently disabled with a misleading "records preserved" warning.
   const deleteBlockedByCompliance =
     confirmKind === "delete" &&
     deleteImpact !== null &&
+    confirmCourse?.status !== "archived" &&
     (deleteImpact.approvedCertificates > 0 ||
       deleteImpact.completedEnrollments > 0 ||
       deleteImpact.awardedPoints > 0);

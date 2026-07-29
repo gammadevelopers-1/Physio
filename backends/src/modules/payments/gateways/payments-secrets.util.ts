@@ -141,7 +141,14 @@ export function lastFourOfSecret(stored: string | null | undefined): string | nu
 
 /**
  * Detect the live/test mode of a Moyasar or Tabby key from its prefix.
- * Both gateways follow Stripe's convention: `sk_live_*` vs `sk_test_*`.
+ *
+ * Moyasar follows Stripe's convention exactly: `sk_live_*` vs `sk_test_*`.
+ *
+ * Tabby is different — sandbox keys have `_test_` in the middle
+ * (`pk_test_<uuid>`), but PRODUCTION keys drop the marker entirely and
+ * are just `pk_<uuid>` / `sk_<uuid>`. So absence of `_test_` on an
+ * otherwise-well-formed `pk_`/`sk_` key means live.
+ *
  * Returns null for empty / unrecognized shapes.
  */
 export function modeFromKeyPrefix(
@@ -150,8 +157,10 @@ export function modeFromKeyPrefix(
   if (!stored) return null;
   const plain = decryptPII(stored);
   if (!plain || typeof plain !== 'string') return null;
-  if (/^[a-z]+_live_/i.test(plain)) return 'live';
   if (/^[a-z]+_test_/i.test(plain)) return 'test';
+  if (/^[a-z]+_live_/i.test(plain)) return 'live';
+  // Tabby live: `pk_<uuid>` / `sk_<uuid>` — no `_live_` marker.
+  if (/^[ps]k_[0-9a-f-]{20,}$/i.test(plain)) return 'live';
   return null;
 }
 

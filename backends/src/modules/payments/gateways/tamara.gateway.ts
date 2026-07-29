@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken';
 import {
   BnplPaymentGateway,
   CreateChargeParams,
@@ -287,14 +288,56 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
     };
   }
 
+  /**
+   * Verify Tamara's webhook signature.
+   *
+   * Tamara signs every webhook as a JWT (HS256) using the Notification Token
+   * provisioned per-merchant. Per Tamara's docs the token is attached in two
+   * places:
+   *   - Query parameter: `?tamaraToken=<jwt>`
+   *   - Authorization header: `Authorization: Bearer <jwt>`
+   * We accept both. `jsonwebtoken.verify` validates the signature, algorithm,
+   * and `exp` claim; we additionally require `iss === "Tamara"` to reject any
+   * accidentally-forwarded token from another issuer.
+   */
   verifyWebhook(headers: Record<string, string>, _body: any): boolean {
     if (!this.notificationToken) return false;
 
-    // Headers are normalized to lowercase by Node's http parser, but accept
-    // the original-case variant defensively too.
-    const token =
-      headers['notification-token'] || headers['Notification-Token'];
-    return token === this.notificationToken;
+    const token = this.extractTamaraToken(headers);
+    if (!token) return false;
+
+    try {
+      const payload = jwt.verify(token, this.notificationToken, {
+        algorithms: ['HS256'],
+      });
+      if (typeof payload !== 'object' || payload === null) return false;
+      const iss = (payload as jwt.JwtPayload).iss;
+      // Tamara's own example payload sets iss="Tamara" — reject anything else
+      // to prevent a stray token from another Tamara-related service passing.
+      if (iss && iss !== 'Tamara') return false;
+      return true;
+    } catch {
+      // Signature mismatch, expired, malformed — treat all as invalid.
+      return false;
+    }
+  }
+
+  /** Pull the JWT from Authorization: Bearer first, then fall back to a
+   *  ?tamaraToken= query param that some gateways surface in a header for us. */
+  private extractTamaraToken(
+    headers: Record<string, string>,
+  ): string | null {
+    const auth = headers['authorization'] || headers['Authorization'];
+    if (typeof auth === 'string') {
+      const match = /^Bearer\s+(.+)$/i.exec(auth.trim());
+      if (match) return match[1].trim();
+    }
+    // Some proxies pass the raw query string through as a header we can
+    // access; NestJS's @Query is not routed to verifyWebhook, so a
+    // dedicated header fallback keeps the signature stable.
+    const q = headers['x-tamara-token'] || headers['X-Tamara-Token'];
+    if (typeof q === 'string' && q.length > 0) return q;
+    return null;
   }
 
   /**

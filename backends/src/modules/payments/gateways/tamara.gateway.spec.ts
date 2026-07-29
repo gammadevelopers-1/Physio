@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import * as jwt from 'jsonwebtoken';
 import { TamaraGateway } from './tamara.gateway';
 import { GatewayCredentialsService } from './gateway-credentials.service';
 
@@ -65,20 +66,51 @@ describe('TamaraGateway', () => {
 
   // ── verifyWebhook ────────────────────────────────────────────────────────────
   describe('verifyWebhook()', () => {
-    it('accepts request with correct notification-token header', () => {
+    const sign = (opts: jwt.SignOptions = {}, secret = 'notif-secret') =>
+      jwt.sign({ iss: 'Tamara' }, secret, { algorithm: 'HS256', expiresIn: '5m', ...opts });
+
+    it('accepts a valid HS256 JWT in the Authorization: Bearer header', () => {
+      const token = sign();
       expect(
-        gateway.verifyWebhook({ 'notification-token': 'notif-secret' }, {}),
+        gateway.verifyWebhook({ authorization: `Bearer ${token}` }, {}),
       ).toBe(true);
     });
 
-    it('rejects request with wrong notification-token header', () => {
+    it('accepts a valid HS256 JWT delivered via x-tamara-token fallback', () => {
+      const token = sign();
       expect(
-        gateway.verifyWebhook({ 'notification-token': 'wrong-token' }, {}),
+        gateway.verifyWebhook({ 'x-tamara-token': token }, {}),
+      ).toBe(true);
+    });
+
+    it('rejects a JWT signed with a different secret', () => {
+      const token = sign({}, 'wrong-secret');
+      expect(
+        gateway.verifyWebhook({ authorization: `Bearer ${token}` }, {}),
       ).toBe(false);
     });
 
-    it('rejects request with no header', () => {
+    it('rejects an expired JWT', () => {
+      const token = sign({ expiresIn: '-1s' });
+      expect(
+        gateway.verifyWebhook({ authorization: `Bearer ${token}` }, {}),
+      ).toBe(false);
+    });
+
+    it('rejects a JWT with the wrong issuer', () => {
+      const token = jwt.sign({ iss: 'NotTamara' }, 'notif-secret', {
+        algorithm: 'HS256',
+        expiresIn: '5m',
+      });
+      expect(
+        gateway.verifyWebhook({ authorization: `Bearer ${token}` }, {}),
+      ).toBe(false);
+    });
+
+    it('rejects malformed / missing tokens', () => {
       expect(gateway.verifyWebhook({}, {})).toBe(false);
+      expect(gateway.verifyWebhook({ authorization: 'Bearer not-a-jwt' }, {})).toBe(false);
+      expect(gateway.verifyWebhook({ authorization: 'Basic abc' }, {})).toBe(false);
     });
   });
 

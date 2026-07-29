@@ -4,6 +4,7 @@ import {
   Param,
   Body,
   Headers,
+  Query,
   Logger,
   UnauthorizedException,
   HttpCode,
@@ -101,12 +102,22 @@ export class WebhooksController {
   async handleWebhook(
     @Param('gateway') gatewayName: string,
     @Headers() headers: Record<string, string>,
+    @Query() query: Record<string, string>,
     @Body() body: any,
   ) {
     this.logger.log(`Webhook received from ${gatewayName}`);
 
     // 1. Get gateway adapter
     const gateway = this.gatewayFactory.getGateway(gatewayName);
+
+    // Tamara signs its webhook JWT and delivers it in TWO places per docs:
+    //   Authorization: Bearer <jwt>   AND   ?tamaraToken=<jwt>
+    // The gateway's verifyWebhook already reads from Authorization; surface
+    // the query variant as an X- header so the same code path can accept it
+    // when only the query param survives an intermediate proxy.
+    if (gatewayName === 'tamara' && query?.tamaraToken) {
+      headers['x-tamara-token'] = query.tamaraToken;
+    }
 
     // 2. Verify webhook signature
     if (!gateway.verifyWebhook(headers, body)) {

@@ -320,12 +320,17 @@ export default function BnplPromoWidgets({
           {/* White card wrapper — Tamara's V2 widget defaults to a pastel-pink
               tile that clashes on dark course-image cards. Per Tamara Ops
               feedback (Mohamed Khalf, 2026-07): widget content must appear
-              on a white/light background. Wrapping in a white rounded card
-              matches Tabby's visual weight and gives the widget a clean
-              frame regardless of what its shadow DOM paints inside. */}
+              on a white/light background. On product / cart placements we
+              wrap in a white rounded card matching Tabby's visual weight.
+              At checkout the payment-method radio card already provides the
+              outer frame, so we render bare here to avoid a double border. */}
           <div
             ref={tamaraWrapperRef}
-            className="bg-white rounded-2xl border border-[#E5E7EB] p-3 flex items-center justify-center"
+            className={
+              source === "checkout"
+                ? "flex items-center justify-center"
+                : "bg-white rounded-2xl border border-[#E5E7EB] p-3 flex items-center justify-center"
+            }
           >
             {/* Tamara V2's <tamara-widget> element takes ZERO configuration
                 attributes — it reads everything from window.tamaraWidgetConfig

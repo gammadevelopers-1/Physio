@@ -317,7 +317,16 @@ export default function BnplPromoWidgets({
         // sandbox onboarding, or full installment breakdown once Tamara
         // Ops finishes provisioning our CDN config) is what buyers see.
         <div className={`relative ${tamaraLoading ? "min-h-14" : ""}`}>
-          <div ref={tamaraWrapperRef}>
+          {/* White card wrapper — Tamara's V2 widget defaults to a pastel-pink
+              tile that clashes on dark course-image cards. Per Tamara Ops
+              feedback (Mohamed Khalf, 2026-07): widget content must appear
+              on a white/light background. Wrapping in a white rounded card
+              matches Tabby's visual weight and gives the widget a clean
+              frame regardless of what its shadow DOM paints inside. */}
+          <div
+            ref={tamaraWrapperRef}
+            className="bg-white rounded-2xl border border-[#E5E7EB] p-3 flex items-center justify-center"
+          >
             {/* Tamara V2's <tamara-widget> element takes ZERO configuration
                 attributes — it reads everything from window.tamaraWidgetConfig
                 (set in the render body above). Passing type/amount/currency
@@ -327,6 +336,7 @@ export default function BnplPromoWidgets({
                 widget from a previous price never lingers on screen. */}
             {createElement("tamara-widget", {
               key: `tamara-${source}-${lang}-${price.toFixed(2)}`,
+              style: { backgroundColor: "white", display: "block", width: "100%" },
             })}
           </div>
           {tamaraLoading && (

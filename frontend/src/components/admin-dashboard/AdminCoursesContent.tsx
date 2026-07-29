@@ -193,6 +193,8 @@ const AdminCoursesContent = () => {
         return "bg-[#DCFCE7] text-[#16A34A]";
       case "draft":
         return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
+      case "ended":
+        return "bg-[#EDE9FE] text-[#6D28D9]";
       case "completed":
         return "bg-[var(--color-border-subtle)] text-[#1D4ED8]";
       case "archived":
@@ -758,6 +760,28 @@ const AdminCoursesContent = () => {
             >
               <CalendarClock className="w-4 h-4" />
               {t("coursesPage.actions.rescheduleRevive")}
+            </button>
+            <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
+              <Trash2 className="w-4 h-4" />
+              {t("coursesPage.actions.delete")}
+            </button>
+          </>
+        )}
+
+        {/* ENDED — the calendar rolled past the end date but no compliance
+            fanout has fired yet. Admin can either release everything
+            (Mark Completed → issues cert requests, awards CME, xAPI) or
+            delete (backend routes into cancel cascade: refunds every paid
+            buyer, notifies students, revokes any stray certs). */}
+        {course.status === "ended" && (
+          <>
+            <button
+              onClick={() => handleComplete(course)}
+              className={itemCls}
+              disabled={!!busyKey}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {t("coursesPage.actions.markCompleted")}
             </button>
             <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
               <Trash2 className="w-4 h-4" />

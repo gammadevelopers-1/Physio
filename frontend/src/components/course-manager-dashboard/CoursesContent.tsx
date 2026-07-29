@@ -70,6 +70,7 @@ const statusIcons: Record<string, React.ReactNode> = {
   draft: <FileText className="w-3.5 h-3.5" />,
   pending_review: <AlertCircle className="w-3.5 h-3.5" />,
   changes_requested: <AlertCircle className="w-3.5 h-3.5" />,
+  ended: <AlertCircle className="w-3.5 h-3.5" />,
   completed: <CheckCircle className="w-3.5 h-3.5" />,
   archived: <Archive className="w-3.5 h-3.5" />,
 };
@@ -120,6 +121,15 @@ const CoursesContent = () => {
   const [requestChangesId, setRequestChangesId] = useState<string | null>(null);
   const [requestChangesNote, setRequestChangesNote] = useState("");
   const [requestingChanges, setRequestingChanges] = useState(false);
+
+  // Delete-confirm modal. Two variants of copy based on the source status —
+  // ended deletes refund every paid buyer and revoke stray certs (see
+  // backend remove() branch); archived deletes preserve student certs +
+  // CME rows for NELC compliance.
+  const [deleteConfirm, setDeleteConfirm] = useState<
+    { id: string; status: string; title: string } | null
+  >(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [ratingsMap, setRatingsMap] = useState<Record<string, { avgRating: number; totalRatings: number }>>({});
   useEffect(() => {
@@ -234,6 +244,7 @@ const CoursesContent = () => {
       draft: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
       pending_review: "bg-[#EEF2FF] text-[#6366F1]",
       changes_requested: "bg-[#FEF3C7] text-[#D97706]",
+      ended: "bg-[#EDE9FE] text-[#6D28D9]",
       completed: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
       archived: "bg-[#FEF3C7] text-[#D4A520]",
       cancelled: "bg-[#FEE2E2] text-[#B91C1C]",
@@ -338,6 +349,7 @@ const CoursesContent = () => {
                         { value: "draft", label: t("coursesPage.filters.draft") },
                         { value: "pending_review", label: t("coursesPage.filters.pendingReview") },
                         { value: "changes_requested", label: t("coursesPage.filters.changesRequested") },
+                        { value: "ended", label: t("coursesPage.filters.ended") },
                         { value: "completed", label: t("coursesPage.filters.completed") },
                         { value: "cancelled", label: t("coursesPage.filters.cancelled") },
                         { value: "archived", label: t("coursesPage.filters.archived") },
@@ -648,6 +660,61 @@ const CoursesContent = () => {
                                     </button>
                                   </>
                                 )}
+
+                                {/* Ended: Mark Completed (fires cert / CME
+                                    fanout) + Delete (goes through the
+                                    ended-delete branch on the backend —
+                                    refunds every paid buyer, revokes any
+                                    stray certs, notifies students). */}
+                                {course.status === "ended" && (
+                                  <>
+                                    <button
+                                      onClick={() => handleAction(course.id, "complete")}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <CheckCircle className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.markCompleted")}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setOpenDropdown(null);
+                                        setDeleteConfirm({
+                                          id: course.id,
+                                          status: course.status,
+                                          title: courseTitle,
+                                        });
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.delete")}
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* Archived: permanent delete. Backend soft-
+                                    deletes with hideFromAdminOnly=true so
+                                    student certificates + CME records keep
+                                    working for NELC compliance. */}
+                                {course.status === "archived" && (
+                                  <button
+                                    onClick={() => {
+                                      setOpenDropdown(null);
+                                      setDeleteConfirm({
+                                        id: course.id,
+                                        status: course.status,
+                                        title: courseTitle,
+                                      });
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
+                                    role="menuitem"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    {t("coursesPage.actions.deletePermanently")}
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -812,6 +879,74 @@ const CoursesContent = () => {
                     >
                       {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Delete-confirmation modal. Two copy variants:
+                    - ended → warns about refunds + student notification cascade
+                    - archived → warns records-preserved, admin-only hide
+                  Copy pulled from translations so both en + ar render right. */}
+              {deleteConfirm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-md p-6">
+                    <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+                      {deleteConfirm.status === "ended"
+                        ? t("coursesPage.deleteConfirm.endedTitle")
+                        : deleteConfirm.status === "archived"
+                          ? t("coursesPage.deleteConfirm.archivedTitle")
+                          : t("coursesPage.actions.delete")}
+                    </h3>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-2">
+                      <span className="font-medium text-[var(--color-text-primary)]">
+                        {deleteConfirm.title}
+                      </span>
+                    </p>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+                      {deleteConfirm.status === "ended"
+                        ? t("coursesPage.deleteConfirm.endedBody")
+                        : deleteConfirm.status === "archived"
+                          ? t("coursesPage.deleteConfirm.archivedBody")
+                          : ""}
+                    </p>
+                    <div className="flex justify-end gap-3 mt-4">
+                      <button
+                        onClick={() => setDeleteConfirm(null)}
+                        disabled={deleting}
+                        className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        {t("coursesPage.actions.cancel")}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!deleteConfirm) return;
+                          setDeleting(true);
+                          try {
+                            await courseManagerApi.deleteCourse(deleteConfirm.id);
+                            toast.success(t("coursesPage.statusChanged"));
+                            setDeleteConfirm(null);
+                            refetch();
+                          } catch (err) {
+                            const msg =
+                              err instanceof ApiError
+                                ? err.message
+                                : t("coursesPage.statusFailed");
+                            toast.error(msg);
+                          } finally {
+                            setDeleting(false);
+                          }
+                        }}
+                        disabled={deleting}
+                        className="px-4 py-2 text-sm text-white bg-[#EF4444] hover:bg-[#DC2626] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        {deleteConfirm.status === "ended"
+                          ? t("coursesPage.deleteConfirm.confirmEnded")
+                          : deleteConfirm.status === "archived"
+                            ? t("coursesPage.deleteConfirm.confirmArchived")
+                            : t("coursesPage.actions.delete")}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

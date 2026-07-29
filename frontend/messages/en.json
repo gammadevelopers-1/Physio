@@ -5090,6 +5090,7 @@
         "draft": "Draft",
         "pendingReview": "Pending Review",
         "changesRequested": "Changes Requested",
+        "ended": "Ended",
         "completed": "Completed",
         "cancelled": "Cancelled",
         "archived": "Archived",
@@ -5102,6 +5103,7 @@
         "draft": "Draft",
         "pending_review": "Pending Review",
         "changes_requested": "Changes Requested",
+        "ended": "Ended",
         "completed": "Completed",
         "archived": "Archived",
         "cancelled": "Cancelled"
@@ -5134,8 +5136,10 @@
         "requestChangesDesc": "Provide feedback to the instructor about what needs to be changed.",
         "requestChangesPlaceholder": "Describe the changes needed...",
         "complete": "Mark Complete",
+        "markCompleted": "Mark Completed",
         "archive": "Archive",
         "delete": "Delete",
+        "deletePermanently": "Delete Permanently",
         "cancel": "Cancel",
         "send": "Send",
         "hideFromPublic": "Hide from public site",
@@ -5145,6 +5149,14 @@
         "duplicate": "Duplicate",
         "duplicateSuccess": "Course duplicated. Set the new dates to continue.",
         "duplicateFailed": "Failed to duplicate course"
+      },
+      "deleteConfirm": {
+        "endedTitle": "Delete this ended course?",
+        "endedBody": "Deleting an ended course will drop all enrolments, revoke any pending certificate requests, and create a pending refund entry for every paid enrolment (real-money and bank transfer). Finance will approve each refund individually. Students will be notified by email and in-app. This cannot be undone.",
+        "confirmEnded": "Yes, delete and refund",
+        "archivedTitle": "Delete this archived course permanently?",
+        "archivedBody": "This course will be removed from the admin, manager, and instructor listings. Student certificates, CME awards, and verification records remain visible for NELC compliance. This cannot be undone.",
+        "confirmArchived": "Delete permanently"
       },
       "hiddenFromPublic": "Course hidden from public site",
       "shownOnPublic": "Course is now visible on public site",
@@ -6805,6 +6817,7 @@
         "feature": "Mark as featured",
         "unfeature": "Remove featured",
         "complete": "Mark as completed",
+        "markCompleted": "Mark as completed",
         "unarchive": "Restore (unarchive)",
         "reschedule": "Reschedule course",
         "rescheduleRevive": "Reopen with new dates"

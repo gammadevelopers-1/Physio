@@ -348,7 +348,7 @@ export interface InstructorCourse {
   description: string | null;
   descriptionAr: string | null;
   deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced' | 'webinar';
-  status: 'draft' | 'pending_review' | 'changes_requested' | 'active' | 'completed' | 'archived' | 'cancelled';
+  status: 'draft' | 'pending_review' | 'changes_requested' | 'active' | 'ended' | 'completed' | 'archived' | 'cancelled';
   thumbnail: string | null;
   maxEnrollment: number | null;
   startDate: string | null;
@@ -421,7 +421,7 @@ export interface CourseDetailResponse {
   description: string | null;
   descriptionAr: string | null;
   deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced' | 'webinar';
-  status: 'draft' | 'pending_review' | 'changes_requested' | 'active' | 'completed' | 'archived' | 'cancelled';
+  status: 'draft' | 'pending_review' | 'changes_requested' | 'active' | 'ended' | 'completed' | 'archived' | 'cancelled';
   reviewNote?: string | null;
   thumbnail: string | null;
   maxEnrollment: number | null;

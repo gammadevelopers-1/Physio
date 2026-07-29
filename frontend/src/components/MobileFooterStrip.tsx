@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useLocale } from "next-intl";
 import { usePathname } from "next/navigation";
 import { Copyright, Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
-import NelcVerificationBadge from "./NelcVerificationBadge";
 import type { SiteSettings } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
@@ -207,13 +206,8 @@ export default function MobileFooterStrip({
         </div>
       )}
 
-      {/* Divider */}
+      {/* Divider above copyright */}
       <div className="h-px bg-[var(--outline-default)]" />
-
-      {/* NELC verification iframe badge */}
-      <div className="flex justify-start">
-        <NelcVerificationBadge />
-      </div>
 
       {/* Copyright — Strapi text if set, else year + name */}
       <div className="flex items-center gap-1.5 text-xs text-[var(--on-surface-variant)]">

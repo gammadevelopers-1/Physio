@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { Copyright, Facebook, Linkedin, Twitter, Instagram } from "lucide-react";
-import NelcVerificationBadge from "./NelcVerificationBadge";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
@@ -320,12 +319,6 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
                 </span>
               </div>
             )}
-
-            {/* Official NELC (SDAIA e-learning regulator) trust mark.
-                Rendered inline at the far end of the copyright row so
-                it lives with the other footer trust marks instead of
-                floating on top of the page content. */}
-            <NelcVerificationBadge />
           </div>
         )}
       </div>

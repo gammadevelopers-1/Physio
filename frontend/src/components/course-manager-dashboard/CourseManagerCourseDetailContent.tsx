@@ -716,9 +716,17 @@ const CourseManagerCourseDetailContent = ({
     confirmKind === "delete" &&
     deleteImpact !== null &&
     deleteImpact.pendingCertificates > 0;
+  // Compliance-block gate — mirrors backend remove(). EXCEPTION per
+  // Amna 2026-07 lifecycle rework: deleting an ARCHIVED course
+  // intentionally hides the row from admin/manager/instructor lists
+  // while backend flips hide_from_admin_only=true so student cert +
+  // CME + verification records keep resolving. Without this bypass
+  // the Delete Permanently button on an archived course row would
+  // sit disabled behind a misleading "records preserved" banner.
   const deleteBlockedByCompliance =
     confirmKind === "delete" &&
     deleteImpact !== null &&
+    course?.status !== "archived" &&
     (deleteImpact.approvedCertificates > 0 ||
       deleteImpact.completedEnrollments > 0 ||
       deleteImpact.awardedPoints > 0);

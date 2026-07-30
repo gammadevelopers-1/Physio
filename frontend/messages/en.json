@@ -6757,6 +6757,7 @@
         "draft": "Draft",
         "pendingReview": "Pending Review",
         "changesRequested": "Changes Requested",
+        "ended": "Ended",
         "completed": "Completed",
         "cancelled": "Cancelled",
         "archived": "Archived",

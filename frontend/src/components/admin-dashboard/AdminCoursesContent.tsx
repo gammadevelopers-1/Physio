@@ -940,6 +940,7 @@ const AdminCoursesContent = () => {
                       { value: "pending_review", label: t("coursesPage.filters.pendingReview") },
                       { value: "changes_requested", label: t("coursesPage.filters.changesRequested") },
                       { value: "active", label: t("coursesPage.filters.active") },
+                      { value: "ended", label: t("coursesPage.filters.ended") },
                       { value: "completed", label: t("coursesPage.filters.completed") },
                       { value: "cancelled", label: t("coursesPage.filters.cancelled") },
                       { value: "archived", label: t("coursesPage.filters.archived") },

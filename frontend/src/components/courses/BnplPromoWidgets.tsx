@@ -154,11 +154,11 @@ export default function BnplPromoWidgets({
       lang,
       country: "SA",
       publicKey: TAMARA_PUBLIC_KEY,
-      // Match Tabby's compact visual weight — its promo pill has the
-      // brand logo at ~40% of card height. Tamara's default badgeRatio 1
-      // reads as an oversized gradient tile beside our smaller helper
-      // text; 0.7 brings the badge roughly in line with Tabby's tile.
-      style: { badgeRatio: 0.7 },
+      // badgeRatio controls the gradient tile size relative to the text.
+      // We initially shrank it to 0.7 to match Tabby's compact pill;
+      // client-review feedback wants the badge more prominent on the
+      // right of the row, so bump back up to 1.3.
+      style: { badgeRatio: 1.3 },
     };
   }
 
@@ -326,14 +326,19 @@ export default function BnplPromoWidgets({
         // sandbox onboarding, or full installment breakdown once Tamara
         // Ops finishes provisioning our CDN config) is what buyers see.
         <div className={`relative ${tamaraLoading ? "min-h-14" : ""}`}>
-          {/* Bare mount div — Tamara's V2 widget renders its own iframe
-              (white background, 1px border, 16px rounded corners per the
-              KSA guidelines) whenever inline-type ≥ 1 unlocks the "Use
-              current template" content. An extra wrapper here would
-              produce a card-within-a-card look; matches Tabby which also
-              mounts into a bare div and lets the vendor script paint the
-              frame. */}
-          <div ref={tamaraWrapperRef} className="flex items-center justify-center">
+          {/* White rounded surface without an explicit 1px border — the
+              widget's iframe already carries the KSA-required border, so
+              we only need to provide the light background and rounded
+              corner clipping. This gives the "white card, no visible
+              double-border" look client-reviewed on 2026-07-30. */}
+          <div
+            ref={tamaraWrapperRef}
+            className={
+              source === "checkout"
+                ? "flex items-center justify-center"
+                : "bg-white rounded-2xl overflow-hidden flex items-center justify-center"
+            }
+          >
             {/* Per Tamara V2's official widget docs
                 (https://widget-docs.tamara.co/tamara-summary), the
                 <tamara-widget> element takes THREE authoritative

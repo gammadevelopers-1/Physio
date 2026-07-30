@@ -55,6 +55,10 @@ declare global {
       lang: string;
       country: string;
       publicKey: string;
+      style?: {
+        fontSize?: string;
+        badgeRatio?: number;
+      };
     };
   }
 }
@@ -150,6 +154,11 @@ export default function BnplPromoWidgets({
       lang,
       country: "SA",
       publicKey: TAMARA_PUBLIC_KEY,
+      // Match Tabby's compact visual weight — its promo pill has the
+      // brand logo at ~40% of card height. Tamara's default badgeRatio 1
+      // reads as an oversized gradient tile beside our smaller helper
+      // text; 0.7 brings the badge roughly in line with Tabby's tile.
+      style: { badgeRatio: 0.7 },
     };
   }
 
@@ -317,21 +326,14 @@ export default function BnplPromoWidgets({
         // sandbox onboarding, or full installment breakdown once Tamara
         // Ops finishes provisioning our CDN config) is what buyers see.
         <div className={`relative ${tamaraLoading ? "min-h-14" : ""}`}>
-          {/* White card wrapper — Tamara's V2 widget defaults to a pastel-pink
-              tile that clashes on dark course-image cards. Per Tamara Ops
-              feedback (Mohamed Khalf, 2026-07): widget content must appear
-              on a white/light background. On product / cart placements we
-              wrap in a white rounded card matching Tabby's visual weight.
-              At checkout the payment-method radio card already provides the
-              outer frame, so we render bare here to avoid a double border. */}
-          <div
-            ref={tamaraWrapperRef}
-            className={
-              source === "checkout"
-                ? "flex items-center justify-center"
-                : "bg-white rounded-2xl border border-[#E5E7EB] p-3 flex items-center justify-center"
-            }
-          >
+          {/* Bare mount div — Tamara's V2 widget renders its own iframe
+              (white background, 1px border, 16px rounded corners per the
+              KSA guidelines) whenever inline-type ≥ 1 unlocks the "Use
+              current template" content. An extra wrapper here would
+              produce a card-within-a-card look; matches Tabby which also
+              mounts into a bare div and lets the vendor script paint the
+              frame. */}
+          <div ref={tamaraWrapperRef} className="flex items-center justify-center">
             {/* Per Tamara V2's official widget docs
                 (https://widget-docs.tamara.co/tamara-summary), the
                 <tamara-widget> element takes THREE authoritative
@@ -366,7 +368,6 @@ export default function BnplPromoWidgets({
                   : "tamara-summary",
               amount: price.toFixed(2),
               ...(source === "checkout" ? {} : { "inline-type": "2" }),
-              style: { backgroundColor: "white", display: "block", width: "100%" },
             })}
           </div>
           {tamaraLoading && (

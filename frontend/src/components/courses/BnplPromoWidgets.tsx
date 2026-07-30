@@ -42,20 +42,19 @@ declare global {
     TabbyPromo?: new (config: Record<string, unknown>) => unknown;
     TabbyCard?: new (config: Record<string, unknown>) => unknown;
     TamaraWidgetV2?: { refresh: () => void };
-    // Tamara V2 widget reads its config from window.tamaraWidgetConfig —
-    // NOT from HTML attributes on the <tamara-widget> element. Its
-    // observedAttributes is just ["uuid"]; every other setting comes
-    // from this global. Ship it BEFORE the widget script loads or the
-    // custom element's initConfig() sees an empty object, misses
-    // publicKey, logs "TamaraWidgetV2: Invalid public key" and renders
-    // nothing (verified by reading the minified V2 loader source).
+    // Tamara V2 widget — per the official Tamara-summary docs
+    // (https://widget-docs.tamara.co/tamara-summary) the config split is:
+    //   window.tamaraWidgetConfig → page-level only (lang, country,
+    //     publicKey, optional css / style). Nothing else goes here.
+    //   <tamara-widget> element attributes → per-placement (type,
+    //     amount, inline-type). This is where price + widget variant live.
+    // Setting `type` or `amount` on the global is ignored, which is why the
+    // widget renders only the Tamara logo badge (default inline-type=4);
+    // fixed by moving type/amount to the element as HTML attributes below.
     tamaraWidgetConfig?: {
       lang: string;
       country: string;
       publicKey: string;
-      amount: string;
-      currency: string;
-      type: string;
     };
   }
 }
@@ -130,13 +129,17 @@ export default function BnplPromoWidgets({
 
   const showWidgets = price >= 50 && currency === "SAR";
 
-  // Set Tamara's global config SYNCHRONOUSLY during render, before React
-  // commits the DOM. Custom-element connectedCallback fires during commit
-  // (before useEffect), so if we defer this to an effect the widget's
-  // initConfig() reads an empty object and the whole widget silently no-ops.
-  // React StrictMode may run this twice in dev — harmless; it's just a
-  // window property assignment. The trailing useEffect below then handles
-  // refresh() on later price changes when the script is already loaded.
+  // Set Tamara's page-level config SYNCHRONOUSLY during render, before
+  // React commits the DOM. Custom-element connectedCallback fires during
+  // commit (before useEffect), so if we defer this to an effect the
+  // widget's initConfig() reads an empty object, logs "TamaraWidgetV2:
+  // Invalid public key", and renders nothing. React StrictMode may run
+  // this twice in dev — harmless; it's just a window property assignment.
+  //
+  // NOTE (per Tamara V2 official docs): only lang / country / publicKey
+  // belong here. `type`, `amount`, `inline-type` are per-placement
+  // configuration and MUST be set as HTML attributes on the
+  // <tamara-widget> element (see the createElement call below).
   if (
     typeof window !== "undefined" &&
     showWidgets &&
@@ -147,9 +150,6 @@ export default function BnplPromoWidgets({
       lang,
       country: "SA",
       publicKey: TAMARA_PUBLIC_KEY,
-      amount: price.toFixed(2),
-      currency,
-      type: source === "checkout" ? "tamara-card-snippet" : "tamara-summary",
     };
   }
 
@@ -332,15 +332,40 @@ export default function BnplPromoWidgets({
                 : "bg-white rounded-2xl border border-[#E5E7EB] p-3 flex items-center justify-center"
             }
           >
-            {/* Tamara V2's <tamara-widget> element takes ZERO configuration
-                attributes — it reads everything from window.tamaraWidgetConfig
-                (set in the render body above). Passing type/amount/currency
-                as HTML attributes is a no-op — the element's observedAttributes
-                is just ["uuid"]. Keying by price + source + lang forces React
-                to remount a fresh element when any of those change, so a stale
-                widget from a previous price never lingers on screen. */}
+            {/* Per Tamara V2's official widget docs
+                (https://widget-docs.tamara.co/tamara-summary), the
+                <tamara-widget> element takes THREE authoritative
+                attributes that drive its rendered content:
+
+                  - type         : "tamara-summary" (product/cart placement)
+                                   or "tamara-card-snippet" (checkout row).
+                  - amount       : the cart total to itemise (format DDDD.dd).
+                  - inline-type  : rendering variant. Default is 4 —
+                                   "Default is a Tamara logo badge" — which
+                                   is why our earlier build showed only
+                                   the tamara wordmark. inline-type="2" is
+                                   the "Use current template" variant which
+                                   renders the calculated downpayment and
+                                   repayment as inline text next to the
+                                   badge — exactly the "Pay SAR X / 4
+                                   payments / Shariah-compliant / More
+                                   options" content the KSA Widget
+                                   Implementation Guidelines mandate.
+
+                We only set inline-type on the summary widget; the checkout
+                card-snippet variant renders its own compact copy from the
+                same amount attribute. Keying by price + source + lang
+                forces React to remount a fresh element when any of those
+                change, so a stale widget from a previous price never
+                lingers on screen. */}
             {createElement("tamara-widget", {
               key: `tamara-${source}-${lang}-${price.toFixed(2)}`,
+              type:
+                source === "checkout"
+                  ? "tamara-card-snippet"
+                  : "tamara-summary",
+              amount: price.toFixed(2),
+              ...(source === "checkout" ? {} : { "inline-type": "2" }),
               style: { backgroundColor: "white", display: "block", width: "100%" },
             })}
           </div>

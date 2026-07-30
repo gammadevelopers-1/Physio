@@ -372,43 +372,13 @@ export default function BnplPromoWidgets({
                   ? "tamara-card-snippet"
                   : "tamara-summary",
               amount: price.toFixed(2),
-              // Product / cart placements use inline-type=0 (custom
-              // template) so we can rearrange the layout to mirror
-              // Tabby's promo tile: description text on the start edge,
-              // prominent brand badge on the end edge, all on one
-              // vertically-centered row. Tamara's inline-type=2 renders
-              // the badge stacked after "More options" which sits
-              // visually below the description; custom template lifts
-              // it up next to the copy. Placeholders {{repaymentAmount}},
-              // {{numberOfInstallments}}, {{learnMoreLink}}, {{badgeTamara}}
-              // are substituted by Tamara's script (docs:
-              // https://widget-docs.tamara.co/tamara-summary).
-              // Checkout stays on the vendor-default card snippet.
-              ...(source === "checkout"
-                ? {}
-                : {
-                    "inline-type": "0",
-                    dangerouslySetInnerHTML: {
-                      __html:
-                        lang === "ar"
-                          ? `<div style="display:flex;align-items:center;gap:16px;padding:16px;font-size:14px;line-height:1.4;">
-                              <div style="flex:1;">
-                                قسّطها على {{numberOfInstallments}} دفعات من {{repaymentAmount}}.
-                                بدون رسوم تأخير، متوافقة مع الشريعة.
-                                {{learnMoreLink}}
-                              </div>
-                              <div style="flex-shrink:0;">{{badgeTamara}}</div>
-                            </div>`
-                          : `<div style="display:flex;align-items:center;gap:16px;padding:16px;font-size:14px;line-height:1.4;">
-                              <div style="flex:1;">
-                                Or split in {{numberOfInstallments}} payments of {{repaymentAmount}}.
-                                No late fees, Shariah-compliant.
-                                {{learnMoreLink}}
-                              </div>
-                              <div style="flex-shrink:0;">{{badgeTamara}}</div>
-                            </div>`,
-                    },
-                  }),
+              // Stay on Tamara's vendor default template (inline-type=2)
+              // — attempted inline-type=0 with custom flex-row template
+              // on 2026-07-30 rendered worse: Tamara's placeholder
+              // substitution broke the layout with unexpected block
+              // boundaries. The vendor template is uglier than we'd
+              // like but it's what Tamara actually supports cleanly.
+              ...(source === "checkout" ? {} : { "inline-type": "2" }),
             })}
           </div>
           {tamaraLoading && (

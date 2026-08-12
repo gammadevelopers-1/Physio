@@ -7,6 +7,7 @@ import { WebsiteRecoveryController } from './website-recovery.controller';
 import { WebsiteRecoveryService } from './website-recovery.service';
 import { RestoreCloneService } from './restore-clone.service';
 import { BackupsPurgeClonesJob } from './backups.jobs';
+import { BackupPurgeCloneTask } from './backups.tasks';
 import { AuthModule } from '../auth/auth.module';
 import { MaterialsModule } from '../materials/materials.module';
 import { CoursesModule } from '../courses/courses.module';
@@ -25,6 +26,8 @@ import { CoursesModule } from '../courses/courses.module';
     WebsiteRecoveryService,
     RestoreCloneService,
     BackupsPurgeClonesJob,
+    // Cloud Tasks handler — self-registers with TaskHandlerRegistry
+    BackupPurgeCloneTask,
   ],
 })
 export class BackupsModule {}

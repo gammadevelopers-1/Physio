@@ -16,6 +16,7 @@ import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { instructorApi, materialsApi, UploadError } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import Select from "@/components/ui/Select";
 import {
   ALL_ALLOWED_MIMES,
@@ -156,6 +157,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
   const [selectedModuleId, setSelectedModuleId] = useState("");
   const [courseModules, setCourseModules] = useState<{ id: string; title: string }[]>([]);
   const [title, setTitle] = useState("");
+  const [titleAr, setTitleAr] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [detectedType, setDetectedType] = useState<MaterialType | null>(null);
   const [autoTranscribe, setAutoTranscribe] = useState(true);
@@ -226,6 +228,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
         (pct) => setProgress(pct),
         selectedModuleId || undefined,
         detectedType === "video" ? autoTranscribe : undefined,
+        titleAr.trim() || undefined,
       );
       toast.success(t("content.uploadSuccess"));
       onUploaded();
@@ -298,9 +301,9 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
             )}
           </div>
 
-          {/* Title */}
+          {/* Title (English) */}
           <div className="mt-4">
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.materialTitle")}</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.materialTitleEn")}</label>
             <input
               type="text"
               value={title}
@@ -308,6 +311,20 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               placeholder={t("content.titlePlaceholder")}
               className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
             />
+          </div>
+
+          {/* Title (Arabic) — optional */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.materialTitleAr")}</label>
+            <input
+              type="text"
+              value={titleAr}
+              onChange={(e) => setTitleAr(e.target.value)}
+              placeholder={t("content.titleArPlaceholder")}
+              dir="rtl"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+            />
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("content.materialTitleArHint")}</p>
           </div>
 
           {/* Course */}
@@ -318,7 +335,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               onChange={setSelectedCourseId}
               className="w-full"
               options={courses
-                .filter((c) => c.status !== "completed" && c.status !== "archived")
+                .filter((c) => c.status !== "completed" && c.status !== "ended" && c.status !== "archived")
                 .map((c) => ({ value: c.id, label: c.title }))}
             />
           </div>
@@ -421,6 +438,7 @@ interface ReplaceModalProps {
 }
 
 const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) => {
+  const locale = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -473,7 +491,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
 
           {/* Current file info */}
           <div className="p-3 bg-[var(--color-surface-page)] rounded-lg mb-4">
-            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{material.title}</p>
+            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{pickLocaleTitle(material.title, material.titleAr, locale)}</p>
             <p className="text-xs text-[var(--color-text-secondary)] mt-1">
               v{material.version} &bull; {formatFileSize(material.fileSize)} &bull; {material.type.toUpperCase()}
             </p>
@@ -558,6 +576,7 @@ interface EditModalProps {
 
 const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
   const [title, setTitle] = useState(material.title);
+  const [titleAr, setTitleAr] = useState(material.titleAr ?? "");
   const [captionsUrl, setCaptionsUrl] = useState(material.captionsUrl || "");
   const [transcriptUrl, setTranscriptUrl] = useState(material.transcriptUrl || "");
   const [autoTranscribe, setAutoTranscribe] = useState(material.autoTranscribe !== false);
@@ -567,8 +586,11 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
     if (!title.trim()) return;
     setSaving(true);
     try {
-      const data: Record<string, string | boolean> = {};
+      const data: Record<string, string | boolean | null> = {};
       if (title.trim() !== material.title) data.title = title.trim();
+      const nextAr = titleAr.trim();
+      const currentAr = (material.titleAr ?? "").trim();
+      if (nextAr !== currentAr) data.titleAr = nextAr || null;
       if (captionsUrl !== (material.captionsUrl || "")) data.captionsUrl = captionsUrl;
       if (transcriptUrl !== (material.transcriptUrl || "")) data.transcriptUrl = transcriptUrl;
       if (material.type === "video" && autoTranscribe !== (material.autoTranscribe !== false)) {
@@ -602,15 +624,29 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
             </button>
           </div>
 
-          {/* Title */}
+          {/* Title (English) */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.materialTitle")}</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.materialTitleEn")}</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
             />
+          </div>
+
+          {/* Title (Arabic) — optional */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.materialTitleAr")}</label>
+            <input
+              type="text"
+              value={titleAr}
+              onChange={(e) => setTitleAr(e.target.value)}
+              placeholder={t("content.titleArPlaceholder")}
+              dir="rtl"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+            />
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("content.materialTitleArHint")}</p>
           </div>
 
           {/* WCAG Status display */}
@@ -775,6 +811,7 @@ interface DeleteConfirmProps {
 }
 
 const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) => {
+  const locale = useLocale();
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -814,7 +851,7 @@ const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) 
           </div>
           <h3 id="delete-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("content.deleteConfirmTitle")}</h3>
           <p className="text-sm text-[var(--color-text-secondary)] mb-1">{t("content.deleteConfirmDesc")}</p>
-          <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-6">&ldquo;{material.title}&rdquo;</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-6">&ldquo;{pickLocaleTitle(material.title, material.titleAr, locale)}&rdquo;</p>
 
           <div className="flex gap-3">
             <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50">
@@ -1660,7 +1697,7 @@ const ContentManagementContent = () => {
       {captionEditingMaterial && (
         <CaptionEditor
           materialId={captionEditingMaterial.id}
-          materialTitle={captionEditingMaterial.title}
+          materialTitle={pickLocaleTitle(captionEditingMaterial.title, captionEditingMaterial.titleAr, locale)}
           onClose={() => setCaptionEditingMaterial(null)}
           onSaved={refetch}
         />
@@ -1668,7 +1705,7 @@ const ContentManagementContent = () => {
       {versionHistoryMaterial && (
         <VersionHistoryPanel
           materialId={versionHistoryMaterial.id}
-          materialTitle={versionHistoryMaterial.title}
+          materialTitle={pickLocaleTitle(versionHistoryMaterial.title, versionHistoryMaterial.titleAr, locale)}
           onClose={() => setVersionHistoryMaterial(null)}
           onRollback={refetch}
         />
@@ -1676,7 +1713,7 @@ const ContentManagementContent = () => {
       {analyticsViewMaterial && (
         <VideoRetentionChart
           materialId={analyticsViewMaterial.id}
-          materialTitle={analyticsViewMaterial.title}
+          materialTitle={pickLocaleTitle(analyticsViewMaterial.title, analyticsViewMaterial.titleAr, locale)}
           onClose={() => setAnalyticsViewMaterial(null)}
         />
       )}

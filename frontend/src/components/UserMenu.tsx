@@ -111,7 +111,13 @@ export function UserMenu() {
     (user.firstName?.[0] || '') + (user.lastName?.[0] || user.email[0]);
 
   return (
-    <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
+    // modal={false} — Radix's default modal mode locks body scroll
+    // (adds `overflow: hidden`) while the menu is open, which makes
+    // <body> a scroll container and breaks `position: sticky` on the
+    // navbar (nav sticks to body instead of viewport → disappears).
+    // A navbar avatar menu isn't a true modal; outside-click still
+    // closes it, and interaction under the menu stays live.
+    <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'} modal={false}>
       <DropdownMenuTrigger asChild>
         <button
           disabled={switching || isLoading}

@@ -118,6 +118,24 @@ ENV_VARS="^||^NODE_ENV=production||CORS_ORIGIN=${CORS_VALUE}||API_PREFIX=api||LO
 # a localhost default breaks the post-payment redirect and leaves payments pending.
 ENV_VARS="${ENV_VARS}||PAYMENT_CALLBACK_URL=${FRONTEND_URL}/payment/callback||PAYMENT_WEBHOOK_BASE_URL=${BACKEND_URL}/api/webhooks"
 
+# Cloud Tasks (event-driven scheduling). TasksService.enqueue() is a no-op
+# when TASKS_ENABLED=false — leave it true in prod so per-row events (session
+# reminders, ticket auto-close, payment cleanup, etc.) are scheduled at real
+# fire time instead of polled by per-minute crons. Dispatcher SA is granted
+# roles/run.invoker on the api-web service by setup-cloud-tasks.sh, and
+# OidcVerifierService accepts only tokens signed for TASKS_DISPATCH_URL by
+# TASKS_DISPATCHER_SA — so an attacker who guesses the URL still can't POST.
+TASKS_DISPATCH_URL="${TASKS_DISPATCH_URL:-${BACKEND_URL}/api/internal/tasks/dispatch}"
+TASKS_DISPATCHER_SA="${TASKS_DISPATCHER_SA:-tasks-dispatcher@${GCP_PROJECT_ID}.iam.gserviceaccount.com}"
+# TASKS_OIDC_AUDIENCE must match on BOTH sides — the producer signs the
+# OIDC token with this audience, and OidcVerifierService checks tokens
+# against it. Producer defaults to `new URL(dispatchUrl).origin`, so we
+# set the verifier explicitly to the same value. Empty string here would
+# reject every incoming task with HTTP 401.
+TASKS_OIDC_AUDIENCE="${TASKS_OIDC_AUDIENCE:-${BACKEND_URL}}"
+ENV_VARS="${ENV_VARS}||TASKS_ENABLED=true||TASKS_LOCATION=${GCP_REGION}||TASKS_DISPATCH_URL=${TASKS_DISPATCH_URL}||TASKS_DISPATCHER_SA=${TASKS_DISPATCHER_SA}||TASKS_OIDC_AUDIENCE=${TASKS_OIDC_AUDIENCE}"
+log_info "Cloud Tasks: dispatch=${TASKS_DISPATCH_URL} sa=${TASKS_DISPATCHER_SA} audience=${TASKS_OIDC_AUDIENCE}"
+
 # Secrets from GCP Secret Manager (required)
 SECRETS="DATABASE_URL=DATABASE_URL:latest"
 SECRETS="${SECRETS},JWT_SECRET=JWT_SECRET:latest"
@@ -245,8 +263,8 @@ if gcloud secrets describe RECONCILIATION_CRON_TOKEN &>/dev/null 2>&1; then
     SECRETS="${SECRETS},RECONCILIATION_CRON_TOKEN=RECONCILIATION_CRON_TOKEN:latest"
     log_info "Reconciliation cron token secret found"
 fi
-# Tamara API URL — sandbox by default; override per env if going live.
-TAMARA_API_URL="${TAMARA_API_URL:-https://api-sandbox.tamara.co}"
+# Tamara API URL — PRODUCTION. Override with TAMARA_API_URL=https://api-sandbox.tamara.co for sandbox.
+TAMARA_API_URL="${TAMARA_API_URL:-https://api.tamara.co}"
 ENV_VARS="${ENV_VARS}||TAMARA_API_URL=${TAMARA_API_URL}"
 log_info "Tamara API URL: ${TAMARA_API_URL}"
 

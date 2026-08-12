@@ -41,9 +41,14 @@ const Step2Schedule = ({ state, dispatch }: Step2Props) => {
             onChange={(v) =>
               dispatch({ type: "SET_FIELD", field: "endDate", value: v })
             }
-            min={state.startDate || undefined}
+            min={(() => {
+              if (!state.startDate) return undefined;
+              const next = new Date(state.startDate);
+              next.setDate(next.getDate() + 1);
+              return next.toISOString().split("T")[0];
+            })()}
           />
-          {state.endDate && state.startDate && new Date(state.endDate) <= new Date(state.startDate) && (
+          {state.endDate && state.startDate && state.endDate <= state.startDate && (
             <p className="text-xs text-[#EF4444] mt-1">{t("endDateError")}</p>
           )}
         </div>

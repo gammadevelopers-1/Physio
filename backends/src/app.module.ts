@@ -46,6 +46,7 @@ import { ScheduledMaintenanceModule } from './modules/scheduled-maintenance/sche
 import { SidebarBadgesModule } from './modules/sidebar-badges/sidebar-badges.module';
 import { XapiModule } from './modules/xapi/xapi.module';
 import { JobsModule } from './modules/jobs/jobs.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 import { MaintenanceMiddleware } from './common/maintenance.middleware';
 import { JwtAuthGuard } from './modules/auth/guards';
 import { ThrottlerGuard } from '@nestjs/throttler';
@@ -165,6 +166,13 @@ import nelcConfig from './config/nelc.config';
     // point (dist/src/main-job) and lets any module register its
     // extracted-cron JobHandlers without importing this module locally.
     JobsModule,
+    // @Global() — Cloud Tasks (event-driven scheduling replacement for
+    // polling-cron). Provides TasksService (enqueue/cancel) and
+    // TaskHandlerRegistry (used by /internal/tasks/dispatch controller).
+    // Retirement path: as each @Cron migrates to Cloud Tasks, its
+    // JobHandler (JobsModule) goes away and a TaskHandler (TasksModule)
+    // replaces it.
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [

@@ -12,6 +12,7 @@ import {
   BadRequestException,
   Inject,
   UseGuards,
+  forwardRef,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { eq, and, or, isNotNull, isNull } from 'drizzle-orm';
@@ -28,6 +29,7 @@ import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { ZoomWebhookService } from './zoom-webhook.service';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { EmailService } from '../email/email.service';
+import { SessionReminderService } from '../sessions/session-reminder.service';
 import { Public, Roles, CurrentUser } from '../auth/decorators';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import {
@@ -61,6 +63,11 @@ export class ZoomController {
     private webhookService: ZoomWebhookService,
     private auditService: NelcAuditService,
     private emailService: EmailService,
+    // forwardRef: SessionsModule imports ZoomModule → circular. We only
+    // need the session-lifecycle enqueue helpers from the reminder
+    // service; forwardRef lets Nest resolve the cycle at bootstrap.
+    @Inject(forwardRef(() => SessionReminderService))
+    private reminderService: SessionReminderService,
   ) {}
 
   /**
@@ -269,14 +276,28 @@ export class ZoomController {
       return;
     }
 
+    const startedAt = new Date();
     await db
       .update(sessions)
       .set({
         status: SESSION_STATUS.LIVE,
-        actualStartedAt: new Date(),
+        actualStartedAt: startedAt,
         updatedAt: new Date(),
       })
       .where(eq(sessions.id, session.id));
+
+    // Enqueue warn-90 + end Cloud Tasks now that the session has really
+    // started (via Zoom webhook rather than manual UI). Same call the
+    // instructor-driven start() path makes. Also cancel the pending
+    // mark-missed + reminder tasks — session left SCHEDULED so they'd
+    // CAS-no-op, but clearing keeps the queue tidy.
+    await this.reminderService.enqueueEndTasks({
+      id: session.id,
+      actualStartedAt: startedAt,
+      durationMinutes: session.durationMinutes,
+    });
+    await this.reminderService.cancelMarkMissedTask(session.id);
+    await this.reminderService.cancelReminderTask(session.id);
 
     await this.auditService.log({
       eventType: NELC_EVENT_TYPE.SESSION_STARTED,
@@ -471,6 +492,11 @@ export class ZoomController {
         updatedAt: endedAt,
       })
       .where(eq(sessions.id, session.id));
+
+    // Cancel the pending warn-90 + end Cloud Tasks (same reasoning as
+    // sessions.service.end() — handlers would CAS-no-op but freeing
+    // the queue slot keeps dashboard metrics clean).
+    await this.reminderService.cancelEndTasks(session.id);
 
     this.logger.log(
       `Session ${session.id} marked as ended via Zoom webhook (instructor must finalize after marking attendance)`,

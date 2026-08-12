@@ -30,6 +30,7 @@ import {
 } from "@/lib/platform-locale";
 import { useInstructorCourseDetail } from "@/hooks/useInstructorCourseDetail";
 import { instructorApi, materialsApi, publicApi, courseManagerApi } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
 import { openWebinarWhatsAppShare, openCoursePageWhatsAppShare } from "@/lib/webinar-share";
 import type { CourseModule, CourseSession, CourseMaterialResponse } from "@/types/instructor-dashboard";
@@ -357,7 +358,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const { course, enrollments, sessions, loading, error, refetch } =
     useInstructorCourseDetail(courseId);
 
-  const isCourseReadOnly = course?.status === "completed" || course?.status === "archived";
+  // `ended` freezes the same write surface as `completed` and `archived`.
+  // Only a manager's Mark Completed transition can promote ended → completed
+  // — from the instructor's perspective, both states are read-only.
+  const isCourseReadOnly = course?.status === "completed" || course?.status === "ended" || course?.status === "archived";
 
   const searchParams = useSearchParams();
   const validTabs = ["overview", "modules", "students", "sessions", "analytics", "settings"] as const;
@@ -1117,6 +1121,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               ? "bg-[#FEF3C7] text-[#D4A520]"
                               : course.status === "completed"
                               ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                              : course.status === "ended"
+                              ? "bg-[#F3E8FF] text-[#7C3AED]"
                               : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                           }`}
                         >
@@ -1435,7 +1441,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                           >
                                             {getMaterialIcon(mat.type)}
                                             <div className="flex-1 min-w-0">
-                                              <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{mat.title}</p>
+                                              <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{pickLocaleTitle(mat.title, mat.titleAr, locale)}</p>
                                               <p className="text-xs text-[var(--color-text-secondary)]">
                                                 {mat.type.toUpperCase()}
                                                 {mat.fileSize ? ` · ${formatFileSize(mat.fileSize)}` : ""}
@@ -1455,7 +1461,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                             <div className="flex items-center gap-0.5">
                                               {mat.type === "video" && mat.fileUrl && (
                                                 <button
-                                                  onClick={() => setPreviewVideo({ url: mat.fileUrl!, title: mat.title })}
+                                                  onClick={() => setPreviewVideo({ url: mat.fileUrl!, title: pickLocaleTitle(mat.title, mat.titleAr, locale) })}
                                                   className="p-1 hover:bg-[var(--color-border-subtle)] rounded"
                                                   aria-label={t("courseDetail.previewVideo") || "Preview video"}
                                                 >
@@ -1504,7 +1510,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                             >
                                               <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                               <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{ma.title}</p>
+                                                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{pickLocaleTitle(ma.title, ma.titleAr, locale)}</p>
                                                 <p className="text-xs text-[var(--color-text-secondary)]">
                                                   {ma.totalMarks} {t("courseDetail.marks") || "marks"}
                                                 </p>
@@ -2274,7 +2280,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       </div>
                       {getMaterialIcon(mat.type)}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{mat.title}</p>
+                        <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{pickLocaleTitle(mat.title, mat.titleAr, locale)}</p>
                         <p className="text-xs text-[var(--color-text-secondary)]">
                           {mat.type.toUpperCase()}
                           {mat.fileSize ? ` · ${formatFileSize(mat.fileSize)}` : ""}

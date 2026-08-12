@@ -6,6 +6,7 @@ import { InvoiceService } from './invoice.service';
 import { EmailService } from '../../email/email.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { DistributedLockService } from '../../tasks/distributed-lock.service';
 
 // Mock the db module — db.select() / db.update() are chainable thenables
 // so we return jest.fn().mockReturnValue(...) chains per test.
@@ -78,6 +79,10 @@ describe('TamaraRetryService — retryOne', () => {
         { provide: InvoiceService, useValue: invoiceService },
         { provide: EmailService, useValue: emailService },
         { provide: AuditLogService, useValue: auditLogService },
+        {
+          provide: DistributedLockService,
+          useValue: { withLock: jest.fn((_k, _t, fn) => fn()) },
+        },
       ],
     }).compile();
 

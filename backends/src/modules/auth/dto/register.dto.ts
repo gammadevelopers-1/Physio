@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, MaxLength, IsOptional, Matches, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, IsOptional, Matches, IsNotEmpty, IsBoolean, Equals } from 'class-validator';
 import { IsSaudiNationalId } from '../../../common/validators/saudi-national-id.validator';
 import { IsSaudiPhone } from '../../../common/validators/saudi-phone.validator';
 
@@ -46,4 +46,16 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   recaptchaToken?: string;
+
+  // PDPL consent — user must check "I accept Terms & Privacy Policy" at
+  // sign-up. Recorded in user_consents against the CURRENT_TERMS_VERSION /
+  // CURRENT_PRIVACY_VERSION constants at the moment of registration.
+  @IsBoolean()
+  @Equals(true, { message: 'You must accept the Terms of Service and Privacy Policy to register' })
+  termsAccepted: boolean;
+
+  // Optional marketing opt-in. Absent = no consent recorded (never assumed).
+  @IsOptional()
+  @IsBoolean()
+  marketingOptIn?: boolean;
 }

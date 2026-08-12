@@ -1283,7 +1283,7 @@ function ScheduleSessionModal({
             className="w-full"
             placeholder={t("sessionsPage.form.selectCourse")}
             options={courses
-              .filter((c) => c.status !== "completed" && c.status !== "archived" && c.deliveryType !== "self-paced" && c.deliveryType !== "webinar")
+              .filter((c) => c.status !== "completed" && c.status !== "ended" && c.status !== "archived" && c.deliveryType !== "self-paced" && c.deliveryType !== "webinar")
               .map((c) => ({ value: c.id, label: c.title }))}
           />
         </div>

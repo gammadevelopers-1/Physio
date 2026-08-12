@@ -197,6 +197,17 @@ export class CoursesService {
       }
     }
 
+    // End date/time must be strictly after start (both carry time-of-day
+    // now — see migration 0114). Equal timestamps are rejected too.
+    if (dto.startDate && dto.endDate) {
+      if (new Date(dto.endDate) <= new Date(dto.startDate)) {
+        throw new BadRequestException({
+          code: 'END_BEFORE_OR_EQUAL_START',
+          message: 'Course end must be after course start',
+        });
+      }
+    }
+
     // Auto-set managerId based on role
     let managerId: string | null = null;
     if (isManager(user)) {
@@ -224,8 +235,8 @@ export class CoursesService {
           : undefined,
         isCmeAccredited: dto.isCmeAccredited,
         language: dto.language,
-        startDate: dto.startDate,
-        endDate: dto.endDate,
+        startDate: dto.startDate ? new Date(dto.startDate) : undefined,
+        endDate: dto.endDate ? new Date(dto.endDate) : undefined,
         cohort: dto.cohort,
         accreditationNumber: dto.accreditationNumber,
         nelcReviewLink: dto.nelcReviewLink,
@@ -249,6 +260,8 @@ export class CoursesService {
         venueAr: dto.venueAr,
         showContents: dto.showContents,
         sectionsOrder: dto.sectionsOrder,
+        sectionHeadings: dto.sectionHeadings,
+        customSections: dto.customSections,
         ...(dto.visibleOnPublicSite !== undefined && { visibleOnPublicSite: dto.visibleOnPublicSite }),
       })
       .returning();
@@ -376,6 +389,8 @@ export class CoursesService {
           faqs: source.faqs,
           showContents: source.showContents,
           sectionsOrder: source.sectionsOrder,
+          sectionHeadings: source.sectionHeadings,
+          customSections: source.customSections,
           // Inherit the source's public-visibility setting so the copy
           // behaves the same way as the original once activated. Feature
           // flag stays off — being "featured" is per-offering, not per
@@ -460,6 +475,7 @@ export class CoursesService {
               courseId: newId,
               moduleId: m.moduleId ? moduleIdMap.get(m.moduleId) ?? null : null,
               title: m.title,
+              titleAr: m.titleAr,
               type: m.type,
               fileUrl: m.fileUrl,
               fileSize: m.fileSize,
@@ -514,6 +530,7 @@ export class CoursesService {
             courseId: newId,
             moduleId: a.moduleId ? moduleIdMap.get(a.moduleId) ?? null : null,
             title: a.title,
+            titleAr: a.titleAr,
             type: a.type,
             totalMarks: a.totalMarks,
             passingMarks: a.passingMarks,
@@ -688,19 +705,23 @@ export class CoursesService {
     const whereClause =
       conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Status lifecycle priority: draft first, cancelled/archived last.
-    // Cancelled sits between completed and archived so a cancelled active
-    // course sinks below normal completions in listings but stays above
-    // fully archived (historical-only) courses.
+    // Status priority: action-required states surface first (Amna
+    // 2026-08). ENDED is the highest priority because it's blocking
+    // the compliance pipeline — nothing releases until a manager
+    // clicks Mark Completed. Pending review + changes requested sit
+    // next because they also need a specific human action. Draft /
+    // active are steady-state; completed / cancelled / archived are
+    // terminal and drop to the bottom.
     const statusPriority = sql`CASE ${courses.status}
-      WHEN 'draft' THEN 1
+      WHEN 'ended' THEN 1
       WHEN 'pending_review' THEN 2
       WHEN 'changes_requested' THEN 3
-      WHEN 'active' THEN 4
-      WHEN 'completed' THEN 5
-      WHEN 'cancelled' THEN 6
-      WHEN 'archived' THEN 7
-      ELSE 8
+      WHEN 'draft' THEN 4
+      WHEN 'active' THEN 5
+      WHEN 'completed' THEN 6
+      WHEN 'cancelled' THEN 7
+      WHEN 'archived' THEN 8
+      ELSE 9
     END`;
 
     // Determine secondary sort order
@@ -1043,7 +1064,7 @@ export class CoursesService {
     // the main /courses page never shows expired content unless the caller
     // explicitly asks for the archive.
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const hasEnded = (c: { endDate: string | null }) => {
+    const hasEnded = (c: { endDate: string | Date | null }) => {
       if (!c.endDate) return false;
       const ed = new Date(c.endDate);
       const edLocal = new Date(ed.getFullYear(), ed.getMonth(), ed.getDate());
@@ -1051,7 +1072,7 @@ export class CoursesService {
     };
     const isArchived = (c: {
       availabilityStatus: 'open' | 'completed' | 'full' | 'deadline_passed';
-      endDate: string | null;
+      endDate: string | Date | null;
     }) =>
       c.availabilityStatus === 'completed' ||
       c.availabilityStatus === 'deadline_passed' ||
@@ -1424,6 +1445,8 @@ export class CoursesService {
         accreditationNumber: courses.accreditationNumber,
         showContents: courses.showContents,
         sectionsOrder: courses.sectionsOrder,
+        sectionHeadings: courses.sectionHeadings,
+        customSections: courses.customSections,
         seoTitle: courses.seoTitle,
         seoDescription: courses.seoDescription,
         seoKeywords: courses.seoKeywords,
@@ -1565,7 +1588,8 @@ export class CoursesService {
     let modulesList: Array<{
       id: string; title: string; titleAr: string | null;
       orderIndex: number; type: string; durationMinutes: number | null;
-      materials?: Array<{ id: string; title: string; type: string; orderIndex: number }>;
+      materials?: Array<{ id: string; title: string; titleAr: string | null; type: string; orderIndex: number }>;
+      assessments?: Array<{ id: string; title: string; titleAr: string | null; type: string }>;
     }> = [];
     if (data.showContents !== false) {
       modulesList = await db
@@ -1581,26 +1605,51 @@ export class CoursesService {
         .where(eq(courseModules.courseId, courseId))
         .orderBy(asc(courseModules.orderIndex));
 
-      // For the first 2 modules, attach their materials (preview)
-      const previewModuleIds = modulesList.slice(0, 2).map((m) => m.id);
+      // Preview the first HALF of modules (rounded up, minimum 1) with their
+      // materials AND published assessments attached — the marketing page
+      // shows the accordion open for these, and the rest are teaser rows
+      // that only reveal titles.
+      const previewCount = modulesList.length > 0
+        ? Math.max(1, Math.ceil(modulesList.length / 2))
+        : 0;
+      const previewSet = new Set(modulesList.slice(0, previewCount).map((m) => m.id));
+      const previewModuleIds = Array.from(previewSet);
       if (previewModuleIds.length > 0) {
-        const allMaterials = await db
-          .select({
-            id: courseMaterials.id,
-            title: courseMaterials.title,
-            type: courseMaterials.type,
-            orderIndex: courseMaterials.orderIndex,
-            moduleId: courseMaterials.moduleId,
-          })
-          .from(courseMaterials)
-          .where(
-            and(
-              inArray(courseMaterials.moduleId, previewModuleIds),
-              eq(courseMaterials.status, 'live'),
-              isNull(courseMaterials.deletedAt),
+        const [allMaterials, allAssessments] = await Promise.all([
+          db
+            .select({
+              id: courseMaterials.id,
+              title: courseMaterials.title,
+              titleAr: courseMaterials.titleAr,
+              type: courseMaterials.type,
+              orderIndex: courseMaterials.orderIndex,
+              moduleId: courseMaterials.moduleId,
+            })
+            .from(courseMaterials)
+            .where(
+              and(
+                inArray(courseMaterials.moduleId, previewModuleIds),
+                eq(courseMaterials.status, 'live'),
+                isNull(courseMaterials.deletedAt),
+              ),
+            )
+            .orderBy(asc(courseMaterials.orderIndex)),
+          db
+            .select({
+              id: assessments.id,
+              title: assessments.title,
+              titleAr: assessments.titleAr,
+              type: assessments.type,
+              moduleId: assessments.moduleId,
+            })
+            .from(assessments)
+            .where(
+              and(
+                inArray(assessments.moduleId, previewModuleIds),
+                eq(assessments.status, 'published'),
+              ),
             ),
-          )
-          .orderBy(asc(courseMaterials.orderIndex));
+        ]);
 
         // Group materials by module
         const materialsByModule = new Map<string, typeof allMaterials>();
@@ -1612,10 +1661,24 @@ export class CoursesService {
           materialsByModule.get(mat.moduleId)!.push(mat);
         }
 
-        modulesList = modulesList.map((mod, i) => ({
-          ...mod,
-          materials: i < 2 ? (materialsByModule.get(mod.id) || []).map(({ id, title, type, orderIndex }) => ({ id, title, type, orderIndex })) : undefined,
-        }));
+        // Group assessments by module
+        const assessmentsByModule = new Map<string, typeof allAssessments>();
+        for (const a of allAssessments) {
+          if (!a.moduleId) continue;
+          if (!assessmentsByModule.has(a.moduleId)) {
+            assessmentsByModule.set(a.moduleId, []);
+          }
+          assessmentsByModule.get(a.moduleId)!.push(a);
+        }
+
+        modulesList = modulesList.map((mod) => {
+          if (!previewSet.has(mod.id)) return mod;
+          return {
+            ...mod,
+            materials: (materialsByModule.get(mod.id) || []).map(({ id, title, titleAr, type, orderIndex }) => ({ id, title, titleAr, type, orderIndex })),
+            assessments: (assessmentsByModule.get(mod.id) || []).map(({ id, title, titleAr, type }) => ({ id, title, titleAr, type })),
+          };
+        });
       }
     }
 
@@ -1889,12 +1952,21 @@ export class CoursesService {
     if (dto.enrollmentDeadline !== undefined) {
       const newDeadline = this.parseEnrollmentDeadline(dto.enrollmentDeadline);
 
-      // Never shorten a previously-set deadline (even if the old one passed)
-      if (existing.enrollmentDeadline && newDeadline <= new Date(existing.enrollmentDeadline)) {
-        throw new BadRequestException({
-          code: 'ENROLLMENT_DEADLINE_NOT_FORWARD',
-          message: 'Enrollment deadline can only be extended, not shortened',
-        });
+      // Never shorten a previously-set deadline (even if the old one passed).
+      // Allow same-value re-sends (equality) so unchanged payloads round-trip
+      // cleanly — the frontend picker rounds to minute precision but the DB
+      // stores sub-second data; without a tolerance, re-saving lands slightly
+      // earlier than the loaded value and would spuriously trip this check.
+      if (existing.enrollmentDeadline) {
+        const existingDeadline = new Date(existing.enrollmentDeadline);
+        const driftMs = existingDeadline.getTime() - newDeadline.getTime();
+        // Reject only when the new deadline is meaningfully earlier (>60s).
+        if (driftMs > 60_000) {
+          throw new BadRequestException({
+            code: 'ENROLLMENT_DEADLINE_NOT_FORWARD',
+            message: 'Enrollment deadline can only be extended, not shortened',
+          });
+        }
       }
 
       // Deadline must still land before the course start date
@@ -1903,6 +1975,23 @@ export class CoursesService {
         throw new BadRequestException({
           code: 'ENROLLMENT_DEADLINE_AFTER_START',
           message: 'Enrollment deadline must be before the course start date',
+        });
+      }
+    }
+
+    // End date/time must remain strictly after start when either is
+    // changed. Compare the effective values (new-or-existing).
+    if (dto.startDate !== undefined || dto.endDate !== undefined) {
+      const nextStart = dto.startDate
+        ? new Date(dto.startDate)
+        : existing.startDate ? new Date(existing.startDate) : null;
+      const nextEnd = dto.endDate
+        ? new Date(dto.endDate)
+        : existing.endDate ? new Date(existing.endDate) : null;
+      if (nextStart && nextEnd && nextEnd <= nextStart) {
+        throw new BadRequestException({
+          code: 'END_BEFORE_OR_EQUAL_START',
+          message: 'Course end must be after course start',
         });
       }
     }
@@ -1986,6 +2075,14 @@ export class CoursesService {
     }
     if (enrollmentDeadline !== undefined) {
       updateData.enrollmentDeadline = this.parseEnrollmentDeadline(enrollmentDeadline);
+    }
+    // Coerce ISO strings to Date so Drizzle's timestamp column happily
+    // takes them; passing raw strings works at runtime but trips TS.
+    if (updateData.startDate !== undefined && updateData.startDate !== null) {
+      updateData.startDate = new Date(updateData.startDate as string);
+    }
+    if (updateData.endDate !== undefined && updateData.endDate !== null) {
+      updateData.endDate = new Date(updateData.endDate as string);
     }
     // Sanitize rich-text fields on update too (same reason as create —
     // these are HTML rendered by other surfaces). Only touches the
@@ -2357,16 +2454,13 @@ export class CoursesService {
     //     CME point cascade because those artifacts only exist once the
     //     course has started producing outcomes.
     //
-    // startDate is a `date` column (day, no time). We treat it as
-    // end-of-day in Asia/Riyadh (UTC+3) — a course scheduled for today
-    // is considered pre-start until 00:00 the next day Riyadh time.
-    // Amna asked for a Riyadh-time-based grace period (Phase F.1 fix).
-    // NULL startDate means self-paced / unfixed → pre-start.
+    // startDate is now a full timestamp (migration 0114) — compare
+    // directly against now(). NULL startDate means self-paced / unfixed
+    // → pre-start.
     const now = new Date();
     const isPreStart =
       !existing.startDate ||
-      new Date(`${existing.startDate}T23:59:59+03:00`).getTime() >
-        now.getTime();
+      new Date(existing.startDate).getTime() > now.getTime();
     const variant: 'pre_start' | 'post_start' = isPreStart
       ? 'pre_start'
       : 'post_start';
@@ -3007,11 +3101,10 @@ export class CoursesService {
         ? newStart.getTime() - new Date(existing.startDate).getTime()
         : 0;
 
-    // The date column strips the time portion; store the ISO date substring.
-    const newStartDateStr = dto.newStartDate.slice(0, 10);
-    const newEndDateStr = newEnd
-      ? newEnd.toISOString().slice(0, 10)
-      : existing.endDate;
+    // Full-timestamp columns now (migration 0114). Store Date objects
+    // directly — Drizzle serialises to UTC.
+    const newStartTs = newStart;
+    const newEndTs = newEnd ?? existing.endDate ?? null;
 
     // Snapshot originalStartDate on first reschedule. Preserve on subsequent.
     const originalStartDate =
@@ -3023,8 +3116,8 @@ export class CoursesService {
       .update(courses)
       .set({
         status: COURSE_STATUS.ACTIVE,
-        startDate: newStartDateStr,
-        endDate: newEndDateStr,
+        startDate: newStartTs,
+        endDate: newEndTs,
         rescheduledAt: now,
         rescheduleReason: dto.reason,
         originalStartDate,
@@ -3111,6 +3204,13 @@ export class CoursesService {
         .from(users)
         .where(inArray(users.id, studentIds));
 
+      // Serialise for notification / email templates (string transport).
+      const newStartIso = newStartTs.toISOString();
+      const newEndIso = newEndTs ? new Date(newEndTs).toISOString() : null;
+      const oldStartIso = existing.startDate
+        ? new Date(existing.startDate).toISOString()
+        : null;
+
       // In-app bulk fanout with i18n keys.
       try {
         if (variant === 'shift') {
@@ -3122,7 +3222,7 @@ export class CoursesService {
             messageKey: 'notifications.types.course_rescheduled.message',
             messageParams: {
               courseName: existing.title,
-              newStartDate: newStartDateStr,
+              newStartDate: newStartIso,
             },
             link: `/dashboard/student/my-courses/${courseId}`,
             entityType: 'course',
@@ -3137,7 +3237,7 @@ export class CoursesService {
             messageKey: 'notifications.types.course_reopened.message',
             messageParams: {
               courseName: existing.title,
-              newStartDate: newStartDateStr,
+              newStartDate: newStartIso,
             },
             link: `/courses/${courseId}`,
             entityType: 'course',
@@ -3153,7 +3253,7 @@ export class CoursesService {
       }
 
       // Per-student email loop.
-      const oldStartDateStr = existing.startDate ?? null;
+      const oldStartDateStr = oldStartIso;
       const frontendBase = (
         process.env.FRONTEND_URL || 'https://physioguidance.org'
       ).replace(/\/$/, '');
@@ -3168,8 +3268,8 @@ export class CoursesService {
                 recipientName,
                 courseName: existing.title,
                 oldStartDate: oldStartDateStr,
-                newStartDate: newStartDateStr,
-                newEndDate: newEndDateStr ?? null,
+                newStartDate: newStartIso,
+                newEndDate: newEndIso,
                 reason: dto.reason,
                 variant,
                 reenrollUrl: `${frontendBase}/${locale}/courses/${courseId}`,
@@ -3202,8 +3302,8 @@ export class CoursesService {
           variant,
           fromStatus: existing.status,
           oldStartDate: existing.startDate,
-          newStartDate: newStartDateStr,
-          newEndDate: newEndDateStr,
+          newStartDate: newStartTs,
+          newEndDate: newEndTs,
           deltaMs,
           sessionsShifted,
           sessionsFailed,
@@ -3224,8 +3324,8 @@ export class CoursesService {
           reason: dto.reason,
           variant,
           oldStartDate: existing.startDate,
-          newStartDate: newStartDateStr,
-          newEndDate: newEndDateStr,
+          newStartDate: newStartTs,
+          newEndDate: newEndTs,
           sessionsShifted,
         },
         ipAddress,
@@ -3235,9 +3335,11 @@ export class CoursesService {
     return {
       rescheduledAt: now,
       variant,
-      newStartDate: newStartDateStr,
-      newEndDate: newEndDateStr ?? null,
-      originalStartDate: originalStartDate ?? null,
+      newStartDate: newStartTs.toISOString(),
+      newEndDate: newEndTs ? new Date(newEndTs).toISOString() : null,
+      originalStartDate: originalStartDate
+        ? new Date(originalStartDate).toISOString()
+        : null,
       sessionsShifted,
       sessionsFailed,
       zoomUpdatesFailed,
@@ -3640,6 +3742,7 @@ export class CoursesService {
       .select({
         id: courseMaterials.id,
         title: courseMaterials.title,
+        titleAr: courseMaterials.titleAr,
         status: courseMaterials.status,
       })
       .from(courseMaterials)
@@ -3999,6 +4102,7 @@ export class CoursesService {
         title: courses.title,
         instructorId: courses.instructorId,
         managerId: courses.managerId,
+        preArchiveStatus: courses.preArchiveStatus,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -4041,6 +4145,18 @@ export class CoursesService {
 
     const isReactivation = course.status === COURSE_STATUS.ARCHIVED;
 
+    // Unarchive restores to preArchiveStatus (Amna 2026-08): the shelf
+    // remembers what the course was before it went up. Valid targets
+    // are ENDED (still awaiting Mark Completed) or COMPLETED (fully
+    // done). Legacy rows archived before 0115 have NULL and fall back
+    // to ACTIVE. Any other value defensively coerces to ACTIVE too.
+    const restoreStatus: (typeof COURSE_STATUS)[keyof typeof COURSE_STATUS] =
+      isReactivation &&
+      (course.preArchiveStatus === COURSE_STATUS.ENDED ||
+        course.preArchiveStatus === COURSE_STATUS.COMPLETED)
+        ? course.preArchiveStatus
+        : COURSE_STATUS.ACTIVE;
+
     // Only validate readiness and materials for first-time activation (not reactivation)
     if (!isReactivation) {
       // Validate course readiness (modules, sessions, dates, CME hours)
@@ -4057,6 +4173,7 @@ export class CoursesService {
         .select({
           id: courseMaterials.id,
           title: courseMaterials.title,
+          titleAr: courseMaterials.titleAr,
           status: courseMaterials.status,
         })
         .from(courseMaterials)
@@ -4083,7 +4200,11 @@ export class CoursesService {
     const [updated] = await db
       .update(courses)
       .set({
-        status: COURSE_STATUS.ACTIVE,
+        status: restoreStatus,
+        // Clear pre-archive marker in every branch — first-time activation
+        // never had one, unarchive consumed it. Keeps the column clean
+        // so a future re-archive captures the fresh status.
+        preArchiveStatus: null,
         reviewedBy: user.id,
         reviewedAt: new Date(),
         reviewNote: null,
@@ -4100,49 +4221,58 @@ export class CoursesService {
       entityType: 'course',
       entityId: courseId,
       userId: user.id,
-      metadata: { courseTitle: course.title },
+      metadata: {
+        courseTitle: course.title,
+        fromStatus: course.status,
+        toStatus: restoreStatus,
+      },
     });
 
-    // Fetch instructor for notification + email
-    const [instructor] = await db
-      .select({ email: users.email, firstName: users.firstName, language: users.language })
-      .from(users)
-      .where(eq(users.id, course.instructorId))
-      .limit(1);
+    // Instructor "course approved" notification / email only fires when
+    // the course lands in ACTIVE. Restoring an archived course back to
+    // ENDED or COMPLETED is not an approval event — the instructor
+    // already had that state and doesn't need re-notification.
+    if (restoreStatus === COURSE_STATUS.ACTIVE) {
+      const [instructor] = await db
+        .select({ email: users.email, firstName: users.firstName, language: users.language })
+        .from(users)
+        .where(eq(users.id, course.instructorId))
+        .limit(1);
 
-    const apIsAr = instructor?.language === 'ar';
+      await this.userNotificationsService.create({
+        recipientId: course.instructorId,
+        type: 'course_approved',
+        title: 'Course Approved',
+        message: `Your course "${course.title}" has been approved and is now active.`,
+        titleKey: 'notifications.types.course_approved.title',
+        messageKey: 'notifications.types.course_approved.messageWithTitle',
+        messageParams: { courseTitle: course.title },
+        link: '/dashboard/instructor/courses',
+        entityType: 'course',
+        entityId: courseId,
+      });
 
-    // Notify instructor: course approved
-    await this.userNotificationsService.create({
-      recipientId: course.instructorId,
-      type: 'course_approved',
-      title: 'Course Approved',
-      message: `Your course "${course.title}" has been approved and is now active.`,
-      titleKey: 'notifications.types.course_approved.title',
-      messageKey: 'notifications.types.course_approved.messageWithTitle',
-      messageParams: { courseTitle: course.title },
-      link: '/dashboard/instructor/courses',
-      entityType: 'course',
-      entityId: courseId,
-    });
-
-    // Email instructor
-    if (instructor?.email) {
-      const instrLocale = (instructor.language || 'en') as 'en' | 'ar';
-      await this.emailService.sendContentReview(instructor.email, {
-        recipientName: instructor.firstName || 'Instructor',
-        materialTitle: course.title,
-        courseName: course.title,
-        decision: 'approved',
-        comment: null,
-      }, instrLocale).catch(() => {});
+      if (instructor?.email) {
+        const instrLocale = (instructor.language || 'en') as 'en' | 'ar';
+        await this.emailService.sendContentReview(instructor.email, {
+          recipientName: instructor.firstName || 'Instructor',
+          materialTitle: course.title,
+          courseName: course.title,
+          decision: 'approved',
+          comment: null,
+        }, instrLocale).catch(() => {});
+      }
     }
 
-    this.logger.log(`Course "${course.title}" activated by ${user.id}`);
+    this.logger.log(
+      `Course "${course.title}" activated by ${user.id} (${course.status} → ${restoreStatus})`,
+    );
 
     await this.logCourseAction(user,courseId, 'course.activate', {
       title: course.title,
       isReactivation,
+      fromStatus: course.status,
+      toStatus: restoreStatus,
     });
 
     return updated;
@@ -4171,15 +4301,28 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    if (course.status !== COURSE_STATUS.COMPLETED) {
+    // Archivable from COMPLETED (course fully done) or ENDED (teaching
+    // wrapped, awaiting Mark Completed but manager wants it off the
+    // active list right now). Amna 2026-08: both should reach Archive
+    // without an intermediate manual step.
+    if (
+      course.status !== COURSE_STATUS.COMPLETED &&
+      course.status !== COURSE_STATUS.ENDED
+    ) {
       throw new BadRequestException(
-        'Only completed courses can be archived. Complete the course (or cancel it) first — active courses cannot be archived while learners are still working.',
+        'Only completed or ended courses can be archived. Complete the course (or cancel it) first — active courses cannot be archived while learners are still working.',
       );
     }
 
     const [updated] = await db
       .update(courses)
-      .set({ status: COURSE_STATUS.ARCHIVED, updatedAt: new Date() })
+      .set({
+        status: COURSE_STATUS.ARCHIVED,
+        // Capture pre-archive status so unarchive can restore it
+        // symmetrically. NULL for legacy rows archived before 0115.
+        preArchiveStatus: course.status,
+        updatedAt: new Date(),
+      })
       .where(eq(courses.id, courseId))
       .returning();
 
@@ -4189,13 +4332,14 @@ export class CoursesService {
       entityType: 'course',
       entityId: courseId,
       userId: user.id,
-      metadata: { courseTitle: course.title },
+      metadata: { courseTitle: course.title, fromStatus: course.status },
     });
 
-    this.logger.log(`Course "${course.title}" deactivated by ${user.id}`);
+    this.logger.log(`Course "${course.title}" deactivated by ${user.id} (from ${course.status})`);
 
     await this.logCourseAction(user,courseId, 'course.archive', {
       title: course.title,
+      fromStatus: course.status,
     });
 
     return updated;
@@ -4315,6 +4459,137 @@ export class CoursesService {
     await this.logCourseAction(user,courseId, 'course.complete', {
       title: course.title,
     });
+
+    return updated;
+  }
+
+  /**
+   * Mark an ACTIVE course as ended (manual counterpart to the cron
+   * autoCompletePastEndDate flow). Manager/admin only. Reason optional.
+   *
+   * Deliberately does NOT run finalizeEnrollments — that's the job of
+   * the separate Mark Completed step, so certificates / CME / xAPI
+   * fanout stay locked behind the human "we're really done" click.
+   * Client spec (Amna 2026-08): Active → Ended → Completed is the
+   * correct order; anything that fans out compliance artefacts belongs
+   * to the second transition alone.
+   */
+  async endCourse(
+    courseId: string,
+    user: AuthenticatedUser,
+    reason?: string,
+  ) {
+    if (!isManagerOrAbove(user)) {
+      throw new ForbiddenException(
+        'Only managers and admins can end a course',
+      );
+    }
+
+    const [course] = await db
+      .select({
+        id: courses.id,
+        status: courses.status,
+        title: courses.title,
+        instructorId: courses.instructorId,
+        managerId: courses.managerId,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    if (course.status !== COURSE_STATUS.ACTIVE) {
+      throw new BadRequestException(
+        'Only active courses can be ended. Use Mark Completed to move an ended course to completed.',
+      );
+    }
+
+    const trimmedReason = reason?.trim() || null;
+
+    const [updated] = await db
+      .update(courses)
+      .set({
+        status: COURSE_STATUS.ENDED,
+        endedAt: new Date(),
+        endedBy: user.id,
+        endReason: trimmedReason,
+        updatedAt: new Date(),
+      })
+      .where(eq(courses.id, courseId))
+      .returning();
+
+    // Head-count of learners still enrolled — used only for the
+    // notification copy ("N enrolments awaiting completion").
+    const [enrolCount] = await db
+      .select({ c: count() })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      );
+    const enrolments = Number(enrolCount?.c || 0);
+
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.COURSE_ENDED_MANUAL,
+      entityType: 'course',
+      entityId: courseId,
+      userId: user.id,
+      metadata: {
+        courseTitle: course.title,
+        trigger: 'manual_end_course_click',
+        activeEnrolments: enrolments,
+        ...(trimmedReason ? { reason: trimmedReason } : {}),
+      },
+    });
+
+    // Notify manager (primary owner of the follow-up Mark Completed
+    // click) — skip if the acting user IS the manager, they already know.
+    if (course.managerId && course.managerId !== user.id) {
+      await this.userNotificationsService.create({
+        recipientId: course.managerId,
+        type: 'course_ended_manual',
+        title: 'Course Ended — Ready for Review',
+        message: `Course "${course.title}" was ended. ${enrolments} enrolment(s) are waiting — click Mark Completed to unlock certificates and CME awards.`,
+        titleKey: 'notifications.types.course_ended_manual.title',
+        messageKey: 'notifications.types.course_ended_manual.messageManager',
+        messageParams: { courseTitle: course.title, count: enrolments },
+        link: `/dashboard/manager/courses/${courseId}`,
+        entityType: 'course',
+        entityId: courseId,
+      });
+    }
+
+    // Instructor gets an FYI too — they don't own the completion action
+    // but should know the teaching window closed.
+    if (course.instructorId && course.instructorId !== user.id) {
+      await this.userNotificationsService.create({
+        recipientId: course.instructorId,
+        type: 'course_ended_manual',
+        title: 'Course Ended',
+        message: `Your course "${course.title}" has been ended. A manager will mark it completed to release certificates.`,
+        titleKey: 'notifications.types.course_ended_manual.title',
+        messageKey: 'notifications.types.course_ended_manual.messageInstructor',
+        messageParams: { courseTitle: course.title, count: enrolments },
+        link: '/dashboard/instructor/courses',
+        entityType: 'course',
+        entityId: courseId,
+      });
+    }
+
+    await this.logCourseAction(user, courseId, 'course.end', {
+      title: course.title,
+      reason: trimmedReason,
+      activeEnrolments: enrolments,
+    });
+
+    this.logger.log(
+      `Course "${course.title}" (${courseId}) ended manually by ${user.id} — ${enrolments} enrolment(s) awaiting Mark Completed`,
+    );
 
     return updated;
   }
@@ -4552,6 +4827,7 @@ export class CoursesService {
         deliveryType: courses.deliveryType,
         enrollmentDeadline: courses.enrollmentDeadline,
         startDate: courses.startDate,
+        endDate: courses.endDate,
         maxEnrollment: courses.maxEnrollment,
       })
       .from(courses)
@@ -4562,8 +4838,10 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'archived')) {
-      throw new BadRequestException('Cannot modify a completed or archived course');
+    // `ended` locks the same write surface as `completed` (see contract in
+    // courses.ts schema comment) — only manager Mark-Completed can promote it.
+    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'ended' || course.status === 'archived')) {
+      throw new BadRequestException('Cannot modify a completed, ended, or archived course');
     }
 
     return course;

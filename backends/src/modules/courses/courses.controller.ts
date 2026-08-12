@@ -22,6 +22,7 @@ import { ReorderModulesDto } from './dto/reorder-modules.dto';
 import { RateCourseDto } from './dto/rate-course.dto';
 import { CancelCourseDto } from './dto/cancel-course.dto';
 import { RescheduleCourseDto } from './dto/reschedule-course.dto';
+import { EndCourseDto } from './dto/end-course.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles, Public } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -187,6 +188,26 @@ export class CoursesController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.coursesService.deactivate(courseId, user);
+  }
+
+  /**
+   * POST /courses/:id/end — Manually end an ACTIVE course.
+   *
+   * Manager + admin only. Flips status → ended (the same transitional
+   * state the cron would produce) with a human author + optional
+   * reason for the audit trail. Does NOT release certificates / CME —
+   * that stays behind the separate Mark Completed click, per client
+   * spec (Amna 2026-08: Active → Ended → Completed).
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/end')
+  @HttpCode(HttpStatus.OK)
+  async endCourse(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: EndCourseDto,
+  ) {
+    return this.coursesService.endCourse(courseId, user, dto.reason);
   }
 
   /**

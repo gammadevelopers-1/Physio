@@ -21,7 +21,7 @@ import {
   BookOpen,
   BarChart3,
 } from "lucide-react";
-import { useAuth } from "@/contexts";
+import { useAuth, useHasMultipleRoles } from "@/contexts";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
@@ -39,13 +39,37 @@ interface SupportNavbarProps {
 const SupportNavbar = ({ profile }: SupportNavbarProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [switchingRole, setSwitchingRole] = useState(false);
   const t = useTranslations("navbar");
   const tDashboard = useTranslations("supportDashboard");
+  const tUserMenu = useTranslations("userMenu");
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
-  const { logout, user } = useAuth();
+  const { logout, user, switchRole } = useAuth();
+  const hasMultipleRoles = useHasMultipleRoles();
+
+  const handleSwitchRole = async (role: string) => {
+    if (role === user?.activeRole) return;
+    setSwitchingRole(true);
+    try {
+      await switchRole(role);
+    } catch (err) {
+      console.error("Failed to switch role:", err);
+    } finally {
+      setSwitchingRole(false);
+    }
+  };
+
+  const roleLabel = (role: string) => {
+    const key = role.toLowerCase();
+    try {
+      return tUserMenu(`roles.${key}`);
+    } catch {
+      return role.charAt(0) + role.slice(1).toLowerCase().replace(/_/g, " ");
+    }
+  };
   const { allowedLanguages } = usePlatformLocale();
   const showLocaleToggle = allowedLanguages.length > 1;
   const { settings: siteSettings } = useSiteSettings();
@@ -199,6 +223,43 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
                   <Settings className="w-4 h-4" />
                   {tDashboard("sidebar.settings")}
                 </Link>
+
+                {/* Role switcher — only visible for multi-role users.
+                    Support-only accounts see the same 3-item menu as
+                    before (Dashboard / Settings / Logout). */}
+                {hasMultipleRoles && user && (
+                  <>
+                    <div className="border-t border-[var(--outline-subtle)] my-1" />
+                    <div
+                      className={`px-4 py-1.5 text-[10px] font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider ${isRTL ? "text-right" : "text-left"}`}
+                    >
+                      {tUserMenu("switchRole")}
+                    </div>
+                    {user.roles.map((role) => {
+                      const isActive = role === user.activeRole;
+                      return (
+                        <button
+                          key={role}
+                          onClick={() => {
+                            handleSwitchRole(role);
+                            setIsUserMenuOpen(false);
+                          }}
+                          disabled={switchingRole || isActive}
+                          className={`flex items-center gap-2 px-4 py-2 w-full text-sm transition-colors ${
+                            isActive
+                              ? "bg-[var(--surface-container-low)] text-[var(--on-surface-default)]"
+                              : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)]"
+                          } disabled:opacity-60`}
+                        >
+                          <User className="w-4 h-4 flex-shrink-0" />
+                          <span className="flex-1 truncate text-start">{roleLabel(role)}</span>
+                          {isActive && <span className="text-[10px] text-[var(--color-primary)]">●</span>}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+
                 <div className="border-t border-[var(--outline-subtle)] my-1" />
                 <button onClick={logout} className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
                   <LogOut className="w-4 h-4" />

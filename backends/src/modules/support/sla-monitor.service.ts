@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { eq, and, inArray, sql } from 'drizzle-orm';
@@ -36,16 +36,50 @@ import {
 import { SupportService } from './support.service';
 import { EmailService } from '../email/email.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { DistributedLockService } from '../tasks/distributed-lock.service';
+import { TasksService } from '../tasks/tasks.service';
+import { SafetyNetSweep } from '../tasks/safety-net-sweep';
+
+// Cloud Tasks constants for the support/CSAT flow. Kept adjacent so
+// name-scheme and handler wiring don't drift.
+export const TICKETS_QUEUE = 'ticket-events';
+export const TICKET_HANDLERS = {
+  CSAT_SEND: 'ticket.csat-send',
+  AUTO_CLOSE_RESOLVED: 'ticket.auto-close-resolved',
+  AUTO_CLOSE_WAITING: 'ticket.auto-close-waiting',
+} as const;
+
+export interface CsatTaskPayload {
+  surveyId: string;
+}
+
+export interface TicketTaskPayload {
+  ticketId: string;
+}
+
+// CSAT email fires at ticket.resolvedAt + CSAT_EMAIL_DELAY_MS. Keeping
+// the 15-min delay from the legacy cron so student sees the email once
+// they've had a chance to leave the app and come back.
+export const CSAT_EMAIL_DELAY_MS = 15 * 60_000;
+// Auto-close-resolved fires at ticket.resolvedAt + AUTO_CLOSE_DELAY_MS
+export const AUTO_CLOSE_DELAY_MS = 48 * 60 * 60 * 1000; // 48h
 
 @Injectable()
 export class SlaMonitorService {
   private readonly logger = new Logger(SlaMonitorService.name);
 
+  private readonly csatSafetyNet: SafetyNetSweep;
+
   constructor(
+    @Inject(forwardRef(() => SupportService))
     private readonly supportService: SupportService,
     private readonly emailService: EmailService,
     private readonly notificationsService: UserNotificationsService,
-  ) {}
+    private readonly lock: DistributedLockService,
+    private readonly tasks: TasksService,
+  ) {
+    this.csatSafetyNet = new SafetyNetSweep(this.tasks, this.lock);
+  }
 
   /**
    * Wrap a cron tick so each run records a row in `cron_runs`. The
@@ -117,7 +151,12 @@ export class SlaMonitorService {
   @Cron('*/5 * * * *')
   async checkSlaBreaches() {
     if (isCronExternalized('support.sla-breach')) return;
-    await this.trackCronRun(CRON_NAMES.SLA_BREACH_CHECK, async () => {
+    // Distributed lock so this cron is safe running in-process on
+    // multi-instance api-web (Phase 4 flip). The per-ticket CAS UPDATEs
+    // inside already prevent duplicate breach events, but the lock
+    // avoids N-instance duplication of the whole 5-min scan.
+    await this.lock.withLock('lock:cron:support.sla-breach', 5 * 60_000, () =>
+      this.trackCronRun(CRON_NAMES.SLA_BREACH_CHECK, async () => {
     try {
       // Refresh business-hours cache if stale — protects against another
       // Cloud Run instance having handled the admin PATCH while this one
@@ -565,7 +604,8 @@ export class SlaMonitorService {
     } catch (err) {
       this.logger.error(`SLA breach check failed: ${err}`);
     }
-    });
+    }),
+    );
   }
 
   /**
@@ -583,7 +623,12 @@ export class SlaMonitorService {
   @Cron('0 * * * *')
   async checkPriorityEscalations() {
     if (isCronExternalized('support.priority-escalation')) return;
-    await this.trackCronRun(CRON_NAMES.PRIORITY_ESCALATION, async () => {
+    // Distributed lock — multi-instance safe when this moves in-process.
+    await this.lock.withLock(
+      'lock:cron:support.priority-escalation',
+      5 * 60_000,
+      () =>
+        this.trackCronRun(CRON_NAMES.PRIORITY_ESCALATION, async () => {
     try {
       // Same anti-stale guard as checkSlaBreaches — see that method.
       await refreshBusinessHoursConfigIfStale(() =>
@@ -762,24 +807,26 @@ export class SlaMonitorService {
     } catch (err) {
       this.logger.error(`Priority escalation check failed: ${err}`);
     }
-    });
+    }),
+    );
   }
 
   /**
    * Auto-close resolved tickets after 48h with no student reply (RS-08)
    * Runs every 30 minutes
    */
+  /**
+   * Legacy every-30-min cron — RETAINED for parallel-run with Cloud
+   * Tasks. Delegates to autoCloseResolvedOne per row. Retire in Phase 5.2.
+   */
   @Cron('*/30 * * * *')
   async autoCloseResolvedTickets() {
     if (isCronExternalized('support.auto-close-resolved')) return;
     await this.trackCronRun(CRON_NAMES.AUTO_CLOSE_RESOLVED, async () => {
     try {
-      const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
-      const cutoff = new Date(Date.now() - FORTY_EIGHT_HOURS_MS);
-
-      // Find resolved tickets older than 48h
+      const cutoff = new Date(Date.now() - AUTO_CLOSE_DELAY_MS);
       const resolvedTickets = await db
-        .select({ id: tickets.id, resolvedAt: tickets.resolvedAt })
+        .select({ id: tickets.id })
         .from(tickets)
         .where(
           and(
@@ -788,31 +835,12 @@ export class SlaMonitorService {
           ),
         );
 
-      for (const ticket of resolvedTickets) {
-        try {
-          await db
-            .update(tickets)
-            .set({
-              status: TICKET_STATUS.CLOSED,
-              closedAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .where(eq(tickets.id, ticket.id));
-
-          this.logger.log(
-            `Auto-closed resolved ticket ${ticket.id} (no reply for 48h)`,
-          );
-        } catch (err) {
-          this.logger.error(
-            `Error auto-closing ticket ${ticket.id}: ${err}`,
-          );
-        }
+      let closed = 0;
+      for (const t of resolvedTickets) {
+        if (await this.autoCloseResolvedOne(t.id)) closed++;
       }
-
-      if (resolvedTickets.length > 0) {
-        this.logger.log(
-          `Auto-closed ${resolvedTickets.length} resolved tickets`,
-        );
+      if (closed > 0) {
+        this.logger.log(`Auto-closed ${closed} resolved ticket(s)`);
       }
     } catch (err) {
       this.logger.error(`Auto-close check failed: ${err}`);
@@ -820,27 +848,144 @@ export class SlaMonitorService {
     });
   }
 
+  // ─── Per-row event handler: auto-close resolved ─────────
+
+  /**
+   * Flip RESOLVED → CLOSED for a ticket that hit its 48h grace.
+   * CAS-guarded so parallel-run and multi-instance can't double-write.
+   */
+  async autoCloseResolvedOne(ticketId: string): Promise<boolean> {
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        status: tickets.status,
+        resolvedAt: tickets.resolvedAt,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+    if (!ticket) return false;
+    if (ticket.status !== TICKET_STATUS.RESOLVED) return false;
+    if (!ticket.resolvedAt) return false;
+    if (ticket.resolvedAt.getTime() + AUTO_CLOSE_DELAY_MS > Date.now()) return false;
+
+    const claim = await db
+      .update(tickets)
+      .set({
+        status: TICKET_STATUS.CLOSED,
+        closedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(tickets.id, ticketId),
+          eq(tickets.status, TICKET_STATUS.RESOLVED),
+        ),
+      )
+      .returning({ id: tickets.id });
+    if (claim.length === 0) return false;
+
+    this.logger.log(`Auto-closed resolved ticket ${ticketId} (no reply for 48h)`);
+    return true;
+  }
+
+  // ─── Cloud Tasks enqueue helpers: auto-close resolved ────
+
+  async enqueueAutoCloseResolvedTask(input: {
+    ticketId: string;
+    resolvedAt: Date;
+  }): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+    try {
+      const fireAt = new Date(input.resolvedAt.getTime() + AUTO_CLOSE_DELAY_MS);
+      await this.tasks.enqueue<TicketTaskPayload>({
+        queue: TICKETS_QUEUE,
+        handler: TICKET_HANDLERS.AUTO_CLOSE_RESOLVED,
+        name: {
+          entity: 'ticket',
+          id: input.ticketId,
+          event: 'auto-close-resolved',
+          version: input.resolvedAt,
+        },
+        payload: { ticketId: input.ticketId },
+        scheduleAt: fireAt.getTime() < Date.now() ? undefined : fireAt,
+      });
+    } catch (e) {
+      this.logger.error(
+        `Failed to enqueue auto-close-resolved task for ticket ${input.ticketId}: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+    }
+  }
+
+  async cancelAutoCloseResolvedTask(ticketId: string): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+    try {
+      await this.tasks.cancelByEvent({
+        queue: TICKETS_QUEUE,
+        entity: 'ticket',
+        id: ticketId,
+        event: 'auto-close-resolved',
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Failed to cancel auto-close-resolved task for ticket ${ticketId}: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+    }
+  }
+
+  async findStaleForAutoCloseResolved(lagMs: number): Promise<{ id: string }[]> {
+    const cutoff = new Date(Date.now() - AUTO_CLOSE_DELAY_MS - lagMs);
+    return db
+      .select({ id: tickets.id })
+      .from(tickets)
+      .where(
+        and(
+          eq(tickets.status, TICKET_STATUS.RESOLVED),
+          sql`${tickets.resolvedAt} IS NOT NULL AND ${tickets.resolvedAt} < ${cutoff}`,
+        ),
+      );
+  }
+
+  @Cron('0 3 * * *')
+  async autoCloseResolvedSafetyNetSweep(): Promise<void> {
+    if (isCronExternalized('support.auto-close-resolved.safety-net')) return;
+    await this.csatSafetyNet.run<{ id: string }, TicketTaskPayload>({
+      slug: 'support.auto-close-resolved',
+      queue: TICKETS_QUEUE,
+      handler: TICKET_HANDLERS.AUTO_CLOSE_RESOLVED,
+      alertThreshold: 5,
+      findStale: () => this.findStaleForAutoCloseResolved(2 * 60 * 60_000), // 2h lag
+      taskParams: (row) => ({
+        name: {
+          entity: 'ticket',
+          id: row.id,
+          event: 'auto-close-resolved',
+          version: Date.now(),
+        },
+        payload: { ticketId: row.id },
+      }),
+    });
+  }
+
   /**
    * Auto-close on-hold "waiting for student response" tickets after 48h (OH-09)
    * Runs every hour
+   */
+  /**
+   * Legacy hourly cron — RETAINED for parallel-run with Cloud Tasks.
+   * Delegates to autoCloseWaitingOne per row. Retire in Phase 5.2.
    */
   @Cron('30 * * * *')
   async autoCloseWaitingForStudent() {
     if (isCronExternalized('support.auto-close-waiting')) return;
     await this.trackCronRun(CRON_NAMES.AUTO_CLOSE_WAITING_STUDENT, async () => {
     try {
-      const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
-      const cutoff = new Date(Date.now() - FORTY_EIGHT_HOURS_MS);
-
-      // Find on-hold tickets with "waiting for student" reason older than 48h.
-      // The DTO enforces the same literal via ON_HOLD_REASONS whitelist, so
-      // the exact match here is now safe from supervisor typos.
+      const cutoff = new Date(Date.now() - AUTO_CLOSE_DELAY_MS);
       const waitingTickets = await db
-        .select({
-          id: tickets.id,
-          onHoldAt: tickets.onHoldAt,
-          onHoldReason: tickets.onHoldReason,
-        })
+        .select({ id: tickets.id })
         .from(tickets)
         .where(
           and(
@@ -853,26 +998,12 @@ export class SlaMonitorService {
           ),
         );
 
-      for (const ticket of waitingTickets) {
-        try {
-          await db
-            .update(tickets)
-            .set({
-              status: TICKET_STATUS.CLOSED,
-              closedAt: new Date(),
-              onHoldAt: null,
-              updatedAt: new Date(),
-            })
-            .where(eq(tickets.id, ticket.id));
-
-          this.logger.log(
-            `Auto-closed on-hold ticket ${ticket.id} (waiting for student > 48h)`,
-          );
-        } catch (err) {
-          this.logger.error(
-            `Error auto-closing waiting ticket ${ticket.id}: ${err}`,
-          );
-        }
+      let closed = 0;
+      for (const t of waitingTickets) {
+        if (await this.autoCloseWaitingOne(t.id)) closed++;
+      }
+      if (closed > 0) {
+        this.logger.log(`Auto-closed ${closed} waiting-for-student ticket(s)`);
       }
     } catch (err) {
       this.logger.error(`Waiting-for-student check failed: ${err}`);
@@ -880,22 +1011,156 @@ export class SlaMonitorService {
     });
   }
 
+  // ─── Per-row event handler: auto-close waiting ─────────
+
+  async autoCloseWaitingOne(ticketId: string): Promise<boolean> {
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        status: tickets.status,
+        onHoldAt: tickets.onHoldAt,
+        onHoldReason: tickets.onHoldReason,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+    if (!ticket) return false;
+    if (ticket.status !== TICKET_STATUS.ON_HOLD) return false;
+    if (ticket.onHoldReason !== ON_HOLD_REASONS.WAITING_FOR_STUDENT_RESPONSE) {
+      return false;
+    }
+    if (!ticket.onHoldAt) return false;
+    if (ticket.onHoldAt.getTime() + AUTO_CLOSE_DELAY_MS > Date.now()) return false;
+
+    const claim = await db
+      .update(tickets)
+      .set({
+        status: TICKET_STATUS.CLOSED,
+        closedAt: new Date(),
+        onHoldAt: null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(tickets.id, ticketId),
+          eq(tickets.status, TICKET_STATUS.ON_HOLD),
+          eq(
+            tickets.onHoldReason,
+            ON_HOLD_REASONS.WAITING_FOR_STUDENT_RESPONSE,
+          ),
+        ),
+      )
+      .returning({ id: tickets.id });
+    if (claim.length === 0) return false;
+
+    this.logger.log(
+      `Auto-closed on-hold ticket ${ticketId} (waiting for student > 48h)`,
+    );
+    return true;
+  }
+
+  // ─── Cloud Tasks enqueue helpers: auto-close waiting ────
+
+  async enqueueAutoCloseWaitingTask(input: {
+    ticketId: string;
+    onHoldAt: Date;
+  }): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+    try {
+      const fireAt = new Date(input.onHoldAt.getTime() + AUTO_CLOSE_DELAY_MS);
+      await this.tasks.enqueue<TicketTaskPayload>({
+        queue: TICKETS_QUEUE,
+        handler: TICKET_HANDLERS.AUTO_CLOSE_WAITING,
+        name: {
+          entity: 'ticket',
+          id: input.ticketId,
+          event: 'auto-close-waiting',
+          version: input.onHoldAt,
+        },
+        payload: { ticketId: input.ticketId },
+        scheduleAt: fireAt.getTime() < Date.now() ? undefined : fireAt,
+      });
+    } catch (e) {
+      this.logger.error(
+        `Failed to enqueue auto-close-waiting task for ticket ${input.ticketId}: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+    }
+  }
+
+  async cancelAutoCloseWaitingTask(ticketId: string): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+    try {
+      await this.tasks.cancelByEvent({
+        queue: TICKETS_QUEUE,
+        entity: 'ticket',
+        id: ticketId,
+        event: 'auto-close-waiting',
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Failed to cancel auto-close-waiting task for ticket ${ticketId}: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+    }
+  }
+
+  async findStaleForAutoCloseWaiting(lagMs: number): Promise<{ id: string }[]> {
+    const cutoff = new Date(Date.now() - AUTO_CLOSE_DELAY_MS - lagMs);
+    return db
+      .select({ id: tickets.id })
+      .from(tickets)
+      .where(
+        and(
+          eq(tickets.status, TICKET_STATUS.ON_HOLD),
+          eq(
+            tickets.onHoldReason,
+            ON_HOLD_REASONS.WAITING_FOR_STUDENT_RESPONSE,
+          ),
+          sql`${tickets.onHoldAt} IS NOT NULL AND ${tickets.onHoldAt} < ${cutoff}`,
+        ),
+      );
+  }
+
+  @Cron('0 4 * * *')
+  async autoCloseWaitingSafetyNetSweep(): Promise<void> {
+    if (isCronExternalized('support.auto-close-waiting.safety-net')) return;
+    await this.csatSafetyNet.run<{ id: string }, TicketTaskPayload>({
+      slug: 'support.auto-close-waiting',
+      queue: TICKETS_QUEUE,
+      handler: TICKET_HANDLERS.AUTO_CLOSE_WAITING,
+      alertThreshold: 5,
+      findStale: () => this.findStaleForAutoCloseWaiting(2 * 60 * 60_000),
+      taskParams: (row) => ({
+        name: {
+          entity: 'ticket',
+          id: row.id,
+          event: 'auto-close-waiting',
+          version: Date.now(),
+        },
+        payload: { ticketId: row.id },
+      }),
+    });
+  }
+
   /**
    * CSAT Email Send — 15 min after ticket resolution
    * Runs every 5 minutes, finds unsent CSAT surveys
+   */
+  /**
+   * Legacy every-5-minute cron — RETAINED for parallel-run with Cloud
+   * Tasks. Delegates to sendCsatEmailOne per row so both this and the
+   * event-driven path share CAS-safe code.
+   *
+   * Retire in Phase 5.2 after Cloud Tasks stability window.
    */
   @Cron('*/5 * * * *')
   async sendCsatEmails() {
     if (isCronExternalized('support.csat-emails')) return;
     await this.trackCronRun(CRON_NAMES.CSAT_EMAIL_SEND, async () => {
     try {
-      // Find CSAT surveys that need email sending:
-      // - No score submitted yet
-      // - Associated ticket was resolved > 15 min ago
-      // - Ticket is still resolved or closed (not reopened)
-      // - sentAt is very close to ticket resolvedAt (means email not yet sent)
-      const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
-      const cutoff = new Date(Date.now() - FIFTEEN_MINUTES_MS);
+      const cutoff = new Date(Date.now() - CSAT_EMAIL_DELAY_MS);
 
       // leftJoin users so guest tickets (userId = GUEST_USER_ID sentinel)
       // don't get excluded. Also pull guestEmail/guestName from the ticket
@@ -903,22 +1168,9 @@ export class SlaMonitorService {
       // userId points at the sentinel user. This mirrors the guest handling
       // in submitCsatScore() for the detractor follow-up path.
       const pendingSurveys = await db
-        .select({
-          surveyId: csatSurveys.id,
-          ticketId: csatSurveys.ticketId,
-          ticketReferenceNumber: tickets.referenceNumber,
-          sentAt: csatSurveys.sentAt,
-          userId: csatSurveys.userId,
-          ticketStatus: tickets.status,
-          ticketResolvedAt: tickets.resolvedAt,
-          userEmail: users.email,
-          userFirstName: users.firstName,
-          guestEmail: tickets.guestEmail,
-          guestName: tickets.guestName,
-        })
+        .select({ id: csatSurveys.id })
         .from(csatSurveys)
         .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
-        .leftJoin(users, eq(csatSurveys.userId, users.id))
         .where(
           and(
             sql`${csatSurveys.score} IS NULL`,
@@ -928,72 +1180,198 @@ export class SlaMonitorService {
               TICKET_STATUS.CLOSED,
             ]),
             sql`${tickets.resolvedAt} IS NOT NULL AND ${tickets.resolvedAt} < ${cutoff}`,
-            // sentAt within 2 min of resolvedAt means email not yet sent
             sql`ABS(EXTRACT(EPOCH FROM (${csatSurveys.sentAt} - ${tickets.resolvedAt}))) < 120`,
           ),
         );
 
-      for (const survey of pendingSurveys) {
-        try {
-          // Prefer the guest email/name when the ticket is a guest ticket
-          // (identified by a non-null guestEmail on the ticket row). Fall
-          // back to the learner's user row otherwise.
-          const recipientEmail = survey.guestEmail || survey.userEmail;
-          const recipientName =
-            survey.guestName || survey.userFirstName || 'Student';
-
-          if (!recipientEmail) {
-            this.logger.warn(
-              `CSAT survey ${survey.surveyId} skipped: no recipient email (ticket ${survey.ticketId})`,
-            );
-            continue;
-          }
-
-          // Compare-and-swap claim before sending. Two Cloud Run
-          // instances can otherwise both win the SELECT above and each
-          // call sendCsatSurvey once — duplicate emails in the user's
-          // inbox. Guarding with the originally-fetched sentAt means
-          // only the first instance flips it to now() and proceeds;
-          // the loser sees zero affected rows and skips the send.
-          const claimed = await db
-            .update(csatSurveys)
-            .set({ sentAt: new Date() })
-            .where(
-              and(
-                eq(csatSurveys.id, survey.surveyId),
-                eq(csatSurveys.sentAt, survey.sentAt),
-              ),
-            )
-            .returning({ id: csatSurveys.id });
-
-          if (claimed.length === 0) {
-            this.logger.log(
-              `CSAT survey ${survey.surveyId}: another instance already sent — skipping`,
-            );
-            continue;
-          }
-
-          await this.emailService.sendCsatSurvey(
-            recipientEmail,
-            recipientName,
-            survey.ticketReferenceNumber,
-            survey.surveyId,
-          );
-
-          this.logger.log(`CSAT email sent for ticket ${survey.ticketId} → ${recipientEmail}`);
-        } catch (err) {
-          this.logger.error(
-            `Failed to send CSAT email for survey ${survey.surveyId}: ${err}`,
-          );
-        }
+      let sent = 0;
+      for (const s of pendingSurveys) {
+        if (await this.sendCsatEmailOne(s.id)) sent++;
       }
-
-      if (pendingSurveys.length > 0) {
-        this.logger.log(`Sent ${pendingSurveys.length} CSAT emails`);
-      }
+      if (sent > 0) this.logger.log(`Sent ${sent} CSAT emails`);
     } catch (err) {
       this.logger.error(`CSAT email send failed: ${err}`);
     }
+    });
+  }
+
+  // ─── Per-row event handler (Cloud Tasks entry point) ─────
+
+  /**
+   * Send one CSAT email. CAS on sentAt-near-resolvedAt marker.
+   * Idempotent: retry sees the flipped sentAt and skips.
+   */
+  async sendCsatEmailOne(surveyId: string): Promise<boolean> {
+    const [survey] = await db
+      .select({
+        surveyId: csatSurveys.id,
+        ticketId: csatSurveys.ticketId,
+        ticketReferenceNumber: tickets.referenceNumber,
+        sentAt: csatSurveys.sentAt,
+        userId: csatSurveys.userId,
+        score: csatSurveys.score,
+        submittedAt: csatSurveys.submittedAt,
+        ticketStatus: tickets.status,
+        ticketResolvedAt: tickets.resolvedAt,
+        userEmail: users.email,
+        userFirstName: users.firstName,
+        guestEmail: tickets.guestEmail,
+        guestName: tickets.guestName,
+      })
+      .from(csatSurveys)
+      .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
+      .leftJoin(users, eq(csatSurveys.userId, users.id))
+      .where(eq(csatSurveys.id, surveyId));
+
+    if (!survey) return false;
+    if (survey.score !== null) return false;
+    if (survey.submittedAt) return false;
+    if (
+      survey.ticketStatus !== TICKET_STATUS.RESOLVED &&
+      survey.ticketStatus !== TICKET_STATUS.CLOSED
+    ) {
+      return false;
+    }
+    if (!survey.ticketResolvedAt) return false;
+
+    // "Email not yet sent" marker: sentAt is within 2 sec of
+    // ticketResolvedAt (they were inserted in the same transaction, so
+    // the delta is DB clock jitter).
+    const deltaMs = Math.abs(
+      survey.sentAt.getTime() - survey.ticketResolvedAt.getTime(),
+    );
+    if (deltaMs >= 2000) return false;
+
+    const recipientEmail = survey.guestEmail || survey.userEmail;
+    const recipientName =
+      survey.guestName || survey.userFirstName || 'Student';
+    if (!recipientEmail) {
+      this.logger.warn(
+        `CSAT survey ${surveyId} skipped: no recipient email (ticket ${survey.ticketId})`,
+      );
+      return false;
+    }
+
+    // CAS-claim by advancing sentAt off the marker window. Loser sees
+    // rowCount=0 and no-ops — at-most-once send under parallel-run.
+    const claim = await db
+      .update(csatSurveys)
+      .set({ sentAt: new Date() })
+      .where(
+        and(
+          eq(csatSurveys.id, surveyId),
+          eq(csatSurveys.sentAt, survey.sentAt),
+        ),
+      )
+      .returning({ id: csatSurveys.id });
+    if (claim.length === 0) return false;
+
+    try {
+      await this.emailService.sendCsatSurvey(
+        recipientEmail,
+        recipientName,
+        survey.ticketReferenceNumber,
+        survey.surveyId,
+      );
+      this.logger.log(
+        `CSAT email sent for ticket ${survey.ticketId} → ${recipientEmail}`,
+      );
+      return true;
+    } catch (err) {
+      this.logger.error(
+        `Failed to send CSAT email for survey ${surveyId}: ${err}`,
+      );
+      // Claim committed — don't rollback (would double-send on retry).
+      return false;
+    }
+  }
+
+  // ─── Cloud Tasks enqueue/cancel helpers ───────────────────
+
+  async enqueueCsatEmailTask(input: {
+    surveyId: string;
+    resolvedAt: Date;
+  }): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+    try {
+      const fireAt = new Date(input.resolvedAt.getTime() + CSAT_EMAIL_DELAY_MS);
+      await this.tasks.enqueue<CsatTaskPayload>({
+        queue: TICKETS_QUEUE,
+        handler: TICKET_HANDLERS.CSAT_SEND,
+        name: {
+          entity: 'csat',
+          id: input.surveyId,
+          event: 'send',
+          version: input.resolvedAt,
+        },
+        payload: { surveyId: input.surveyId },
+        scheduleAt: fireAt.getTime() < Date.now() ? undefined : fireAt,
+      });
+    } catch (e) {
+      this.logger.error(
+        `Failed to enqueue CSAT task for survey ${input.surveyId}: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+    }
+  }
+
+  async cancelCsatEmailTask(surveyId: string): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+    try {
+      await this.tasks.cancelByEvent({
+        queue: TICKETS_QUEUE,
+        entity: 'csat',
+        id: surveyId,
+        event: 'send',
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Failed to cancel CSAT task for survey ${surveyId}: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+    }
+  }
+
+  async findStaleForCsatEmail(lagMs: number): Promise<{ id: string }[]> {
+    const cutoff = new Date(Date.now() - CSAT_EMAIL_DELAY_MS - lagMs);
+    return db
+      .select({ id: csatSurveys.id })
+      .from(csatSurveys)
+      .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
+      .where(
+        and(
+          sql`${csatSurveys.score} IS NULL`,
+          sql`${csatSurveys.submittedAt} IS NULL`,
+          inArray(tickets.status, [
+            TICKET_STATUS.RESOLVED,
+            TICKET_STATUS.CLOSED,
+          ]),
+          sql`${tickets.resolvedAt} IS NOT NULL AND ${tickets.resolvedAt} < ${cutoff}`,
+          sql`ABS(EXTRACT(EPOCH FROM (${csatSurveys.sentAt} - ${tickets.resolvedAt}))) < 120`,
+        ),
+      );
+  }
+
+  @Cron('0 * * * *')
+  async csatEmailSafetyNetSweep(): Promise<void> {
+    if (isCronExternalized('support.csat-emails.safety-net')) return;
+    await this.csatSafetyNet.run<{ id: string }, CsatTaskPayload>({
+      slug: 'support.csat-emails',
+      queue: TICKETS_QUEUE,
+      handler: TICKET_HANDLERS.CSAT_SEND,
+      alertThreshold: 5,
+      findStale: () => this.findStaleForCsatEmail(20 * 60_000),
+      taskParams: (row) => ({
+        name: {
+          entity: 'csat',
+          id: row.id,
+          event: 'send',
+          version: Date.now(),
+        },
+        payload: { surveyId: row.id },
+      }),
     });
   }
 
@@ -1014,10 +1392,36 @@ export class SlaMonitorService {
    * has an assignee and skip. So notifications fire exactly once even
    * though the cron runs on every instance.
    */
-  @Cron('*/1 * * * *')
+  /**
+   * Business-hours resume sweep.
+   *
+   * Previously ran every minute as a Cloud Run Job — 43,200 executions/mo
+   * for a job that no-ops ~73% of the time (outside business hours) and
+   * has trivial actual work when it does fire (assign N unassigned
+   * tickets to available agents). Cost was ~$51/mo just for this cron.
+   *
+   * Post-migration:
+   *   - Cadence dropped to every 5 min — SLA the client cares about is
+   *     `support.sla-breach` on a separate schedule; assignment latency
+   *     of up to 5 min at business-hours boundary is invisible to users.
+   *   - Runs IN-PROCESS on api-web (warm container, ~zero marginal cost)
+   *     via the @Cron decorator. Cloud Run Job path is retired in
+   *     Phase 5.2 once we've observed stability.
+   *   - Distributed lock guarantees only one api-web instance sweeps per
+   *     tick — the old code relied on the Cloud Run Job being single-
+   *     instance for that dedup, so moving in-process needs the lock.
+   *
+   * Note: `isCronExternalized` guard preserved during parallel-run — flip
+   * the env var to swap paths without a redeploy.
+   */
+  @Cron('*/5 * * * *')
   async sweepBusinessResumeAssignments() {
     if (isCronExternalized('support.business-resume-sweep')) return;
-    await this.trackCronRun(CRON_NAMES.BUSINESS_RESUME_SWEEP, async () => {
+    // 60s lock TTL comfortably exceeds observed max sweep runtime (~2s
+    // with a dozen unassigned tickets). Another instance skipping is
+    // the correct dedup behaviour — the winner does the work.
+    await this.lock.withLock('lock:cron:business-resume-sweep', 60_000, () =>
+      this.trackCronRun(CRON_NAMES.BUSINESS_RESUME_SWEEP, async () => {
     try {
       await refreshBusinessHoursConfigIfStale(() =>
         this.supportService.getBusinessHours(),
@@ -1181,6 +1585,7 @@ export class SlaMonitorService {
     } catch (err) {
       this.logger.error(`Business-resume sweep failed: ${err}`);
     }
-    });
+    }),
+    );
   }
 }

@@ -42,7 +42,11 @@ import { useStudentCourses } from "@/hooks/useStudentCourses";
 import type { StudentEnrolledCourse } from "@/types/student-dashboard";
 import EmptyStateIllustration from "./EmptyStateIllustration";
 
-type StatusFilter = "all" | "active" | "completed" | "dropped";
+// "ended" = course lifecycle passed its live window but a manager hasn't
+// yet clicked Mark Completed. Enrollment stays 'active' in that state,
+// so we need to derive this bucket from courseStatus rather than
+// enrollmentStatus.
+type StatusFilter = "all" | "active" | "ended" | "completed" | "dropped";
 type DeliveryFilter = "all" | "zoom" | "onsite" | "blended" | "self-paced" | "webinar";
 type SortOption = "recent" | "title" | "completed_date" | "newest";
 
@@ -372,6 +376,7 @@ const MyCoursesContent = () => {
                     options={[
                       { value: "all", label: t("myCourses.tabs.all") },
                       { value: "active", label: t("myCourses.tabs.inProgress") },
+                      { value: "ended", label: t("myCourses.tabs.ended") },
                       { value: "completed", label: t("myCourses.tabs.completed") },
                       { value: "dropped", label: t("myCourses.tabs.dropped") },
                     ]}
@@ -541,6 +546,20 @@ const MyCoursesContent = () => {
                             </div>
                           )}
 
+                          {/* Ended Badge — course lifecycle passed its live
+                              window, but manager hasn't yet clicked Mark
+                              Completed (which would flip enrollmentStatus to
+                              "completed" and show the Completed pill instead). */}
+                          {course.courseStatus === "ended" &&
+                            course.enrollmentStatus !== "completed" &&
+                            !deadline && (
+                              <div
+                                className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} z-10 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm`}
+                              >
+                                {t("myCourses.endedBadge")}
+                              </div>
+                            )}
+
                           {/* Thumbnail — 16:9 */}
                           <div className="relative w-full aspect-[16/9] bg-[var(--color-surface-page)] overflow-hidden">
                             {course.thumbnail ? (
@@ -604,6 +623,23 @@ const MyCoursesContent = () => {
                                 >
                                   {t("myCourses.reopenedBanner.reenrollCta")}
                                 </Link>
+                              </div>
+                            )}
+
+                          {/* Ended course banner — course transitioned past
+                              its live window. Progress is frozen until a
+                              manager clicks Mark Completed (which unlocks
+                              reviews + certificate). Neutral tone so it
+                              reads as a status update, not an error. */}
+                          {course.courseStatus === "ended" &&
+                            course.enrollmentStatus !== "completed" && (
+                              <div className="bg-[#F3E8FF] border-y border-[#DDD6FE] px-3 py-2">
+                                <p className="text-[11px] font-semibold text-[#5B21B6] leading-tight">
+                                  {t("myCourses.endedBanner.title")}
+                                </p>
+                                <p className="text-[10px] text-[#6D28D9] mt-0.5">
+                                  {t("myCourses.endedBanner.body")}
+                                </p>
                               </div>
                             )}
 

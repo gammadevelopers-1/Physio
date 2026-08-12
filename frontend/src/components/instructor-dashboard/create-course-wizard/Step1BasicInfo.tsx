@@ -142,7 +142,12 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
                 id="end-date"
                 value={state.endDate}
                 onChange={(v) => dispatch({ type: "SET_FIELD", field: "endDate", value: v })}
-                min={state.startDate || undefined}
+                min={(() => {
+                  if (!state.startDate) return undefined;
+                  const next = new Date(state.startDate);
+                  next.setDate(next.getDate() + 1);
+                  return next.toISOString().split("T")[0];
+                })()}
               />
             </div>
             <div>

@@ -122,6 +122,11 @@ const CoursesContent = () => {
   const [requestChangesNote, setRequestChangesNote] = useState("");
   const [requestingChanges, setRequestingChanges] = useState(false);
 
+  // End-course confirm modal. Reason optional (Amna 2026-08).
+  const [endConfirm, setEndConfirm] = useState<{ id: string; title: string } | null>(null);
+  const [endReason, setEndReason] = useState("");
+  const [ending, setEnding] = useState(false);
+
   // Delete-confirm modal. Two variants of copy based on the source status —
   // ended deletes refund every paid buyer and revoke stray certs (see
   // backend remove() branch); archived deletes preserve student certs +
@@ -137,7 +142,7 @@ const CoursesContent = () => {
   }, []);
 
   const handleAction = useCallback(
-    async (courseId: string, action: "activate" | "archive" | "delete" | "approve" | "complete" | "toggle_public" | "hide_public" | "toggle_featured", currentValue?: boolean) => {
+    async (courseId: string, action: "activate" | "archive" | "delete" | "approve" | "complete" | "end" | "toggle_public" | "hide_public" | "toggle_featured", currentValue?: boolean) => {
       setOpenDropdown(null);
       setStatusLoading(courseId);
       try {
@@ -147,6 +152,11 @@ const CoursesContent = () => {
           await courseManagerApi.deactivateCourse(courseId);
         } else if (action === "complete") {
           await courseManagerApi.completeCourse(courseId);
+        } else if (action === "end") {
+          // Reason typed into the end-course confirm modal is passed
+          // separately via handleEndCourse. This branch handles the
+          // no-modal quick-end path if we ever add it — currently unused.
+          await courseManagerApi.endCourse(courseId);
         } else if (action === "delete") {
           await courseManagerApi.deleteCourse(courseId);
         } else if (action === "toggle_public" || action === "hide_public") {
@@ -210,6 +220,28 @@ const CoursesContent = () => {
       }
     },
     [locale, router, t]
+  );
+
+  const handleEndCourse = useCallback(
+    async (courseId: string) => {
+      setEnding(true);
+      try {
+        await courseManagerApi.endCourse(courseId, endReason);
+        toast.success(t("coursesPage.statusChanged"));
+        setEndConfirm(null);
+        setEndReason("");
+        refetch();
+      } catch (err) {
+        if (err instanceof ApiError) {
+          toast.error(err.message);
+        } else {
+          toast.error(t("coursesPage.statusFailed"));
+        }
+      } finally {
+        setEnding(false);
+      }
+    },
+    [endReason, refetch, t],
   );
 
   const handleRequestChanges = useCallback(
@@ -344,11 +376,16 @@ const CoursesContent = () => {
                       onChange={setStatusFilter}
                       className="w-40"
                       options={[
+                        // Lifecycle order (Amna 2026-08). Reads left-to-right
+                        // as the natural flow the course goes through, so
+                        // "ended" sits between "active" and "completed" —
+                        // admins spot end-date-expired courses awaiting
+                        // Mark Completed without hunting.
                         { value: "all", label: t("coursesPage.filters.allStatus") },
-                        { value: "active", label: t("coursesPage.filters.active") },
                         { value: "draft", label: t("coursesPage.filters.draft") },
                         { value: "pending_review", label: t("coursesPage.filters.pendingReview") },
                         { value: "changes_requested", label: t("coursesPage.filters.changesRequested") },
+                        { value: "active", label: t("coursesPage.filters.active") },
                         { value: "ended", label: t("coursesPage.filters.ended") },
                         { value: "completed", label: t("coursesPage.filters.completed") },
                         { value: "cancelled", label: t("coursesPage.filters.cancelled") },
@@ -611,6 +648,24 @@ const CoursesContent = () => {
                                         ? t("coursesPage.actions.unfeature")
                                         : t("coursesPage.actions.feature")}
                                     </button>
+                                {/* End Course — Active → Ended. Distinct
+                                    from Complete: no cert / CME fanout,
+                                    just flips status to Ended so the
+                                    manager can then click Mark Completed
+                                    when they've reviewed everything.
+                                    Client spec (Amna 2026-08). */}
+                                    <button
+                                      onClick={() => {
+                                        setOpenDropdown(null);
+                                        setEndConfirm({ id: course.id, title: courseTitle });
+                                        setEndReason("");
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#6D28D9] hover:bg-[#F5F3FF] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <AlertCircle className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.endCourse")}
+                                    </button>
                                     <button
                                       onClick={() => handleAction(course.id, "complete")}
                                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
@@ -662,10 +717,12 @@ const CoursesContent = () => {
                                 )}
 
                                 {/* Ended: Mark Completed (fires cert / CME
-                                    fanout) + Delete (goes through the
-                                    ended-delete branch on the backend —
-                                    refunds every paid buyer, revokes any
-                                    stray certs, notifies students). */}
+                                    fanout) + Archive (shelves without
+                                    releasing anything — Amna 2026-08
+                                    added this so managers can take
+                                    ended courses off active listings
+                                    while they decide on Mark Completed)
+                                    + Delete. */}
                                 {course.status === "ended" && (
                                   <>
                                     <button
@@ -675,6 +732,14 @@ const CoursesContent = () => {
                                     >
                                       <CheckCircle className="w-3.5 h-3.5" />
                                       {t("coursesPage.actions.markCompleted")}
+                                    </button>
+                                    <button
+                                      onClick={() => handleAction(course.id, "archive")}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#D97706] hover:bg-[#FFFBEB] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <Archive className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.archive")}
                                     </button>
                                     <button
                                       onClick={() => {
@@ -694,26 +759,40 @@ const CoursesContent = () => {
                                   </>
                                 )}
 
-                                {/* Archived: permanent delete. Backend soft-
-                                    deletes with hideFromAdminOnly=true so
-                                    student certificates + CME records keep
+                                {/* Archived: Unarchive (restores to
+                                    preArchiveStatus — ended stays
+                                    ended, completed stays completed,
+                                    legacy null → active) + permanent
+                                    delete. Backend soft-deletes with
+                                    hideFromAdminOnly=true so student
+                                    certificates + CME records keep
                                     working for NELC compliance. */}
                                 {course.status === "archived" && (
-                                  <button
-                                    onClick={() => {
-                                      setOpenDropdown(null);
-                                      setDeleteConfirm({
-                                        id: course.id,
-                                        status: course.status,
-                                        title: courseTitle,
-                                      });
-                                    }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
-                                    role="menuitem"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    {t("coursesPage.actions.deletePermanently")}
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleAction(course.id, "activate")}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#22C55E] hover:bg-[#F0FDF4] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <Play className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.unarchive")}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setOpenDropdown(null);
+                                        setDeleteConfirm({
+                                          id: course.id,
+                                          status: course.status,
+                                          title: courseTitle,
+                                        });
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.deletePermanently")}
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             )}
@@ -945,6 +1024,53 @@ const CoursesContent = () => {
                           : deleteConfirm.status === "archived"
                             ? t("coursesPage.deleteConfirm.confirmArchived")
                             : t("coursesPage.actions.delete")}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* End Course confirm — optional reason. Backend flips
+                  status → ended without touching enrolments, certs or
+                  CME (that's Mark Completed's job). */}
+              {endConfirm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-md p-6">
+                    <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+                      {t("coursesPage.endConfirm.title")}
+                    </h3>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-2">
+                      <span className="font-medium text-[var(--color-text-primary)]">
+                        {endConfirm.title}
+                      </span>
+                    </p>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-3">
+                      {t("coursesPage.endConfirm.body")}
+                    </p>
+                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                      {t("coursesPage.endConfirm.reasonLabel")}
+                    </label>
+                    <textarea
+                      value={endReason}
+                      onChange={(e) => setEndReason(e.target.value)}
+                      placeholder={t("coursesPage.endConfirm.reasonPlaceholder")}
+                      className="w-full border border-[var(--color-input-border)] rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-h-[80px] resize-none"
+                    />
+                    <div className="flex justify-end gap-3 mt-4">
+                      <button
+                        onClick={() => { setEndConfirm(null); setEndReason(""); }}
+                        disabled={ending}
+                        className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        {t("coursesPage.actions.cancel")}
+                      </button>
+                      <button
+                        onClick={() => handleEndCourse(endConfirm.id)}
+                        disabled={ending}
+                        className="px-4 py-2 text-sm text-white bg-[#6D28D9] hover:bg-[#5B21B6] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {ending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        {t("coursesPage.endConfirm.confirm")}
                       </button>
                     </div>
                   </div>

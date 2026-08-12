@@ -13,6 +13,7 @@ import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { EmailService } from '../../email/email.service';
 import { PaymentsService } from '../payments.service';
 import { InvoiceService } from './invoice.service';
+import { DistributedLockService } from '../../tasks/distributed-lock.service';
 import type { TamaraStuckSeverity } from '../../email/templates/tamara-stuck-alert.template';
 
 /**
@@ -61,11 +62,26 @@ export class TamaraRetryService {
     private readonly invoiceService: InvoiceService,
     private readonly emailService: EmailService,
     private readonly auditLogService: AuditLogService,
+    private readonly lock: DistributedLockService,
   ) {}
 
   @Cron('0 */10 * * * *')
   async retryStuckOrders(): Promise<void> {
     if (isCronExternalized('payments.tamara-retry')) return;
+    // Distributed lock — multi-instance safe when this moves in-process.
+    // 15-min TTL: sweep can call Tamara for up to 50 payments; gateway
+    // roundtrip ~2s per payment.
+    const outcome = await this.lock.withLock(
+      'lock:cron:payments.tamara-retry',
+      15 * 60_000,
+      () => this.retryStuckOrdersInner(),
+    );
+    if (outcome === null) {
+      // Another instance holds the lock — no-op.
+    }
+  }
+
+  private async retryStuckOrdersInner(): Promise<void> {
     const minAge = new Date(Date.now() - this.MIN_AGE_MS);
 
     let stuck: { id: string; createdAt: Date; metadata: any; gatewayChargeId: string | null }[];

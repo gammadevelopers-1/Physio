@@ -41,12 +41,14 @@ import {
   Award,
   GraduationCap,
   UserCog,
+  AlertCircle,
 } from "lucide-react";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { useAdminCourses } from "@/hooks/useAdminCourses";
 import {
   adminApi,
   courseManagerApi,
+  ApiError,
   FilterPerson,
   type CourseDeleteImpact,
 } from "@/lib/api";
@@ -102,6 +104,14 @@ const AdminCoursesContent = () => {
   const [requestChangesCourse, setRequestChangesCourse] = useState<InstructorCourse | null>(null);
   const [requestChangesNote, setRequestChangesNote] = useState("");
   const [requestChangesBusy, setRequestChangesBusy] = useState(false);
+
+  // End-course modal state. Reason is optional (Amna 2026-08). Distinct
+  // from the Cancel flow (which drops enrolments + queues refunds) —
+  // End Course just flips Active → Ended so the manager can review
+  // before releasing certs / CME via Mark Completed.
+  const [endCourseTarget, setEndCourseTarget] = useState<InstructorCourse | null>(null);
+  const [endCourseReason, setEndCourseReason] = useState("");
+  const [endCourseBusy, setEndCourseBusy] = useState(false);
 
   // Per-card action busy state — keyed by course ID + action so the
   // button shows a spinner without locking the whole grid.
@@ -311,6 +321,29 @@ const AdminCoursesContent = () => {
       "coursesPage.toasts.completed",
       "coursesPage.toasts.completeFailed",
     );
+
+  const openEndCourse = (c: InstructorCourse) => {
+    setOpenDropdownId(null);
+    setEndCourseTarget(c);
+    setEndCourseReason("");
+  };
+
+  const handleEndCourseConfirm = async () => {
+    if (!endCourseTarget) return;
+    setEndCourseBusy(true);
+    try {
+      await adminApi.endCourse(endCourseTarget.id, endCourseReason);
+      toast.success(t("coursesPage.toasts.ended"));
+      setEndCourseTarget(null);
+      setEndCourseReason("");
+      refetch();
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : t("coursesPage.toasts.endFailed");
+      toast.error(msg);
+    } finally {
+      setEndCourseBusy(false);
+    }
+  };
 
   const handleToggleFeatured = (c: InstructorCourse) =>
     runAction(
@@ -733,6 +766,17 @@ const AdminCoursesContent = () => {
                 ? t("coursesPage.actions.unfeature")
                 : t("coursesPage.actions.feature")}
             </button>
+            {/* End Course: Active → Ended (no cert / CME fanout). Client
+                spec Amna 2026-08 — sits BEFORE Mark Completed so the
+                natural flow reads Active → Ended → Completed. */}
+            <button
+              onClick={() => openEndCourse(course)}
+              className={itemCls}
+              disabled={!!busyKey}
+            >
+              <AlertCircle className="w-4 h-4" />
+              {t("coursesPage.actions.endCourse")}
+            </button>
             <button
               onClick={() => handleComplete(course)}
               className={itemCls}
@@ -791,6 +835,16 @@ const AdminCoursesContent = () => {
             >
               <CheckCircle2 className="w-4 h-4" />
               {t("coursesPage.actions.markCompleted")}
+            </button>
+            {/* Archive from ended (Amna 2026-08): unarchive later
+                restores to ended, not active. */}
+            <button
+              onClick={() => openConfirm("archive", course)}
+              className={itemCls}
+              disabled={!!busyKey}
+            >
+              <Archive className="w-4 h-4" />
+              {t("coursesPage.actions.archive")}
             </button>
             <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
               <Trash2 className="w-4 h-4" />
@@ -1980,6 +2034,54 @@ const AdminCoursesContent = () => {
                 {t("coursesPage.studentsModal.openCourse")}
                 <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
               </Link>
+            </div>
+          </div>
+        </ModalBackdrop>
+      )}
+
+      {/* End Course Modal — optional reason. Active → Ended only. */}
+      {endCourseTarget && (
+        <ModalBackdrop onClose={() => { if (!endCourseBusy) { setEndCourseTarget(null); setEndCourseReason(""); } }}>
+          <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+              {t("coursesPage.endCourseModal.title")}
+            </h3>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-3">
+              {t("coursesPage.endCourseModal.body", {
+                title:
+                  locale === "ar" && endCourseTarget.titleAr
+                    ? endCourseTarget.titleAr
+                    : endCourseTarget.title,
+              })}
+            </p>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+              {t("coursesPage.endCourseModal.reasonLabel")}
+            </label>
+            <textarea
+              value={endCourseReason}
+              onChange={(e) => setEndCourseReason(e.target.value)}
+              placeholder={t("coursesPage.endCourseModal.reasonPlaceholder")}
+              rows={3}
+              className="w-full px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)] resize-none"
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => { setEndCourseTarget(null); setEndCourseReason(""); }}
+                disabled={endCourseBusy}
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
+              >
+                {t("coursesPage.endCourseModal.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={handleEndCourseConfirm}
+                disabled={endCourseBusy}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#6D28D9] rounded-lg hover:bg-[#5B21B6] transition-colors disabled:opacity-50"
+              >
+                {endCourseBusy && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t("coursesPage.endCourseModal.confirm")}
+              </button>
             </div>
           </div>
         </ModalBackdrop>

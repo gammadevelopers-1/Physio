@@ -215,6 +215,8 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                             ? "bg-[#FEF3C7] text-[#D4A520]"
                             : course.status === "completed"
                             ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                            : course.status === "ended"
+                            ? "bg-[#F3E8FF] text-[#7C3AED]"
                             : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                         }`}
                       >

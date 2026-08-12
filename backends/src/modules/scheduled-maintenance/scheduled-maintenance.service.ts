@@ -4,7 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { and, asc, desc, eq, gte, inArray, isNull, lte, ne } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, isNull, lte, ne } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   roles,
@@ -17,8 +17,22 @@ import {
 } from '../../database/schema';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 import { EmailService } from '../email/email.service';
+import { TasksService } from '../tasks/tasks.service';
 import type { CreateScheduledMaintenanceDto } from './dto/create-scheduled-maintenance.dto';
 import type { UpdateScheduledMaintenanceDto } from './dto/update-scheduled-maintenance.dto';
+
+// Cloud Tasks queue + handler slugs for this module. Kept adjacent so
+// task-name schemes and handler wiring don't drift.
+export const MAINTENANCE_QUEUE = 'maintenance-events';
+export const MAINTENANCE_HANDLERS = {
+  ACTIVATE: 'maintenance.activate',
+  COMPLETE: 'maintenance.complete',
+  PRE_NOTIFY: 'maintenance.pre-notify',
+} as const;
+
+export interface MaintenanceTaskPayload {
+  windowId: string;
+}
 
 // Roles that receive pre-notifications + see the banner. Admin +
 // Support are excluded — they're managing the window, not affected
@@ -38,6 +52,7 @@ export class ScheduledMaintenanceService {
   constructor(
     private readonly settings: AdminSettingsService,
     private readonly emailService: EmailService,
+    private readonly tasks: TasksService,
   ) {}
 
   // ─── Admin CRUD ─────────────────────────────────────────────
@@ -117,6 +132,21 @@ export class ScheduledMaintenanceService {
         createdBy: actorId,
       })
       .returning();
+
+    // Enqueue the three lifecycle tasks that replace the polling cron.
+    // A best-effort — if Cloud Tasks is unavailable, the safety-net
+    // sweep + legacy @Cron still catch the window. Do not fail the
+    // create() on enqueue error.
+    try {
+      await this.enqueueLifecycleTasks(row);
+    } catch (err) {
+      this.logger.error(
+        `Failed to enqueue lifecycle tasks for window ${row.id}: ${
+          err instanceof Error ? err.message : 'unknown'
+        }`,
+      );
+    }
+
     return row;
   }
 
@@ -153,7 +183,7 @@ export class ScheduledMaintenanceService {
       }
     }
 
-    await db
+    const [updated] = await db
       .update(scheduledMaintenanceWindows)
       .set({
         titleEn: dto.titleEn ?? existing.titleEn,
@@ -178,7 +208,21 @@ export class ScheduledMaintenanceService {
         // the new timing.
         preNotificationSentAt: null,
       })
-      .where(eq(scheduledMaintenanceWindows.id, id));
+      .where(eq(scheduledMaintenanceWindows.id, id))
+      .returning();
+
+    // Reschedule tasks — startAt/endAt may have moved. cancelByEvent
+    // sweeps every prior version so nothing stale can fire against
+    // the old times.
+    try {
+      await this.enqueueLifecycleTasks(updated, { replaceExisting: true });
+    } catch (err) {
+      this.logger.error(
+        `Failed to reschedule lifecycle tasks for window ${id}: ${
+          err instanceof Error ? err.message : 'unknown'
+        }`,
+      );
+    }
 
     return { success: true };
   }
@@ -200,6 +244,20 @@ export class ScheduledMaintenanceService {
       .update(scheduledMaintenanceWindows)
       .set({ status: SCHEDULED_MAINTENANCE_STATUS.CANCELLED })
       .where(eq(scheduledMaintenanceWindows.id, id));
+
+    // Delete pending Cloud Tasks — an activate/complete/pre-notify
+    // firing on a cancelled window would be a no-op (per-row handlers
+    // CAS-check status), but freeing the queue slot is tidier.
+    try {
+      await this.cancelLifecycleTasks(id);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to cancel lifecycle tasks for window ${id}: ${
+          err instanceof Error ? err.message : 'unknown'
+        }`,
+      );
+    }
+
     return { success: true };
   }
 
@@ -249,14 +307,16 @@ export class ScheduledMaintenanceService {
 
   /**
    * Activate any scheduled window whose start_at has passed.
-   * Replaces the system maintenance.enabled toggle with our
-   * window's title + description so the maintenance page reads
-   * naturally to users.
+   *
+   * Bulk version used by the legacy per-minute @Cron (kept during
+   * parallel-run) AND by the hourly safety-net sweep. Delegates to
+   * activateOne() for the per-window work so both entry points share
+   * the same CAS-safe path.
    */
   async tickActivations(): Promise<number> {
     const now = new Date();
     const ready = await db
-      .select()
+      .select({ id: scheduledMaintenanceWindows.id })
       .from(scheduledMaintenanceWindows)
       .where(
         and(
@@ -267,65 +327,17 @@ export class ScheduledMaintenanceService {
           lte(scheduledMaintenanceWindows.startAt, now),
         ),
       );
-
-    if (ready.length === 0) return 0;
+    let acted = 0;
     for (const w of ready) {
-      // If we've already passed the end_at (e.g. cron lagged) skip
-      // straight to completed without flipping the toggle.
-      if (w.endAt <= now) {
-        await db
-          .update(scheduledMaintenanceWindows)
-          .set({ status: SCHEDULED_MAINTENANCE_STATUS.COMPLETED })
-          .where(eq(scheduledMaintenanceWindows.id, w.id));
-        continue;
-      }
-      // Mark the window active first so a second tick can't double-fire.
-      await db
-        .update(scheduledMaintenanceWindows)
-        .set({ status: SCHEDULED_MAINTENANCE_STATUS.ACTIVE })
-        .where(eq(scheduledMaintenanceWindows.id, w.id));
-
-      const messageEn =
-        w.descriptionEn?.trim() ||
-        `Scheduled maintenance: ${w.titleEn}. The platform will return shortly.`;
-      const messageAr =
-        w.descriptionAr?.trim() ||
-        w.titleAr ||
-        'صيانة مجدولة. ستعود المنصة قريباً.';
-
-      const existing = await this.settings.getCategory<{
-        enabled?: boolean;
-        messageEn?: string;
-        messageAr?: string;
-      }>('maintenance');
-
-      await this.settings.updateCategory(
-        'maintenance',
-        {
-          ...existing,
-          enabled: true,
-          messageEn,
-          messageAr,
-          // Audit hint — useful when debugging "why is maintenance on".
-          activeWindowId: w.id,
-        },
-        w.createdBy ?? '00000000-0000-0000-0000-000000000000',
-      );
-
-      this.logger.log(
-        `Activated scheduled maintenance window ${w.id} (${w.titleEn})`,
-      );
+      if (await this.activateOne(w.id)) acted++;
     }
-    return ready.length;
+    return acted;
   }
 
-  /**
-   * Deactivate any active window whose end_at has passed.
-   */
   async tickCompletions(): Promise<number> {
     const now = new Date();
     const done = await db
-      .select()
+      .select({ id: scheduledMaintenanceWindows.id })
       .from(scheduledMaintenanceWindows)
       .where(
         and(
@@ -336,47 +348,22 @@ export class ScheduledMaintenanceService {
           lte(scheduledMaintenanceWindows.endAt, now),
         ),
       );
-    if (done.length === 0) return 0;
-
+    let acted = 0;
     for (const w of done) {
-      await db
-        .update(scheduledMaintenanceWindows)
-        .set({ status: SCHEDULED_MAINTENANCE_STATUS.COMPLETED })
-        .where(eq(scheduledMaintenanceWindows.id, w.id));
-
-      // Only flip the toggle off if THIS window owns it. Otherwise
-      // a manual ON or a different window could be in control.
-      const existing = await this.settings.getCategory<{
-        enabled?: boolean;
-        activeWindowId?: string;
-      }>('maintenance');
-      if (existing.activeWindowId === w.id) {
-        await this.settings.updateCategory(
-          'maintenance',
-          {
-            ...existing,
-            enabled: false,
-            activeWindowId: null,
-          },
-          w.createdBy ?? '00000000-0000-0000-0000-000000000000',
-        );
-      }
-      this.logger.log(
-        `Completed scheduled maintenance window ${w.id} (${w.titleEn})`,
-      );
+      if (await this.completeOne(w.id)) acted++;
     }
-    return done.length;
+    return acted;
   }
 
-  /**
-   * Fan out pre-notification heads-ups for any scheduled window
-   * whose start_at is within its lead window AND hasn't been
-   * notified yet. Lead 0 = skip entirely.
-   */
   async tickPreNotifications(): Promise<number> {
     const now = new Date();
     const candidates = await db
-      .select()
+      .select({
+        id: scheduledMaintenanceWindows.id,
+        startAt: scheduledMaintenanceWindows.startAt,
+        preNotificationLeadMinutes:
+          scheduledMaintenanceWindows.preNotificationLeadMinutes,
+      })
       .from(scheduledMaintenanceWindows)
       .where(
         and(
@@ -389,28 +376,399 @@ export class ScheduledMaintenanceService {
         ),
       );
 
-    let fired = 0;
+    let acted = 0;
     for (const w of candidates) {
       const leadMs = w.preNotificationLeadMinutes * 60_000;
       if (w.startAt.getTime() - now.getTime() > leadMs) continue;
-      // Mark sent BEFORE dispatching so a retry can't double-send.
-      await db
-        .update(scheduledMaintenanceWindows)
-        .set({ preNotificationSentAt: now })
-        .where(eq(scheduledMaintenanceWindows.id, w.id));
-
-      try {
-        await this.notifyAffectedUsers(w);
-        fired++;
-      } catch (e) {
-        this.logger.error(
-          `Pre-notification for ${w.id} failed: ${
-            e instanceof Error ? e.message : 'unknown'
-          }`,
-        );
-      }
+      if (await this.preNotifyOne(w.id)) acted++;
     }
-    return fired;
+    return acted;
+  }
+
+  // ─── Per-row event handlers (Cloud Tasks entry points) ─────
+  //
+  // Each returns true if the window was mutated, false if the CAS
+  // update touched 0 rows (someone else already handled it or the
+  // window's state has moved on since the task was enqueued).
+  //
+  // These are the ONLY paths that should be called from a Cloud Task
+  // handler. All three are idempotent — safe to call any number of
+  // times for the same window.
+
+  async activateOne(windowId: string): Promise<boolean> {
+    const now = new Date();
+
+    // Fetch the row first so we know the desired end state and the
+    // "already past end" case can skip the toggle flip. Only rows
+    // that are still SCHEDULED and whose startAt has arrived get
+    // touched.
+    const [w] = await db
+      .select()
+      .from(scheduledMaintenanceWindows)
+      .where(eq(scheduledMaintenanceWindows.id, windowId));
+    if (!w) return false;
+    if (w.status !== SCHEDULED_MAINTENANCE_STATUS.SCHEDULED) return false;
+    if (w.startAt > now) return false;
+
+    // If we've already passed the end_at (cron / dispatch was late)
+    // skip straight to completed without ever flipping the toggle.
+    if (w.endAt <= now) {
+      const claim = await db
+        .update(scheduledMaintenanceWindows)
+        .set({ status: SCHEDULED_MAINTENANCE_STATUS.COMPLETED })
+        .where(
+          and(
+            eq(scheduledMaintenanceWindows.id, windowId),
+            eq(
+              scheduledMaintenanceWindows.status,
+              SCHEDULED_MAINTENANCE_STATUS.SCHEDULED,
+            ),
+          ),
+        )
+        .returning({ id: scheduledMaintenanceWindows.id });
+      return claim.length > 0;
+    }
+
+    // CAS claim: only proceed with side-effects if THIS caller flipped
+    // status from SCHEDULED → ACTIVE. Concurrent legacy @Cron + Cloud
+    // Task delivery race safely here — loser sees rowCount 0 and no-ops.
+    const claim = await db
+      .update(scheduledMaintenanceWindows)
+      .set({ status: SCHEDULED_MAINTENANCE_STATUS.ACTIVE })
+      .where(
+        and(
+          eq(scheduledMaintenanceWindows.id, windowId),
+          eq(
+            scheduledMaintenanceWindows.status,
+            SCHEDULED_MAINTENANCE_STATUS.SCHEDULED,
+          ),
+        ),
+      )
+      .returning({ id: scheduledMaintenanceWindows.id });
+    if (claim.length === 0) return false;
+
+    const messageEn =
+      w.descriptionEn?.trim() ||
+      `Scheduled maintenance: ${w.titleEn}. The platform will return shortly.`;
+    const messageAr =
+      w.descriptionAr?.trim() ||
+      w.titleAr ||
+      'صيانة مجدولة. ستعود المنصة قريباً.';
+
+    const existing = await this.settings.getCategory<{
+      enabled?: boolean;
+      messageEn?: string;
+      messageAr?: string;
+    }>('maintenance');
+
+    await this.settings.updateCategory(
+      'maintenance',
+      {
+        ...existing,
+        enabled: true,
+        messageEn,
+        messageAr,
+        activeWindowId: w.id,
+      },
+      w.createdBy ?? '00000000-0000-0000-0000-000000000000',
+    );
+
+    this.logger.log(
+      `Activated scheduled maintenance window ${w.id} (${w.titleEn})`,
+    );
+    return true;
+  }
+
+  async completeOne(windowId: string): Promise<boolean> {
+    const now = new Date();
+    const [w] = await db
+      .select()
+      .from(scheduledMaintenanceWindows)
+      .where(eq(scheduledMaintenanceWindows.id, windowId));
+    if (!w) return false;
+    if (w.status !== SCHEDULED_MAINTENANCE_STATUS.ACTIVE) return false;
+    if (w.endAt > now) return false;
+
+    const claim = await db
+      .update(scheduledMaintenanceWindows)
+      .set({ status: SCHEDULED_MAINTENANCE_STATUS.COMPLETED })
+      .where(
+        and(
+          eq(scheduledMaintenanceWindows.id, windowId),
+          eq(
+            scheduledMaintenanceWindows.status,
+            SCHEDULED_MAINTENANCE_STATUS.ACTIVE,
+          ),
+        ),
+      )
+      .returning({ id: scheduledMaintenanceWindows.id });
+    if (claim.length === 0) return false;
+
+    // Only flip the toggle off if THIS window owns it. Otherwise a
+    // manual ON or a different overlapping window could be in control.
+    const existing = await this.settings.getCategory<{
+      enabled?: boolean;
+      activeWindowId?: string;
+    }>('maintenance');
+    if (existing.activeWindowId === w.id) {
+      await this.settings.updateCategory(
+        'maintenance',
+        {
+          ...existing,
+          enabled: false,
+          activeWindowId: null,
+        },
+        w.createdBy ?? '00000000-0000-0000-0000-000000000000',
+      );
+    }
+
+    this.logger.log(
+      `Completed scheduled maintenance window ${w.id} (${w.titleEn})`,
+    );
+    return true;
+  }
+
+  async preNotifyOne(windowId: string): Promise<boolean> {
+    const now = new Date();
+    const [w] = await db
+      .select()
+      .from(scheduledMaintenanceWindows)
+      .where(eq(scheduledMaintenanceWindows.id, windowId));
+    if (!w) return false;
+    if (w.status !== SCHEDULED_MAINTENANCE_STATUS.SCHEDULED) return false;
+    if (w.preNotificationSentAt) return false;
+    if (w.preNotificationLeadMinutes === 0) return false;
+
+    // CAS claim on preNotificationSentAt = null. This closes the
+    // double-send race the legacy code had — the current @Cron only
+    // filtered null in the SELECT, not in the UPDATE, so two parallel
+    // instances could both dispatch. Here the UPDATE only affects the
+    // row when it's STILL null, giving us at-most-once semantics.
+    const claim = await db
+      .update(scheduledMaintenanceWindows)
+      .set({ preNotificationSentAt: now })
+      .where(
+        and(
+          eq(scheduledMaintenanceWindows.id, windowId),
+          isNull(scheduledMaintenanceWindows.preNotificationSentAt),
+          eq(
+            scheduledMaintenanceWindows.status,
+            SCHEDULED_MAINTENANCE_STATUS.SCHEDULED,
+          ),
+        ),
+      )
+      .returning({ id: scheduledMaintenanceWindows.id });
+    if (claim.length === 0) return false;
+
+    try {
+      await this.notifyAffectedUsers(w);
+      return true;
+    } catch (e) {
+      this.logger.error(
+        `Pre-notification for ${w.id} failed: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+      // Claim already committed — do NOT reset preNotificationSentAt,
+      // otherwise a retry would double-send to users who did receive
+      // the email. Better to lose one notification than double-notify.
+      return false;
+    }
+  }
+
+  // ─── Cloud Tasks orchestration ─────────────────────────────
+
+  /**
+   * Enqueue (or re-enqueue after cancel) the three lifecycle tasks
+   * for a window. Called after every write path that materially
+   * changes when the window fires.
+   *
+   * Version: uses the trigger time itself as the task version.
+   * That means startAt or endAt changing naturally produces a new
+   * task name — perfect for reschedule.
+   *
+   * Pre-notify skipped when lead = 0. Complete always enqueued (the
+   * handler no-ops if the window was never activated).
+   */
+  private async enqueueLifecycleTasks(
+    w: typeof scheduledMaintenanceWindows.$inferSelect,
+    opts: { replaceExisting?: boolean } = {},
+  ): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+
+    // On update, cancel prior task versions first so old scheduleTimes
+    // don't fire. Skip on create since there's nothing to cancel.
+    if (opts.replaceExisting) {
+      await Promise.all([
+        this.tasks.cancelByEvent({
+          queue: MAINTENANCE_QUEUE,
+          entity: 'maint',
+          id: w.id,
+          event: 'activate',
+        }),
+        this.tasks.cancelByEvent({
+          queue: MAINTENANCE_QUEUE,
+          entity: 'maint',
+          id: w.id,
+          event: 'complete',
+        }),
+        this.tasks.cancelByEvent({
+          queue: MAINTENANCE_QUEUE,
+          entity: 'maint',
+          id: w.id,
+          event: 'pre-notify',
+        }),
+      ]);
+    }
+
+    const payload: MaintenanceTaskPayload = { windowId: w.id };
+
+    // ACTIVATE at startAt — version = startAt.getTime()
+    await this.tasks.enqueue<MaintenanceTaskPayload>({
+      queue: MAINTENANCE_QUEUE,
+      handler: MAINTENANCE_HANDLERS.ACTIVATE,
+      name: {
+        entity: 'maint',
+        id: w.id,
+        event: 'activate',
+        version: w.startAt,
+      },
+      payload,
+      scheduleAt: w.startAt,
+    });
+
+    // COMPLETE at endAt — version = endAt.getTime()
+    await this.tasks.enqueue<MaintenanceTaskPayload>({
+      queue: MAINTENANCE_QUEUE,
+      handler: MAINTENANCE_HANDLERS.COMPLETE,
+      name: {
+        entity: 'maint',
+        id: w.id,
+        event: 'complete',
+        version: w.endAt,
+      },
+      payload,
+      scheduleAt: w.endAt,
+    });
+
+    // PRE-NOTIFY at startAt - leadMinutes — skip if lead=0
+    if (w.preNotificationLeadMinutes > 0) {
+      const notifyAt = new Date(
+        w.startAt.getTime() - w.preNotificationLeadMinutes * 60_000,
+      );
+      // If the notify time already passed at create() time (window was
+      // scheduled with lead > time-until-start), still enqueue with
+      // scheduleAt = now so the notification fires immediately.
+      await this.tasks.enqueue<MaintenanceTaskPayload>({
+        queue: MAINTENANCE_QUEUE,
+        handler: MAINTENANCE_HANDLERS.PRE_NOTIFY,
+        name: {
+          entity: 'maint',
+          id: w.id,
+          event: 'pre-notify',
+          version: notifyAt,
+        },
+        payload,
+        scheduleAt: notifyAt.getTime() < Date.now() ? undefined : notifyAt,
+      });
+    }
+  }
+
+  private async cancelLifecycleTasks(windowId: string): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+    await Promise.all([
+      this.tasks.cancelByEvent({
+        queue: MAINTENANCE_QUEUE,
+        entity: 'maint',
+        id: windowId,
+        event: 'activate',
+      }),
+      this.tasks.cancelByEvent({
+        queue: MAINTENANCE_QUEUE,
+        entity: 'maint',
+        id: windowId,
+        event: 'complete',
+      }),
+      this.tasks.cancelByEvent({
+        queue: MAINTENANCE_QUEUE,
+        entity: 'maint',
+        id: windowId,
+        event: 'pre-notify',
+      }),
+    ]);
+  }
+
+  // ─── Safety-net sweep queries ──────────────────────────────
+  //
+  // Returns windows whose event-driven task appears to have been
+  // missed. Feeds SafetyNetSweep in the hourly cron.
+
+  async findStaleForActivate(
+    lagMs: number,
+  ): Promise<{ id: string }[]> {
+    const cutoff = new Date(Date.now() - lagMs);
+    return db
+      .select({ id: scheduledMaintenanceWindows.id })
+      .from(scheduledMaintenanceWindows)
+      .where(
+        and(
+          eq(
+            scheduledMaintenanceWindows.status,
+            SCHEDULED_MAINTENANCE_STATUS.SCHEDULED,
+          ),
+          lte(scheduledMaintenanceWindows.startAt, cutoff),
+        ),
+      );
+  }
+
+  async findStaleForComplete(
+    lagMs: number,
+  ): Promise<{ id: string }[]> {
+    const cutoff = new Date(Date.now() - lagMs);
+    return db
+      .select({ id: scheduledMaintenanceWindows.id })
+      .from(scheduledMaintenanceWindows)
+      .where(
+        and(
+          eq(
+            scheduledMaintenanceWindows.status,
+            SCHEDULED_MAINTENANCE_STATUS.ACTIVE,
+          ),
+          lte(scheduledMaintenanceWindows.endAt, cutoff),
+        ),
+      );
+  }
+
+  async findStaleForPreNotify(
+    lagMs: number,
+  ): Promise<{ id: string }[]> {
+    const now = Date.now();
+    const cutoff = new Date(now - lagMs);
+    const rows = await db
+      .select({
+        id: scheduledMaintenanceWindows.id,
+        startAt: scheduledMaintenanceWindows.startAt,
+        preNotificationLeadMinutes:
+          scheduledMaintenanceWindows.preNotificationLeadMinutes,
+      })
+      .from(scheduledMaintenanceWindows)
+      .where(
+        and(
+          eq(
+            scheduledMaintenanceWindows.status,
+            SCHEDULED_MAINTENANCE_STATUS.SCHEDULED,
+          ),
+          isNull(scheduledMaintenanceWindows.preNotificationSentAt),
+          ne(scheduledMaintenanceWindows.preNotificationLeadMinutes, 0),
+        ),
+      );
+    // Filter to rows where notify time is >= lagMs in the past.
+    return rows
+      .filter((w) => {
+        const notifyMs = w.startAt.getTime() - w.preNotificationLeadMinutes * 60_000;
+        return notifyMs <= cutoff.getTime();
+      })
+      .map((w) => ({ id: w.id }));
   }
 
   // ─── Internal helpers ──────────────────────────────────────

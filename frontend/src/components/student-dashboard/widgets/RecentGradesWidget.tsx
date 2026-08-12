@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Award, GraduationCap, X } from "lucide-react";
 import { useStudentRecentGrades } from "@/hooks/useStudentRecentGrades";
+import { pickLocaleTitle } from "@/lib/locale-title";
 
 const STORAGE_KEY = "physioguidance:dismissed-grades";
 const MAX_VISIBLE = 5;
@@ -96,7 +97,7 @@ export default function RecentGradesWidget() {
                 <Link
                   href={reviewHref}
                   className={`flex items-center gap-3 flex-1 min-w-0 ${isRTL ? "flex-row-reverse" : ""}`}
-                  aria-label={`${g.assessmentTitle} — ${Math.round(g.percentage)}%`}
+                  aria-label={`${pickLocaleTitle(g.assessmentTitle, g.assessmentTitleAr, locale)} — ${Math.round(g.percentage)}%`}
                 >
                   <div
                     className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -109,7 +110,7 @@ export default function RecentGradesWidget() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
-                      {g.assessmentTitle}
+                      {pickLocaleTitle(g.assessmentTitle, g.assessmentTitleAr, locale)}
                     </p>
                     <p className="text-[10px] text-[var(--color-text-secondary)] truncate">
                       {courseTitle}

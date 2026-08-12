@@ -369,7 +369,20 @@ export class StudentService {
     // should not see the course in their "My Courses" list. Explicit
     // status filters (e.g. 'dropped' for a refund-history view) still
     // honoured.
-    if (params.status && params.status !== 'all') {
+    //
+    // Special-case `ended`: the enrollment stays `active` until a manager
+    // clicks Mark Completed, so we derive the "Ended" bucket from
+    // `courses.status = 'ended'` instead. Symmetrically, `active` should
+    // exclude courses that already transitioned to `ended` — otherwise
+    // ended courses would still appear in the "In Progress" tab.
+    if (params.status === 'ended') {
+      conditions.push(eq(enrollments.status, 'active'));
+      conditions.push(eq(courses.status, 'ended'));
+    } else if (params.status === 'active') {
+      conditions.push(eq(enrollments.status, 'active'));
+      // Only truly-live courses. Excludes ended/completed/archived/cancelled.
+      conditions.push(eq(courses.status, 'active'));
+    } else if (params.status && params.status !== 'all') {
       conditions.push(eq(enrollments.status, params.status));
     } else {
       // Default view: hide `dropped` enrollments, EXCEPT for the
@@ -900,6 +913,7 @@ export class StudentService {
       .select({
         id: assessments.id,
         title: assessments.title,
+        titleAr: assessments.titleAr,
         type: assessments.type,
         totalMarks: assessments.totalMarks,
         passingMarks: assessments.passingMarks,
@@ -1341,6 +1355,22 @@ export class StudentService {
     if (!enrollment) {
       throw new NotFoundException(
         'Active enrollment not found for this course',
+      );
+    }
+
+    // Course-level progress lock: once the course is completed/ended/archived,
+    // student progress is frozen. `completed` is normally caught by the
+    // enrollment.status='active' gate above (finalizeEnrollments flips it),
+    // but `ended` keeps enrollment.status='active' until manager Mark
+    // Completed, so we need an explicit course.status check here.
+    const [parentCourse] = await db
+      .select({ status: courses.status })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    if (parentCourse && (parentCourse.status === 'completed' || parentCourse.status === 'ended' || parentCourse.status === 'archived')) {
+      throw new BadRequestException(
+        `Cannot update progress on a ${parentCourse.status} course. Course progress is frozen.`,
       );
     }
 
@@ -2263,6 +2293,20 @@ export class StudentService {
       throw new BadRequestException('You must be enrolled in the course');
     }
 
+    // Course-level lock: same reasoning as updateProgress — `ended` keeps
+    // enrollment.status='active' until manager Mark Completed, so we need
+    // an explicit course.status gate to freeze assessment submissions.
+    const [parentCourse] = await db
+      .select({ status: courses.status })
+      .from(courses)
+      .where(eq(courses.id, assessment.courseId))
+      .limit(1);
+    if (parentCourse && (parentCourse.status === 'completed' || parentCourse.status === 'ended' || parentCourse.status === 'archived')) {
+      throw new BadRequestException(
+        `Cannot submit an assessment on a ${parentCourse.status} course. Course progress is frozen.`,
+      );
+    }
+
     // Look up any unused retake grant — its newDueDate (if any) overrides
     // the assessment's global dueDate for this student.
     const [activeRetakeGrant] = await db
@@ -2804,6 +2848,19 @@ export class StudentService {
       throw new BadRequestException('You must be enrolled in the course');
     }
 
+    // Course-level lock: freeze assignment submissions on completed/ended/
+    // archived courses. See submitAssessment for the same reasoning.
+    const [parentCourseForAssignment] = await db
+      .select({ status: courses.status })
+      .from(courses)
+      .where(eq(courses.id, assessment.courseId))
+      .limit(1);
+    if (parentCourseForAssignment && (parentCourseForAssignment.status === 'completed' || parentCourseForAssignment.status === 'ended' || parentCourseForAssignment.status === 'archived')) {
+      throw new BadRequestException(
+        `Cannot submit an assignment on a ${parentCourseForAssignment.status} course. Course progress is frozen.`,
+      );
+    }
+
     // Check existing terminal submissions. The student is allowed 1 baseline
     // attempt + 1 attempt per retake grant. The total grants count includes
     // both used and unused grants since used grants represent attempts already
@@ -3009,6 +3066,7 @@ export class StudentService {
         id: submissions.id,
         assessmentId: submissions.assessmentId,
         assessmentTitle: assessments.title,
+        assessmentTitleAr: assessments.titleAr,
         courseId: assessments.courseId,
         courseTitle: courses.title,
         courseTitleAr: courses.titleAr,
@@ -3034,6 +3092,7 @@ export class StudentService {
       id: r.id,
       assessmentId: r.assessmentId,
       assessmentTitle: r.assessmentTitle,
+      assessmentTitleAr: r.assessmentTitleAr,
       courseId: r.courseId,
       courseTitle: r.courseTitle,
       courseTitleAr: r.courseTitleAr,
@@ -3178,6 +3237,7 @@ export class StudentService {
       .select({
         id: assessments.id,
         title: assessments.title,
+        titleAr: assessments.titleAr,
         date: assessments.dueDate,
         durationMinutes: assessments.durationMinutes,
         type: assessments.type,
@@ -3428,6 +3488,7 @@ export class StudentService {
             id: submissions.id,
             type: sql<string>`'assessment_submitted'`,
             title: assessments.title,
+            titleAr: assessments.titleAr,
             courseTitle: courses.title,
             courseTitleAr: courses.titleAr,
             timestamp: submissions.submittedAt,
@@ -3706,6 +3767,7 @@ export class StudentService {
       .select({
         id: courseMaterials.id,
         title: courseMaterials.title,
+        titleAr: courseMaterials.titleAr,
         type: courseMaterials.type,
         fileUrl: courseMaterials.fileUrl,
         fileSize: courseMaterials.fileSize,

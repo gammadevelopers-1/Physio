@@ -135,7 +135,12 @@ export function buildScore(score: XapiScore): {
   max: number;
 } {
   const range = score.max - score.min;
-  const scaled = range === 0 ? 0 : (score.raw - score.min) / range;
+  const rawScaled = range === 0 ? 0 : (score.raw - score.min) / range;
+  // xAPI spec requires scaled ∈ [-1, 1]. NELC's LRS rejects out-of-range
+  // values with HTTP 400 (verified via a stuck statement that retried
+  // hourly until manually patched). Clamp defensively so upstream data
+  // drift never breaks compliance transmission.
+  const scaled = Math.max(-1, Math.min(1, rawScaled));
   return {
     scaled,
     raw: score.raw,

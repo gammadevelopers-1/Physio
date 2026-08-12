@@ -141,6 +141,7 @@ export class WcagRunner {
       .select({
         id: courseMaterials.id,
         title: courseMaterials.title,
+        titleAr: courseMaterials.titleAr,
         courseId: courseMaterials.courseId,
       })
       .from(courseMaterials)

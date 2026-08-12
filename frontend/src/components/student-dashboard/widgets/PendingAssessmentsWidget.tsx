@@ -36,10 +36,15 @@ export default function PendingAssessmentsWidget({
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
+  // Exclude courses past their live window. On `ended` the backend rejects
+  // new attempts, so surfacing them here as "pending" is misleading.
+  const isLiveCourseStatus = (s?: string) =>
+    !s || (s !== "ended" && s !== "completed" && s !== "archived" && s !== "cancelled");
   const pending = (courses || [])
     .filter(
       (c) =>
         c.enrollmentStatus === "active" &&
+        isLiveCourseStatus(c.courseStatus) &&
         (c.nextAction === "take_quiz" || c.nextAction === "upload_assignment"),
     )
     .sort((a, b) => {

@@ -48,6 +48,10 @@ interface RegisterData {
   scfhsNumber?: string;
   nationalId: string;
   recaptchaToken?: string;
+  // PDPL consent — must be true; backend rejects otherwise. Backend
+  // records against the current Terms + Privacy versions at accept time.
+  termsAccepted: boolean;
+  marketingOptIn?: boolean;
 }
 
 // ===========================================
@@ -304,6 +308,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         nationalId: data.nationalId,
         ...(data.scfhsNumber && { scfhsNumber: data.scfhsNumber }),
         ...(data.recaptchaToken && { recaptchaToken: data.recaptchaToken }),
+        termsAccepted: data.termsAccepted,
+        ...(data.marketingOptIn !== undefined && { marketingOptIn: data.marketingOptIn }),
       });
       setState((prev) => ({ ...prev, isLoading: false }));
     } catch (error) {

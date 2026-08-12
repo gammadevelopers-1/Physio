@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
+import { eq } from 'drizzle-orm';
+import { db } from '../../../database';
+import { payments } from '../../../database/schema';
 import {
   BnplPaymentGateway,
   CreateChargeParams,
@@ -406,13 +409,36 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
     // Authorise → Capture inline so the entire flow completes before we
     // respond 'paid' to the webhook controller.
     if (eventType === 'order_approved' || eventType === 'order_authorised') {
-      const totalAmount = body.total_amount?.amount;
-      const totalCurrency = body.total_amount?.currency || 'SAR';
-      if (!chargeId || totalAmount == null) {
+      if (!chargeId) {
         this.logger.error(
-          `Tamara ${eventType} webhook missing order_id / total_amount: ${JSON.stringify(body)}`,
+          `Tamara ${eventType} webhook missing order_id: ${JSON.stringify(body)}`,
         );
         return { chargeId, status: 'failed', errorCode: 'malformed_webhook', rawData: body };
+      }
+      // Tamara's order_approved webhook does not always echo total_amount
+      // in the payload (observed: {"order_id":"...","event_type":"order_approved","data":[]}).
+      // We're authoritative on the amount anyway — read it from our own
+      // payment record, keyed by the gateway_charge_id we stored when the
+      // order was created. Falling back to the webhook made us fail the
+      // capture step whenever Tamara omitted the amount field.
+      const [paymentRow] = await db
+        .select({ amount: payments.amount, currency: payments.currency })
+        .from(payments)
+        .where(eq(payments.gatewayChargeId, chargeId))
+        .limit(1);
+      if (!paymentRow) {
+        this.logger.error(
+          `Tamara ${eventType} webhook for unknown order ${chargeId} — no payment row`,
+        );
+        return { chargeId, status: 'failed', errorCode: 'unknown_charge', rawData: body };
+      }
+      const totalAmount = Number(paymentRow.amount);
+      const totalCurrency = paymentRow.currency || 'SAR';
+      if (!(totalAmount > 0)) {
+        this.logger.error(
+          `Tamara ${eventType} webhook for order ${chargeId} but payment amount is ${paymentRow.amount}`,
+        );
+        return { chargeId, status: 'failed', errorCode: 'invalid_amount', rawData: body };
       }
 
       // Step 1: Authorise (idempotent on Tamara's side — calling twice

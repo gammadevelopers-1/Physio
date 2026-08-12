@@ -171,13 +171,27 @@ export class WebhooksController {
 
     // 9. Process: use queue if available, otherwise process synchronously
     if (this.webhookQueue) {
-      await this.webhookQueue.add(PAYMENT_JOB_NAMES.PROCESS_WEBHOOK, {
-        gateway: gatewayName,
-        chargeId: webhookResult.chargeId,
-        status: webhookResult.status,
-        errorCode: webhookResult.errorCode,
-        rawBody: body,
-      });
+      await this.webhookQueue.add(
+        PAYMENT_JOB_NAMES.PROCESS_WEBHOOK,
+        {
+          gateway: gatewayName,
+          chargeId: webhookResult.chargeId,
+          status: webhookResult.status,
+          errorCode: webhookResult.errorCode,
+          rawBody: body,
+        },
+        {
+          // Belt-and-braces retry: BullMQ default is attempts:1, meaning a
+          // single Redis blip or cold-worker error loses the webhook. With
+          // 5 attempts + exponential backoff, transient failures self-heal
+          // within ~3 minutes. Gateways also retry from their side, but
+          // relying on that alone means duplicate dedup churn.
+          attempts: 5,
+          backoff: { type: 'exponential', delay: 5000 },
+          removeOnComplete: 100,
+          removeOnFail: 500,
+        },
+      );
     } else {
       // Synchronous fallback (no Redis)
       await this.processWebhookSync(

@@ -80,20 +80,24 @@ export function formatPlatformDateReadable(
   const date = typeof input === "string" ? new Date(input) : input;
   if (isNaN(date.getTime())) return options?.fallback ?? "—";
 
+  // ar-EG defaults to Arabic-Indic digits; force Latin unless the admin
+  // explicitly picked arabic_indic in Platform Settings.
+  const numberingSystem = settings.numberSystem === "arabic_indic" ? "arab" : "latn";
   const datePart = date.toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  });
+    numberingSystem,
+  } as Intl.DateTimeFormatOptions);
   const timePart = options?.includeTime
     ? " " +
       date.toLocaleTimeString(locale === "ar" ? "ar-EG" : "en-US", {
         hour: "2-digit",
         minute: "2-digit",
-      })
+        numberingSystem,
+      } as Intl.DateTimeFormatOptions)
     : "";
-  const out = datePart + timePart;
-  return settings.numberSystem === "arabic_indic" ? toArabicIndic(out) : out;
+  return datePart + timePart;
 }
 
 /**
@@ -111,12 +115,13 @@ export function formatPlatformTime(
   const date = typeof input === "string" ? new Date(input) : input;
   if (isNaN(date.getTime())) return "—";
   const hour12 = options?.hour12 !== false;
-  const out = date.toLocaleTimeString(locale === "ar" ? "ar-EG" : "en-US", {
+  const numberingSystem = settings.numberSystem === "arabic_indic" ? "arab" : "latn";
+  return date.toLocaleTimeString(locale === "ar" ? "ar-EG" : "en-US", {
     hour: hour12 ? "numeric" : "2-digit",
     minute: "2-digit",
     hour12,
-  });
-  return settings.numberSystem === "arabic_indic" ? toArabicIndic(out) : out;
+    numberingSystem,
+  } as Intl.DateTimeFormatOptions);
 }
 
 /**

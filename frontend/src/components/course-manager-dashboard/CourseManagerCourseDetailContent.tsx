@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { adminApi, courseManagerApi, type CourseDeleteImpact } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import DatePicker from "@/components/ui/DatePicker";
 import type {
   CourseDetailResponse,
@@ -51,6 +52,7 @@ import {
   RefreshCw,
   CheckCircle,
   Archive,
+  ArchiveRestore,
   FileText,
   Image as ImageIcon,
   File,
@@ -200,6 +202,7 @@ const CourseManagerCourseDetailContent = ({
   interface MaterialItem {
     id: string;
     title: string;
+    titleAr: string | null;
     type: string;
     status: string;
     fileUrl: string | null;
@@ -819,6 +822,31 @@ const CourseManagerCourseDetailContent = ({
     }
   };
 
+  // End Course flow — surfaced in the Danger Zone on Active courses.
+  // Reason optional (Amna 2026-08). Distinct from Cancel (drops
+  // enrolments + refunds); just flips status → ended so the manager can
+  // review before releasing certs / CME via Mark Completed.
+  const [showEndCourse, setShowEndCourse] = useState(false);
+  const [endCourseReason, setEndCourseReason] = useState("");
+  const [endingCourse, setEndingCourse] = useState(false);
+  const handleEndCourse = async () => {
+    if (!course) return;
+    setEndingCourse(true);
+    try {
+      const updated = await courseManagerApi.endCourse(course.id, endCourseReason);
+      setCourse(updated);
+      setShowEndCourse(false);
+      setEndCourseReason("");
+      toast.success(t("courseDetail.statusUpdated"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("courseDetail.statusError")
+      );
+    } finally {
+      setEndingCourse(false);
+    }
+  };
+
   const handleRequestChanges = async () => {
     if (!course || !requestChangesNote.trim()) return;
     setRequestingChanges(true);
@@ -933,6 +961,12 @@ const CourseManagerCourseDetailContent = ({
         return (
           <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#FEF3C7] text-[#D97706]">
             {t("courseDetail.status.changes_requested")}
+          </span>
+        );
+      case "ended":
+        return (
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#EDE9FE] text-[#6D28D9]">
+            {t("courseDetail.status.ended")}
           </span>
         );
       case "completed":
@@ -1081,10 +1115,10 @@ const CourseManagerCourseDetailContent = ({
                   )}
 
                   <div className="p-5">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-2">
+                          <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] break-words">
                             {course.title}
                           </h1>
                           {getStatusBadge(course.status)}
@@ -1098,7 +1132,7 @@ const CourseManagerCourseDetailContent = ({
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 lg:flex-shrink-0">
                         {course.status === "pending_review" && (
                           <>
                             <button
@@ -1153,8 +1187,8 @@ const CourseManagerCourseDetailContent = ({
                             disabled={updatingStatus}
                             className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-lg hover:bg-[#15803D] transition-colors disabled:opacity-50"
                           >
-                            <Play className="w-4 h-4" />
-                            {t("courseDetail.activate")}
+                            <ArchiveRestore className="w-4 h-4" />
+                            {t("courseDetail.unarchive")}
                           </button>
                         )}
                         <Link
@@ -1463,7 +1497,7 @@ const CourseManagerCourseDetailContent = ({
                                               >
                                                 {getMaterialIcon(mat.type)}
                                                 <div className="flex-1 min-w-0">
-                                                  <p className="text-sm text-[var(--color-text-secondary)] truncate">{mat.title}</p>
+                                                  <p className="text-sm text-[var(--color-text-secondary)] truncate">{pickLocaleTitle(mat.title, mat.titleAr, locale)}</p>
                                                   <p className="text-xs text-[var(--color-text-secondary)]">
                                                     {mat.type} • {formatFileSize(mat.fileSize)}
                                                     {mat.wcagStatus && (
@@ -1530,7 +1564,7 @@ const CourseManagerCourseDetailContent = ({
                                                 >
                                                   <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                                   <div className="flex-1 min-w-0">
-                                                    <p className="text-sm text-[var(--color-text-primary)] truncate font-medium">{ma.title}</p>
+                                                    <p className="text-sm text-[var(--color-text-primary)] truncate font-medium">{pickLocaleTitle(ma.title, ma.titleAr, locale)}</p>
                                                     <p className="text-xs text-[var(--color-text-secondary)]">
                                                       {ma.totalMarks} {t("courseDetail.marks") || "marks"}
                                                       {typeof ma.submissionCount === "number" && (
@@ -1650,7 +1684,7 @@ const CourseManagerCourseDetailContent = ({
                               >
                                 <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-[var(--color-text-primary)] truncate font-medium">{ma.title}</p>
+                                  <p className="text-sm text-[var(--color-text-primary)] truncate font-medium">{pickLocaleTitle(ma.title, ma.titleAr, locale)}</p>
                                   <p className="text-xs text-[var(--color-text-secondary)]">
                                     {t("courseDetail.assessmentModuleLabel")}: {mod?.title || t("courseDetail.assessmentNoModule")}
                                     {" · "}
@@ -2421,6 +2455,19 @@ const CourseManagerCourseDetailContent = ({
                                 (pending certs, NELC compliance) prevent
                                 any submit that would 400. */}
 
+                            {/* End Course — Active → Ended. No cert /
+                                CME fanout (that's Mark Completed's job).
+                                Client spec Amna 2026-08. */}
+                            {course.status === "active" && (
+                              <button
+                                onClick={() => { setShowEndCourse(true); setEndCourseReason(""); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#DDD6FE] text-[#6D28D9] text-sm font-medium rounded-lg hover:bg-[#F5F3FF] transition-colors"
+                              >
+                                <Ban className="w-4 h-4" />
+                                {tAdmin("coursesPage.actions.endCourse")}
+                              </button>
+                            )}
+
                             {/* Cancel — statuses that can still be cancelled */}
                             {(course.status === "active" ||
                               course.status === "pending_review" ||
@@ -2446,10 +2493,14 @@ const CourseManagerCourseDetailContent = ({
                               </button>
                             )}
 
-                            {/* Archive — active or completed (moves out of
-                                catalog while preserving compliance rows) */}
-                            {(course.status === "active" ||
-                              course.status === "completed") && (
+                            {/* Archive — completed or ended (moves out of
+                                catalog while preserving compliance rows).
+                                Active courses cannot be archived directly —
+                                Complete/End first, then Archive. Ended
+                                courses can archive directly and unarchive
+                                restores back to Ended (Amna 2026-08). */}
+                            {(course.status === "completed" ||
+                              course.status === "ended") && (
                               <button
                                 onClick={handleDeactivate}
                                 disabled={updatingStatus}
@@ -2460,15 +2511,22 @@ const CourseManagerCourseDetailContent = ({
                               </button>
                             )}
 
-                            {/* Activate — bring an archived course back */}
+                            {/* Unarchive — bring an archived course back
+                                to its pre-archive status (ended stays
+                                ended, completed stays completed, legacy
+                                null → active). Backend endpoint is
+                                still /activate; label reads "Unarchive"
+                                here because the user's mental model on
+                                an archived course is "put it back",
+                                not "make it live". */}
                             {course.status === "archived" && (
                               <button
                                 onClick={handleActivate}
                                 disabled={updatingStatus}
                                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-lg hover:bg-[#15803D] transition-colors disabled:opacity-50"
                               >
-                                <Play className="w-4 h-4" />
-                                {t("courseDetail.activate")}
+                                <ArchiveRestore className="w-4 h-4" />
+                                {t("courseDetail.unarchive")}
                               </button>
                             )}
 
@@ -2553,6 +2611,58 @@ const CourseManagerCourseDetailContent = ({
               >
                 {removeLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t("courseDetail.removeMaterialBtn")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* End Course Modal — Active → Ended, optional reason. */}
+      {showEndCourse && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--color-surface-card)] rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#EDE9FE] flex items-center justify-center">
+                <Ban className="w-5 h-5 text-[#6D28D9]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                  {tAdmin("coursesPage.endCourseModal.title")}
+                </h3>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  {tAdmin("coursesPage.endCourseModal.body", {
+                    title: locale === "ar" && course?.titleAr ? course.titleAr : course?.title ?? "",
+                  })}
+                </p>
+              </div>
+            </div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+              {tAdmin("coursesPage.endCourseModal.reasonLabel")}
+            </label>
+            <textarea
+              value={endCourseReason}
+              onChange={(e) => setEndCourseReason(e.target.value)}
+              rows={3}
+              maxLength={1000}
+              placeholder={tAdmin("coursesPage.endCourseModal.reasonPlaceholder")}
+              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#6D28D9] focus:border-transparent resize-none mb-1"
+            />
+            <p className="text-xs text-[var(--color-text-secondary)] mb-4 text-end">{endCourseReason.length}/1000</p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => { setShowEndCourse(false); setEndCourseReason(""); }}
+                disabled={endingCourse}
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+              >
+                {tAdmin("coursesPage.endCourseModal.cancel")}
+              </button>
+              <button
+                onClick={handleEndCourse}
+                disabled={endingCourse}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#6D28D9] rounded-lg hover:bg-[#5B21B6] disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {endingCourse && <Loader2 className="w-4 h-4 animate-spin" />}
+                {tAdmin("coursesPage.endCourseModal.confirm")}
               </button>
             </div>
           </div>

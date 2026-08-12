@@ -163,9 +163,12 @@ export const paymentReceipts = pgTable(
 
     // Student refund info (KSA, snapshot at upload time)
     refundAccountHolder: varchar('refund_account_holder', { length: 255 }).notNull(),
-    refundIban: varchar('refund_iban', { length: 34 }).notNull(),
+    // Stored encrypted (AES-256-GCM) via encryptPII() — see common/crypto.ts.
+    // TEXT (not varchar(34)) because ciphertext ~92 chars for a 34-char IBAN.
+    refundIban: text('refund_iban').notNull(),
     refundBankName: varchar('refund_bank_name', { length: 255 }).notNull(),
-    refundNationalId: varchar('refund_national_id', { length: 20 }),
+    // Stored encrypted — see refundIban above. Nullable (optional at submit).
+    refundNationalId: text('refund_national_id'),
 
     // Re-upload chain
     replacedById: uuid('replaced_by_id'),

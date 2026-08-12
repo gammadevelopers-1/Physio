@@ -176,6 +176,26 @@ export default async function CourseDetailPage({
         reviewsHeading={courseDetailPage?.reviewsHeading || undefined}
         targetAudienceHeading={courseDetailPage?.targetAudienceHeading || undefined}
         courseDetailsHeading={courseDetailPage?.courseDetailsHeading || undefined}
+        certificate={{
+          title: courseDetailPage?.certificateTitle || undefined,
+          body: courseDetailPage?.certificateBody || undefined,
+          accreditedByLabel: courseDetailPage?.certificateAccreditedByLabel || undefined,
+          accreditorName: courseDetailPage?.certificateAccreditorName || undefined,
+          accreditorLogoUrl: courseDetailPage?.certificateAccreditorLogo?.url
+            ? getStrapiMediaUrl(courseDetailPage.certificateAccreditorLogo.url)
+            : undefined,
+          accreditorLogoAlt:
+            courseDetailPage?.certificateAccreditorLogo?.alternativeText ||
+            courseDetailPage?.certificateAccreditorName ||
+            undefined,
+          imageUrl: courseDetailPage?.certificateImage?.url
+            ? getStrapiMediaUrl(courseDetailPage.certificateImage.url)
+            : undefined,
+          imageAlt:
+            courseDetailPage?.certificateImage?.alternativeText ||
+            courseDetailPage?.certificateTitle ||
+            undefined,
+        }}
       />
 
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />

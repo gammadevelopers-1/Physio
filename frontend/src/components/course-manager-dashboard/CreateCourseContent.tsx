@@ -10,7 +10,9 @@ import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { courseManagerApi, courseAssistantsApi } from "@/lib/api";
-import type { InstructorListItem, CreateCourseManagerData } from "@/lib/api";
+import type { InstructorListItem, CreateCourseManagerData, SectionHeadingKey, SectionHeadingsMap } from "@/lib/api";
+import { SectionHeadingOverride } from "./SectionHeadingOverride";
+import { CustomSectionsEditor, type CustomSectionDraft } from "./CustomSectionsEditor";
 import {
   ArrowLeft,
   ArrowRight,
@@ -134,7 +136,18 @@ function getStatusColor(status: InstructorListItem["status"]): string {
   }
 }
 
-const CreateCourseContent = () => {
+export type SectionHeadingDefaults = {
+  en?: Partial<Record<SectionHeadingKey, string>>;
+  ar?: Partial<Record<SectionHeadingKey, string>>;
+};
+
+interface CreateCourseContentProps {
+  /** Strapi course-detail-page defaults shown as placeholders in the
+   *  per-course heading overrides. Fetched by the server page. */
+  headingDefaults?: SectionHeadingDefaults;
+}
+
+const CreateCourseContent = ({ headingDefaults }: CreateCourseContentProps = {}) => {
   const manager = useManagerProfile();
   const router = useRouter();
   const locale = useLocale();
@@ -183,6 +196,14 @@ const CreateCourseContent = () => {
   // counterpart locale at render time.
   type FaqDraft = { question: string; questionAr: string; answer: string; answerAr: string };
   const [faqs, setFaqs] = useState<FaqDraft[]>([]);
+  // Per-course heading overrides. Blank locales fall back to Strapi defaults
+  // (shown as placeholders in the inputs) at render time on the public page.
+  const [sectionHeadings, setSectionHeadings] = useState<SectionHeadingsMap>({});
+  const headingPlaceholderEn = (k: SectionHeadingKey) => headingDefaults?.en?.[k];
+  const headingPlaceholderAr = (k: SectionHeadingKey) => headingDefaults?.ar?.[k];
+  // Per-course custom sections. Each entry slots into sectionsOrder via the
+  // key `custom:<id>` so it reorders alongside the fixed sections.
+  const [customSections, setCustomSections] = useState<CustomSectionDraft[]>([]);
 
   // Step 3: Schedule & Pricing
   const [startDate, setStartDate] = useState("");
@@ -236,6 +257,16 @@ const CreateCourseContent = () => {
     if (!courseClassification) return null;
     return 2000;
   }, [courseClassification]);
+
+  // endDate DatePicker min = startDate + 1 day so same-day picks are
+  // impossible at the picker level. Matches the step-3 validation and
+  // the backend endDate > startDate check.
+  const endDateMin = useMemo(() => {
+    if (!startDate) return new Date().toISOString().split("T")[0];
+    const next = new Date(startDate);
+    next.setDate(next.getDate() + 1);
+    return next.toISOString().split("T")[0];
+  }, [startDate]);
 
   // Fetch instructors and TAs on mount
   useEffect(() => {
@@ -305,11 +336,25 @@ const CreateCourseContent = () => {
           toast.error(t("createCourse.startDate") + " must not be in the past");
           return false;
         }
-        // Allow same-day courses (endDate === startDate) — single-session
-        // workshops are common. Only reject when end is strictly before start.
-        if (endDate < startDate) {
-          toast.error(t("createCourse.endDate") + " cannot be before " + t("createCourse.startDate"));
+        // Amna 2026-08: end must be strictly after start. Same-day is
+        // rejected here AND blocked at the DatePicker (endDate min =
+        // startDate + 1). Matches the backend check so the user never
+        // gets a mismatched surprise error at submit time.
+        if (endDate <= startDate) {
+          toast.error(t("createCourse.endDate") + " must be after " + t("createCourse.startDate"));
           return false;
+        }
+        // Enrollment deadline (if set) must land before start. Backend
+        // enforces this too — surfacing it on the same step means users
+        // don't hit the error only after Create.
+        if (enrollmentDeadline) {
+          try {
+            const deadlineIso = fromRiyadhLocal(enrollmentDeadline);
+            if (new Date(deadlineIso) >= new Date(startDate)) {
+              toast.error(t("createCourse.enrollmentDeadlineLabel") + " must be before " + t("createCourse.startDate"));
+              return false;
+            }
+          } catch { /* ignore parse issues — backend will reject */ }
         }
         return true;
       }
@@ -433,6 +478,24 @@ const CreateCourseContent = () => {
         payload.showContents = showContents;
       }
       payload.visibleOnPublicSite = visibleOnPublicSite;
+      if (Object.keys(sectionHeadings).length) {
+        payload.sectionHeadings = sectionHeadings;
+      }
+      // Drop empty custom sections (no EN title AND no AR title) so the
+      // "Add" button doesn't accidentally persist stubs. Everything else
+      // is passed through — the renderer decides per-locale visibility.
+      const cleanedCustomSections = customSections
+        .map((s) => ({
+          id: s.id,
+          titleEn: s.titleEn.trim(),
+          titleAr: s.titleAr.trim(),
+          contentEn: s.contentEn.trim(),
+          contentAr: s.contentAr.trim(),
+        }))
+        .filter((s) => s.titleEn || s.titleAr);
+      if (cleanedCustomSections.length) {
+        payload.customSections = cleanedCustomSections;
+      }
       // Webinar Course only — toggle controls whether the recording is
       // surfaced in students' dashboards after the event ends.
       if (deliveryType === 'webinar') {
@@ -683,6 +746,13 @@ const CreateCourseContent = () => {
                     </h2>
                     <div className="space-y-4">
                       {/* Overview */}
+                      <SectionHeadingOverride
+                        sectionKey="overview"
+                        value={sectionHeadings}
+                        onChange={setSectionHeadings}
+                        defaultEn={headingPlaceholderEn("overview")}
+                        defaultAr={headingPlaceholderAr("overview")}
+                      />
                       <div>
                         <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsOverviewEn")}</label>
                         <RichTextEditor
@@ -702,6 +772,13 @@ const CreateCourseContent = () => {
                       </div>
 
                       {/* Objectives */}
+                      <SectionHeadingOverride
+                        sectionKey="objectives"
+                        value={sectionHeadings}
+                        onChange={setSectionHeadings}
+                        defaultEn={headingPlaceholderEn("objectives")}
+                        defaultAr={headingPlaceholderAr("objectives")}
+                      />
                       <div>
                         <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsObjectivesEn")}</label>
                         {objectives.map((obj, i) => (
@@ -749,6 +826,13 @@ const CreateCourseContent = () => {
                       </div>
 
                       {/* Features */}
+                      <SectionHeadingOverride
+                        sectionKey="features"
+                        value={sectionHeadings}
+                        onChange={setSectionHeadings}
+                        defaultEn={headingPlaceholderEn("features")}
+                        defaultAr={headingPlaceholderAr("features")}
+                      />
                       <div>
                         <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsFeaturesEn")}</label>
                         {features.map((feat, i) => (
@@ -796,6 +880,13 @@ const CreateCourseContent = () => {
                       </div>
 
                       {/* Target Audience */}
+                      <SectionHeadingOverride
+                        sectionKey="targetAudience"
+                        value={sectionHeadings}
+                        onChange={setSectionHeadings}
+                        defaultEn={headingPlaceholderEn("targetAudience")}
+                        defaultAr={headingPlaceholderAr("targetAudience")}
+                      />
                       <div>
                         <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsTargetAudienceEn")}</label>
                         {targetAudience.map((item, i) => (
@@ -845,6 +936,13 @@ const CreateCourseContent = () => {
                       {/* Requirements — only for onsite/blended */}
                       {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                         <>
+                          <SectionHeadingOverride
+                            sectionKey="requirements"
+                            value={sectionHeadings}
+                            onChange={setSectionHeadings}
+                            defaultEn={headingPlaceholderEn("requirements")}
+                            defaultAr={headingPlaceholderAr("requirements")}
+                          />
                           <div>
                             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsRequirementsEn")}</label>
                             <textarea
@@ -870,6 +968,13 @@ const CreateCourseContent = () => {
                       )}
 
                       {/* Notices */}
+                      <SectionHeadingOverride
+                        sectionKey="notices"
+                        value={sectionHeadings}
+                        onChange={setSectionHeadings}
+                        defaultEn={headingPlaceholderEn("notices")}
+                        defaultAr={headingPlaceholderAr("notices")}
+                      />
                       <div>
                         <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsNoticesEn")}</label>
                         <textarea
@@ -894,6 +999,13 @@ const CreateCourseContent = () => {
 
                       {/* FAQs — available for every delivery type */}
                       <div className="pt-3 border-t border-[var(--color-border)]">
+                          <SectionHeadingOverride
+                            sectionKey="faqs"
+                            value={sectionHeadings}
+                            onChange={setSectionHeadings}
+                            defaultEn={headingPlaceholderEn("faqs")}
+                            defaultAr={headingPlaceholderAr("faqs")}
+                          />
                           <div className="flex items-baseline justify-between mb-2">
                             <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
                               {t("createCourse.faqsTitle")}
@@ -976,6 +1088,58 @@ const CreateCourseContent = () => {
                             {t("createCourse.addFaq")}
                           </button>
                         </div>
+
+                      {/* Custom sections — arbitrary rich-text sections that
+                          render on the public course page. The manager reorders
+                          them alongside fixed sections after saving via the
+                          Edit-course Section Order UI. */}
+                      <CustomSectionsEditor
+                        value={customSections}
+                        onChange={setCustomSections}
+                      />
+
+                      {/* Auto-generated section headings — sections whose content
+                          is not authored here but whose heading is still
+                          customizable per course (Contents, Schedule, Reviews,
+                          Course Details). */}
+                      <div className="pt-3 border-t border-[var(--color-border)]">
+                        <div className="mb-2">
+                          <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {t("createCourse.autoSectionHeadingsTitle")}
+                          </h4>
+                          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                            {t("createCourse.autoSectionHeadingsHint")}
+                          </p>
+                        </div>
+                        <SectionHeadingOverride
+                          sectionKey="contents"
+                          value={sectionHeadings}
+                          onChange={setSectionHeadings}
+                          defaultEn={headingPlaceholderEn("contents")}
+                          defaultAr={headingPlaceholderAr("contents")}
+                        />
+                        <SectionHeadingOverride
+                          sectionKey="schedule"
+                          value={sectionHeadings}
+                          onChange={setSectionHeadings}
+                          defaultEn={headingPlaceholderEn("schedule")}
+                          defaultAr={headingPlaceholderAr("schedule")}
+                        />
+                        <SectionHeadingOverride
+                          sectionKey="reviews"
+                          value={sectionHeadings}
+                          onChange={setSectionHeadings}
+                          defaultEn={headingPlaceholderEn("reviews")}
+                          defaultAr={headingPlaceholderAr("reviews")}
+                        />
+                        <SectionHeadingOverride
+                          sectionKey="courseDetails"
+                          value={sectionHeadings}
+                          onChange={setSectionHeadings}
+                          defaultEn={headingPlaceholderEn("courseDetails")}
+                          defaultAr={headingPlaceholderAr("courseDetails")}
+                        />
+                      </div>
 
                       {/* Show Contents toggle — only for self-paced and blended */}
                       {(deliveryType === 'self-paced' || deliveryType === 'blended') && (
@@ -1069,7 +1233,7 @@ const CreateCourseContent = () => {
                           id="end-date"
                           value={endDate}
                           onChange={setEndDate}
-                          min={startDate || new Date().toISOString().split("T")[0]}
+                          min={endDateMin}
                         />
                       </div>
                       <div>
@@ -1203,6 +1367,7 @@ const CreateCourseContent = () => {
                           onChange={(e) => setPrice(e.target.value)}
                           placeholder="0"
                           min={0}
+                          step="0.01"
                           className={inputClass}
                         />
                       </div>

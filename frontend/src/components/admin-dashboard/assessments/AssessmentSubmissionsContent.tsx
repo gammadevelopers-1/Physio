@@ -18,6 +18,7 @@ import AdminMobileSidebar from "@/components/admin-dashboard/AdminMobileSidebar"
 import Select from "@/components/ui/Select";
 import SubmissionDetailDrawer from "./SubmissionDetailDrawer";
 import { instructorApi, ApiError } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import type {
   AssessmentResponse,
@@ -151,7 +152,7 @@ export default function AssessmentSubmissionsContent({ courseId, assessmentId }:
               {/* Header */}
               <div className="mb-6">
                 <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
-                  {assessment?.title || t("title")}
+                  {assessment ? pickLocaleTitle(assessment.title, assessment.titleAr, locale) : t("title")}
                 </h1>
                 <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                   {t("subtitle")}

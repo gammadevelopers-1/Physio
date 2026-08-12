@@ -75,9 +75,11 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 5 / min / IP — abuse-prone
   @Post('register')
-  async register(@Body() dto: RegisterDto) {
+  async register(@Body() dto: RegisterDto, @Req() req: Request) {
     await this.recaptchaService.verify(dto.recaptchaToken, 'register');
-    return this.authService.register(dto);
+    const ipAddress = req.ip || req.connection.remoteAddress || null;
+    const userAgent = req.headers['user-agent'] || null;
+    return this.authService.register(dto, ipAddress, userAgent);
   }
 
   // ===========================================

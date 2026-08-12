@@ -8,6 +8,7 @@ import {
   cronRuns,
 } from '../../database/schema';
 import { runCheck } from './service-status-checks';
+import { DistributedLockService } from '../tasks/distributed-lock.service';
 
 const CRON_NAME = 'service_status_check';
 
@@ -15,13 +16,20 @@ const CRON_NAME = 'service_status_check';
 export class ServiceStatusCron {
   private readonly logger = new Logger(ServiceStatusCron.name);
 
+  constructor(private readonly lock: DistributedLockService) {}
+
   // Every 5 minutes — standard cadence for a status page. Anything
   // tighter eats Cloud Run minutes + bumps into Statuspage rate
   // limits; anything looser risks stale status during an incident.
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handleCron(): Promise<void> {
     if (isCronExternalized('service-status.check')) return;
-    await this.trackCronRun(CRON_NAME, async () => {
+    // Distributed lock so multi-instance api-web doesn't fan the same
+    // upstream HTTP checks N times per tick. 4-min TTL: HTTP timeouts
+    // per component are bounded, and this cron shouldn't sit longer
+    // than the 5-min cadence anyway.
+    await this.lock.withLock('lock:cron:service-status.check', 4 * 60_000, () =>
+      this.trackCronRun(CRON_NAME, async () => {
       const components = await db
         .select()
         .from(serviceStatusComponents)
@@ -81,7 +89,8 @@ export class ServiceStatusCron {
           );
         }
       }
-    });
+    }),
+    );
   }
 
   // Same wrapper SlaMonitorService uses. Inserts a cron_runs row,

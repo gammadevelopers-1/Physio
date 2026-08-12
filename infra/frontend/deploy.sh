@@ -81,13 +81,13 @@ fi
 # at build time (Next.js NEXT_PUBLIC_*). Override per env if going live.
 TABBY_PUBLIC_KEY_FE="${NEXT_PUBLIC_TABBY_PUBLIC_KEY:-pk_test_019e2e71-0358-6bb2-e50b-73334f9ec199}"
 TABBY_MERCHANT_CODE_FE="${NEXT_PUBLIC_TABBY_MERCHANT_CODE:-PHYS}"
-TAMARA_PUBLIC_KEY_FE="${NEXT_PUBLIC_TAMARA_PUBLIC_KEY:-c53610b1-8ba1-461e-bb4c-1df00ddbdf1e}"
+TAMARA_PUBLIC_KEY_FE="${NEXT_PUBLIC_TAMARA_PUBLIC_KEY:-13739852-2acd-4a25-a818-80c3f33273da}"
 # CDN base URL the widget script + merchant config JSON live on. Tamara
 # Widget V2 fetches its config from the SAME CDN the widget was loaded
 # from, so this MUST match the environment of TAMARA_API_URL — sandbox
 # API ↔ cdn-sandbox.tamara.co, prod API ↔ cdn.tamara.co. Flipping one
 # without the other means the widget never renders.
-TAMARA_CDN_URL_FE="${NEXT_PUBLIC_TAMARA_CDN_URL:-https://cdn-sandbox.tamara.co}"
+TAMARA_CDN_URL_FE="${NEXT_PUBLIC_TAMARA_CDN_URL:-https://cdn.tamara.co}"
 log_info "NEXT_PUBLIC_TABBY_PUBLIC_KEY  = ${TABBY_PUBLIC_KEY_FE:0:18}…"
 log_info "NEXT_PUBLIC_TABBY_MERCHANT_CODE = ${TABBY_MERCHANT_CODE_FE}"
 log_info "NEXT_PUBLIC_TAMARA_PUBLIC_KEY = ${TAMARA_PUBLIC_KEY_FE:0:8}…"

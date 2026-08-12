@@ -37,6 +37,7 @@ import { SessionAssistantsService } from '../session-assistants/session-assistan
 import { CourseAssistantsService } from '../course-assistants/course-assistants.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { SessionNotificationService } from './session-notification.service';
+import { SessionReminderService } from './session-reminder.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 import { toArabicIndic } from '../../common/platform-locale';
 import { NELC_EVENT_TYPE } from '../../database/schema';
@@ -55,6 +56,7 @@ export class SessionsService {
     private readonly sessionNotificationService: SessionNotificationService,
     private readonly courseAssistantsService: CourseAssistantsService,
     private readonly adminSettings: AdminSettingsService,
+    private readonly reminderService: SessionReminderService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -257,8 +259,8 @@ export class SessionsService {
         throw new NotFoundException('Course not found');
       }
 
-      if (course.status === 'completed' || course.status === 'archived') {
-        throw new BadRequestException('Cannot create lectures for a completed or archived course');
+      if (course.status === 'completed' || course.status === 'ended' || course.status === 'archived') {
+        throw new BadRequestException('Cannot create lectures for a completed, ended, or archived course');
       }
 
       // Validate session date is within course date range
@@ -289,6 +291,16 @@ export class SessionsService {
           assignedStudents: dto.assignedStudents || null,
         })
         .returning();
+
+      // Enqueue the reminder Cloud Task at scheduledAt-5m (Zoom/Hybrid
+      // only — enqueueReminderTask self-gates on session type). Fire-
+      // and-forget: if enqueue fails, the hourly safety-net sweep
+      // + legacy per-minute @Cron still catch it.
+      await this.reminderService.enqueueReminderTask(session);
+      // Enqueue the mark-missed task at scheduledAt+15m — applies to
+      // every session type (not just Zoom/Hybrid) since even onsite
+      // sessions get missed status when the instructor no-shows.
+      await this.reminderService.enqueueMarkMissedTask(session);
 
       // Auto-allocate assistants based on NELC rules
       await this.assistantsService.checkAndAllocate(session.id).catch((err) => {
@@ -362,8 +374,8 @@ export class SessionsService {
       throw new NotFoundException('Course not found');
     }
 
-    if (course.status === 'completed' || course.status === 'archived') {
-      throw new BadRequestException('Cannot create lectures for a completed or archived course');
+    if (course.status === 'completed' || course.status === 'ended' || course.status === 'archived') {
+      throw new BadRequestException('Cannot create lectures for a completed, ended, or archived course');
     }
 
     // Validate session date is within course date range
@@ -389,6 +401,12 @@ export class SessionsService {
         assignedStudents: dto.assignedStudents || null,
       })
       .returning();
+
+    // Enqueue reminder Cloud Task (event-driven replacement for polling
+    // cron). Self-gates on session.type = Zoom/Hybrid.
+    await this.reminderService.enqueueReminderTask(session);
+    // Enqueue mark-missed at scheduledAt+15m (all session types).
+    await this.reminderService.enqueueMarkMissedTask(session);
 
     // Auto-allocate assistants based on NELC rules
     await this.assistantsService.checkAndAllocate(session.id).catch((err) => {
@@ -1179,6 +1197,19 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .returning();
 
+    // Reschedule the reminder Cloud Task when scheduledAt actually
+    // changed. replaceExisting cancels the prior task version so the
+    // reminder fires at the new time, not the old.
+    if (dto.scheduledAt) {
+      await this.reminderService.enqueueReminderTask(updated, {
+        replaceExisting: true,
+      });
+      // Same reschedule for mark-missed. Cancel the stale one then
+      // enqueue against the new scheduledAt.
+      await this.reminderService.cancelMarkMissedTask(updated.id);
+      await this.reminderService.enqueueMarkMissedTask(updated);
+    }
+
     // Audit log the update
     await this.auditLogService.log({
       entityType: 'session',
@@ -1312,6 +1343,23 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .returning();
 
+    // Enqueue the warn-90 + end Cloud Tasks now that actualStartedAt is
+    // known. The reminder task fires from a different lifecycle event
+    // (create/update) so it's not scheduled here.
+    if (updated.actualStartedAt) {
+      await this.reminderService.enqueueEndTasks({
+        id: updated.id,
+        actualStartedAt: updated.actualStartedAt,
+        durationMinutes: updated.durationMinutes,
+      });
+    }
+    // Also cancel the pending mark-missed + reminder tasks — the
+    // session has moved past SCHEDULED so both would CAS-no-op, but
+    // clearing the queue slot avoids the safety-net sweep grabbing
+    // them.
+    await this.reminderService.cancelMarkMissedTask(sessionId);
+    await this.reminderService.cancelReminderTask(sessionId);
+
     // If this is a Zoom/hybrid session with a meetingId, fetch the host start URL
     let zoomStartUrl: string | null = null;
     if (
@@ -1414,6 +1462,13 @@ export class SessionsService {
       })
       .where(eq(sessions.id, sessionId))
       .returning();
+
+    // Cancel the pending warn-90 + end Cloud Tasks. The per-row
+    // handlers CAS-check status and would no-op anyway, but freeing
+    // the queue slot avoids noise on the dashboard (a task delivered
+    // "successfully" but doing no work is indistinguishable at the
+    // metric layer from one that failed to find work due to a bug).
+    await this.reminderService.cancelEndTasks(sessionId);
 
     await this.auditService.log({
       eventType: NELC_EVENT_TYPE.SESSION_ENDED,
@@ -1686,6 +1741,13 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .returning();
 
+    // Cancel the pending reminder + mark-missed tasks — the per-row
+    // handlers CAS-check status so they would no-op anyway, but freeing
+    // the queue slot is cleaner and stops the safety-net sweep from
+    // trying to re-enqueue.
+    await this.reminderService.cancelReminderTask(sessionId);
+    await this.reminderService.cancelMarkMissedTask(sessionId);
+
     await this.auditService.log({
       eventType: NELC_EVENT_TYPE.SESSION_CANCELLED,
       entityType: 'session',
@@ -1798,6 +1860,10 @@ export class SessionsService {
           })
           .where(eq(sessions.id, session.id))
           .returning();
+
+        // Cascade cancel of the pending reminder + mark-missed tasks.
+        await this.reminderService.cancelReminderTask(session.id);
+        await this.reminderService.cancelMarkMissedTask(session.id);
 
         // Audit at both layers — NELC compliance (regulatory) and the
         // recovery feed (so the Restore History shows the cascade).
@@ -2167,6 +2233,9 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .returning();
 
+    // Cancel the pending reminder task on manager override.
+    await this.reminderService.cancelReminderTask(sessionId);
+
     await this.auditService.log({
       eventType: NELC_EVENT_TYPE.SESSION_CANCELLED,
       entityType: 'session',
@@ -2396,8 +2465,8 @@ export class SessionsService {
    */
   private validateSessionDateRange(
     scheduledAt: string,
-    courseStartDate: string | null,
-    courseEndDate: string | null,
+    courseStartDate: string | Date | null,
+    courseEndDate: string | Date | null,
     localDate?: string,
   ) {
     // Use the user's local date (YYYY-MM-DD) sent from the frontend.
@@ -2406,21 +2475,28 @@ export class SessionsService {
     // Falls back to extracting from ISO string if localDate not provided.
     const sessionDateStr = localDate || scheduledAt.slice(0, 10);
 
-    if (courseStartDate) {
-      const startStr = String(courseStartDate).slice(0, 10);
-      if (sessionDateStr < startStr) {
-        throw new BadRequestException(
-          `Lecture date cannot be before the course start date (${startStr})`,
-        );
-      }
+    // Course start/end are now full timestamps (courses.ts migration 0114).
+    // Normalise both to a YYYY-MM-DD substring so the whole-day range
+    // check keeps the same semantics as before (sessions are still
+    // day-scoped for range validation — the time is just what the
+    // instructor chose).
+    const toDateStr = (v: string | Date | null): string | null => {
+      if (!v) return null;
+      if (typeof v === 'string') return v.slice(0, 10);
+      return v.toISOString().slice(0, 10);
+    };
+
+    const startStr = toDateStr(courseStartDate);
+    if (startStr && sessionDateStr < startStr) {
+      throw new BadRequestException(
+        `Lecture date cannot be before the course start date (${startStr})`,
+      );
     }
-    if (courseEndDate) {
-      const endStr = String(courseEndDate).slice(0, 10);
-      if (sessionDateStr > endStr) {
-        throw new BadRequestException(
-          `Lecture date cannot be after the course end date (${endStr})`,
-        );
-      }
+    const endStr = toDateStr(courseEndDate);
+    if (endStr && sessionDateStr > endStr) {
+      throw new BadRequestException(
+        `Lecture date cannot be after the course end date (${endStr})`,
+      );
     }
   }
 
@@ -2713,6 +2789,7 @@ export class SessionsService {
         materialId: sessionMaterials.materialId,
         sharedAt: sessionMaterials.sharedAt,
         materialTitle: courseMaterials.title,
+        materialTitleAr: courseMaterials.titleAr,
         materialType: courseMaterials.type,
         fileUrl: courseMaterials.fileUrl,
         fileSize: courseMaterials.fileSize,

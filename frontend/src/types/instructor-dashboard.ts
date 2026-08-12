@@ -103,6 +103,9 @@ export interface DashboardTabAssessment {
 }
 
 export interface DashboardPendingSubmission {
+  // titleAr counterpart for locale-aware rendering; nullable when the
+  // instructor only authored the English title.
+  assessmentTitleAr?: string | null;
   id: string;
   studentName: string;
   assessmentTitle: string;
@@ -630,6 +633,7 @@ export interface CourseMaterialResponse {
   courseId: string;
   moduleId: string | null;
   title: string;
+  titleAr: string | null;
   type: MaterialType;
   fileUrl: string | null;
   fileSize: number | string;
@@ -793,8 +797,17 @@ export interface PublicCourseSession {
 export interface PublicCourseMaterial {
   id: string;
   title: string;
+  titleAr: string | null;
   type: string;
   orderIndex: number;
+}
+
+export interface PublicCourseAssessment {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  /** 'quiz' | 'exam' | 'assignment' */
+  type: string;
 }
 
 export interface PublicCourseModule {
@@ -805,6 +818,7 @@ export interface PublicCourseModule {
   type: string;
   durationMinutes: number | null;
   materials?: PublicCourseMaterial[];
+  assessments?: PublicCourseAssessment[];
 }
 
 export interface PublicCourseRating {
@@ -921,6 +935,36 @@ export interface PublicCourse {
   };
   showContents: boolean | null;
   sectionsOrder: string[] | null;
+  /**
+   * Per-course heading overrides for the public course-detail sections.
+   * Any missing key or blank locale falls back to the Strapi default.
+   */
+  sectionHeadings: Partial<Record<
+    | 'overview'
+    | 'objectives'
+    | 'features'
+    | 'contents'
+    | 'schedule'
+    | 'requirements'
+    | 'notices'
+    | 'reviews'
+    | 'targetAudience'
+    | 'courseDetails'
+    | 'faqs',
+    { en?: string; ar?: string }
+  >> | null;
+  /**
+   * Per-course custom sections authored by the manager. Each entry gets a
+   * stable id; the public renderer slots it in via the key `custom:<id>`
+   * inside `sectionsOrder`, so it reorders alongside the fixed sections.
+   */
+  customSections: Array<{
+    id: string;
+    titleEn: string;
+    titleAr?: string | null;
+    contentEn?: string | null;
+    contentAr?: string | null;
+  }> | null;
   // Related data
   sessions: PublicCourseSession[];
   modules: PublicCourseModule[];

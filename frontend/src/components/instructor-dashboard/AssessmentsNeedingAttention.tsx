@@ -5,6 +5,7 @@ import { ClipboardList, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { DashboardPendingSubmission } from "@/types/instructor-dashboard";
 import Link from "next/link";
 import { useLocale } from "next-intl";
+import { pickLocaleTitle } from "@/lib/locale-title";
 
 interface Props {
   submissions: DashboardPendingSubmission[];
@@ -85,7 +86,7 @@ const AssessmentsNeedingAttention = ({
                   {sub.studentName}
                 </p>
                 <p className="text-[11px] text-[var(--color-text-secondary)] truncate mb-0.5">
-                  {sub.assessmentTitle} · {sub.courseName}
+                  {pickLocaleTitle(sub.assessmentTitle, sub.assessmentTitleAr, locale)} · {sub.courseName}
                 </p>
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${getOverdueColor(sub.daysOverdue)}`}

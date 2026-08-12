@@ -6,6 +6,7 @@ import { db } from '../../database';
 import { courses, enrollments, NELC_EVENT_TYPE, COURSE_STATUS } from '../../database/schema';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { DistributedLockService } from '../tasks/distributed-lock.service';
 
 /**
  * Auto-END-date sweep for courses.
@@ -31,15 +32,32 @@ export class CourseCompletionCronService {
   constructor(
     private readonly auditService: NelcAuditService,
     private readonly notificationsService: UserNotificationsService,
+    private readonly lock: DistributedLockService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async autoCompletePastEndDate(): Promise<void> {
     if (isCronExternalized('courses.completion')) return;
+    // Distributed lock — multi-instance safe when this moves in-process
+    // (Phase 4). 10-min TTL: the sweep can take longer if many courses
+    // are past-due (per-course notifications fire).
+    const result = await this.lock.withLock(
+      'lock:cron:courses.completion',
+      10 * 60_000,
+      () => this.autoCompletePastEndDateInner(),
+    );
+    if (result === null) {
+      // Another instance holds it — no-op is correct dedup.
+    }
+  }
+
+  private async autoCompletePastEndDateInner(): Promise<void> {
     this.logger.log('Running course end-date sweep (active → ended)...');
 
     try {
-      // Find active courses whose endDate has passed
+      // Find active courses whose endDate has passed.
+      // endDate is now a full timestamp (migration 0114) stored as UTC.
+      // Compare directly against now() — no more date-string truncation.
       const expiredCourses = await db
         .select({
           id: courses.id,
@@ -52,7 +70,7 @@ export class CourseCompletionCronService {
           and(
             eq(courses.status, COURSE_STATUS.ACTIVE),
             isNotNull(courses.endDate),
-            lte(courses.endDate, new Date().toISOString().split('T')[0]),
+            lte(courses.endDate, new Date()),
           ),
         );
 

@@ -17,6 +17,14 @@ interface BnplPromoWidgetsProps {
    *  next to its own radio button. Leave undefined to render both
    *  side-by-side (product / cart pages). */
   only?: "tabby" | "tamara";
+  /** Disambiguator for pages that render TWO Bnpl widget instances at
+   *  the same `source` (e.g. the public course detail page has a
+   *  desktop pricing card and a mobile pricing card, both display:none-
+   *  toggled by a media query but both always in DOM). Without this,
+   *  both mount targets share `id="tabby-promo-product"` and Tabby's
+   *  querySelector picks the first, leaving the other card empty on
+   *  its own viewport. */
+  instanceKey?: string;
   className?: string;
 }
 
@@ -69,15 +77,16 @@ declare global {
  * public keys are missing, so this component is safe to render even before
  * the BNPL gateways are fully enabled.
  *
- * Skipped entirely for amounts under each gateway's minimum (Tabby: 50 SAR,
- * Tamara: 50 SAR) — the widgets themselves filter, but rendering when we
- * already know it's a no-op saves DOM noise.
+ * Rendered for every SAR price — the gateways decide whether an installment
+ * plan is available for a given amount and hide themselves accordingly, so
+ * we don't second-guess them with a client-side floor.
  */
 export default function BnplPromoWidgets({
   price,
   currency = "SAR",
   source = "product",
   only,
+  instanceKey,
   className = "",
 }: BnplPromoWidgetsProps) {
   const locale = useLocale();
@@ -98,7 +107,7 @@ export default function BnplPromoWidgets({
   // (e.g. checkout has one near the Tabby radio and one near Tamara — the
   // Tamara render still includes the wrapping element ref but no Tabby
   // widget). Suffixing with `only` prevents id collisions.
-  const tabbyMountId = `tabby-promo-${source}${only ? `-${only}` : ""}`;
+  const tabbyMountId = `tabby-promo-${source}${only ? `-${only}` : ""}${instanceKey ? `-${instanceKey}` : ""}`;
   const tabbyInstantiatedRef = useRef(false);
 
   // Admin-controlled per-gateway visibility. Missing → true (fail open so
@@ -131,7 +140,7 @@ export default function BnplPromoWidgets({
   const showTabby = (!only || only === "tabby") && gwTabbyOn;
   const showTamara = (!only || only === "tamara") && gwTamaraOn;
 
-  const showWidgets = price >= 50 && currency === "SAR";
+  const showWidgets = currency === "SAR";
 
   // Set Tamara's page-level config SYNCHRONOUSLY during render, before
   // React commits the DOM. Custom-element connectedCallback fires during

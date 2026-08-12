@@ -5,6 +5,7 @@ import { PointsService } from './points.service';
 import { PointsLedgerService } from './points-ledger.service';
 import { PointsCronService } from './points.cron';
 import { PointsSweepHoldsJob, PointsLogExpiredJob } from './points.jobs';
+import { PointsReleaseHoldTask } from './points.tasks';
 import { RewardsService } from './rewards/rewards.service';
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 import { EnrollmentsModule } from '../enrollments/enrollments.module';
@@ -18,6 +19,8 @@ import { EnrollmentsModule } from '../enrollments/enrollments.module';
     PointsCronService,
     PointsSweepHoldsJob,
     PointsLogExpiredJob,
+    // Cloud Tasks handler — self-registers with TaskHandlerRegistry.
+    PointsReleaseHoldTask,
     RewardsService,
   ],
   exports: [PointsService, PointsLedgerService, RewardsService],

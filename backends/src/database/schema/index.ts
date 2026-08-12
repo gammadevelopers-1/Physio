@@ -132,6 +132,9 @@ export * from './reconciliation';
 // NELC xAPI transmission log
 export * from './xapi-statements';
 
+// PDPL consent ledger
+export * from './user-consents';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

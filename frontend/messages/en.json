@@ -1172,15 +1172,74 @@
     "requirements": "Requirements",
     "notices": "Important Notice",
     "reviews": "Reviews",
+    "features": "Features",
+    "faqs": "FAQs",
+    "instructor": "Instructor",
+    "instructorFallbackName": "Instructor",
+    "viewProfile": "View profile",
+    "shareCopied": "Link copied",
+    "share": {
+      "action": "Share",
+      "title": "Share",
+      "close": "Close",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "registrationCountdown": {
+      "title": "Registration Ends In",
+      "days": "Days",
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "seconds": "Seconds"
+    },
+    "noReviewsYet": "No Reviews Yet",
+    "reviewsCount": "{count, plural, =1 {1 review} other {# reviews}}",
+    "viewAllReviews": "View all reviews ({count})",
+    "reviewsToggle": {
+      "course": "Course",
+      "instructor": "Instructor"
+    },
+    "deliveryType": {
+      "zoom": "Live Online",
+      "onsite": "On-site",
+      "blended": "Blended",
+      "selfPaced": "Self-paced",
+      "webinar": "Webinar"
+    },
+    "contentsDurationLabel": "{duration} of content",
+    "contentsMoreCount": "{count, plural, =1 {1 more module available after enrollment} other {# more modules available after enrollment}}",
+    "contentsMoreDefault": "Full content available after enrollment",
+    "materialType": {
+      "video": "Video",
+      "pdf": "PDF",
+      "slides": "Slides",
+      "document": "Document",
+      "quiz": "Quiz",
+      "exam": "Exam",
+      "assignment": "Assignment"
+    },
+    "sessions": {
+      "city": "City",
+      "month": "Month",
+      "allCities": "All cities",
+      "allMonths": "All months",
+      "clear": "Clear",
+      "noMatch": "No sessions match your filters"
+    },
     "courseDetails": {
       "title": "Course Details",
       "registrationDeadline": "Registration Deadline",
       "city": "City",
       "language": "Language",
+      "startDate": "Start Date",
       "startTime": "Start time",
       "duration": "Duration",
+      "endDate": "End Date",
       "endTime": "End time",
       "venue": "Venue",
+      "deliveryType": "Delivery Type",
+      "cmeHours": "CME Hours",
+      "accreditationNumber": "Accreditation Number",
       "hours": "Hours"
     },
     "whatYouWillLearn": {
@@ -2008,6 +2067,7 @@
       "tabs": {
         "all": "All",
         "inProgress": "In progress",
+        "ended": "Ended",
         "completed": "Completed",
         "upcoming": "Upcoming",
         "dropped": "Dropped"
@@ -2069,6 +2129,12 @@
       "reviewAlreadyTitle": "Review Submitted",
       "reviewAlreadyDesc": "Thank you — you have already reviewed this course.",
       "completedBadge": "Completed",
+      "endedBadge": "Ended",
+      "ended": "Ended",
+      "endedBanner": {
+        "title": "This course has ended",
+        "body": "Your progress is finalized. Reviews and certificate requests unlock once a manager marks the course as completed."
+      },
       "notEnrolled": "You are not enrolled in this course"
     },
     "favourites": {
@@ -3346,6 +3412,7 @@
         "draft": "Draft",
         "pending_review": "Pending Review",
         "changes_requested": "Changes Requested",
+        "ended": "Ended",
         "completed": "Completed",
         "archived": "Archived",
         "cancelled": "Cancelled"
@@ -4261,7 +4328,11 @@
       "noAssessmentsDesc": "No assessments match your current filters.",
       "course": "Course",
       "assessmentTitle": "Assessment Title",
+      "assessmentTitleEn": "Assessment Title (English)",
+      "assessmentTitleAr": "Assessment Title (Arabic)",
+      "assessmentTitleArHint": "Optional — shown to students browsing in Arabic. Falls back to the English title when empty.",
       "titlePlaceholder": "Enter assessment title...",
+      "titleArPlaceholder": "أدخل عنوان التقييم بالعربية",
       "type": "Type",
       "duration": "Duration",
       "minutes": "min",
@@ -4593,7 +4664,11 @@
       "noFiles": "No Files Found",
       "noFilesDesc": "Upload your first course material to get started.",
       "materialTitle": "Title",
+      "materialTitleEn": "Title (English)",
+      "materialTitleAr": "Title (Arabic)",
+      "materialTitleArHint": "Optional — shown to students browsing in Arabic. Falls back to the English title when empty.",
       "titlePlaceholder": "Enter material title",
+      "titleArPlaceholder": "أدخل عنوان المحتوى بالعربية",
       "removeFile": "Remove file",
       "unsupportedType": "This file type is not supported.",
       "uploadSuccess": "File uploaded successfully.",
@@ -5137,7 +5212,9 @@
         "requestChangesPlaceholder": "Describe the changes needed...",
         "complete": "Mark Complete",
         "markCompleted": "Mark Completed",
+        "endCourse": "End Course",
         "archive": "Archive",
+        "unarchive": "Unarchive",
         "delete": "Delete",
         "deletePermanently": "Delete Permanently",
         "cancel": "Cancel",
@@ -5157,6 +5234,13 @@
         "archivedTitle": "Delete this archived course permanently?",
         "archivedBody": "This course will be removed from the admin, manager, and instructor listings. Student certificates, CME awards, and verification records remain visible for NELC compliance. This cannot be undone.",
         "confirmArchived": "Delete permanently"
+      },
+      "endConfirm": {
+        "title": "End this course?",
+        "body": "The course will move from Active to Ended. Enrolments stay open and no certificates or CME are released yet — click Mark Completed after your review to unlock those. Adding a reason is optional.",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "Why are you ending this course early?",
+        "confirm": "End Course"
       },
       "hiddenFromPublic": "Course hidden from public site",
       "shownOnPublic": "Course is now visible on public site",
@@ -5247,6 +5331,7 @@
       "sectionOverview": "Overview",
       "sectionObjectives": "Objectives (What You'll Learn)",
       "sectionInstructor": "Instructor",
+      "sectionCertificate": "Certificate",
       "sectionContents": "Contents / Modules",
       "sectionRequirements": "Requirements",
       "sectionFaqs": "FAQs",
@@ -5326,6 +5411,25 @@
       "faqQuestionArPlaceholder": "السؤال (عربي)",
       "faqAnswerEnPlaceholder": "Answer (English)",
       "faqAnswerArPlaceholder": "الإجابة (عربي)",
+      "sectionHeadingOverride": "Section heading (optional override)",
+      "sectionHeadingEnPlaceholder": "Heading (English)",
+      "sectionHeadingArPlaceholder": "العنوان (عربي)",
+      "autoSectionHeadingsTitle": "Other section headings",
+      "autoSectionHeadingsHint": "These sections (Contents, Schedule, Reviews, Course Details) are generated automatically. Their headings still default from Strapi — override them per course here.",
+      "customSectionsTitle": "Custom Sections",
+      "customSectionsHint": "Add extra sections that show on the public course page. Reorder them alongside the fixed sections below in Section Order.",
+      "customSectionItemLabel": "Custom section",
+      "addCustomSection": "+ Add custom section",
+      "removeCustomSection": "Remove",
+      "customSectionTitleEn": "Title (English)",
+      "customSectionTitleAr": "العنوان (بالعربية)",
+      "customSectionTitleEnPlaceholder": "e.g. Learning Path",
+      "customSectionTitleArPlaceholder": "مثال: مسار التعلم",
+      "customSectionContentEn": "Content (English)",
+      "customSectionContentAr": "المحتوى (بالعربية)",
+      "customSectionContentEnPlaceholder": "Content shown on the public course page…",
+      "customSectionContentArPlaceholder": "المحتوى المعروض في صفحة الدورة العامة…",
+      "sectionCustomFallback": "Custom section",
       "optional": "Optional",
       "noneSelected": "— None —",
       "teamTitle": "Team Assignment",
@@ -5351,6 +5455,7 @@
       "backToCourses": "Back to Courses",
       "editCourse": "Edit Course",
       "activate": "Activate",
+      "unarchive": "Unarchive",
       "approve": "Approve",
       "requestChanges": "Request Changes",
       "requestChangesTitle": "Request Changes",
@@ -5403,6 +5508,7 @@
         "draft": "Draft",
         "pending_review": "Pending Review",
         "changes_requested": "Changes Requested",
+        "ended": "Ended",
         "completed": "Completed",
         "archived": "Archived",
         "cancelled": "Cancelled"
@@ -6819,6 +6925,7 @@
         "unfeature": "Remove featured",
         "complete": "Mark as completed",
         "markCompleted": "Mark as completed",
+        "endCourse": "End Course",
         "unarchive": "Restore (unarchive)",
         "reschedule": "Reschedule course",
         "rescheduleRevive": "Reopen with new dates"
@@ -6858,7 +6965,17 @@
         "visibilityFailed": "Failed to update visibility",
         "requestChangesSent": "Changes requested",
         "requestChangesFailed": "Failed to send request",
-        "studentsLoadFailed": "Failed to load enrolled students"
+        "studentsLoadFailed": "Failed to load enrolled students",
+        "ended": "Course ended — awaiting Mark Completed",
+        "endFailed": "Failed to end course"
+      },
+      "endCourseModal": {
+        "title": "End this course?",
+        "body": "\"{title}\" will move from Active to Ended. Enrolments stay open and no certificates or CME are released yet — click Mark Completed after your review to unlock those.",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "Why are you ending this course early?",
+        "cancel": "Cancel",
+        "confirm": "End Course"
       },
       "confirmArchive": {
         "title": "Archive this completed course?",
@@ -14278,6 +14395,7 @@
       },
       "customer": "Customer",
       "customerRating": "Customer Rating",
+      "deletedAccount": "Deleted account",
       "guestBadge": "Guest",
       "guestTicketHint": "Submitted via the public form (no account).",
       "requesterRole": {
@@ -14760,6 +14878,16 @@
         "title": "Course Auto-Completed",
         "messageInstructor": "Your course \"{courseTitle}\" has been automatically completed as the end date has passed. {count} enrollment(s) were finalized.",
         "messageManager": "Course \"{courseTitle}\" has been automatically completed (end date reached). {count} enrollment(s) were finalized."
+      },
+      "course_ended_needs_review": {
+        "title": "Course Ended — Ready for Review",
+        "messageInstructor": "Your course \"{courseTitle}\" reached its end date. A manager will mark it completed to release certificates.",
+        "messageManager": "Course \"{courseTitle}\" reached its end date. {count} enrolment(s) are waiting — click Mark Completed to unlock certificates and CME awards."
+      },
+      "course_ended_manual": {
+        "title": "Course Ended — Ready for Review",
+        "messageInstructor": "Your course \"{courseTitle}\" has been ended. A manager will mark it completed to release certificates.",
+        "messageManager": "Course \"{courseTitle}\" was ended. {count} enrolment(s) are waiting — click Mark Completed to unlock certificates and CME awards."
       },
       "course_managed": {
         "title": "Course Assigned to You",

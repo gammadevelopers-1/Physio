@@ -620,6 +620,8 @@ export const authApi = {
     scfhsNumber?: string;
     nationalId: string;
     recaptchaToken?: string;
+    termsAccepted: boolean;
+    marketingOptIn?: boolean;
   }) => api.post<RegisterResponse>('/auth/register', data, { skipAuth: true }),
 
   login: (data: { email: string; password: string; recaptchaToken?: string }) =>
@@ -928,6 +930,16 @@ export const adminApi = {
 
   completeCourse: (courseId: string) =>
     api.post<unknown>(`/courses/${courseId}/complete`, {}),
+
+  // Manually end an active course (Active → Ended). Reason optional —
+  // if the manager didn't type one, drop the body so the DTO's
+  // @IsOptional gate is satisfied cleanly. Certificates / CME stay
+  // locked; the follow-up Mark Completed is what releases them.
+  endCourse: (courseId: string, reason?: string) =>
+    api.post<unknown>(
+      `/courses/${courseId}/end`,
+      reason && reason.trim() ? { reason: reason.trim() } : {},
+    ),
 
   toggleCourseFeatured: (courseId: string) =>
     api.patch<{ id: string; isFeatured: boolean }>(
@@ -1685,7 +1697,7 @@ export const instructorApi = {
   },
 
   // Assessment CRUD
-  createAssessment: (data: { courseId: string; title: string; type: string; totalMarks: number; passingMarks: number; durationMinutes?: number; attemptsAllowed?: number; dueDate?: string; instructions?: string; moduleId?: string; randomizeOrder?: boolean; questionsPerAttempt?: number }) =>
+  createAssessment: (data: { courseId: string; title: string; titleAr?: string; type: string; totalMarks: number; passingMarks: number; durationMinutes?: number; attemptsAllowed?: number; dueDate?: string; instructions?: string; moduleId?: string; randomizeOrder?: boolean; questionsPerAttempt?: number }) =>
     api.post<AssessmentResponse>('/assessments', data),
 
   getAssessmentDetail: (assessmentId: string) =>
@@ -3393,10 +3405,11 @@ export const materialsApi = {
     return api.get<CourseMaterialResponse[]>(`/courses/${courseId}/materials${qs ? `?${qs}` : ''}`);
   },
 
-  upload: (courseId: string, file: File, title: string, type: string, moduleId?: string, autoTranscribe?: boolean) => {
+  upload: (courseId: string, file: File, title: string, type: string, moduleId?: string, autoTranscribe?: boolean, titleAr?: string) => {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('title', title);
+    if (titleAr && titleAr.trim()) fd.append('titleAr', titleAr.trim());
     fd.append('type', type);
     if (moduleId) fd.append('moduleId', moduleId);
     if (autoTranscribe !== undefined) fd.append('autoTranscribe', String(autoTranscribe));
@@ -3411,6 +3424,7 @@ export const materialsApi = {
     onProgress: (percent: number) => void,
     moduleId?: string,
     autoTranscribe?: boolean,
+    titleAr?: string,
   ): Promise<CourseMaterialResponse> => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -3441,6 +3455,7 @@ export const materialsApi = {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('title', title);
+      if (titleAr && titleAr.trim()) fd.append('titleAr', titleAr.trim());
       fd.append('type', type);
       if (moduleId) fd.append('moduleId', moduleId);
       if (autoTranscribe !== undefined) fd.append('autoTranscribe', String(autoTranscribe));
@@ -3448,7 +3463,7 @@ export const materialsApi = {
     });
   },
 
-  update: (materialId: string, data: { title?: string; moduleId?: string | null; wcagStatus?: string; captionsUrl?: string; transcriptUrl?: string; autoTranscribe?: boolean }) =>
+  update: (materialId: string, data: { title?: string; titleAr?: string | null; moduleId?: string | null; wcagStatus?: string; captionsUrl?: string; transcriptUrl?: string; autoTranscribe?: boolean }) =>
     api.patch<CourseMaterialResponse>(`/materials/${materialId}`, data),
 
   assignToModule: (materialId: string, moduleId: string) =>
@@ -3721,10 +3736,43 @@ export interface CreateCourseManagerData {
   language?: string;
   showContents?: boolean;
   sectionsOrder?: string[];
+  /**
+   * Per-course heading overrides for public course-detail sections. Any
+   * missing key or empty locale falls back to the Strapi default.
+   */
+  sectionHeadings?: SectionHeadingsMap;
+  /**
+   * Per-course custom sections. Each entry gets a stable `id`; slot it into
+   * the public page ordering via the key `custom:<id>` in `sectionsOrder`.
+   */
+  customSections?: Array<{
+    id: string;
+    titleEn: string;
+    titleAr?: string;
+    contentEn?: string;
+    contentAr?: string;
+  }>;
   visibleOnPublicSite?: boolean;
   /** Webinar Course only — surface the post-event recording in students' dashboards. */
   recordingShareEnabled?: boolean;
 }
+
+export type SectionHeadingKey =
+  | 'overview'
+  | 'objectives'
+  | 'features'
+  | 'contents'
+  | 'schedule'
+  | 'requirements'
+  | 'notices'
+  | 'reviews'
+  | 'targetAudience'
+  | 'courseDetails'
+  | 'faqs';
+
+export type SectionHeadingsMap = Partial<
+  Record<SectionHeadingKey, { en?: string; ar?: string }>
+>;
 
 export interface SessionsParams {
   dateRange?: string;
@@ -4167,6 +4215,13 @@ export const courseManagerApi = {
   completeCourse: (courseId: string) =>
     api.post<CourseDetailResponse>(`/courses/${courseId}/complete`, {}),
 
+  // Manually end an active course (Active → Ended). Reason optional.
+  endCourse: (courseId: string, reason?: string) =>
+    api.post<CourseDetailResponse>(
+      `/courses/${courseId}/end`,
+      reason && reason.trim() ? { reason: reason.trim() } : {},
+    ),
+
   // Toggle featured flag (homepage showcase)
   toggleFeatured: (courseId: string) =>
     api.patch<{ id: string; isFeatured: boolean }>(`/courses/${courseId}/feature`, {}),
@@ -4471,6 +4526,7 @@ export const courseManagerApi = {
     api.get<Array<{
       id: string;
       title: string;
+      titleAr: string | null;
       type: string;
       status: string;
       fileUrl: string | null;

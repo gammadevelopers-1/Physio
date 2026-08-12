@@ -761,6 +761,16 @@ export interface CourseDetailPage {
   reviewsHeading: string | null;
   targetAudienceHeading: string | null;
   courseDetailsHeading: string | null;
+  /** Certificate section — a new orderable block above Contents on the
+   *  public course detail page. Every field optional; the section is only
+   *  rendered when at least one of them is populated. Text fields follow
+   *  the same per-locale pattern as the heading fields above. */
+  certificateTitle?: string | null;
+  certificateBody?: string | null;
+  certificateAccreditedByLabel?: string | null;
+  certificateAccreditorName?: string | null;
+  certificateAccreditorLogo?: StrapiMedia | null;
+  certificateImage?: StrapiMedia | null;
   locale: string;
   createdAt: string;
   updatedAt: string;

@@ -18,8 +18,21 @@ import {
   RESTORE_CLONE_LIMITS,
 } from '../../database/schema';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { TasksService } from '../tasks/tasks.service';
+import { DistributedLockService } from '../tasks/distributed-lock.service';
+import { SafetyNetSweep } from '../tasks/safety-net-sweep';
 
 const SQLADMIN = 'https://sqladmin.googleapis.com/v1';
+
+// Cloud Tasks constants for the restore-clone lifecycle.
+export const BACKUPS_QUEUE = 'backup-events';
+export const BACKUP_HANDLERS = {
+  PURGE_CLONE: 'backup.purge-clone',
+} as const;
+
+export interface BackupTaskPayload {
+  cloneId: string;
+}
 
 /**
  * Phase 2D — Admin restore-to-clone (sandbox).
@@ -53,7 +66,15 @@ export class RestoreCloneService {
 
   private auth: GoogleAuth | null = null;
 
-  constructor(private readonly audit: AuditLogService) {}
+  private readonly safetyNet: SafetyNetSweep;
+
+  constructor(
+    private readonly audit: AuditLogService,
+    private readonly tasks: TasksService,
+    private readonly lock: DistributedLockService,
+  ) {
+    this.safetyNet = new SafetyNetSweep(this.tasks, this.lock);
+  }
 
   // ── Listing ─────────────────────────────────────────────────────
 
@@ -207,6 +228,10 @@ export class RestoreCloneService {
       })
       .returning();
 
+    // Enqueue purge Cloud Task at expiresAt. Fire-and-forget; if enqueue
+    // fails, daily safety-net sweep + legacy hourly @Cron still catch it.
+    await this.enqueuePurgeTask({ id: record.id, expiresAt });
+
     const startedAt = Date.now();
 
     try {
@@ -350,6 +375,13 @@ export class RestoreCloneService {
       .set({ expiresAt: newExpiry })
       .where(eq(restoreClones.id, id));
 
+    // Reschedule the purge task — cancel prior versions, enqueue new
+    // one at the extended expiresAt. Version-in-task-name means the
+    // stale task would collide-and-be-superseded but explicit cancel
+    // is cleaner.
+    await this.cancelPurgeTask(id);
+    await this.enqueuePurgeTask({ id, expiresAt: newExpiry });
+
     await this.audit.log({
       entityType: 'restore_clone',
       entityId: id,
@@ -379,18 +411,26 @@ export class RestoreCloneService {
       throw new BadRequestException('Sandbox has already been dropped.');
     }
     await this.dropDatabase(clone.dbName, id, userId, ip, 'restore_clone.dropped');
+    // Cancel the pending purge task — dropDatabase transitions the row
+    // to DROPPED so purgeOne would CAS-no-op, but freeing the queue slot
+    // is cleaner and stops the daily safety-net from re-enqueuing.
+    await this.cancelPurgeTask(id);
     return { id, status: RESTORE_CLONE_STATUS.DROPPED };
   }
 
   // ── Auto-purge cron ─────────────────────────────────────────────
 
+  /**
+   * Legacy hourly cron — RETAINED for parallel-run with Cloud Tasks.
+   * Delegates to purgeOne per row. Retire in Phase 5.2.
+   */
   @Cron(CronExpression.EVERY_HOUR)
   async purgeExpired(): Promise<void> {
     if (isCronExternalized('backups.purge-clones')) return;
     if (!this.enabled) return;
     try {
       const expired = await db
-        .select({ id: restoreClones.id, dbName: restoreClones.dbName })
+        .select({ id: restoreClones.id })
         .from(restoreClones)
         .where(
           and(
@@ -402,28 +442,151 @@ export class RestoreCloneService {
           ),
         );
       if (expired.length === 0) return;
-
-      this.logger.log(`purgeExpired: dropping ${expired.length} sandbox(es)`);
+      let dropped = 0;
       for (const c of expired) {
-        try {
-          await this.dropDatabase(
-            c.dbName,
-            c.id,
-            null,
-            undefined,
-            'restore_clone.expired',
-          );
-        } catch (err) {
-          this.logger.warn(
-            `purgeExpired: drop failed for ${c.dbName}: ${
-              err instanceof Error ? err.message : String(err)
-            }`,
-          );
-        }
+        if (await this.purgeOne(c.id)) dropped++;
+      }
+      if (dropped > 0) {
+        this.logger.log(`purgeExpired: dropped ${dropped} sandbox(es)`);
       }
     } catch (err) {
       this.logger.error('purgeExpired cron failed', err as Error);
     }
+  }
+
+  // ─── Per-row event handler (Cloud Tasks entry point) ────
+
+  /**
+   * Drop one expired sandbox. dropDatabase itself sets droppedAt +
+   * status to DROPPED, so idempotent retries just find droppedAt !=
+   * null and short-circuit inside dropDatabase.
+   */
+  async purgeOne(cloneId: string): Promise<boolean> {
+    if (!this.enabled) return false;
+    const [clone] = await db
+      .select({
+        id: restoreClones.id,
+        dbName: restoreClones.dbName,
+        status: restoreClones.status,
+        expiresAt: restoreClones.expiresAt,
+        droppedAt: restoreClones.droppedAt,
+      })
+      .from(restoreClones)
+      .where(eq(restoreClones.id, cloneId));
+    if (!clone) return false;
+    if (clone.droppedAt) return false;
+    if (
+      clone.status !== RESTORE_CLONE_STATUS.READY &&
+      clone.status !== RESTORE_CLONE_STATUS.IMPORTING
+    ) {
+      return false;
+    }
+    if (clone.expiresAt.getTime() > Date.now()) return false;
+
+    try {
+      await this.dropDatabase(
+        clone.dbName,
+        clone.id,
+        null,
+        undefined,
+        'restore_clone.expired',
+      );
+      return true;
+    } catch (err) {
+      this.logger.warn(
+        `purgeOne: drop failed for ${clone.dbName}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      // Rethrow so Cloud Tasks retries.
+      throw err;
+    }
+  }
+
+  // ─── Cloud Tasks enqueue helpers ─────────────────────────
+
+  async enqueuePurgeTask(clone: {
+    id: string;
+    expiresAt: Date;
+  }): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+    try {
+      await this.tasks.enqueue<BackupTaskPayload>({
+        queue: BACKUPS_QUEUE,
+        handler: BACKUP_HANDLERS.PURGE_CLONE,
+        name: {
+          entity: 'clone',
+          id: clone.id,
+          event: 'purge',
+          version: clone.expiresAt,
+        },
+        payload: { cloneId: clone.id },
+        scheduleAt:
+          clone.expiresAt.getTime() < Date.now() ? undefined : clone.expiresAt,
+      });
+    } catch (e) {
+      this.logger.error(
+        `Failed to enqueue purge task for clone ${clone.id}: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+    }
+  }
+
+  async cancelPurgeTask(cloneId: string): Promise<void> {
+    if (!this.tasks.isEnabled()) return;
+    try {
+      await this.tasks.cancelByEvent({
+        queue: BACKUPS_QUEUE,
+        entity: 'clone',
+        id: cloneId,
+        event: 'purge',
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Failed to cancel purge task for clone ${cloneId}: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+    }
+  }
+
+  async findStaleForPurge(lagMs: number): Promise<{ id: string }[]> {
+    const cutoff = new Date(Date.now() - lagMs);
+    return db
+      .select({ id: restoreClones.id })
+      .from(restoreClones)
+      .where(
+        and(
+          inArray(restoreClones.status, [
+            RESTORE_CLONE_STATUS.READY,
+            RESTORE_CLONE_STATUS.IMPORTING,
+          ]),
+          lt(restoreClones.expiresAt, cutoff),
+        ),
+      );
+  }
+
+  @Cron('0 5 * * *')
+  async purgeSafetyNetSweep(): Promise<void> {
+    if (isCronExternalized('backups.purge-clones.safety-net')) return;
+    if (!this.enabled) return;
+    await this.safetyNet.run<{ id: string }, BackupTaskPayload>({
+      slug: 'backups.purge-clones',
+      queue: BACKUPS_QUEUE,
+      handler: BACKUP_HANDLERS.PURGE_CLONE,
+      alertThreshold: 3,
+      findStale: () => this.findStaleForPurge(2 * 60 * 60_000), // 2h lag
+      taskParams: (row) => ({
+        name: {
+          entity: 'clone',
+          id: row.id,
+          event: 'purge',
+          version: Date.now(),
+        },
+        payload: { cloneId: row.id },
+      }),
+    });
   }
 
   // ── Internals ───────────────────────────────────────────────────

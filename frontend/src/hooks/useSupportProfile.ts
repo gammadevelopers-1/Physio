@@ -22,6 +22,7 @@ function formatDurationMinutes(minutes: number | null): string {
 export interface SupportProfile {
   name: string;
   email: string;
+  avatar?: string;           // Uploaded profile image URL (from user.avatar)
   resolved: number;
   csat: number | null;       // 1-5 avg or null when no responses
   avgFRT: string;            // "18m" / "2h 15m" / "--"
@@ -74,6 +75,9 @@ export function useSupportProfile(): SupportProfile {
   return {
     name,
     email: user?.email || "",
+    // Uploaded profile image so SupportNavbar renders the real avatar
+    // instead of the "/images/default-avatar.png" fallback.
+    avatar: user?.avatar || undefined,
     resolved: perf?.resolvedCount ?? 0,
     csat: perf?.csatAvgScore ?? null,
     avgFRT: formatDurationMinutes(perf?.avgFrtMinutes ?? null),

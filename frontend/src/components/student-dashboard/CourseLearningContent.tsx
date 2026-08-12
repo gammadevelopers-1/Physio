@@ -33,6 +33,7 @@ import {
 import { useStudentCourseDetail } from "@/hooks/useStudentCourseDetail";
 import { useModuleMaterials } from "@/hooks/useModuleMaterials";
 import { studentApi } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import { isJoinable, formatTimeUntil } from "@/lib/calendar-utils";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable, formatPlatformTime } from "@/lib/platform-locale";
@@ -78,6 +79,7 @@ function detectFileKind(material: ModuleMaterial): FileKind {
 
 function PdfViewer({ material }: { material: ModuleMaterial }) {
   const t = useTranslations("studentDashboard.learning");
+  const locale = useLocale();
   const [loading, setLoading] = useState(true);
   const [errored, setErrored] = useState(false);
 
@@ -106,7 +108,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
         )}
         <iframe
           src={officeSrc}
-          title={material.title}
+          title={pickLocaleTitle(material.title, material.titleAr, locale)}
           className="w-full rounded-lg border border-[var(--color-border)]"
           style={{ height: "680px" }}
           onLoad={() => setLoading(false)}
@@ -149,7 +151,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
         </div>
         <div>
           <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-            {material.title}
+            {pickLocaleTitle(material.title, material.titleAr, locale)}
           </p>
           <p className="text-xs text-[var(--color-text-secondary)]">
             {t("previewUnavailable")}
@@ -181,7 +183,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           </div>
           <div>
             <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-              {material.title}
+              {pickLocaleTitle(material.title, material.titleAr, locale)}
             </p>
             <p className="text-xs text-[var(--color-text-secondary)]">
               {t("previewUnavailable")}
@@ -199,7 +201,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
       ) : (
         <iframe
           src={fileUrl}
-          title={material.title}
+          title={pickLocaleTitle(material.title, material.titleAr, locale)}
           className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-card)]"
           style={{ height: "680px" }}
           onLoad={() => setLoading(false)}
@@ -234,6 +236,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
 
 function ImageViewer({ material }: { material: ModuleMaterial }) {
   const t = useTranslations("studentDashboard.learning");
+  const locale = useLocale();
   if (!material.fileUrl) return null;
 
   return (
@@ -241,7 +244,7 @@ function ImageViewer({ material }: { material: ModuleMaterial }) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={material.fileUrl}
-        alt={material.title}
+        alt={pickLocaleTitle(material.title, material.titleAr, locale)}
         className="w-full rounded-lg object-contain bg-[var(--color-surface-page)]"
         style={{ maxHeight: "600px" }}
       />
@@ -1324,7 +1327,10 @@ const CourseLearningContent = () => {
                             }`}
                           >
                             <Icon className="w-3.5 h-3.5" />
-                            {mat.title.length > 28 ? mat.title.slice(0, 28) + "…" : mat.title}
+                            {(() => {
+                              const displayTitle = pickLocaleTitle(mat.title, mat.titleAr, locale);
+                              return displayTitle.length > 28 ? displayTitle.slice(0, 28) + "…" : displayTitle;
+                            })()}
                           </button>
                         );
                       })}

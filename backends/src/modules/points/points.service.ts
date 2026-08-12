@@ -18,6 +18,7 @@ import {
   type NewPointTransaction,
 } from '../../database/schema';
 import { PointsLedgerService } from './points-ledger.service';
+import { PointsCronService } from './points.cron';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EnrollmentsService } from '../enrollments/enrollments.service';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -71,6 +72,7 @@ export class PointsService {
     private readonly ledger: PointsLedgerService,
     private readonly notifications: UserNotificationsService,
     private readonly enrollmentsService: EnrollmentsService,
+    private readonly pointsCron: PointsCronService,
   ) {}
 
   /**
@@ -324,6 +326,16 @@ export class PointsService {
       await tx.insert(pointTransactions).values(debitRow);
     });
 
+    // Enqueue release-hold Cloud Task at expiresAt. If enrollment
+    // succeeds (below), the commit path cancels this task. If the
+    // request crashes or the enrollment fails, the task still fires at
+    // expiresAt and releases the hold. Fire-and-forget on enqueue error
+    // — legacy @Cron sweep + hourly safety-net still catch it.
+    await this.pointsCron.enqueueReleaseHoldTask({
+      id: redemptionId,
+      expiresAt,
+    });
+
     // Enrollment. Delegates to EnrollmentsService which enforces capacity,
     // waitlist, and existing-enrollment rules and fires the auto-webinar
     // registration + xAPI 'registered' hooks the paid path relies on.
@@ -379,6 +391,13 @@ export class PointsService {
       };
       await tx.insert(pointTransactions).values(commitRow);
     });
+
+    // Cancel the release-hold task since the redemption completed.
+    // The releaseHoldOne handler CAS-checks status='pending' so a race
+    // where the task fires just before this cancel would just no-op,
+    // but freeing the queue slot is tidier and stops the safety-net
+    // sweep from re-enqueuing.
+    await this.pointsCron.cancelReleaseHoldTask(redemptionId);
 
     // Notify — best-effort, never blocks the redemption.
     try {

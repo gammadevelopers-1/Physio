@@ -1297,6 +1297,11 @@ export async function getCourseDetailPage(locale: string = 'en'): Promise<Course
         locale,
         ...BLOCKS_POPULATE_PARAMS,
         ...SEO_POPULATE,
+        // Certificate section — pull the two media relations. Text fields
+        // come back automatically from the single type; only relations
+        // need to be explicitly populated.
+        'populate[certificateAccreditorLogo]': true,
+        'populate[certificateImage]': true,
       },
     }
   );

@@ -37,6 +37,7 @@ import StudentCourseDetailSkeleton from "./StudentCourseDetailSkeleton";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCourseDetail } from "@/hooks/useStudentCourseDetail";
 import { studentApi, studentFinanceApi, ApiError } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import { isJoinable, formatTimeUntil, canDropCourseNow } from "@/lib/calendar-utils";
@@ -285,6 +286,31 @@ const StudentCourseDetailContent = () => {
                       cancelled by admin. Enrollment may be `dropped`
                       (Phase C drops all enrollments on cancel) or, in
                       the edge case of a manual retention, still `active`. */}
+                  {/* Ended course banner — course transitioned past its live
+                      window, but the manager hasn't yet flipped enrollment
+                      to `completed`. Progress is frozen; reviews + certificate
+                      are unlocked only after Mark Completed. Same neutral
+                      purple as the card badge/banner so the state is
+                      recognisable across surfaces. */}
+                  {data.course.status === "ended" &&
+                    data.enrollment.status !== "completed" && (
+                      <div className="bg-[#F3E8FF] border border-[#DDD6FE] rounded-xl p-4 sm:p-5 mb-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-[#DDD6FE] flex items-center justify-center flex-shrink-0">
+                            <CheckCircle2 className="w-4 h-4 text-[#5B21B6]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h2 className="text-sm sm:text-base font-semibold text-[#5B21B6]">
+                              {t("myCourses.endedBanner.title")}
+                            </h2>
+                            <p className="text-xs sm:text-sm text-[#6D28D9] mt-1 leading-relaxed">
+                              {t("myCourses.endedBanner.body")}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                   {data.course.status === "cancelled" && (
                     <div className="bg-[#FEE2E2] border border-[#FECACA] rounded-xl p-4 sm:p-5 mb-4">
                       <div className="flex items-start gap-3">
@@ -392,14 +418,15 @@ const StudentCourseDetailContent = () => {
                     </div>
 
                     {/* Primary CTA row.
-                        - active:    Start/Continue Learning → /learn (writable)
+                        - active + course.status live: Start/Continue Learning
+                        - active + course.status ended: Review only (progress frozen)
                         - completed: Review Course Material → /learn (read-only;
                                      inside-of-learn guards block joining live
                                      lectures, taking assessments and marking
                                      modules complete). When the cert is
                                      approved, also show View Certificate
                                      side-by-side. */}
-                    {data.enrollment.status === "active" && (
+                    {data.enrollment.status === "active" && data.course.status !== "ended" && (
                       <div className="mt-4 flex flex-wrap gap-3">
                         <Link
                           href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
@@ -409,6 +436,26 @@ const StudentCourseDetailContent = () => {
                           {data.enrollment.progress > 0
                             ? t("courseDetail.continueLearning")
                             : t("courseDetail.startLearning")}
+                        </Link>
+                        {receiptPaymentId && (
+                          <Link
+                            href={`/${locale}/dashboard/student/billing?payment=${receiptPaymentId}`}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:border-[var(--color-primary)] hover:shadow-sm transition-all"
+                          >
+                            <Receipt className="w-4 h-4" />
+                            {t("courseDetail.viewReceipt")}
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                    {data.enrollment.status === "active" && data.course.status === "ended" && (
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <Link
+                          href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
+                          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:border-[var(--color-primary)] hover:shadow-sm transition-all"
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          {t("courseDetail.reviewCourseMaterial")}
                         </Link>
                         {receiptPaymentId && (
                           <Link
@@ -646,11 +693,13 @@ const StudentCourseDetailContent = () => {
                             {t("courseDetail.status")}
                           </p>
                           <p className="text-lg font-semibold text-[var(--color-text-secondary)] capitalize">
-                            {data.enrollment.status === "active"
-                              ? t("myCourses.inProgress")
-                              : data.enrollment.status === "completed"
-                                ? t("myCourses.completed")
-                                : t("myCourses.notStarted")}
+                            {data.enrollment.status === "completed"
+                              ? t("myCourses.completed")
+                              : data.course.status === "ended"
+                                ? t("myCourses.ended")
+                                : data.enrollment.status === "active"
+                                  ? t("myCourses.inProgress")
+                                  : t("myCourses.notStarted")}
                           </p>
                         </div>
                       </div>
@@ -1013,7 +1062,7 @@ const StudentCourseDetailContent = () => {
                                   isFailed || isMissed ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"
                                 }`}
                               >
-                                {assessment.title}
+                                {pickLocaleTitle(assessment.title, assessment.titleAr, locale)}
                               </p>
                               <div className="flex items-center gap-3 text-xs text-[var(--color-text-secondary)] mt-0.5">
                                 <span className="capitalize">{assessment.type}</span>

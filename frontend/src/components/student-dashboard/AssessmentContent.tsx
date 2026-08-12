@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { studentApi } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import type {
   StudentAssessment,
   AssessmentResult,
@@ -515,7 +516,7 @@ const AssessmentContent = () => {
                   <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
                 </Link>
                 <h1 className="text-sm sm:text-base font-semibold text-[var(--color-text-primary)]">
-                  {assessment.title} — {t("assessment.reviewAnswers")}
+                  {pickLocaleTitle(assessment.title, assessment.titleAr, locale)} — {t("assessment.reviewAnswers")}
                 </h1>
               </div>
               <span className="text-sm font-medium text-[var(--color-text-primary)]">
@@ -666,7 +667,7 @@ const AssessmentContent = () => {
             <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium mb-3 ${badge.color}`}>
               {badge.label}
             </span>
-            <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">{assessment.title}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">{pickLocaleTitle(assessment.title, assessment.titleAr, locale)}</h1>
           </div>
 
           {/* Deadline Banner */}
@@ -864,7 +865,7 @@ const AssessmentContent = () => {
                 <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </Link>
               <h1 className="text-sm sm:text-base font-semibold text-[var(--color-text-primary)]">
-                {assessment.title} — {t("assessment.reviewAnswers")}
+                {pickLocaleTitle(assessment.title, assessment.titleAr, locale)} — {t("assessment.reviewAnswers")}
               </h1>
             </div>
             <span className="text-sm font-medium text-[var(--color-text-primary)]">
@@ -1394,7 +1395,7 @@ const AssessmentContent = () => {
               )}
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
-              {assessment.title}
+              {pickLocaleTitle(assessment.title, assessment.titleAr, locale)}
             </h1>
             {assessment.isRetakeAttempt && (
               <p className="mt-2 text-sm text-[#6B21A8]">
@@ -1554,7 +1555,7 @@ const AssessmentContent = () => {
               <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </Link>
             <h1 className="text-sm sm:text-base font-semibold text-[var(--color-text-primary)] truncate max-w-[200px] sm:max-w-none">
-              {assessment.title}
+              {pickLocaleTitle(assessment.title, assessment.titleAr, locale)}
             </h1>
           </div>
 

@@ -116,6 +116,7 @@ function SignUpForm() {
         nationalId: nationalId.trim(),
         ...(scfhsNumber.trim() && { scfhsNumber: scfhsNumber.trim() }),
         recaptchaToken,
+        termsAccepted: true,
       });
       setSuccess(true);
       toast.success(tToasts("accountCreated"));

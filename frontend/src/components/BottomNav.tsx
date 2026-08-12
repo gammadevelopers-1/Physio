@@ -35,19 +35,20 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
     { href: `/${locale}/checkout`, label: t("cart"), icon: "/file-02.svg" },
   ];
 
-  // Drawer content — ALL from Strapi
-  const platformLinks = (footerLinks?.platform || []).map((l) => ({
-    label: l.label,
-    href: resolveHref(l.url, locale) || l.url,
-  }));
-  const organizationLinks = (footerLinks?.organization || []).map((l) => ({
-    label: l.label,
-    href: resolveHref(l.url, locale) || l.url,
-  }));
-  const supportLinks = (footerLinks?.support || []).map((l) => ({
-    label: l.label,
-    href: resolveHref(l.url, locale) || l.url,
-  }));
+  // Drawer content — ALL from Strapi.
+  // External (http/https) URLs always open in a new tab; internal links
+  // respect the Strapi `openInNewTab` flag.
+  const toLink = (l: NavigationLink) => {
+    const isExternal = /^https?:\/\//i.test(l.url);
+    return {
+      label: l.label,
+      href: resolveHref(l.url, locale) || l.url,
+      newTab: l.openInNewTab || isExternal,
+    };
+  };
+  const platformLinks = (footerLinks?.platform || []).map(toLink);
+  const organizationLinks = (footerLinks?.organization || []).map(toLink);
+  const supportLinks = (footerLinks?.support || []).map(toLink);
 
   const platformTitle = siteSettings?.footerPlatformTitle || "";
   const organizationTitle = siteSettings?.footerOrganizationTitle || "";
@@ -206,6 +207,8 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
                     <Link
                       key={index}
                       href={link.href}
+                      target={link.newTab ? "_blank" : undefined}
+                      rel={link.newTab ? "noopener noreferrer" : undefined}
                       onClick={handleLinkClick}
                       className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-border-subtle)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                     >
@@ -231,6 +234,8 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
                     <Link
                       key={index}
                       href={link.href}
+                      target={link.newTab ? "_blank" : undefined}
+                      rel={link.newTab ? "noopener noreferrer" : undefined}
                       onClick={handleLinkClick}
                       className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-border-subtle)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                     >
@@ -256,6 +261,8 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
                     <Link
                       key={index}
                       href={link.href}
+                      target={link.newTab ? "_blank" : undefined}
+                      rel={link.newTab ? "noopener noreferrer" : undefined}
                       onClick={handleLinkClick}
                       className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-border-subtle)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                     >

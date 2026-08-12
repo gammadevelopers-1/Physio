@@ -45,6 +45,72 @@ export class FaqItemDto {
   answerAr?: string;
 }
 
+export class SectionHeadingOverrideDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  en?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  ar?: string;
+}
+
+// Per-course heading overrides for the public course-detail sections.
+// Any omitted key or blank locale falls back to the Strapi default.
+export class SectionHeadingsDto {
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  overview?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  objectives?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  features?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  contents?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  schedule?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  requirements?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  notices?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  reviews?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  targetAudience?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  courseDetails?: SectionHeadingOverrideDto;
+  @IsOptional() @ValidateNested() @Type(() => SectionHeadingOverrideDto)
+  faqs?: SectionHeadingOverrideDto;
+}
+
+export class CustomSectionDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  id: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  titleEn: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  titleAr?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20000)
+  contentEn?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20000)
+  contentAr?: string;
+}
+
 const validDeliveryTypes = Object.values(DELIVERY_TYPE);
 
 export class CreateCourseDto {
@@ -117,12 +183,15 @@ export class CreateCourseDto {
   @IsIn(['en', 'ar', 'both'])
   language?: string;
 
+  // Full-resolution datetime — see riyadh-time.ts for the client-side
+  // conversion. Accept ISO datetime OR legacy YYYY-MM-DD (@IsDateString
+  // allows both). Ordering (end > start) is enforced in CoursesService.
   @IsOptional()
-  @IsDateString({}, { message: 'Start date must be a valid date string (YYYY-MM-DD)' })
+  @IsDateString({}, { message: 'Start date/time must be a valid ISO datetime' })
   startDate?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'End date must be a valid date string (YYYY-MM-DD)' })
+  @IsDateString({}, { message: 'End date/time must be a valid ISO datetime' })
   endDate?: string;
 
   @IsOptional()
@@ -230,6 +299,17 @@ export class CreateCourseDto {
   @IsArray()
   @IsString({ each: true })
   sectionsOrder?: string[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SectionHeadingsDto)
+  sectionHeadings?: SectionHeadingsDto;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CustomSectionDto)
+  customSections?: CustomSectionDto[];
 
   @IsOptional()
   @IsBoolean()

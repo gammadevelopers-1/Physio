@@ -105,7 +105,7 @@ export class MaterialsService {
     courseId: string,
     user: AuthenticatedUser,
     file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
-    body: { title: string; type: string; moduleId?: string; autoTranscribe?: string },
+    body: { title: string; titleAr?: string; type: string; moduleId?: string; autoTranscribe?: string },
   ) {
     await this.verifyCourseAccess(courseId, user);
 
@@ -142,6 +142,7 @@ export class MaterialsService {
         courseId,
         moduleId: body.moduleId || null,
         title: body.title,
+        titleAr: body.titleAr?.trim() || null,
         type: materialType,
         fileSize: file.size,
         mimeType: file.mimetype,
@@ -361,6 +362,7 @@ export class MaterialsService {
         courseId: existing.courseId,
         moduleId: existing.moduleId,
         title: inferredTitle,
+        titleAr: existing.titleAr,
         type: materialType,
         fileSize: file.size,
         mimeType: file.mimetype,
@@ -541,6 +543,7 @@ export class MaterialsService {
         courseId: courseMaterials.courseId,
         moduleId: courseMaterials.moduleId,
         title: courseMaterials.title,
+        titleAr: courseMaterials.titleAr,
         type: courseMaterials.type,
         status: courseMaterials.status,
         fileUrl: courseMaterials.fileUrl,
@@ -1069,6 +1072,7 @@ export class MaterialsService {
         moduleId: courseMaterials.moduleId,
         moduleTitle: courseModules.title,
         title: courseMaterials.title,
+        titleAr: courseMaterials.titleAr,
         type: courseMaterials.type,
         fileSize: courseMaterials.fileSize,
         mimeType: courseMaterials.mimeType,
@@ -1235,8 +1239,10 @@ export class MaterialsService {
       throw new NotFoundException('Course not found');
     }
 
-    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'archived')) {
-      throw new BadRequestException('Cannot modify a completed or archived course');
+    // `ended` locks the same write surface as `completed` (see contract in
+    // courses.ts schema comment) — only manager Mark-Completed can promote it.
+    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'ended' || course.status === 'archived')) {
+      throw new BadRequestException('Cannot modify a completed, ended, or archived course');
     }
 
     return course;
@@ -1283,8 +1289,10 @@ export class MaterialsService {
       throw new NotFoundException('Material not found');
     }
 
-    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'archived')) {
-      throw new BadRequestException('Cannot modify a completed or archived course');
+    // `ended` locks the same write surface as `completed` (see contract in
+    // courses.ts schema comment) — only manager Mark-Completed can promote it.
+    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'ended' || course.status === 'archived')) {
+      throw new BadRequestException('Cannot modify a completed, ended, or archived course');
     }
 
     return material;

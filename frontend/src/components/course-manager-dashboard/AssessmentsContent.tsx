@@ -7,6 +7,7 @@ import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { courseManagerApi, instructorApi } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import type { AssessmentResponse } from "@/types/instructor-dashboard";
 import {
   Search,
@@ -1135,7 +1136,7 @@ const AssessmentsContent = () => {
                                               onClick={() => toggleSettings(assessment)}
                                             >
                                               <td className="px-4 py-3">
-                                                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{assessment.title}</p>
+                                                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{pickLocaleTitle(assessment.title, assessment.titleAr, locale)}</p>
                                                 {assessment.durationMinutes && (
                                                   <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                                                     {assessment.durationMinutes} min
@@ -1170,7 +1171,7 @@ const AssessmentsContent = () => {
                                                     </button>
                                                   </DropdownMenuTrigger>
                                                   <DropdownMenuContent align={isRTL ? "start" : "end"}>
-                                                    <DropdownMenuItem onSelect={() => handlePreviewAssessment(assessment.id, assessment.title)}>
+                                                    <DropdownMenuItem onSelect={() => handlePreviewAssessment(assessment.id, pickLocaleTitle(assessment.title, assessment.titleAr, locale))}>
                                                       <Eye className="w-4 h-4" />
                                                       {t("assessmentsPage.preview.title") || "Preview"}
                                                     </DropdownMenuItem>
@@ -1180,14 +1181,14 @@ const AssessmentsContent = () => {
                                                           <Settings className="w-4 h-4" />
                                                           {t("assessmentsPage.actions.configure")}
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onSelect={() => openOverrideModal(assessment.id, assessment.title, assessment.courseId)}>
+                                                        <DropdownMenuItem onSelect={() => openOverrideModal(assessment.id, pickLocaleTitle(assessment.title, assessment.titleAr, locale), assessment.courseId)}>
                                                           <Shield className="w-4 h-4" />
                                                           {t("assessmentsPage.override.title")}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem
                                                           danger
-                                                          onSelect={() => setFlagModal({ assessmentId: assessment.id, title: assessment.title })}
+                                                          onSelect={() => setFlagModal({ assessmentId: assessment.id, title: pickLocaleTitle(assessment.title, assessment.titleAr, locale) })}
                                                         >
                                                           <Flag className="w-4 h-4" />
                                                           {t("assessmentsPage.flagForReview")}
@@ -1222,7 +1223,7 @@ const AssessmentsContent = () => {
                                 <div className="p-4">
                                   <div className="flex items-start justify-between mb-3">
                                     <div>
-                                      <h3 className="text-sm font-medium text-[var(--color-text-primary)]">{assessment.title}</h3>
+                                      <h3 className="text-sm font-medium text-[var(--color-text-primary)]">{pickLocaleTitle(assessment.title, assessment.titleAr, locale)}</h3>
                                       {assessment.durationMinutes && (
                                         <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{assessment.durationMinutes} min</p>
                                       )}
@@ -1267,7 +1268,7 @@ const AssessmentsContent = () => {
                                         </button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align={isRTL ? "start" : "end"}>
-                                        <DropdownMenuItem onSelect={() => handlePreviewAssessment(assessment.id, assessment.title)}>
+                                        <DropdownMenuItem onSelect={() => handlePreviewAssessment(assessment.id, pickLocaleTitle(assessment.title, assessment.titleAr, locale))}>
                                           <Eye className="w-4 h-4" />
                                           {t("assessmentsPage.preview.title") || "Preview"}
                                         </DropdownMenuItem>
@@ -1277,14 +1278,14 @@ const AssessmentsContent = () => {
                                               <Settings className="w-4 h-4" />
                                               {t("assessmentsPage.actions.configure")}
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => openOverrideModal(assessment.id, assessment.title, assessment.courseId)}>
+                                            <DropdownMenuItem onSelect={() => openOverrideModal(assessment.id, pickLocaleTitle(assessment.title, assessment.titleAr, locale), assessment.courseId)}>
                                               <Shield className="w-4 h-4" />
                                               {t("assessmentsPage.override.title")}
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem
                                               danger
-                                              onSelect={() => setFlagModal({ assessmentId: assessment.id, title: assessment.title })}
+                                              onSelect={() => setFlagModal({ assessmentId: assessment.id, title: pickLocaleTitle(assessment.title, assessment.titleAr, locale) })}
                                             >
                                               <Flag className="w-4 h-4" />
                                               {t("assessmentsPage.flagForReview")}
@@ -1582,7 +1583,7 @@ const AssessmentsContent = () => {
                                                         assessmentId: effectiveRow.assessmentId,
                                                         studentId: effectiveRow.studentId,
                                                         studentName: `${effectiveRow.studentFirstName} ${effectiveRow.studentLastName}`.trim(),
-                                                        assessmentTitle: subAssessment.title,
+                                                        assessmentTitle: pickLocaleTitle(subAssessment.title, subAssessment.titleAr, locale),
                                                         isAssignment: subAssessment.type === "assignment",
                                                       });
                                                       setRetakeForm({ reason: "", newDueDate: "" });
@@ -1651,7 +1652,7 @@ const AssessmentsContent = () => {
                 {assessment && (
                   <div className="p-3 bg-[var(--color-surface-page)] rounded-lg">
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.table.assessment")}</p>
-                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">{assessment.title}</p>
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">{pickLocaleTitle(assessment.title, assessment.titleAr, locale)}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">

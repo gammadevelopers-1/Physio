@@ -22,9 +22,15 @@ export default function ContinueLearningWidget({
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
-  // Most-recent active courses first (lastAccessedAt desc, fall back to enrollment order)
+  // Most-recent active courses first (lastAccessedAt desc, fall back to enrollment order).
+  // Also exclude courses whose lifecycle has moved past `active` — ended/completed/
+  // archived/cancelled shouldn't show up as "continue learning" even while the
+  // student's enrollment is still marked active (which is the case for `ended`
+  // until a manager clicks Mark Completed).
+  const isLiveCourseStatus = (s?: string) =>
+    !s || (s !== "ended" && s !== "completed" && s !== "archived" && s !== "cancelled");
   const active = (courses || [])
-    .filter((c) => c.enrollmentStatus === "active")
+    .filter((c) => c.enrollmentStatus === "active" && isLiveCourseStatus(c.courseStatus))
     .sort((a, b) => {
       const ta = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0;
       const tb = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0;

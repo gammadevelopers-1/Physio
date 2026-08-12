@@ -9,6 +9,7 @@ import {
   serviceStatusIncidents,
   tickets,
 } from '../../database/schema';
+import { DistributedLockService } from '../tasks/distributed-lock.service';
 
 /**
  * Auto-incident suggestion.
@@ -37,10 +38,18 @@ const CRON_NAME = 'incident_suggestion_check';
 export class IncidentSuggestionCron {
   private readonly logger = new Logger(IncidentSuggestionCron.name);
 
+  constructor(private readonly lock: DistributedLockService) {}
+
   @Cron(CronExpression.EVERY_5_MINUTES)
   async run(): Promise<void> {
     if (isCronExternalized('service-status.incident-suggestion')) return;
-    await this.tracked(CRON_NAME, async () => {
+    // Distributed lock — multi-instance safe. Also protects against
+    // multi-instance spamming: the SUGGESTION_DEDUPE_WINDOW check
+    // downstream would catch duplicates but at a higher cost.
+    await this.lock.withLock(
+      'lock:cron:service-status.incident-suggestion',
+      2 * 60_000,
+      () => this.tracked(CRON_NAME, async () => {
       const since = new Date(
         Date.now() - RECENT_TICKETS_WINDOW_MIN * 60_000,
       );
@@ -116,7 +125,8 @@ export class IncidentSuggestionCron {
           `Suggested incident for category="${g.category}" (${g.count} tickets in ${RECENT_TICKETS_WINDOW_MIN}m)`,
         );
       }
-    });
+    }),
+    );
   }
 
   private async tracked(name: string, body: () => Promise<void>): Promise<void> {

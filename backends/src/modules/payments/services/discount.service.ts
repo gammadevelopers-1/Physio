@@ -50,7 +50,6 @@ export class DiscountService {
     //   • not full — checked in JS against enrolled count vs maxEnrollment
     //     (NULL maxEnrollment means uncapped, never full)
     const now = new Date();
-    const todayISO = now.toISOString().slice(0, 10);
 
     const conditions: any[] = [
       isNull(courses.deletedAt),
@@ -59,7 +58,7 @@ export class DiscountService {
         isNull(courses.enrollmentDeadline),
         gt(courses.enrollmentDeadline, now),
       )!,
-      or(isNull(courses.endDate), gte(courses.endDate, todayISO))!,
+      or(isNull(courses.endDate), gte(courses.endDate, now))!,
     ];
     if (search && search.trim()) {
       const q = `%${search.trim()}%`;

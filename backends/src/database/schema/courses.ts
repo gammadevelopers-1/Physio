@@ -4,7 +4,6 @@ import {
   varchar,
   text,
   integer,
-  date,
   timestamp,
   index,
   check,
@@ -64,8 +63,14 @@ export const courses = pgTable(
     enrollmentDeadline: timestamp('enrollment_deadline'),
     isCmeAccredited: boolean('is_cme_accredited').default(false),
     language: varchar('language', { length: 10 }).default('en'),
-    startDate: date('start_date'),
-    endDate: date('end_date'),
+    // start_date / end_date carry the full course window as UTC-stored
+    // naive timestamps (same convention as enrollment_deadline). Frontend
+    // reads via toRiyadhLocal() and writes via fromRiyadhLocal() so users
+    // always pick and see Asia/Riyadh time regardless of viewer tz.
+    // Historically these were `date` columns — migration 0114 widened
+    // them to timestamp and backfilled existing rows to midnight Riyadh.
+    startDate: timestamp('start_date'),
+    endDate: timestamp('end_date'),
     // At-risk thresholds
     atRiskAttendanceThreshold: integer('at_risk_attendance_threshold').default(70),
     atRiskScoreThreshold: integer('at_risk_score_threshold').default(60),
@@ -111,6 +116,34 @@ export const courses = pgTable(
     }>>(),
     showContents: boolean('show_contents').default(true),
     sectionsOrder: jsonb('sections_order').$type<string[]>(),
+    // Per-course heading overrides for the public course-detail sections.
+    // Any missing key/locale falls back to the Strapi course-detail-page
+    // default. Keys mirror the section IDs used by the public renderer.
+    sectionHeadings: jsonb('section_headings').$type<Partial<Record<
+      | 'overview'
+      | 'objectives'
+      | 'features'
+      | 'contents'
+      | 'schedule'
+      | 'requirements'
+      | 'notices'
+      | 'reviews'
+      | 'targetAudience'
+      | 'courseDetails'
+      | 'faqs',
+      { en?: string; ar?: string }
+    >>>(),
+    // Per-course custom sections authored by the manager. Each entry gets a
+    // stable `id`; the section slots into the public page via the key
+    // `custom:<id>` inside `sectionsOrder`, so it reorders alongside the
+    // fixed sections without any special-case rendering paths.
+    customSections: jsonb('custom_sections').$type<Array<{
+      id: string;
+      titleEn: string;
+      titleAr?: string;
+      contentEn?: string;
+      contentAr?: string;
+    }>>(),
     visibleOnPublicSite: boolean('visible_on_public_site').default(true).notNull(),
     isFeatured: boolean('is_featured').default(false).notNull(),
     // Per-course SEO overrides. Empty fields fall back to title /
@@ -142,7 +175,23 @@ export const courses = pgTable(
     // so the UI can show the pre-reschedule date after any number of moves.
     rescheduledAt: timestamp('rescheduled_at'),
     rescheduleReason: text('reschedule_reason'),
-    originalStartDate: date('original_start_date'),
+    originalStartDate: timestamp('original_start_date'),
+    // End Course audit (Amna 2026-08). Populated when a manager/admin
+    // clicks "End Course" on an active course (Active → Ended). Parallel
+    // to the cron path that also produces `ended` but without a human
+    // author. Reason is optional (client-confirmed 2026-08-01) — the
+    // "why did you end this early?" field is a courtesy, not a gate.
+    endedAt: timestamp('ended_at'),
+    endedBy: uuid('ended_by').references(() => users.id),
+    endReason: text('end_reason'),
+    // preArchiveStatus captures the status the course held just before
+    // it was archived. Set by the deactivate service, cleared by the
+    // activate service when unarchiving. Enables ended → archived →
+    // unarchive to return to ended (and completed → archived →
+    // unarchive to return to completed) instead of always resetting to
+    // active. Legacy rows archived before migration 0115 have NULL and
+    // fall back to active on unarchive.
+    preArchiveStatus: varchar('pre_archive_status', { length: 20 }),
     deletedAt: timestamp('deleted_at'),
     deletedBy: uuid('deleted_by').references(() => users.id),
     // When true, a soft-deleted course row is hidden from admin / manager /

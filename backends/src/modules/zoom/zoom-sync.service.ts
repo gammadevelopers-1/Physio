@@ -18,6 +18,7 @@ import { XapiService } from '../xapi/xapi.service';
 import { matchParticipantToUser, matchParticipantByPlatformId, getSessionInstructorId, parseTAId } from './zoom.helpers';
 import { courseAssistants } from '../../database/schema/course-assistants';
 import { users } from '../../database/schema';
+import { DistributedLockService } from '../tasks/distributed-lock.service';
 
 @Injectable()
 export class ZoomSyncService {
@@ -30,16 +31,35 @@ export class ZoomSyncService {
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
     private readonly auditService: NelcAuditService,
     private readonly xapiService: XapiService,
+    private readonly lock: DistributedLockService,
   ) {}
 
   /**
    * Cron job: every 10 minutes, sync recently ended Zoom sessions.
    * Finds completed sessions with a meetingId that haven't been synced yet.
    * Item #11: extended sync window to 7 days for sessions that failed sync.
+   *
+   * The `isSyncing` boolean handles single-instance re-entry (concurrent
+   * ticks on the same node while a prior sync is still running). The
+   * DistributedLockService wrap on top handles CROSS-instance dedup for
+   * when this moves in-process on multi-instance api-web.
    */
   @Cron('*/10 * * * *')
   async syncRecentlyEndedSessions(): Promise<void> {
     if (isCronExternalized('zoom.sync')) return;
+    // Cross-instance dedup: 12-min TTL comfortably exceeds the 10-min
+    // cadence + a typical sync run.
+    const outcome = await this.lock.withLock(
+      'lock:cron:zoom.sync',
+      12 * 60_000,
+      () => this.syncRecentlyEndedSessionsInner(),
+    );
+    if (outcome === null) {
+      // Another instance holds it; safe no-op.
+    }
+  }
+
+  private async syncRecentlyEndedSessionsInner(): Promise<void> {
     // Item #10: concurrency guard
     if (this.isSyncing) {
       this.logger.debug('Zoom sync already in progress, skipping this run');

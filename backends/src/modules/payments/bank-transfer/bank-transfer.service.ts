@@ -27,7 +27,7 @@ import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 import { StorageService } from '../../storage/storage.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { EmailService } from '../../email/email.service';
-import { decryptPII } from '../../../common/crypto';
+import { decryptPII, encryptPII } from '../../../common/crypto';
 import { InvoiceService } from '../services/invoice.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { SubmitDraftDto } from './dto/submit-draft.dto';
@@ -253,9 +253,9 @@ export class BankTransferService {
           scanStatus: RECEIPT_SCAN_STATUS.PENDING,
           reviewStatus: RECEIPT_REVIEW_STATUS.PENDING,
           refundAccountHolder: dto.refundAccountHolder,
-          refundIban: dto.refundIban,
+          refundIban: encryptPII(dto.refundIban),
           refundBankName: dto.refundBankName,
-          refundNationalId: dto.refundNationalId || null,
+          refundNationalId: encryptPII(dto.refundNationalId || null),
         })
         .returning();
 
@@ -614,9 +614,9 @@ export class BankTransferService {
           scanStatus: RECEIPT_SCAN_STATUS.PENDING,
           reviewStatus: RECEIPT_REVIEW_STATUS.PENDING,
           refundAccountHolder: dto.refundAccountHolder,
-          refundIban: dto.refundIban,
+          refundIban: encryptPII(dto.refundIban),
           refundBankName: dto.refundBankName,
-          refundNationalId: dto.refundNationalId || null,
+          refundNationalId: encryptPII(dto.refundNationalId || null),
         })
         .returning({ id: paymentReceipts.id });
 
@@ -914,9 +914,9 @@ export class BankTransferService {
         financeInternalNote: row.receipt.financeInternalNote,
         refundInfo: {
           accountHolder: row.receipt.refundAccountHolder,
-          iban: row.receipt.refundIban,
+          iban: decryptPII(row.receipt.refundIban),
           bankName: row.receipt.refundBankName,
-          nationalId: row.receipt.refundNationalId,
+          nationalId: decryptPII(row.receipt.refundNationalId),
         },
         downloadUrl,
       },

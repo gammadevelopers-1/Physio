@@ -25,6 +25,7 @@ export const courseMaterials = pgTable(
       .references(() => courses.id, { onDelete: 'cascade' }),
     moduleId: uuid('module_id').references(() => courseModules.id, { onDelete: 'set null' }),
     title: varchar('title', { length: 255 }).notNull(),
+    titleAr: varchar('title_ar', { length: 255 }),
     type: varchar('type', { length: 20 }).notNull(),
     fileUrl: varchar('file_url', { length: 500 }),
     fileSize: bigint('file_size', { mode: 'number' }),

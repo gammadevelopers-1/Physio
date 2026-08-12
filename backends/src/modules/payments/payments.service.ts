@@ -36,6 +36,7 @@ import { DiscountService } from './services/discount.service';
 import { InvoiceService } from './services/invoice.service';
 import { TaxComputationService } from './services/tax-computation.service';
 import { PaymentAdminNotifierService } from './services/payment-admin-notifier.service';
+import { PaymentCleanupService } from './services/payment-cleanup.service';
 import { EmailService } from '../email/email.service';
 import { StorageService } from '../storage/storage.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
@@ -109,6 +110,7 @@ export class PaymentsService {
     private readonly xapiService: XapiService,
     private readonly enrollmentsService: EnrollmentsService,
     private readonly paymentAdminNotifier: PaymentAdminNotifierService,
+    private readonly paymentCleanupService: PaymentCleanupService,
   ) {}
 
   /**
@@ -1092,6 +1094,13 @@ export class PaymentsService {
 
       return { payment, enrollmentIds };
     });
+
+    // Enqueue payment.cleanup Cloud Task at createdAt+2h. If the
+    // gateway completes the charge (webhook flips status to PAID)
+    // before then, the task fires but no-ops (CAS-checks status).
+    // Fire-and-forget on enqueue error — hourly safety-net sweep +
+    // legacy @Cron catch anything the enqueue misses.
+    await this.paymentCleanupService.enqueueCleanupTask(result.payment);
 
     // 9. Create charge via gateway
     const callbackUrl = this.configService.get<string>('payments.callbackUrl');
@@ -2129,7 +2138,12 @@ export class PaymentsService {
           );
         }
       }
-      receiptWithUrl = { ...activeReceipt, downloadUrl };
+      receiptWithUrl = {
+        ...activeReceipt,
+        refundIban: decryptPII(activeReceipt.refundIban),
+        refundNationalId: decryptPII(activeReceipt.refundNationalId),
+        downloadUrl,
+      };
     }
 
     const refundRows = await db
@@ -2348,7 +2362,11 @@ export class PaymentsService {
       .where(whereClause);
 
     return {
-      data: paymentsList,
+      data: paymentsList.map((row) => ({
+        ...row,
+        refundIban: decryptPII(row.refundIban),
+        refundNationalId: decryptPII(row.refundNationalId),
+      })),
       pagination: {
         page,
         limit,

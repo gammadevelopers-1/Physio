@@ -732,6 +732,7 @@ export class NelcComplianceService {
       .select({
         id: courseMaterials.id,
         title: courseMaterials.title,
+        titleAr: courseMaterials.titleAr,
         type: courseMaterials.type,
         status: courseMaterials.status,
         wcagStatus: courseMaterials.wcagStatus,
@@ -750,7 +751,7 @@ export class NelcComplianceService {
 
     // 6. Assessment results
     const courseAssessments = await db
-      .select({ id: assessments.id, title: assessments.title })
+      .select({ id: assessments.id, title: assessments.title, titleAr: assessments.titleAr })
       .from(assessments)
       .where(eq(assessments.courseId, courseId));
 

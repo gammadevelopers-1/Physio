@@ -16,6 +16,11 @@ import {
   CsatEmailsJob,
   BusinessResumeSweepJob,
 } from './support.jobs';
+import {
+  TicketCsatSendTask,
+  TicketAutoCloseResolvedTask,
+  TicketAutoCloseWaitingTask,
+} from './support.tasks';
 
 @Module({
   imports: [
@@ -36,7 +41,14 @@ import {
     AutoCloseWaitingJob,
     CsatEmailsJob,
     BusinessResumeSweepJob,
+    // Cloud Tasks handlers — self-register with TaskHandlerRegistry.
+    TicketCsatSendTask,
+    TicketAutoCloseResolvedTask,
+    TicketAutoCloseWaitingTask,
   ],
-  exports: [SupportService],
+  // Export SlaMonitorService so SupportService (in this module) and
+  // any downstream service that needs the CSAT enqueue helpers can
+  // reach them.
+  exports: [SupportService, SlaMonitorService],
 })
 export class SupportModule {}

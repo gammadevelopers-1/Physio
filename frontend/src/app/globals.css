@@ -191,8 +191,13 @@ body {
      elements (absolute-positioned decorations, wide background art,
      100vw quirks with vertical-scrollbar width). Individual sections
      should still cap their own inner content, but this is the safety
-     net so the browser never shows an unwanted body-level x-scroll. */
-  overflow-x: hidden;
+     net so the browser never shows an unwanted body-level x-scroll.
+     `clip` (not `hidden`) — `overflow: hidden` on html/body creates a
+     scroll container which silently breaks `position: sticky` on every
+     descendant (the sticky element sticks relative to html instead of
+     the viewport, so it never actually stays visible). `clip` blocks
+     the same horizontal scroll without forming a scroll container. */
+  overflow-x: clip;
 }
 
 body {

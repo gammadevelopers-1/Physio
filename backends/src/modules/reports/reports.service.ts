@@ -507,6 +507,7 @@ export class ReportsService {
       .select({
         id: assessments.id,
         title: assessments.title,
+        titleAr: assessments.titleAr,
         totalMarks: assessments.totalMarks,
         passingMarks: assessments.passingMarks,
       })
@@ -1905,6 +1906,7 @@ export class ReportsService {
     const data = await db
       .select({
         title: assessments.title,
+        titleAr: assessments.titleAr,
         courseTitle: courses.title,
         type: assessments.type,
         totalMarks: assessments.totalMarks,
@@ -1947,6 +1949,7 @@ export class ReportsService {
     const data = await db
       .select({
         title: courseMaterials.title,
+        titleAr: courseMaterials.titleAr,
         type: courseMaterials.type,
         status: courseMaterials.status,
         wcagStatus: courseMaterials.wcagStatus,

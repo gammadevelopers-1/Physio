@@ -24,6 +24,7 @@ export const assessments = pgTable(
       .references(() => courses.id, { onDelete: 'cascade' }),
     moduleId: uuid('module_id').references(() => courseModules.id),
     title: varchar('title', { length: 255 }).notNull(),
+    titleAr: varchar('title_ar', { length: 255 }),
     type: varchar('type', { length: 20 }).notNull(),
     totalMarks: integer('total_marks').notNull(),
     passingMarks: integer('passing_marks').notNull(),

@@ -16,7 +16,7 @@ import {
   DELIVERY_TYPE,
   DeliveryType,
 } from '../../../database/schema';
-import { FaqItemDto } from './create-course.dto';
+import { FaqItemDto, SectionHeadingsDto, CustomSectionDto } from './create-course.dto';
 
 const validDeliveryTypes = Object.values(DELIVERY_TYPE);
 
@@ -83,11 +83,11 @@ export class UpdateCourseDto {
   language?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'Start date must be a valid date string (YYYY-MM-DD)' })
+  @IsDateString({}, { message: 'Start date/time must be a valid ISO datetime' })
   startDate?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'End date must be a valid date string (YYYY-MM-DD)' })
+  @IsDateString({}, { message: 'End date/time must be a valid ISO datetime' })
   endDate?: string;
 
   @IsOptional()
@@ -190,6 +190,17 @@ export class UpdateCourseDto {
   @IsArray()
   @IsString({ each: true })
   sectionsOrder?: string[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SectionHeadingsDto)
+  sectionHeadings?: SectionHeadingsDto;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CustomSectionDto)
+  customSections?: CustomSectionDto[];
 
   @IsOptional()
   @IsBoolean()

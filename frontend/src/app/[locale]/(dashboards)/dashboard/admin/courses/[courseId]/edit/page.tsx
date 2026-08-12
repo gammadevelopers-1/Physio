@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { EditCourseContent } from "@/components/course-manager-dashboard";
+import { fetchHeadingDefaults } from "@/lib/course-heading-defaults";
 
 export const metadata = {
   title: "Edit Course | Admin Dashboard | PhysioGuidance",
@@ -14,9 +15,11 @@ export default async function AdminEditCoursePage({
   const { locale, courseId } = await params;
   setRequestLocale(locale);
 
+  const headingDefaults = await fetchHeadingDefaults();
+
   return (
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
-      <EditCourseContent courseId={courseId} role="admin" />
+      <EditCourseContent courseId={courseId} role="admin" headingDefaults={headingDefaults} />
     </main>
   );
 }

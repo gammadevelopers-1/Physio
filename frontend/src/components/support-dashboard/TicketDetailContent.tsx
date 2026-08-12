@@ -1388,14 +1388,39 @@ const TicketDetailContent = () => {
                             })()}
                           </div>
                           {ticket.studentEmail && (
-                            <a
-                              href={`mailto:${ticket.studentEmail}`}
-                              className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] inline-flex items-center gap-1 truncate"
-                              title={ticket.studentEmail}
-                            >
-                              <Mail className="w-3 h-3 flex-shrink-0" />
-                              <span className="truncate">{ticket.studentEmail}</span>
-                            </a>
+                            (() => {
+                              // Backend soft-deletes users by rewriting email
+                              // to `deleted-<uuid>@deleted.local`. Rendering
+                              // that raw is confusing UX and overflows the
+                              // customer card; show a friendly placeholder
+                              // and drop the mailto: link (no one to email).
+                              const isDeletedAccount = /^deleted-[0-9a-f-]{8,}@deleted\.local$/i.test(ticket.studentEmail);
+                              if (isDeletedAccount) {
+                                let label = "Deleted account";
+                                try {
+                                  const translated = t("ticketDetail.deletedAccount");
+                                  if (translated && translated !== "ticketDetail.deletedAccount") {
+                                    label = translated;
+                                  }
+                                } catch { /* missing key — fall back */ }
+                                return (
+                                  <span className="text-xs text-[var(--color-text-secondary)] italic inline-flex items-center gap-1">
+                                    <Mail className="w-3 h-3 flex-shrink-0" />
+                                    <span>{label}</span>
+                                  </span>
+                                );
+                              }
+                              return (
+                                <a
+                                  href={`mailto:${ticket.studentEmail}`}
+                                  className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] inline-flex items-center gap-1 truncate"
+                                  title={ticket.studentEmail}
+                                >
+                                  <Mail className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">{ticket.studentEmail}</span>
+                                </a>
+                              );
+                            })()
                           )}
                           {ticket.isGuestTicket && (
                             <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5 italic">

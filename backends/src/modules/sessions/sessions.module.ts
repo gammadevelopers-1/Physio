@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SessionsController } from './sessions.controller';
 import { SessionsService } from './sessions.service';
 import { SessionReminderService } from './session-reminder.service';
@@ -9,6 +9,12 @@ import {
   SessionMarkMissedJob,
   SessionEndExpiredJob,
 } from './sessions.jobs';
+import {
+  SessionRemindTask,
+  SessionWarn90Task,
+  SessionEndTask,
+  SessionMarkMissedTask,
+} from './sessions.tasks';
 import { AuthModule } from '../auth/auth.module';
 import { ZoomModule } from '../zoom/zoom.module';
 import { SessionAssistantsModule } from '../session-assistants/session-assistants.module';
@@ -17,7 +23,21 @@ import { UserNotificationsModule } from '../user-notifications/user-notification
 import { AdminSettingsModule } from '../admin-settings/admin-settings.module';
 
 @Module({
-  imports: [AuthModule, ZoomModule, SessionAssistantsModule, CourseAssistantsModule, UserNotificationsModule, AdminSettingsModule],
+  imports: [
+    AuthModule,
+    // forwardRef: ZoomModule → SessionsModule (webhook path enqueues
+    // session tasks) creates a cycle; Nest resolves via forwardRef.
+    forwardRef(() => ZoomModule),
+    SessionAssistantsModule,
+    // forwardRef: CourseAssistantsModule → ZoomModule → SessionsModule
+    // is a second cycle path — loading order can enter SessionsModule
+    // while CourseAssistantsModule is still being constructed, so
+    // eager import resolves to undefined. Deferring via forwardRef
+    // closes it.
+    forwardRef(() => CourseAssistantsModule),
+    UserNotificationsModule,
+    AdminSettingsModule,
+  ],
   controllers: [SessionsController],
   providers: [
     SessionsService,
@@ -27,7 +47,15 @@ import { AdminSettingsModule } from '../admin-settings/admin-settings.module';
     SessionReminderNotifyJob,
     SessionMarkMissedJob,
     SessionEndExpiredJob,
+    // Cloud Tasks handlers for the migrated event-driven pipeline.
+    // Constructors self-register with TaskHandlerRegistry.
+    SessionRemindTask,
+    SessionWarn90Task,
+    SessionEndTask,
+    SessionMarkMissedTask,
   ],
-  exports: [SessionsService],
+  // Also export SessionReminderService so ZoomModule (via forwardRef)
+  // can inject it into its webhook controller.
+  exports: [SessionsService, SessionReminderService],
 })
 export class SessionsModule {}

@@ -343,6 +343,7 @@ export class InstructorService {
           .select({
             id: assessments.id,
             title: assessments.title,
+            titleAr: assessments.titleAr,
             courseId: assessments.courseId,
             type: assessments.type,
             totalMarks: assessments.totalMarks,
@@ -508,6 +509,7 @@ export class InstructorService {
         .select({
           id: courseMaterials.id,
           title: courseMaterials.title,
+          titleAr: courseMaterials.titleAr,
           type: courseMaterials.type,
           version: courseMaterials.version,
           status: courseMaterials.status,
@@ -555,6 +557,7 @@ export class InstructorService {
       id: string;
       studentName: string;
       assessmentTitle: string;
+      assessmentTitleAr: string | null;
       courseName: string;
       submittedAt: string;
       daysOverdue: number;
@@ -571,6 +574,7 @@ export class InstructorService {
           studentFirstName: users.firstName,
           studentLastName: users.lastName,
           assessmentTitle: assessments.title,
+          assessmentTitleAr: assessments.titleAr,
           courseTitle: courses.title,
         })
         .from(submissions)
@@ -591,6 +595,7 @@ export class InstructorService {
         id: r.id,
         studentName: `${r.studentFirstName || ''} ${r.studentLastName || ''}`.trim() || 'Unknown',
         assessmentTitle: r.assessmentTitle,
+        assessmentTitleAr: r.assessmentTitleAr,
         courseName: r.courseTitle,
         submittedAt: r.submittedAt?.toISOString() || new Date().toISOString(),
         daysOverdue: r.submittedAt
@@ -1419,6 +1424,7 @@ export class InstructorService {
         assessmentId: assessments.id,
         courseId: assessments.courseId,
         title: assessments.title,
+        titleAr: assessments.titleAr,
         maxScore: assessments.totalMarks,
         retakeScorePolicy: assessments.retakeScorePolicy,
         score: submissions.score,

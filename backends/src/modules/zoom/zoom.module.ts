@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ZoomService } from './zoom.service';
 import { ZoomMockService } from './zoom-mock.service';
@@ -9,10 +9,19 @@ import { ZoomController } from './zoom.controller';
 import { ZOOM_SERVICE } from './zoom.interface';
 import { AuthModule } from '../auth/auth.module';
 import { EmailModule } from '../email/email.module';
+import { SessionsModule } from '../sessions/sessions.module';
 import zoomConfig from '../../config/zoom.config';
 
 @Module({
-  imports: [ConfigModule.forFeature(zoomConfig), AuthModule, EmailModule],
+  imports: [
+    ConfigModule.forFeature(zoomConfig),
+    AuthModule,
+    EmailModule,
+    // forwardRef closes the cycle SessionsModule ↔ ZoomModule: sessions
+    // needs Zoom for meeting mgmt, and Zoom needs sessions to enqueue
+    // end/warn tasks from the meeting.started webhook.
+    forwardRef(() => SessionsModule),
+  ],
   controllers: [ZoomController],
   providers: [
     {

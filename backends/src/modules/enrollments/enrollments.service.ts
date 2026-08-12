@@ -1134,6 +1134,23 @@ export class EnrollmentsService {
   ) {
     const session = await this.verifySessionAccess(sessionId, user);
 
+    // Course-level lock: once the course is completed/ended/archived, all
+    // student-facing progress including attendance is frozen. Only the
+    // manager's Mark Completed transition can promote ended → completed,
+    // so instructors/TAs must treat both as terminal. `verifySessionAccess`
+    // doesn't select courseId in every branch, so we join to sessions here.
+    const [parentCourse] = await db
+      .select({ status: courses.status })
+      .from(courses)
+      .innerJoin(sessions, eq(sessions.courseId, courses.id))
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+    if (parentCourse && (parentCourse.status === 'completed' || parentCourse.status === 'ended' || parentCourse.status === 'archived')) {
+      throw new BadRequestException(
+        `Cannot mark attendance on a ${parentCourse.status} course. Course progress is frozen.`,
+      );
+    }
+
     if (session.status !== 'live' && session.status !== 'ended' && session.status !== 'completed') {
       throw new BadRequestException(
         `Cannot mark attendance for a ${session.status} session. Attendance can only be marked during a live, ended, or completed session.`,
@@ -1398,7 +1415,12 @@ export class EnrollmentsService {
 
       if (courseTA) return session;
 
-      throw new NotFoundException('Session not found');
+      // Fall through: user carries TEACHING_ASSISTANT role but isn't
+      // assigned to this session/course as a TA. They may still qualify
+      // via another role (e.g. INSTRUCTOR of the session, or MANAGER /
+      // ADMIN with platform-wide oversight). Multi-role users hit this
+      // path — throwing 404 here masked their instructor access to their
+      // own sessions and to every past lecture they'd created.
     }
 
     const conditions: any[] = [eq(sessions.id, sessionId)];

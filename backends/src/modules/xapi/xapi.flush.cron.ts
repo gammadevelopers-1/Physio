@@ -12,6 +12,7 @@ import {
   type TransmitStatementJobData,
 } from './constants';
 import { isCronExternalized } from '../../common/is-cron-externalized.helper';
+import { DistributedLockService } from '../tasks/distributed-lock.service';
 
 /**
  * Hourly safety-net flush. Picks up:
@@ -30,6 +31,7 @@ export class XapiFlushCron {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly lock: DistributedLockService,
     @Optional()
     @InjectQueue(XAPI_QUEUE_NAMES.STATEMENTS)
     private readonly queue: Queue<TransmitStatementJobData> | null,
@@ -43,7 +45,21 @@ export class XapiFlushCron {
     // during the extraction window. Rollback = remove the name from
     // the env var and the in-container path resumes on its own.
     if (isCronExternalized('xapi.flush')) return;
+    // Cross-instance dedup — 8-min TTL comfortably exceeds a 500-row
+    // enqueue batch. Each individual statement enqueue is idempotent
+    // via the statementId payload, but avoiding N-instance parallel
+    // enqueues saves BullMQ dedup work.
+    const outcome = await this.lock.withLock(
+      'lock:cron:xapi.flush',
+      8 * 60_000,
+      () => this.flushInner(),
+    );
+    if (outcome === null) {
+      // Another instance handled this tick — safe no-op.
+    }
+  }
 
+  private async flushInner(): Promise<void> {
     const enabled = this.configService.get<boolean>('nelc.enabled');
     if (!enabled) return;
     if (!this.queue) {

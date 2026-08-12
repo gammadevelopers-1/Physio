@@ -7,6 +7,7 @@ import { scheduledReports, users, userRoles, roles } from '../../database/schema
 import { ReportsService } from './reports.service';
 import { EmailService } from '../email/email.service';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { DistributedLockService } from '../tasks/distributed-lock.service';
 
 @Injectable()
 export class ReportSchedulerService {
@@ -15,6 +16,7 @@ export class ReportSchedulerService {
   constructor(
     private readonly reportsService: ReportsService,
     private readonly emailService: EmailService,
+    private readonly lock: DistributedLockService,
   ) {}
 
   /**
@@ -25,6 +27,20 @@ export class ReportSchedulerService {
   @Cron('0 6 * * *')
   async handleScheduledReports(): Promise<void> {
     if (isCronExternalized('reports.schedule')) return;
+    // Cross-instance dedup. 15-min TTL comfortably exceeds observed
+    // runtime (each report generation is 1-30s; ~20 reports per day
+    // typical).
+    const outcome = await this.lock.withLock(
+      'lock:cron:reports.schedule',
+      15 * 60_000,
+      () => this.handleScheduledReportsInner(),
+    );
+    if (outcome === null) {
+      // Another instance holds the lock — safe no-op.
+    }
+  }
+
+  private async handleScheduledReportsInner(): Promise<void> {
     this.logger.log('Running scheduled reports cron job...');
 
     const now = new Date();

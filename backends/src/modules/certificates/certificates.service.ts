@@ -458,12 +458,21 @@ export class CertificatesService {
       );
     }
 
-    // For CPD/CME courses, SCFHS number is required
+    // For CPD/CME courses, SCFHS number is required. Also enforce the course
+    // must be `completed` before a certificate can be requested — `ended`
+    // freezes progress but stays locked until a manager clicks Mark Completed.
+    // The Mark Completed path bypasses this check via `skipEligibilityCheck`.
     const [courseInfo] = await db
-      .select({ isCmeAccredited: courses.isCmeAccredited })
+      .select({ isCmeAccredited: courses.isCmeAccredited, status: courses.status })
       .from(courses)
       .where(eq(courses.id, courseId))
       .limit(1);
+
+    if (!skipEligibilityCheck && courseInfo?.status !== 'completed') {
+      throw new BadRequestException(
+        'Certificate can be requested only after the course is marked as completed.',
+      );
+    }
 
     if (courseInfo?.isCmeAccredited) {
       const [student] = await db

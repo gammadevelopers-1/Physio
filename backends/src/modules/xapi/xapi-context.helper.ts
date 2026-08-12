@@ -329,6 +329,7 @@ export class XapiContextHelper {
         courseId: courseMaterials.courseId,
         moduleId: courseMaterials.moduleId,
         title: courseMaterials.title,
+        titleAr: courseMaterials.titleAr,
       })
       .from(courseMaterials)
       .where(eq(courseMaterials.id, materialId))
@@ -368,6 +369,7 @@ export class XapiContextHelper {
         id: assessments.id,
         courseId: assessments.courseId,
         title: assessments.title,
+        titleAr: assessments.titleAr,
         totalMarks: assessments.totalMarks,
       })
       .from(assessments)

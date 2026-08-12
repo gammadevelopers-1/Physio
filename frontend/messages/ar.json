@@ -1172,15 +1172,74 @@
     "requirements": "المتطلبات",
     "notices": "ملاحظة مهمة",
     "reviews": "التقييمات",
+    "features": "المميزات",
+    "faqs": "الأسئلة الشائعة",
+    "instructor": "المدرب",
+    "instructorFallbackName": "المدرب",
+    "viewProfile": "عرض الملف الشخصي",
+    "shareCopied": "تم نسخ الرابط",
+    "share": {
+      "action": "مشاركة",
+      "title": "مشاركة",
+      "close": "إغلاق",
+      "copy": "نسخ",
+      "copied": "تم النسخ"
+    },
+    "registrationCountdown": {
+      "title": "ينتهي التسجيل خلال",
+      "days": "يوم",
+      "hours": "ساعة",
+      "minutes": "دقيقة",
+      "seconds": "ثانية"
+    },
+    "noReviewsYet": "لا توجد تقييمات بعد",
+    "reviewsCount": "{count, plural, =0 {لا توجد تقييمات} =1 {تقييم واحد} =2 {تقييمان} few {# تقييمات} many {# تقييماً} other {# تقييم}}",
+    "viewAllReviews": "عرض كل التقييمات ({count})",
+    "reviewsToggle": {
+      "course": "الدورة",
+      "instructor": "المدرب"
+    },
+    "deliveryType": {
+      "zoom": "عبر الإنترنت",
+      "onsite": "حضوري",
+      "blended": "مدمج",
+      "selfPaced": "ذاتي",
+      "webinar": "ويبينار"
+    },
+    "contentsDurationLabel": "{duration} من المحتوى",
+    "contentsMoreCount": "{count, plural, =0 {لا يوجد محتوى إضافي} =1 {وحدة إضافية عند التسجيل} =2 {وحدتان إضافيتان عند التسجيل} few {# وحدات إضافية عند التسجيل} many {# وحدة إضافية عند التسجيل} other {# وحدة إضافية عند التسجيل}}",
+    "contentsMoreDefault": "المحتوى الكامل متاح عند التسجيل",
+    "materialType": {
+      "video": "فيديو",
+      "pdf": "PDF",
+      "slides": "شرائح",
+      "document": "مستند",
+      "quiz": "اختبار قصير",
+      "exam": "امتحان",
+      "assignment": "تكليف"
+    },
+    "sessions": {
+      "city": "المدينة",
+      "month": "الشهر",
+      "allCities": "كل المدن",
+      "allMonths": "كل الأشهر",
+      "clear": "مسح",
+      "noMatch": "لا توجد جلسات تطابق المرشحات"
+    },
     "courseDetails": {
       "title": "تفاصيل الدورة",
       "registrationDeadline": "الموعد النهائي للتسجيل",
       "city": "المدينة",
       "language": "اللغة",
+      "startDate": "تاريخ البدء",
       "startTime": "وقت البدء",
       "duration": "المدة",
+      "endDate": "تاريخ الانتهاء",
       "endTime": "وقت الانتهاء",
       "venue": "مكان",
+      "deliveryType": "نوع التقديم",
+      "cmeHours": "ساعات CME",
+      "accreditationNumber": "رقم الاعتماد",
       "hours": "ساعات"
     },
     "whatYouWillLearn": {
@@ -2008,6 +2067,7 @@
       "tabs": {
         "all": "الكل",
         "inProgress": "قيد التقدم",
+        "ended": "منتهية",
         "completed": "مكتملة",
         "upcoming": "القادمة",
         "dropped": "منسحب"
@@ -2069,6 +2129,12 @@
       "reviewAlreadySubmitted": "لقد قمت بمراجعة هذه الدورة من قبل",
       "reviewAlreadyTitle": "تم إرسال المراجعة",
       "reviewAlreadyDesc": "شكراً — لقد قمت بمراجعة هذه الدورة من قبل.",
+      "endedBadge": "منتهية",
+      "ended": "منتهية",
+      "endedBanner": {
+        "title": "انتهت هذه الدورة",
+        "body": "تم تجميد تقدمك. تُتاح المراجعات وطلب الشهادة بعد أن يقوم المدير بتعليم الدورة كمكتملة."
+      },
       "notEnrolled": "أنت غير مسجل في هذه الدورة"
     },
     "favourites": {
@@ -3346,6 +3412,7 @@
         "draft": "مسودة",
         "pending_review": "قيد المراجعة",
         "changes_requested": "تغييرات مطلوبة",
+        "ended": "منتهي",
         "completed": "مكتمل",
         "archived": "مؤرشف",
         "cancelled": "ملغاة"
@@ -4261,7 +4328,11 @@
       "noAssessmentsDesc": "لا توجد تقييمات تطابق الفلاتر الحالية.",
       "course": "الدورة",
       "assessmentTitle": "عنوان التقييم",
+      "assessmentTitleEn": "عنوان التقييم (إنجليزي)",
+      "assessmentTitleAr": "عنوان التقييم (عربي)",
+      "assessmentTitleArHint": "اختياري — يظهر للطلاب الذين يتصفحون بالعربية. يعود إلى العنوان الإنجليزي عند تركه فارغاً.",
       "titlePlaceholder": "أدخل عنوان التقييم...",
+      "titleArPlaceholder": "أدخل عنوان التقييم بالعربية",
       "type": "النوع",
       "duration": "المدة",
       "minutes": "دقيقة",
@@ -4593,7 +4664,11 @@
       "noFiles": "لا توجد ملفات",
       "noFilesDesc": "ارفع أول مادة تعليمية للبدء.",
       "materialTitle": "العنوان",
+      "materialTitleEn": "العنوان (إنجليزي)",
+      "materialTitleAr": "العنوان (عربي)",
+      "materialTitleArHint": "اختياري — يظهر للطلاب الذين يتصفحون بالعربية. يعود إلى العنوان الإنجليزي عند تركه فارغاً.",
       "titlePlaceholder": "أدخل عنوان المادة",
+      "titleArPlaceholder": "أدخل عنوان المحتوى بالعربية",
       "removeFile": "إزالة الملف",
       "unsupportedType": "نوع الملف هذا غير مدعوم.",
       "uploadSuccess": "تم رفع الملف بنجاح.",
@@ -5137,7 +5212,9 @@
         "requestChangesPlaceholder": "صف التعديلات المطلوبة...",
         "complete": "إكمال الدورة",
         "markCompleted": "وضع علامة كمكتملة",
+        "endCourse": "إنهاء الدورة",
         "archive": "أرشفة",
+        "unarchive": "إلغاء الأرشفة",
         "delete": "حذف",
         "deletePermanently": "حذف نهائي",
         "cancel": "إلغاء",
@@ -5157,6 +5234,13 @@
         "archivedTitle": "حذف هذه الدورة المؤرشفة نهائياً؟",
         "archivedBody": "ستتم إزالة هذه الدورة من قوائم الإدارة والمديرين والمدربين. ستبقى شهادات الطلاب وساعات CME وسجلات التحقق مرئية للامتثال لمتطلبات المركز الوطني للتعليم الإلكتروني. لا يمكن التراجع عن هذا الإجراء.",
         "confirmArchived": "حذف نهائي"
+      },
+      "endConfirm": {
+        "title": "إنهاء هذه الدورة؟",
+        "body": "ستنتقل الدورة من نشطة إلى منتهية. تبقى التسجيلات مفتوحة ولن تُصدر أي شهادات أو ساعات CME الآن — اضغط على وضع علامة كمكتملة بعد المراجعة لإطلاقها. إضافة سبب اختيارية.",
+        "reasonLabel": "السبب (اختياري)",
+        "reasonPlaceholder": "لماذا تنهي هذه الدورة مبكراً؟",
+        "confirm": "إنهاء الدورة"
       },
       "hiddenFromPublic": "تم إخفاء الدورة من الموقع العام",
       "shownOnPublic": "الدورة ظاهرة الآن على الموقع العام",
@@ -5247,6 +5331,7 @@
       "sectionOverview": "نظرة عامة",
       "sectionObjectives": "الأهداف (ماذا ستتعلم)",
       "sectionInstructor": "المدرب",
+      "sectionCertificate": "الشهادة",
       "sectionContents": "المحتويات / الوحدات",
       "sectionRequirements": "المتطلبات",
       "sectionFaqs": "الأسئلة الشائعة",
@@ -5326,6 +5411,25 @@
       "faqQuestionArPlaceholder": "السؤال (عربي)",
       "faqAnswerEnPlaceholder": "Answer (English)",
       "faqAnswerArPlaceholder": "الإجابة (عربي)",
+      "sectionHeadingOverride": "عنوان القسم (اختياري لتجاوز الافتراضي)",
+      "sectionHeadingEnPlaceholder": "العنوان (بالإنجليزية)",
+      "sectionHeadingArPlaceholder": "العنوان (بالعربية)",
+      "autoSectionHeadingsTitle": "عناوين الأقسام الأخرى",
+      "autoSectionHeadingsHint": "هذه الأقسام (المحتوى، الجدول، التقييمات، تفاصيل الدورة) تُنشأ تلقائيًا. عناوينها الافتراضية تأتي من Strapi — يمكن تجاوزها لكل دورة هنا.",
+      "customSectionsTitle": "أقسام مخصصة",
+      "customSectionsHint": "أضف أقسامًا إضافية تظهر في صفحة الدورة العامة. يمكنك ترتيبها مع الأقسام الثابتة بالأسفل ضمن ترتيب الأقسام.",
+      "customSectionItemLabel": "قسم مخصص",
+      "addCustomSection": "+ إضافة قسم مخصص",
+      "removeCustomSection": "حذف",
+      "customSectionTitleEn": "العنوان (بالإنجليزية)",
+      "customSectionTitleAr": "العنوان (بالعربية)",
+      "customSectionTitleEnPlaceholder": "مثال: مسار التعلم",
+      "customSectionTitleArPlaceholder": "مثال: مسار التعلم",
+      "customSectionContentEn": "المحتوى (بالإنجليزية)",
+      "customSectionContentAr": "المحتوى (بالعربية)",
+      "customSectionContentEnPlaceholder": "المحتوى المعروض في صفحة الدورة العامة…",
+      "customSectionContentArPlaceholder": "المحتوى المعروض في صفحة الدورة العامة…",
+      "sectionCustomFallback": "قسم مخصص",
       "optional": "اختياري",
       "noneSelected": "— بدون —",
       "teamTitle": "تعيين الفريق",
@@ -5351,6 +5455,7 @@
       "backToCourses": "العودة إلى الدورات",
       "editCourse": "تعديل الدورة",
       "activate": "تفعيل",
+      "unarchive": "إلغاء الأرشفة",
       "approve": "الموافقة",
       "requestChanges": "طلب تغييرات",
       "requestChangesTitle": "طلب تغييرات",
@@ -5403,6 +5508,7 @@
         "draft": "مسودة",
         "pending_review": "قيد المراجعة",
         "changes_requested": "تغييرات مطلوبة",
+        "ended": "منتهية",
         "completed": "مكتملة",
         "archived": "مؤرشفة",
         "cancelled": "ملغاة"
@@ -6819,6 +6925,7 @@
         "unfeature": "إلغاء التمييز",
         "complete": "تعيين كمكتملة",
         "markCompleted": "وضع علامة كمكتملة",
+        "endCourse": "إنهاء الدورة",
         "unarchive": "استعادة (إلغاء الأرشفة)",
         "reschedule": "إعادة جدولة الدورة",
         "rescheduleRevive": "إعادة تشغيل بتواريخ جديدة"
@@ -6858,7 +6965,17 @@
         "visibilityFailed": "فشل تحديث الظهور",
         "requestChangesSent": "تم طلب التعديلات",
         "requestChangesFailed": "فشل إرسال الطلب",
-        "studentsLoadFailed": "فشل في تحميل قائمة الطلاب المسجلين"
+        "studentsLoadFailed": "فشل في تحميل قائمة الطلاب المسجلين",
+        "ended": "تم إنهاء الدورة — في انتظار وضع علامة كمكتملة",
+        "endFailed": "فشل إنهاء الدورة"
+      },
+      "endCourseModal": {
+        "title": "إنهاء هذه الدورة؟",
+        "body": "ستنتقل \"{title}\" من نشطة إلى منتهية. تبقى التسجيلات مفتوحة ولن تُصدر أي شهادات أو ساعات CME الآن — اضغط على وضع علامة كمكتملة بعد المراجعة لإطلاقها.",
+        "reasonLabel": "السبب (اختياري)",
+        "reasonPlaceholder": "لماذا تنهي هذه الدورة مبكراً؟",
+        "cancel": "إلغاء",
+        "confirm": "إنهاء الدورة"
       },
       "confirmArchive": {
         "title": "أرشفة هذه الدورة المكتملة؟",
@@ -14278,6 +14395,7 @@
       },
       "customer": "العميل",
       "customerRating": "تقييم العميل",
+      "deletedAccount": "حساب محذوف",
       "guestBadge": "زائر",
       "guestTicketHint": "تم الإرسال عبر النموذج العام (بدون حساب).",
       "requesterRole": {
@@ -14760,6 +14878,16 @@
         "title": "اكتملت الدورة تلقائياً",
         "messageInstructor": "تم إكمال دورتك \"{courseTitle}\" تلقائياً بعد انتهاء تاريخ الانتهاء. تم إنهاء {count} تسجيل(ات).",
         "messageManager": "تم إكمال الدورة \"{courseTitle}\" تلقائياً (تم الوصول لتاريخ الانتهاء). تم إنهاء {count} تسجيل(ات)."
+      },
+      "course_ended_needs_review": {
+        "title": "انتهت الدورة — جاهزة للمراجعة",
+        "messageInstructor": "وصلت دورتك \"{courseTitle}\" إلى تاريخ الانتهاء. سيقوم أحد المديرين بوضع علامة كمكتملة لإطلاق الشهادات.",
+        "messageManager": "وصلت الدورة \"{courseTitle}\" إلى تاريخ الانتهاء. {count} تسجيل(ات) في الانتظار — اضغط على وضع علامة كمكتملة لإطلاق الشهادات وساعات CME."
+      },
+      "course_ended_manual": {
+        "title": "انتهت الدورة — جاهزة للمراجعة",
+        "messageInstructor": "تم إنهاء دورتك \"{courseTitle}\". سيقوم أحد المديرين بوضع علامة كمكتملة لإطلاق الشهادات.",
+        "messageManager": "تم إنهاء الدورة \"{courseTitle}\". {count} تسجيل(ات) في الانتظار — اضغط على وضع علامة كمكتملة لإطلاق الشهادات وساعات CME."
       },
       "course_managed": {
         "title": "تم تعيين دورة لك",

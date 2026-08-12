@@ -8,6 +8,7 @@ import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
 import { useNavbarChrome } from "@/hooks/useNavbarChrome";
+import { resolveHref } from "@/lib/href-utils";
 
 interface FooterProps {
   siteSettings?: SiteSettings | null;
@@ -41,10 +42,19 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
     locale === "ar" ? platformGeneral.platformNameAr : platformGeneral.platformName;
   const siteName = adminName || siteSettings?.siteName || "";
 
-  // Link columns — Strapi only (no translation-based fallback arrays)
-  const platformLinks = (footerLinks?.platform || []).map((l) => ({ label: l.label, href: l.url }));
-  const organizationLinks = (footerLinks?.organization || []).map((l) => ({ label: l.label, href: l.url }));
-  const supportLinks = (footerLinks?.support || []).map((l) => ({ label: l.label, href: l.url }));
+  // Link columns — Strapi only (no translation-based fallback arrays).
+  // Normalize URL through resolveHref so `status`, `/status`, and `/en/status`
+  // all resolve to a proper locale-prefixed absolute path (otherwise Next Link
+  // treats `status` as relative to the current path → 404).
+  // Any external (http/https) URL opens in a new tab regardless of the flag.
+  const toLink = (l: NavigationLink) => {
+    const href = resolveHref(l.url, locale) || l.url;
+    const isExternal = /^https?:\/\//i.test(l.url);
+    return { label: l.label, href, newTab: l.openInNewTab || isExternal };
+  };
+  const platformLinks = (footerLinks?.platform || []).map(toLink);
+  const organizationLinks = (footerLinks?.organization || []).map(toLink);
+  const supportLinks = (footerLinks?.support || []).map(toLink);
 
   // Social URLs — each icon renders only if Strapi has a URL for it
   const socialLinks = [
@@ -240,6 +250,8 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
                   <Link
                     key={index}
                     href={link.href}
+                    target={link.newTab ? "_blank" : undefined}
+                    rel={link.newTab ? "noopener noreferrer" : undefined}
                     className="text-[var(--color-footer-text)] leading-6 hover:text-[var(--on-surface-primary)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                   >
@@ -264,6 +276,8 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
                   <Link
                     key={index}
                     href={link.href}
+                    target={link.newTab ? "_blank" : undefined}
+                    rel={link.newTab ? "noopener noreferrer" : undefined}
                     className="text-[var(--color-footer-text)] leading-6 hover:text-[var(--on-surface-primary)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                   >
@@ -288,6 +302,8 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
                   <Link
                     key={index}
                     href={link.href}
+                    target={link.newTab ? "_blank" : undefined}
+                    rel={link.newTab ? "noopener noreferrer" : undefined}
                     className="text-[var(--color-footer-text)] leading-6 hover:text-[var(--on-surface-primary)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                   >

@@ -694,6 +694,55 @@
       "when": 1785715200000,
       "tag": "0113_course_ended_and_hide_from_admin_only",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1785801600000,
+      "tag": "0114_course_start_end_time_and_end_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1785888000000,
+      "tag": "0115_course_pre_archive_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1785974400000,
+      "tag": "0116_material_assessment_title_ar",
+      "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1786060800000,
+      "tag": "0117_course_section_headings",
+      "breakpoints": true
+    },
+    {
+      "idx": 103,
+      "version": "7",
+      "when": 1786147200000,
+      "tag": "0118_course_custom_sections",
+      "breakpoints": true
+    },
+    {
+      "idx": 104,
+      "version": "7",
+      "when": 1786752000000,
+      "tag": "0119_encrypt_refund_pii",
+      "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1786752060000,
+      "tag": "0120_user_consents",
+      "breakpoints": true
     }
   ]
 }

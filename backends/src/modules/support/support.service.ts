@@ -5,6 +5,8 @@ import {
   BadRequestException,
   OnModuleInit,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
@@ -50,6 +52,7 @@ import {
   ticketHoldRequests,
   HOLD_REQUEST_STATUS,
   HOLD_REASONS,
+  ON_HOLD_REASONS,
   TICKET_STATUS,
   TICKET_PRIORITY,
   ROLE_NAMES,
@@ -100,6 +103,7 @@ import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { ensureCsvBom } from '../../common/exports/csv.util';
 import { registerArabicFonts, writeText, hasArabic } from '../../common/exports/pdf.util';
 import { RoleRequestsService } from '../role-requests/role-requests.service';
+import { SlaMonitorService } from './sla-monitor.service';
 
 // Fallback auto-priority mapping for the 8 built-ins. Used only when the
 // stored ticket_categories config row has no entry for that slug (which
@@ -287,6 +291,11 @@ export class SupportService implements OnModuleInit {
     private readonly storageService: StorageService,
     private readonly auditLogService: AuditLogService,
     private readonly roleRequestsService: RoleRequestsService,
+    // Circular DI: SlaMonitorService injects SupportService. forwardRef
+    // lets Nest resolve the cycle at bootstrap. Only used for the CSAT
+    // Cloud Task enqueue/cancel helpers.
+    @Inject(forwardRef(() => SlaMonitorService))
+    private readonly slaMonitorService: SlaMonitorService,
   ) {}
 
   // Stable action labels for support audit-log entries — used both when
@@ -1915,6 +1924,22 @@ export class SupportService implements OnModuleInit {
       ) {
         updateData.resolvedAt = null;
         updateData.closedAt = null;
+        // Cancel any pending CSAT email task — a reopened ticket
+        // shouldn't get a satisfaction survey. sendCsatEmailOne CAS-
+        // guards on ticket.status = RESOLVED/CLOSED anyway (would no-
+        // op), but freeing the queue slot is cleaner and stops the
+        // safety-net sweep from re-enqueuing.
+        const [survey] = await db
+          .select({ id: csatSurveys.id })
+          .from(csatSurveys)
+          .where(eq(csatSurveys.ticketId, ticketId));
+        if (survey) {
+          await this.slaMonitorService.cancelCsatEmailTask(survey.id);
+        }
+        // Cancel pending auto-close-resolved task too. The reopen path
+        // moved the ticket back to IN_PROGRESS so the handler would
+        // CAS-no-op, but freeing the queue slot keeps things tidy.
+        await this.slaMonitorService.cancelAutoCloseResolvedTask(ticketId);
       }
     }
 
@@ -1945,6 +1970,28 @@ export class SupportService implements OnModuleInit {
       .set(updateData)
       .where(eq(tickets.id, ticketId))
       .returning();
+
+    // Wire Cloud Tasks for auto-close-waiting on the on-hold lifecycle:
+    //   - Entering ON_HOLD with waiting-for-student reason → enqueue
+    //     task at onHoldAt + 48h.
+    //   - Exiting ON_HOLD (for any reason) → cancel the pending task
+    //     (the handler CAS-checks status anyway, but freeing the queue
+    //     slot stops the safety-net from re-enqueuing).
+    if (
+      dto.status === TICKET_STATUS.ON_HOLD &&
+      updated.onHoldReason === ON_HOLD_REASONS.WAITING_FOR_STUDENT_RESPONSE &&
+      updated.onHoldAt
+    ) {
+      await this.slaMonitorService.enqueueAutoCloseWaitingTask({
+        ticketId: updated.id,
+        onHoldAt: updated.onHoldAt,
+      });
+    } else if (
+      existing.status === TICKET_STATUS.ON_HOLD &&
+      dto.status !== TICKET_STATUS.ON_HOLD
+    ) {
+      await this.slaMonitorService.cancelAutoCloseWaitingTask(updated.id);
+    }
 
     // Status-change notification (P-04 follow-up).
     //
@@ -2695,6 +2742,27 @@ export class SupportService implements OnModuleInit {
 
       return { updated: updatedTicket, surveyId: resolvedSurveyId };
     });
+
+    // Enqueue the CSAT email Cloud Task at resolvedAt + 15min. Runs
+    // outside the transaction: if it fails, the hourly safety-net sweep
+    // + legacy @Cron still catch it. Only schedule when we actually
+    // created (or found) a survey — staff-requester tickets have
+    // skipCsat = true → surveyId is null.
+    if (surveyId && updated.resolvedAt) {
+      await this.slaMonitorService.enqueueCsatEmailTask({
+        surveyId,
+        resolvedAt: updated.resolvedAt,
+      });
+    }
+
+    // Enqueue auto-close-resolved Cloud Task at resolvedAt + 48h.
+    // Cancelled if the ticket is reopened before the grace expires.
+    if (updated.resolvedAt) {
+      await this.slaMonitorService.enqueueAutoCloseResolvedTask({
+        ticketId: updated.id,
+        resolvedAt: updated.resolvedAt,
+      });
+    }
 
     // Log resolved_within_sla event (SB-13) — best-effort, outside the
     // transaction because a failed analytics insert shouldn't roll back

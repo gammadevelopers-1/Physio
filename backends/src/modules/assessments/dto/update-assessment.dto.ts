@@ -31,6 +31,11 @@ export class UpdateAssessmentDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
+  titleAr?: string | null;
+
+  @IsOptional()
+  @IsString()
   @IsIn(validTypes, {
     message: `Type must be one of: ${validTypes.join(', ')}`,
   })

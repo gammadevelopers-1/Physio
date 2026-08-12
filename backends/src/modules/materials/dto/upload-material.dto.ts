@@ -17,6 +17,11 @@ export class UploadMaterialDto {
   @MaxLength(255)
   title: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  titleAr?: string;
+
   @IsString()
   @IsNotEmpty({ message: 'Type is required' })
   @IsIn(validTypes, {

@@ -4,10 +4,13 @@ import { isCronExternalized } from '../../common/is-cron-externalized.helper';
 import { eq, and, lt } from 'drizzle-orm';
 import { db } from '../../database';
 import { courseMaterials, MATERIAL_STATUS } from '../../database/schema';
+import { DistributedLockService } from '../tasks/distributed-lock.service';
 
 @Injectable()
 export class ProcessingCleanupService {
   private readonly logger = new Logger(ProcessingCleanupService.name);
+
+  constructor(private readonly lock: DistributedLockService) {}
 
   /**
    * Every 15 minutes, reap materials stuck in 'processing' for >3 hours.
@@ -20,10 +23,21 @@ export class ProcessingCleanupService {
    * updatedAt is bumped at every step transition (transcoding →
    * captions → wcag → complete), so a healthy pipeline resets the
    * timer each stage. Only truly stuck rows are reaped.
+   *
+   * Wrapped in distributed lock so multi-instance api-web running the
+   * same reap doesn't race on the UPDATE (the UPDATE itself is atomic
+   * — worst case is a redundant no-op UPDATE — but skipping saves DB
+   * work).
    */
   @Cron('*/15 * * * *')
   async cleanupStaleProcessing(): Promise<void> {
     if (isCronExternalized('processing.cleanup')) return;
+    await this.lock.withLock('lock:cron:processing.cleanup', 4 * 60_000, () =>
+      this.cleanupStaleProcessingInner(),
+    );
+  }
+
+  private async cleanupStaleProcessingInner(): Promise<void> {
     const cutoff = new Date(Date.now() - 3 * 60 * 60 * 1000);
 
     try {

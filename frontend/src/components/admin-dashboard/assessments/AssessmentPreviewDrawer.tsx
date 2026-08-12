@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import { instructorApi } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import type {
   AssessmentResponse,
   AssessmentQuestion,
@@ -99,7 +100,7 @@ export default function AssessmentPreviewDrawer({
                 {t("title")}
               </p>
               <h2 className="text-base font-semibold text-[var(--color-text-primary)] truncate">
-                {assessment?.title || "—"}
+                {assessment ? pickLocaleTitle(assessment.title, assessment.titleAr, locale) : "—"}
               </h2>
             </div>
             <button

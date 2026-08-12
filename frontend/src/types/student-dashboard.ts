@@ -141,6 +141,7 @@ export interface AttemptSummary {
 export interface CourseAssessmentWithSubmission {
   id: string;
   title: string;
+  titleAr: string | null;
   type: string;
   totalMarks: number;
   passingMarks: number;
@@ -309,6 +310,7 @@ export interface RecentGrade {
   id: string;
   assessmentId: string;
   assessmentTitle: string;
+  assessmentTitleAr: string | null;
   courseId: string;
   courseTitle: string;
   courseTitleAr: string | null;
@@ -420,6 +422,7 @@ export interface MaterialProgressData {
 export interface ModuleMaterial {
   id: string;
   title: string;
+  titleAr: string | null;
   type: 'video' | 'pdf' | 'document' | 'image';
   fileUrl: string | null;
   fileSize: number | null;
@@ -459,6 +462,7 @@ export interface StudentAssessmentFile {
 export interface StudentAssessment {
   id: string;
   title: string;
+  titleAr: string | null;
   type: string;
   totalMarks: number;
   passingMarks: number;

@@ -27,7 +27,13 @@ import {
   RolePermissions,
   supportTeamMembers,
   SUPPORT_SUB_ROLES,
+  userConsents,
 } from '../../database/schema';
+import {
+  CURRENT_TERMS_VERSION,
+  CURRENT_PRIVACY_VERSION,
+  CONSENT_TYPE,
+} from './consent-versions';
 import { RegisterDto, LoginDto, CreateUserDto, UpdateUserDto, UpdateProfileDto } from './dto';
 import { EmailService } from '../email/email.service';
 import { JwtPayload } from './strategies/jwt.strategy';
@@ -111,7 +117,11 @@ export class AuthService {
   // ===========================================
   // Register - Creates user with STUDENT role
   // ===========================================
-  async register(dto: RegisterDto): Promise<{ user: Partial<User> & { roles?: string[] }; message: string }> {
+  async register(
+    dto: RegisterDto,
+    ipAddress: string | null = null,
+    userAgent: string | null = null,
+  ): Promise<{ user: Partial<User> & { roles?: string[] }; message: string }> {
     // Check if user exists
     const [existingUser] = await db
       .select()
@@ -180,6 +190,36 @@ export class AuthService {
       userId: newUser.id,
       roleId: studentRole.id,
     });
+
+    // Record PDPL consent — one row per accepted document at signup time.
+    // DTO validation guarantees termsAccepted === true, so at minimum we
+    // store TERMS + PRIVACY. Marketing is opt-in (never assumed).
+    const consentRows: Array<typeof userConsents.$inferInsert> = [
+      {
+        userId: newUser.id,
+        consentType: CONSENT_TYPE.TERMS,
+        version: CURRENT_TERMS_VERSION,
+        ipAddress,
+        userAgent,
+      },
+      {
+        userId: newUser.id,
+        consentType: CONSENT_TYPE.PRIVACY,
+        version: CURRENT_PRIVACY_VERSION,
+        ipAddress,
+        userAgent,
+      },
+    ];
+    if (dto.marketingOptIn) {
+      consentRows.push({
+        userId: newUser.id,
+        consentType: CONSENT_TYPE.MARKETING_EMAIL,
+        version: CURRENT_TERMS_VERSION,
+        ipAddress,
+        userAgent,
+      });
+    }
+    await db.insert(userConsents).values(consentRows);
 
     // Award signup points (best-effort — never blocks registration if it fails).
     // ModuleRef avoids a hard import dependency on PointsModule that would

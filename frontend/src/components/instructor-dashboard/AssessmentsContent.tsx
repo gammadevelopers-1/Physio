@@ -11,6 +11,7 @@ import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDate, formatPlatformDateReadable } from "@/lib/platform-locale";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { instructorApi, ApiError } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import { toast } from "sonner";
 import type {
   AssessmentResponse,
@@ -85,6 +86,7 @@ const CreateAssessmentModal = ({
 }) => {
   const [courseId, setCourseId] = useState(courses[0]?.id || "");
   const [title, setTitle] = useState("");
+  const [titleAr, setTitleAr] = useState("");
   const [type, setType] = useState("quiz");
   const [totalMarks, setTotalMarks] = useState("100");
   const [passingMarks, setPassingMarks] = useState("60");
@@ -128,6 +130,7 @@ const CreateAssessmentModal = ({
       await instructorApi.createAssessment({
         courseId,
         title: title.trim(),
+        titleAr: titleAr.trim() || undefined,
         type,
         totalMarks: Number(totalMarks) || 1,
         passingMarks: Number(passingMarks) || 0,
@@ -168,7 +171,7 @@ const CreateAssessmentModal = ({
               onChange={setCourseId}
               className="w-full"
               options={courses
-                .filter((c) => c.status !== "completed" && c.status !== "archived")
+                .filter((c) => c.status !== "completed" && c.status !== "ended" && c.status !== "archived")
                 .map((c) => ({
                   value: c.id,
                   label: locale === "ar" && c.titleAr ? c.titleAr : c.title,
@@ -193,7 +196,7 @@ const CreateAssessmentModal = ({
           )}
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-              {t("assessments.assessmentTitle")}
+              {t("assessments.assessmentTitleEn")}
             </label>
             <input
               type="text"
@@ -203,6 +206,20 @@ const CreateAssessmentModal = ({
               placeholder={t("assessments.titlePlaceholder")}
               required
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+              {t("assessments.assessmentTitleAr")}
+            </label>
+            <input
+              type="text"
+              value={titleAr}
+              onChange={(e) => setTitleAr(e.target.value)}
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+              placeholder={t("assessments.titleArPlaceholder")}
+              dir="rtl"
+            />
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("assessments.assessmentTitleArHint")}</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -338,6 +355,7 @@ const EditAssessmentModal = ({
   onUpdated: () => void;
 }) => {
   const [title, setTitle] = useState(assessment.title);
+  const [titleAr, setTitleAr] = useState(assessment.titleAr ?? "");
   const [type, setType] = useState(assessment.type);
   const [totalMarks, setTotalMarks] = useState(String(assessment.totalMarks));
   const [passingMarks, setPassingMarks] = useState(String(assessment.passingMarks));
@@ -378,6 +396,7 @@ const EditAssessmentModal = ({
     try {
       await instructorApi.updateAssessment(assessment.id, {
         title: title.trim(),
+        titleAr: titleAr.trim() || null,
         type,
         totalMarks: Number(totalMarks) || 1,
         passingMarks: Number(passingMarks) || 0,
@@ -414,7 +433,7 @@ const EditAssessmentModal = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-              {t("assessments.assessmentTitle")}
+              {t("assessments.assessmentTitleEn")}
             </label>
             <input
               type="text"
@@ -423,6 +442,20 @@ const EditAssessmentModal = ({
               className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               required
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+              {t("assessments.assessmentTitleAr")}
+            </label>
+            <input
+              type="text"
+              value={titleAr}
+              onChange={(e) => setTitleAr(e.target.value)}
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+              placeholder={t("assessments.titleArPlaceholder")}
+              dir="rtl"
+            />
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("assessments.assessmentTitleArHint")}</p>
           </div>
           {editCourseModules.length > 0 && (
             <div>
@@ -2159,7 +2192,7 @@ const AssessmentsContent = () => {
                                     </div>
                                     <div>
                                       <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
-                                        {assessment.title}
+                                        {pickLocaleTitle(assessment.title, assessment.titleAr, locale)}
                                       </h4>
                                       <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                                         {courseNameMap.get(assessment.courseId) || assessment.courseId}

@@ -123,6 +123,7 @@ export class AssessmentsService {
         courseId: dto.courseId,
         moduleId: dto.moduleId,
         title: dto.title,
+        titleAr: dto.titleAr?.trim() || null,
         type: dto.type,
         totalMarks: dto.totalMarks,
         passingMarks: dto.passingMarks,
@@ -1486,6 +1487,7 @@ export class AssessmentsService {
       .select({
         id: assessments.id,
         title: assessments.title,
+        titleAr: assessments.titleAr,
         type: assessments.type,
         createdAt: assessments.createdAt,
       })
@@ -1555,6 +1557,7 @@ export class AssessmentsService {
       .select({
         id: assessments.id,
         title: assessments.title,
+        titleAr: assessments.titleAr,
         type: assessments.type,
         moduleId: assessments.moduleId,
         totalMarks: assessments.totalMarks,
@@ -2157,8 +2160,11 @@ export class AssessmentsService {
       throw new NotFoundException('Course not found');
     }
 
-    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'archived')) {
-      throw new BadRequestException('Cannot modify a completed or archived course');
+    // `ended` locks the same write surface as `completed` for instructors/TAs.
+    // Only a manager's Mark Completed transition can promote ended → completed;
+    // both states are terminal from a content-authoring perspective.
+    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'ended' || course.status === 'archived')) {
+      throw new BadRequestException('Cannot modify a completed, ended, or archived course');
     }
 
     return course;

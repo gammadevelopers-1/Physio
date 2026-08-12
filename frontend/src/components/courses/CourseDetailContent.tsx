@@ -25,17 +25,27 @@ import {
   X,
   Zap,
   Sparkles,
+  PlayCircle,
+  FileText,
+  HelpCircle,
+  ClipboardList,
+  Lock,
+  Bookmark,
+  Copy as CopyIcon,
+  type LucideIcon,
 } from "lucide-react";
 import { CourseCard, MobileCourseCard } from "@/components/courses";
 import Select from "@/components/ui/Select";
-import { PublicCourse } from "@/types/instructor-dashboard";
+import { PublicCourse, PublicCourseModule } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavourites } from "@/contexts/FavouritesContext";
 import { useCart } from "@/contexts/CartContext";
 import { studentApi, publicApi, pointsApi, ApiError } from "@/lib/api";
+import { pickLocaleTitle } from "@/lib/locale-title";
 import NonStudentEnrollmentNotice from "./NonStudentEnrollmentNotice";
 import BnplPromoWidgets from "./BnplPromoWidgets";
+import RegistrationCountdown from "./RegistrationCountdown";
 import { formatDuration } from "@/lib/utils";
 import { getCityLabel } from "@/lib/saudi-cities";
 import { Loader2 } from "lucide-react";
@@ -58,6 +68,19 @@ interface CourseDetailContentProps {
   reviewsHeading?: string;
   targetAudienceHeading?: string;
   courseDetailsHeading?: string;
+  /** Strapi-managed certificate section. Rendered above Contents by
+   *  default, but reorderable per-course through `sectionsOrder`.
+   *  Nothing renders if the whole bundle is empty. */
+  certificate?: {
+    title?: string;
+    body?: string;
+    accreditedByLabel?: string;
+    accreditorName?: string;
+    accreditorLogoUrl?: string;
+    accreditorLogoAlt?: string;
+    imageUrl?: string;
+    imageAlt?: string;
+  };
 }
 
 // ───────────────────────────────────────────────────────────
@@ -191,8 +214,8 @@ function AllReviewsModal({
             <h3 className="text-xl font-bold text-[var(--color-text-primary)]">
               {reviewsHeading || (isRTL ? "المراجعات" : "Reviews")}
             </h3>
-            <div className={`flex items-center gap-2 mt-1 ${isRTL ? "flex-row-reverse" : ""}`}>
-              <div className={`flex items-center gap-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
@@ -274,7 +297,7 @@ function AllReviewsModal({
                   <div className="flex-1 h-2 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                     <div className="h-full bg-[var(--color-primary)]" style={{ width: `${pct}%` }} />
                   </div>
-                  <span className="w-8 text-right text-[var(--color-text-secondary)] tabular-nums">{c}</span>
+                  <span className="w-8 text-end text-[var(--color-text-secondary)] tabular-nums">{c}</span>
                 </div>
               );
             })}
@@ -306,7 +329,7 @@ function AllReviewsModal({
                     <p className="font-medium text-[14px] text-[var(--color-text-secondary)]">{r.studentName}</p>
                     <p className="text-[12px] text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
                   </div>
-                  <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <div className="flex items-center gap-0.5 mb-2">
                     {[...Array(5)].map((_, si) => (
                       <Star
                         key={si}
@@ -354,6 +377,386 @@ function AllReviewsModal({
   );
 }
 
+// ───────────────────────────────────────────────────────────
+// Share Modal — social share targets + copy-link. Matches the
+// marketing reference: Telegram / WhatsApp / X / LinkedIn / Facebook
+// / Email icons in a row, then the canonical URL with a Copy button.
+// ───────────────────────────────────────────────────────────
+
+type ShareTarget = {
+  key: "telegram" | "whatsapp" | "x" | "linkedin" | "facebook" | "email";
+  label: string;
+  href: string;
+  bg: string;
+  icon: React.ReactNode;
+};
+
+function buildShareTargets(url: string, title: string): ShareTarget[] {
+  const u = encodeURIComponent(url);
+  const t = encodeURIComponent(title);
+  return [
+    {
+      key: "telegram",
+      label: "Telegram",
+      href: `https://t.me/share/url?url=${u}&text=${t}`,
+      bg: "bg-[#EFF6FF] hover:bg-[#DBEAFE]",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#2AABEE" aria-hidden="true">
+          <path d="M9.417 15.181l-.397 5.584c.568 0 .814-.244 1.109-.537l2.663-2.545 5.518 4.041c1.012.564 1.725.267 1.998-.931L23.94 4.099c.32-1.497-.541-2.081-1.527-1.714L2.14 10.144c-1.462.564-1.44 1.375-.249 1.744l5.061 1.577L18.68 7.109c.548-.365 1.047-.163.635.201L9.417 15.181z" />
+        </svg>
+      ),
+    },
+    {
+      key: "whatsapp",
+      label: "WhatsApp",
+      href: `https://wa.me/?text=${t}%20${u}`,
+      bg: "bg-[#DCFCE7] hover:bg-[#BBF7D0]",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+        </svg>
+      ),
+    },
+    {
+      key: "x",
+      label: "X",
+      href: `https://twitter.com/intent/tweet?url=${u}&text=${t}`,
+      bg: "bg-[#F3F4F6] hover:bg-[#E5E7EB]",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#000000" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      ),
+    },
+    {
+      key: "linkedin",
+      label: "LinkedIn",
+      href: `https://www.linkedin.com/sharing/share-offsite/?url=${u}`,
+      bg: "bg-[#EFF6FF] hover:bg-[#DBEAFE]",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true">
+          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+        </svg>
+      ),
+    },
+    {
+      key: "facebook",
+      label: "Facebook",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${u}`,
+      bg: "bg-[#EFF6FF] hover:bg-[#DBEAFE]",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2" aria-hidden="true">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+        </svg>
+      ),
+    },
+    {
+      key: "email",
+      label: "Email",
+      href: `mailto:?subject=${t}&body=${u}`,
+      bg: "bg-[#FEE2E2] hover:bg-[#FECACA]",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+          <polyline points="22,6 12,13 2,6" />
+        </svg>
+      ),
+    },
+  ];
+}
+
+function ShareModal({
+  url,
+  title,
+  onClose,
+  isRTL,
+  t,
+}: {
+  url: string;
+  title: string;
+  onClose: () => void;
+  isRTL: boolean;
+  t: (key: string) => string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const targets = buildShareTargets(url, title);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Clipboard blocked; leave silent — user can still click a target.
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+      dir={isRTL ? "rtl" : "ltr"}
+    >
+      <div
+        className="bg-[var(--color-surface-card)] rounded-2xl shadow-2xl w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-[var(--color-border)]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+            {t("share.title")}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
+            aria-label={t("share.close")}
+          >
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="flex items-center justify-center gap-3 flex-wrap mb-6">
+            {targets.map((tg) => (
+              <a
+                key={tg.key}
+                href={tg.href}
+                target={tg.key === "email" ? undefined : "_blank"}
+                rel={tg.key === "email" ? undefined : "noopener noreferrer"}
+                aria-label={tg.label}
+                title={tg.label}
+                className={`w-12 h-12 rounded-xl ${tg.bg} flex items-center justify-center transition-colors`}
+              >
+                {tg.icon}
+              </a>
+            ))}
+          </div>
+
+          <div className="flex items-stretch gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-page)] overflow-hidden">
+            <input
+              type="text"
+              value={url}
+              readOnly
+              onFocus={(e) => e.currentTarget.select()}
+              className="flex-1 px-3 py-2.5 text-sm bg-transparent text-[var(--color-text-secondary)] focus:outline-none min-w-0"
+            />
+            <button
+              onClick={handleCopy}
+              className="px-4 text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors flex items-center gap-1.5"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+              {copied ? t("share.copied") : t("share.copy")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────────────────────────────────────────
+// Contents accordion — reference layout matches the marketing
+// mockup: full module list visible, first module open by default,
+// each entry expands to a clean row-list of materials + published
+// assessments. Preview modules (backend attaches their content)
+// reveal actual items; non-preview modules reveal a "locked"
+// placeholder so the shape of the course is still communicated.
+// ───────────────────────────────────────────────────────────
+
+const MATERIAL_ICON: Record<string, LucideIcon> = {
+  video: PlayCircle,
+  document: FileText,
+  pdf: FileText,
+  slides: FileText,
+  ppt: FileText,
+  pptx: FileText,
+  doc: FileText,
+  docx: FileText,
+};
+
+const ASSESSMENT_ICON: Record<string, LucideIcon> = {
+  quiz: HelpCircle,
+  exam: ClipboardList,
+  assignment: ClipboardList,
+};
+
+function iconForMaterial(type: string): LucideIcon {
+  return MATERIAL_ICON[type.toLowerCase()] || FileText;
+}
+function iconForAssessment(type: string): LucideIcon {
+  return ASSESSMENT_ICON[type.toLowerCase()] || HelpCircle;
+}
+
+function materialTypeLabel(type: string, tFn: (key: string) => string): string {
+  const k = type.toLowerCase();
+  if (["video"].includes(k)) return tFn("materialType.video");
+  if (["pdf"].includes(k)) return tFn("materialType.pdf");
+  if (["slides", "ppt", "pptx"].includes(k)) return tFn("materialType.slides");
+  if (["document", "doc", "docx"].includes(k)) return tFn("materialType.document");
+  return type.toUpperCase();
+}
+function assessmentTypeLabel(type: string, tFn: (key: string) => string): string {
+  const k = type.toLowerCase();
+  if (k === "quiz") return tFn("materialType.quiz");
+  if (k === "exam") return tFn("materialType.exam");
+  if (k === "assignment") return tFn("materialType.assignment");
+  return type.toUpperCase();
+}
+
+function ModulesAccordion({
+  modules,
+  isRTL,
+  locale,
+  isMobile,
+  moreContentText,
+  fallbackLocked,
+  materialTypeLabel: matLabel,
+  assessmentTypeLabel: asmtLabel,
+}: {
+  modules: PublicCourseModule[];
+  isRTL: boolean;
+  locale: string;
+  isMobile: boolean;
+  moreContentText: string | null;
+  fallbackLocked: string;
+  materialTypeLabel: (type: string) => string;
+  assessmentTypeLabel: (type: string) => string;
+}) {
+  // All modules collapsed by default — buyer opens each explicitly.
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  return (
+    <div className="flex flex-col gap-3">
+      {modules.map((mod, i) => {
+        const isOpen = openId === mod.id;
+        const title = isRTL && mod.titleAr ? mod.titleAr : mod.title;
+        const materials = mod.materials ?? [];
+        const assessments = mod.assessments ?? [];
+        const hasContent = materials.length > 0 || assessments.length > 0;
+        // Modules without a `materials` field attached are "locked previews"
+        // (backend only attaches to the first ceil(N/2) modules). Distinguish
+        // that from an authored module that genuinely has zero content.
+        const isLockedPreview = mod.materials === undefined && mod.assessments === undefined;
+
+        return (
+          <div
+            key={mod.id}
+            className={`bg-[var(--color-surface-card)] rounded-xl border ${
+              isOpen ? "border-[var(--color-primary)]" : "border-[var(--color-border)]"
+            } overflow-hidden transition-colors`}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenId(isOpen ? null : mod.id)}
+              aria-expanded={isOpen}
+              className={`w-full flex items-center justify-between gap-3 px-4 sm:px-5 ${
+                isMobile ? "py-3.5" : "py-4"
+              } text-start hover:bg-[var(--color-border-subtle)] transition-colors`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span
+                  className={`text-[13px] font-semibold flex-shrink-0 ${
+                    isOpen ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"
+                  }`}
+                >
+                  {i + 1}.
+                </span>
+                <span
+                  className={`${isMobile ? "text-sm" : "text-[15px]"} font-semibold text-start ${
+                    isOpen ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"
+                  }`}
+                >
+                  {title}
+                </span>
+              </div>
+              <ChevronDown
+                className={`w-5 h-5 flex-shrink-0 transition-transform ${
+                  isOpen
+                    ? "rotate-180 text-[var(--color-primary)]"
+                    : "text-[var(--color-text-secondary)]"
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+            {isOpen && (
+              <div className="border-t border-[var(--color-border-subtle)]">
+                {hasContent ? (
+                  <div className="flex flex-col divide-y divide-[var(--color-border-subtle)]">
+                    {materials.map((mat) => (
+                      <MaterialRow
+                        key={`mat-${mat.id}`}
+                        title={pickLocaleTitle(mat.title, mat.titleAr, locale)}
+                        typeLabel={matLabel(mat.type)}
+                        Icon={iconForMaterial(mat.type)}
+                        isMobile={isMobile}
+                      />
+                    ))}
+                    {assessments.map((asmt) => (
+                      <MaterialRow
+                        key={`asmt-${asmt.id}`}
+                        title={pickLocaleTitle(asmt.title, asmt.titleAr, locale)}
+                        typeLabel={asmtLabel(asmt.type)}
+                        Icon={iconForAssessment(asmt.type)}
+                        isMobile={isMobile}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-4 sm:px-5 py-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center flex-shrink-0">
+                      <Lock className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                    </div>
+                    <p className="text-[13px] text-[var(--color-text-secondary)] text-start">
+                      {isLockedPreview
+                        ? (moreContentText || fallbackLocked)
+                        : fallbackLocked}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function MaterialRow({
+  title,
+  typeLabel,
+  Icon,
+  isMobile,
+}: {
+  title: string;
+  typeLabel: string;
+  Icon: LucideIcon;
+  isMobile: boolean;
+}) {
+  return (
+    <div className={`flex items-center gap-3 px-4 sm:px-5 ${isMobile ? "py-3" : "py-3.5"}`}>
+      <div className="w-8 h-8 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" aria-hidden="true" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <span className="block text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] font-semibold">
+          {typeLabel}
+        </span>
+        <span className="block text-[13px] sm:text-[14px] text-[var(--color-text-primary)] text-start truncate">
+          {title}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const CourseDetailContent = ({
   noReviewsText,
   moreContentText,
@@ -369,6 +772,7 @@ const CourseDetailContent = ({
   reviewsHeading,
   targetAudienceHeading,
   courseDetailsHeading,
+  certificate,
 }: CourseDetailContentProps = {}) => {
   const t = useTranslations("courseDetailPage");
   const tCourses = useTranslations("coursesPage");
@@ -455,7 +859,7 @@ const CourseDetailContent = ({
   const [pointsBalance, setPointsBalance] = useState<number | null>(null);
   const [redeeming, setRedeeming] = useState(false);
   const [redeemModalOpen, setRedeemModalOpen] = useState(false);
-  const [shareTooltip, setShareTooltip] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [sessionFilterCity, setSessionFilterCity] = useState<string>("");
   const [sessionFilterMonth, setSessionFilterMonth] = useState<string>("");
   const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
@@ -484,32 +888,10 @@ const CourseDetailContent = ({
     });
   };
 
-  const handleShare = async () => {
-    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-    const shareTitle = apiCourse?.title || "";
-
-    // Try native share API first (mobile)
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      try {
-        await (navigator as any).share({
-          title: shareTitle,
-          url: shareUrl,
-        });
-        return;
-      } catch {
-        // User cancelled or failed — fall through to clipboard
-      }
-    }
-
-    // Fallback: copy URL to clipboard
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setShareTooltip(true);
-      setTimeout(() => setShareTooltip(false), 2000);
-    } catch {
-      // Clipboard API failed (old browsers)
-    }
-  };
+  // Share now opens a modal with social targets + copy-link, matching the
+  // marketing reference. The old native-share / clipboard fallback lived
+  // here; the modal handles copy itself via its own Copy button.
+  const handleShare = () => setShareModalOpen(true);
 
   // Derive pricing/capacity from API data. Precedence for "what the student
   // actually pays" (top wins):
@@ -765,6 +1147,29 @@ const CourseDetailContent = ({
   const getNotices = () => isRTL && apiCourse?.noticesAr ? apiCourse.noticesAr : (apiCourse?.notices || "");
   const getVenue = () => isRTL && apiCourse?.venueAr ? apiCourse.venueAr : (apiCourse?.venue || "");
 
+  // Per-course heading override, resolved for the current locale. Falls
+  // back to the Strapi default (passed as `fallback`) when no override is
+  // set for this locale.
+  const headingFor = (
+    key:
+      | 'overview'
+      | 'objectives'
+      | 'features'
+      | 'contents'
+      | 'schedule'
+      | 'requirements'
+      | 'notices'
+      | 'reviews'
+      | 'targetAudience'
+      | 'courseDetails'
+      | 'faqs',
+    fallback?: string,
+  ): string | undefined => {
+    const entry = apiCourse?.sectionHeadings?.[key];
+    const override = (isRTL ? entry?.ar : entry?.en)?.trim();
+    return override || fallback;
+  };
+
   // Delivery-type based section visibility
   const dt = apiCourse?.deliveryType || "";
   const isWebinarCourse = dt === "webinar";
@@ -787,20 +1192,24 @@ const CourseDetailContent = ({
     return t("languages.english");
   };
 
-  // Date formatting helper
+  // Date formatting helper — date-only for course start/end and any
+  // review timestamps. Enrollment deadline uses formatDeadline (below)
+  // because it's the only field with true tz semantics.
   const formatDate = (dateStr: string | null) =>
-    formatPlatformDateReadable(dateStr, platformLocale, locale === "ar" ? "ar" : "en", {
-      includeTime: true,
-    });
+    formatPlatformDateReadable(dateStr, platformLocale, locale === "ar" ? "ar" : "en");
 
   // Enrollment deadline: always render in Riyadh time + label it. The
   // manager picks it in Riyadh tz (see riyadh-time.ts) and a viewer in
   // any other zone would otherwise see a shifted time on this public
-  // page. Keeping it canonical removes the ambiguity.
+  // page. Keeping it canonical removes the ambiguity. Digits stay Latin
+  // in both locales — Arabic-Indic conversion happens only when the
+  // admin explicitly picks it in Platform Settings.
   const formatDeadline = (dateStr: string | null) => {
     if (!dateStr) return "—";
+    const numberingSystem =
+      platformLocale.numberSystem === "arabic_indic" ? "arab" : "latn";
     const formatted = new Date(dateStr).toLocaleString(
-      locale === "ar" ? "ar-SA" : "en-US",
+      locale === "ar" ? "ar-EG" : "en-US",
       {
         timeZone: "Asia/Riyadh",
         day: "numeric",
@@ -809,7 +1218,8 @@ const CourseDetailContent = ({
         hour: "2-digit",
         minute: "2-digit",
         hour12: true,
-      },
+        numberingSystem,
+      } as Intl.DateTimeFormatOptions,
     );
     const suffix = locale === "ar" ? "بتوقيت الرياض" : "Riyadh time";
     return `${formatted} (${suffix})`;
@@ -817,11 +1227,11 @@ const CourseDetailContent = ({
 
   // Delivery type label
   const getDeliveryLabel = () => {
-    if (dt === "zoom") return isRTL ? "عبر الإنترنت" : "Live Online";
-    if (dt === "onsite") return isRTL ? "حضوري" : "On-site";
-    if (dt === "blended") return isRTL ? "مدمج" : "Blended";
-    if (dt === "self-paced") return isRTL ? "ذاتي" : "Self-paced";
-    if (dt === "webinar") return isRTL ? "ويبينار" : "Webinar";
+    if (dt === "zoom") return t("deliveryType.zoom");
+    if (dt === "onsite") return t("deliveryType.onsite");
+    if (dt === "blended") return t("deliveryType.blended");
+    if (dt === "self-paced") return t("deliveryType.selfPaced");
+    if (dt === "webinar") return t("deliveryType.webinar");
     return dt;
   };
 
@@ -840,7 +1250,7 @@ const CourseDetailContent = ({
   const renderLanguageTags = (sizeClass: string = "text-sm") => {
     const lang = apiCourse.language || "en";
     return (
-      <div className={`flex items-center gap-3 ${isRTL ? "justify-start" : ""}`}>
+      <div className="flex items-center gap-3">
         {(lang === "en" || lang === "both") && (
           <div className="flex items-center gap-1.5">
             <Globe className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -897,32 +1307,35 @@ const CourseDetailContent = ({
     const monthLabel = (key: string) => {
       const [year, month] = key.split("-");
       const date = new Date(Number(year), Number(month) - 1, 1);
-      return date.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+      const numberingSystem =
+        platformLocale.numberSystem === "arabic_indic" ? "arab" : "latn";
+      return date.toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", {
         month: "long",
         year: "numeric",
-      });
+        numberingSystem,
+      } as Intl.DateTimeFormatOptions);
     };
 
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
         <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold mb-4 text-start`}>
-          {scheduleHeading || t("schedule") || "Schedule"}
+          {headingFor('schedule', scheduleHeading) || t("schedule")}
         </h2>
 
         {/* Filters */}
         {(showCityFilter || showMonthFilter) && (
-          <div className={`flex flex-wrap gap-3 mb-5 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <div className="flex flex-wrap gap-3 mb-5">
             {showCityFilter && (
               <div className="flex flex-col gap-1">
                 <label className="text-[12px] text-[var(--color-text-secondary)] font-medium">
-                  {locale === "ar" ? "المدينة" : "City"}
+                  {t("sessions.city")}
                 </label>
                 <Select
                   value={sessionFilterCity}
                   onChange={setSessionFilterCity}
                   className="min-w-[160px]"
                   options={[
-                    { value: "", label: locale === "ar" ? "كل المدن" : "All cities" },
+                    { value: "", label: t("sessions.allCities") },
                     ...uniqueCities.map((city) => ({
                       value: city,
                       label: getCityLabel(city, locale),
@@ -934,14 +1347,14 @@ const CourseDetailContent = ({
             {showMonthFilter && (
               <div className="flex flex-col gap-1">
                 <label className="text-[12px] text-[var(--color-text-secondary)] font-medium">
-                  {locale === "ar" ? "الشهر" : "Month"}
+                  {t("sessions.month")}
                 </label>
                 <Select
                   value={sessionFilterMonth}
                   onChange={setSessionFilterMonth}
                   className="min-w-[160px]"
                   options={[
-                    { value: "", label: locale === "ar" ? "كل الأشهر" : "All months" },
+                    { value: "", label: t("sessions.allMonths") },
                     ...uniqueMonths.map((m) => ({ value: m, label: monthLabel(m) })),
                   ]}
                 />
@@ -955,7 +1368,7 @@ const CourseDetailContent = ({
                 }}
                 className="self-end px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] underline"
               >
-                {locale === "ar" ? "مسح" : "Clear"}
+                {t("sessions.clear")}
               </button>
             )}
           </div>
@@ -964,13 +1377,11 @@ const CourseDetailContent = ({
         <div className="flex flex-col gap-3">
           {filteredSessions.length === 0 ? (
             <div className="text-center py-6 text-sm text-[var(--color-text-secondary)]">
-              {locale === "ar"
-                ? "لا توجد جلسات تطابق المرشحات"
-                : "No sessions match your filters"}
+              {t("sessions.noMatch")}
             </div>
           ) : (
             filteredSessions.map((session) => (
-              <div key={session.id} className={`flex items-center justify-between p-3 bg-[var(--color-border-subtle)] rounded-lg ${isRTL ? "flex-row-reverse" : ""}`}>
+              <div key={session.id} className="flex items-center justify-between p-3 bg-[var(--color-border-subtle)] rounded-lg gap-3">
                 <div className="text-start">
                   <p className="font-medium text-[14px]">{session.title}</p>
                   <p className="text-[13px] text-[var(--color-text-secondary)]">
@@ -986,11 +1397,11 @@ const CourseDetailContent = ({
                     <p className="text-[12px] text-[var(--color-text-secondary)]">{session.venueAddress}</p>
                   )}
                 </div>
-                <span className={`text-[11px] px-2 py-1 rounded-full ${
+                <span className={`text-[11px] px-2 py-1 rounded-full flex-shrink-0 ${
                   session.type === "zoom" ? "bg-blue-100 text-blue-700" :
                   session.type === "onsite" ? "bg-green-100 text-green-700" :
                   "bg-purple-100 text-purple-700"
-                }`}>{session.type}</span>
+                }`}>{session.type === "zoom" ? t("deliveryType.zoom") : session.type === "onsite" ? t("deliveryType.onsite") : t("deliveryType.webinar")}</span>
               </div>
             ))
           )}
@@ -999,61 +1410,42 @@ const CourseDetailContent = ({
     );
   };
 
-  // Modules section renderer
+  // Modules section renderer — accordion-style card matching the reference
+  // marketing layout. First module is open by default; the rest collapse to
+  // module-title-only rows. Preview modules (backend attaches materials +
+  // published assessments) reveal their contents inside; the tail modules
+  // reveal a "content available after enrollment" placeholder so the user
+  // can still see the full module list.
   const renderModules = (isMobile: boolean = false) => {
     if (!showModules || !apiCourse.modules.length) return null;
     const totalCount = apiCourse.modules.length;
     const totalMinutes = apiCourse.modules.reduce((sum, m) => sum + (m.durationMinutes || 0), 0);
-    const previewModules = apiCourse.modules.slice(0, 2);
-    const remaining = totalCount - previewModules.length;
+    const heading = headingFor('contents', contentsHeading?.trim() || undefined) || t("contents");
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
-        <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
-          <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold`}>
-            {contentsHeading || t("contents") || "Contents"} {totalCount}
+        <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+          <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold text-start`}>
+            {heading}
+            <span className="ms-2 text-[13px] font-normal text-[var(--color-text-secondary)] align-middle">
+              ({totalCount})
+            </span>
           </h2>
           {totalMinutes > 0 && (
             <span className="text-[13px] text-[var(--color-text-secondary)]">
-              {formatDuration(totalMinutes, locale)} {locale === "ar" ? "من المحتوى" : "of content"}
+              {t("contentsDurationLabel", { duration: formatDuration(totalMinutes, locale) })}
             </span>
           )}
         </div>
-        <div className="flex flex-col gap-3">
-          {previewModules.map((mod, i) => (
-            <div key={mod.id} className="border border-[var(--outline-subtle)] rounded-lg overflow-hidden">
-              <div className={`flex items-center justify-between p-3 bg-[var(--color-surface-page)] ${isRTL ? "flex-row-reverse" : ""}`}>
-                <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-                  <span className="text-[13px] text-[var(--color-text-secondary)] font-medium">{i + 1}.</span>
-                  <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                    {isRTL && mod.titleAr ? mod.titleAr : mod.title}
-                  </span>
-                </div>
-                {mod.durationMinutes && (
-                  <span className="text-[12px] text-[var(--color-text-secondary)]">{formatDuration(mod.durationMinutes, locale)}</span>
-                )}
-              </div>
-              {mod.materials && mod.materials.length > 0 && (
-                <div className="flex flex-col divide-y divide-[var(--outline-subtle)]">
-                  {mod.materials.map((mat) => (
-                    <div key={mat.id} className={`flex items-center gap-2 p-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-                      <span className="text-[11px] text-[var(--color-text-secondary)] uppercase bg-[var(--color-border-subtle)] px-2 py-0.5 rounded">{mat.type}</span>
-                      <span className="text-[13px] text-[var(--color-text-secondary)]">{mat.title}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-          {(moreContentText?.trim() || remaining > 0) && (
-            <div className="mt-2 p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
-              <p className="text-[13px] text-[var(--color-text-secondary)]">
-                {moreContentText?.trim() || (locale === "ar"
-                  ? "المزيد من المحتوى متاح عند التسجيل"
-                  : "More content available after enrollment")}
-              </p>
-            </div>
-          )}
-        </div>
+        <ModulesAccordion
+          modules={apiCourse.modules}
+          isRTL={isRTL}
+          locale={locale}
+          isMobile={isMobile}
+          moreContentText={moreContentText?.trim() || null}
+          fallbackLocked={t("contentsMoreDefault")}
+          materialTypeLabel={(type) => materialTypeLabel(type, t)}
+          assessmentTypeLabel={(type) => assessmentTypeLabel(type, t)}
+        />
       </div>
     );
   };
@@ -1078,7 +1470,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} text-start`}>
-          {overviewHeading || t("overview") || "Overview"}
+          {headingFor('overview', overviewHeading) || t("overview") || "Overview"}
         </h2>
         <div
           className={`course-overview-content text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed text-start`}
@@ -1108,7 +1500,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} text-start`}>
-          {isRTL ? "الأسئلة الشائعة" : "FAQs"}
+          {headingFor('faqs') || t("faqs")}
         </h2>
         <Accordion items={items} />
       </div>
@@ -1122,7 +1514,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} text-start`}>
-          {objectivesHeading || t("whatYouWillLearn.title")}
+          {headingFor('objectives', objectivesHeading) || t("whatYouWillLearn.title")}
         </h2>
         <div className={isMobile ? "space-y-3" : "space-y-4"}>
           {objectives.map((item, index) => (
@@ -1143,7 +1535,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} text-start`}>
-          {targetAudienceHeading || t("targetAudience") || "Target Audience"}
+          {headingFor('targetAudience', targetAudienceHeading) || t("targetAudience") || "Target Audience"}
         </h2>
         <div className="flex flex-wrap gap-2">
           {audience.map((item, index) => (
@@ -1165,7 +1557,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} text-start`}>
-          {requirementsHeading || t("requirements") || "Requirements"}
+          {headingFor('requirements', requirementsHeading) || t("requirements") || "Requirements"}
         </h2>
         <p className={`text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed text-start`}>
           {getRequirements()}
@@ -1174,11 +1566,106 @@ const CourseDetailContent = ({
     );
   };
 
-  // Instructor card — only renders when an instructor row exists. Photo
-  // and name are clickable and route to the dedicated profile page.
-  // Email is intentionally not shown (privacy + spam vector); reach out
-  // happens via the profile page or course enrolment.
-  const renderInstructor = (isMobile: boolean = false) => {
+  // Certificate section — Strapi-managed, rendered above Contents by
+  // default. Fail-silent when no fields are filled so courses that don't
+  // want it show nothing. Two-column layout on desktop (image + accreditor
+  // info side-by-side); stacks on mobile. RTL flips the column order
+  // via `flex-row-reverse`.
+  const renderCertificate = (isMobile: boolean = false) => {
+    if (!certificate) return null;
+    const {
+      title,
+      body,
+      accreditedByLabel,
+      accreditorName,
+      accreditorLogoUrl,
+      accreditorLogoAlt,
+      imageUrl,
+      imageAlt,
+    } = certificate;
+    const hasText = !!(title || body || accreditedByLabel || accreditorName);
+    if (!hasText && !imageUrl) return null;
+    return (
+      <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+        {title && (
+          <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-6"} text-start`}>
+            {title}
+          </h2>
+        )}
+        <div className={`flex ${isMobile ? "flex-col" : `flex-col md:flex-row md:items-center ${isRTL ? "md:flex-row-reverse" : ""}`} gap-6`}>
+          {imageUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={imageUrl}
+              alt={imageAlt || title || "Certificate"}
+              className={`${isMobile ? "w-full" : "md:w-2/5"} rounded-xl bg-[var(--color-border-subtle)] object-contain`}
+            />
+          )}
+          <div className={`${isMobile ? "w-full" : "md:flex-1"} text-start`}>
+            {(accreditedByLabel || accreditorName || accreditorLogoUrl) && (
+              <div className={`flex items-center gap-4 mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+                {accreditorLogoUrl && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={accreditorLogoUrl}
+                    alt={accreditorLogoAlt || accreditorName || ""}
+                    className={`${isMobile ? "w-16 h-16" : "w-20 h-20"} object-contain flex-shrink-0`}
+                  />
+                )}
+                <div>
+                  {accreditedByLabel && (
+                    <p className="text-sm text-[var(--color-text-secondary)]">{accreditedByLabel}</p>
+                  )}
+                  {accreditorName && (
+                    <p className="text-sm font-bold text-[var(--color-text-primary)]">{accreditorName}</p>
+                  )}
+                </div>
+              </div>
+            )}
+            {body && (
+              <p className={`text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed`}>
+                {body}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Custom-section renderer — looks up the section by id, picks the
+  // locale-appropriate title + content, and renders as a bordered card
+  // that visually matches the fixed sections. Returns null when the
+  // section is missing OR has nothing in the current locale.
+  const renderCustomSection = (id: string, isMobile: boolean = false) => {
+    const section = apiCourse?.customSections?.find((s) => s.id === id);
+    if (!section) return null;
+    const title = (isRTL ? section.titleAr : section.titleEn)?.trim()
+      || (isRTL ? section.titleEn : section.titleAr)?.trim();
+    const content = (isRTL ? section.contentAr : section.contentEn)?.trim()
+      || (isRTL ? section.contentEn : section.contentAr)?.trim();
+    if (!title && !content) return null;
+    return (
+      <div key={`custom:${id}`} className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+        {title && (
+          <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} text-start`}>
+            {title}
+          </h2>
+        )}
+        {content && (
+          <div
+            className={`text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed rich-text text-start`}
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
+        )}
+      </div>
+    );
+  };
+
+  // Shared derivation for the full instructor card and the compact
+  // instructor row above Details. Returns null if the course has no
+  // instructor row so callers can early-out.
+  const instructorMeta = (() => {
     const inst = apiCourse?.instructor;
     if (!inst?.id) return null;
 
@@ -1186,7 +1673,7 @@ const CourseDetailContent = ({
       const ar = `${inst.firstNameAr || ""} ${inst.lastNameAr || ""}`.trim();
       const en = `${inst.firstName || ""} ${inst.lastName || ""}`.trim();
       if (isRTL && ar) return ar;
-      return en || ar || "Instructor";
+      return en || ar || t("instructorFallbackName");
     })();
     const initials = fullName
       .split(/\s+/)
@@ -1194,8 +1681,92 @@ const CourseDetailContent = ({
       .slice(0, 2)
       .map((p) => p[0]?.toUpperCase() ?? "")
       .join("");
-    const tagline = inst.profession || inst.specialty || inst.qualification || null;
+    // Instructor profile fields (profession/specialty/qualification) are free
+    // text authored in English; translate a handful of very common values so
+    // the Arabic layout doesn't leak a lone "Doctor" chip. Unknown values
+    // fall through as-is — better than hiding them.
+    const rawTagline = inst.profession || inst.specialty || inst.qualification || null;
+    const tagline = (() => {
+      if (!rawTagline) return null;
+      if (!isRTL) return rawTagline;
+      const key = rawTagline.trim().toLowerCase();
+      const map: Record<string, string> = {
+        "doctor": "طبيب",
+        "physician": "طبيب",
+        "physiotherapist": "أخصائي علاج طبيعي",
+        "physical therapist": "أخصائي علاج طبيعي",
+        "occupational therapist": "أخصائي علاج وظيفي",
+        "nurse": "ممرض",
+        "consultant": "استشاري",
+        "specialist": "أخصائي",
+        "professor": "أستاذ",
+        "researcher": "باحث",
+        "trainer": "مدرب",
+        "instructor": "مدرب",
+      };
+      return map[key] || rawTagline;
+    })();
     const profileHref = `/${locale}/instructors/${inst.id}`;
+    return { inst, fullName, initials, tagline, profileHref };
+  })();
+
+  // Compact instructor row shown above Details on both desktop and mobile.
+  // Whole row is one clickable Link — matches the fuller instructor card
+  // that appears below in Contents.
+  const renderInstructorMini = (isMobile: boolean = false) => {
+    if (!instructorMeta) return null;
+    const { inst, fullName, initials, tagline, profileHref } = instructorMeta;
+    const size = isMobile ? 44 : 52;
+    return (
+      <Link
+        href={profileHref}
+        aria-label={fullName}
+        className={`group flex items-center gap-3 mb-4 ${isMobile ? "" : "mt-6"}`}
+      >
+        <div
+          className="flex-shrink-0 rounded-full overflow-hidden bg-[var(--color-border-subtle)] flex items-center justify-center transition-opacity group-hover:opacity-90"
+          style={{ width: size, height: size }}
+        >
+          {inst.avatar ? (
+            <Image
+              src={inst.avatar}
+              alt={fullName}
+              width={size}
+              height={size}
+              className="w-full h-full object-cover"
+              unoptimized={inst.avatar.startsWith("http")}
+            />
+          ) : (
+            <span className={`font-semibold text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"}`}>
+              {initials || "?"}
+            </span>
+          )}
+        </div>
+        <div className="min-w-0">
+          <p
+            className={`font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors truncate text-start ${isMobile ? "text-sm" : "text-base"}`}
+          >
+            {fullName}
+          </p>
+          {tagline && (
+            <p
+              className={`text-[var(--color-primary)] font-medium truncate text-start ${isMobile ? "text-[12px]" : "text-sm"}`}
+            >
+              {tagline}
+            </p>
+          )}
+        </div>
+      </Link>
+    );
+  };
+
+  // Instructor card — only renders when an instructor row exists. Photo
+  // and name are clickable and route to the dedicated profile page.
+  // Email is intentionally not shown (privacy + spam vector); reach out
+  // happens via the profile page or course enrolment.
+  const renderInstructor = (isMobile: boolean = false) => {
+    if (!instructorMeta) return null;
+    const { inst, fullName, initials, tagline, profileHref } = instructorMeta;
     const twitterHref = inst.twitter
       ? inst.twitter.startsWith("http")
         ? inst.twitter
@@ -1212,9 +1783,9 @@ const CourseDetailContent = ({
         className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}
       >
         <h2
-          className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"}`}
+          className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} text-start`}
         >
-          {isRTL ? "المدرب" : "Instructor"}
+          {t("instructor")}
         </h2>
         <div className={`flex ${isMobile ? "flex-col items-start gap-4" : "items-start gap-5"}`}>
           {/* Avatar — clickable */}
@@ -1276,7 +1847,7 @@ const CourseDetailContent = ({
                   {inst.avgRating.toFixed(1)}
                 </span>
                 <span className="text-xs text-[var(--color-text-secondary)]">
-                  ({inst.totalRatings} {isRTL ? "تقييم" : inst.totalRatings === 1 ? "review" : "reviews"})
+                  ({t("reviewsCount", { count: inst.totalRatings })})
                 </span>
               </div>
             )}
@@ -1295,8 +1866,8 @@ const CourseDetailContent = ({
                 href={profileHref}
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors"
               >
-                {isRTL ? "عرض الملف الشخصي" : "View profile"}
-                {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                {t("viewProfile")}
+                <ChevronIcon className="w-4 h-4" aria-hidden="true" />
               </Link>
               {(twitterHref || linkedinHref) && (
                 <div className="flex items-center gap-2">
@@ -1345,7 +1916,7 @@ const CourseDetailContent = ({
           <AlertTriangle className="w-5 h-5 text-[#D97706] flex-shrink-0 mt-0.5" />
           <div>
             <h3 className={`font-semibold text-[#92400E] ${isMobile ? "text-sm" : "text-base"} mb-1`}>
-              {noticesHeading || t("notices") || "Important Notice"}
+              {headingFor('notices', noticesHeading) || t("notices") || "Important Notice"}
             </h3>
             <p className={`text-[#92400E] ${isMobile ? "text-xs" : "text-sm"} leading-relaxed text-start`}>
               {notices}
@@ -1373,12 +1944,12 @@ const CourseDetailContent = ({
 
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <div className={`flex items-center justify-between mb-4 gap-3 flex-wrap ${isRTL ? "flex-row-reverse" : ""}`}>
-          <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg" : "text-xl"}`}>
-            {reviewsHeading || t("reviews")}
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg" : "text-xl"} text-start`}>
+            {headingFor('reviews', reviewsHeading) || t("reviews")}
           </h2>
-          <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-            <div className={`flex items-center gap-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
@@ -1393,8 +1964,8 @@ const CourseDetailContent = ({
         <div className={`inline-flex p-1 bg-[var(--color-border-subtle)] rounded-lg mb-5`}>
           {(
             [
-              { key: "course" as const, label: isRTL ? "الدورة" : "Course" },
-              { key: "instructor" as const, label: isRTL ? "المدرب" : "Instructor" },
+              { key: "course" as const, label: t("reviewsToggle.course") },
+              { key: "instructor" as const, label: t("reviewsToggle.instructor") },
             ]
           ).map((seg) => (
             <button
@@ -1452,7 +2023,7 @@ const CourseDetailContent = ({
                         {formatPlatformDateReadable(r.createdAt, platformLocale, locale === "ar" ? "ar" : "en")}
                       </p>
                     </div>
-                    <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                    <div className="flex items-center gap-0.5 mb-2">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
@@ -1475,7 +2046,7 @@ const CourseDetailContent = ({
                   onClick={() => setReviewsModalOpen(true)}
                   className="px-6 py-2.5 rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-semibold hover:bg-[var(--color-primary)] hover:text-white transition-colors"
                 >
-                  {isRTL ? `عرض كل المراجعات (${total})` : `View all reviews (${total})`}
+                  {t("viewAllReviews", { count: total })}
                 </button>
               </div>
             )}
@@ -1486,7 +2057,7 @@ const CourseDetailContent = ({
               <Star className="w-7 h-7 text-[var(--color-star-border)]" />
             </div>
             <p className="text-sm text-[var(--color-text-secondary)]">
-              {noReviewsText || (locale === "ar" ? "لا توجد تقييمات بعد" : "No Reviews Yet")}
+              {noReviewsText || t("noReviewsYet")}
             </p>
           </div>
         )}
@@ -1501,11 +2072,11 @@ const CourseDetailContent = ({
         {/* Main Content Area */}
         <div className="px-16 pt-6">
           <div className="max-w-[1200px] mx-auto">
-            <div className="flex gap-8">
+            <div className="flex gap-8 items-start">
               {/* Course Info - flex-1 */}
               <div className="flex-1">
                 {/* Breadcrumb */}
-                <div className={`flex items-center gap-2 text-sm text-[var(--color-text-secondary)] mb-6 ${isRTL ? "flex-row" : ""}`}>
+                <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] mb-6">
                   <Link href="/" className="hover:text-[var(--color-text-primary)]">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M2 6L8 1.33333L14 6V13.3333C14 13.687 13.8595 14.0261 13.6095 14.2761C13.3594 14.5262 13.0203 14.6667 12.6667 14.6667H3.33333C2.97971 14.6667 2.64057 14.5262 2.39052 14.2761C2.14048 14.0261 2 13.687 2 13.3333V6Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1537,7 +2108,7 @@ const CourseDetailContent = ({
 
                 {/* Seats + Sessions Info Bar */}
                 {(apiSessionCount > 0 || apiRemainingSeats !== null) && (
-                  <div className={`flex flex-wrap items-center gap-3 mb-6 ${isRTL ? "justify-start" : ""}`}>
+                  <div className="flex flex-wrap items-center gap-3 mb-6">
                     {apiSessionCount > 0 && (
                       <div className="flex items-center gap-1.5 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] px-3 py-1.5 rounded-full text-sm">
                         <Video className="w-4 h-4" />
@@ -1574,77 +2145,86 @@ const CourseDetailContent = ({
                 {/* Notices (from course content) */}
                 {renderNotices()}
 
+                {/* Instructor mini-card — clickable, routes to instructor profile */}
+                {renderInstructorMini(false)}
+
                 {/* Course Details — placed in left column to fill space next to pricing card */}
                 <div className="bg-[var(--color-surface-card)] rounded-2xl p-8 mb-8 mt-6">
-                  <h2 className={`font-bold text-[var(--color-text-primary)] text-xl mb-6 text-start`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
+                  <h2 className={`font-bold text-[var(--color-text-primary)] text-xl mb-6 text-start`}>{headingFor('courseDetails', courseDetailsHeading) || t("courseDetails.title")}</h2>
 
                   <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                     {apiCourse.enrollmentDeadline && (
                       <div className="flex items-start gap-3">
-                        <Calendar className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                        <div className="text-start">
+                        <Calendar className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                        <div className="text-start min-w-0">
                           <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.registrationDeadline")}</p>
                           <p className="text-sm text-[var(--color-text-secondary)]">{formatDeadline(apiCourse.enrollmentDeadline)}</p>
                         </div>
                       </div>
                     )}
                     <div className="flex items-start gap-3">
-                      <Globe className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                      <div className="text-start">
+                      <Globe className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                      <div className="text-start min-w-0">
                         <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.language")}</p>
                         <p className="text-sm text-[var(--color-text-secondary)]">{getLanguageLabel()}</p>
                       </div>
                     </div>
                     {apiCourse.startDate && (
-                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ps-5 overflow-hidden`}>
-                        <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] text-start`}>{t("courseDetails.startTime")}</p>
-                        <p className={`text-sm text-[var(--color-text-secondary)] text-start`}>{formatDate(apiCourse.startDate)}</p>
+                      <div className="flex items-start gap-3">
+                        <Calendar className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                        <div className="text-start min-w-0">
+                          <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.startDate")}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.startDate)}</p>
+                        </div>
                       </div>
                     )}
                     {apiCourse.endDate && (
-                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ps-5 overflow-hidden`}>
-                        <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] text-start`}>{t("courseDetails.endTime")}</p>
-                        <p className={`text-sm text-[var(--color-text-secondary)] text-start`}>{formatDate(apiCourse.endDate)}</p>
+                      <div className="flex items-start gap-3">
+                        <Calendar className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                        <div className="text-start min-w-0">
+                          <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.endDate")}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.endDate)}</p>
+                        </div>
                       </div>
                     )}
                     <div className="flex items-start gap-3">
-                      <Clock className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                      <div className="text-start">
+                      <Clock className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                      <div className="text-start min-w-0">
                         <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.duration")}</p>
                         <p className="text-sm text-[var(--color-text-secondary)]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Video className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                      <div className="text-start">
-                        <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
+                      <Video className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                      <div className="text-start min-w-0">
+                        <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.deliveryType")}</p>
                         <p className="text-sm text-[var(--color-text-secondary)]">{getDeliveryLabel()}</p>
                       </div>
                     </div>
                     {apiCmeAccredited && (
                       <div className="flex items-start gap-3">
-                        <Award className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                        <div className="text-start">
-                          <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
+                        <Award className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                        <div className="text-start min-w-0">
+                          <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.cmeHours")}</p>
                           <p className="text-sm text-[var(--color-text-secondary)]">{apiCmeHours} {t("courseDetails.hours")}</p>
                         </div>
                       </div>
                     )}
                     {showVenue && getVenue() && (
-                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ps-5 overflow-hidden`}>
-                        <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] text-start`}>{t("courseDetails.venue")}</p>
-                        <p className={`text-sm text-[var(--color-text-secondary)] text-start`}>{getVenue()}</p>
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                        <div className="text-start min-w-0">
+                          <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.venue")}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{getVenue()}</p>
+                        </div>
                       </div>
                     )}
                     {apiAccreditationNumber && (
                       <div className="flex items-start gap-3">
-                        <Award className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
-                        <div className="text-start">
+                        <Award className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                        <div className="text-start min-w-0">
                           <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-                            {locale === "ar" ? "رقم الاعتماد" : "Accreditation Number"}
+                            {t("courseDetails.accreditationNumber")}
                           </p>
                           <p className="text-sm text-[var(--color-text-secondary)] break-all">
                             {apiAccreditationNumber}
@@ -1658,9 +2238,9 @@ const CourseDetailContent = ({
                   {getTargetAudience().length > 0 && (
                     <div className={`mt-6 pt-6 border-t border-[var(--color-border)] text-start`}>
                       <p className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
-                        {targetAudienceHeading || t("targetAudience") || "Target Audience"}
+                        {headingFor('targetAudience', targetAudienceHeading) || t("targetAudience") || "Target Audience"}
                       </p>
-                      <div className={`flex flex-wrap gap-2 ${isRTL ? "justify-end" : "justify-start"}`}>
+                      <div className="flex flex-wrap gap-2 justify-start">
                         {getTargetAudience().map((item, idx) => (
                           <span
                             key={idx}
@@ -1673,11 +2253,57 @@ const CourseDetailContent = ({
                     </div>
                   )}
                 </div>
+
+                {/* Content sections (overview / objectives / instructor / contents / requirements / faqs / reviews)
+                    stack inside the left column so the sticky pricing card on the right keeps following the
+                    buyer through the entire page. Honour the manager's saved section order; append any default
+                    sections that aren't in it yet (courses saved before "instructor" / "faqs" existed still get
+                    those blocks). */}
+                <div className="mt-6">
+                  {(() => {
+                    const defaultOrder = ["overview", "objectives", "instructor", "certificate", "contents", "requirements", "faqs", "reviews"];
+                    const saved = apiCourse.sectionsOrder ?? [];
+                    // Also include any `custom:<id>` keys that aren't in the
+                    // saved order — e.g. a section added before sectionsOrder
+                    // existed. Append them at the end so behaviour is stable.
+                    const customKeys = (apiCourse.customSections ?? []).map((s) => `custom:${s.id}`);
+                    const order = saved.length > 0
+                      ? [
+                          ...saved,
+                          ...defaultOrder.filter((k) => !saved.includes(k)),
+                          ...customKeys.filter((k) => !saved.includes(k)),
+                        ]
+                      : [...defaultOrder, ...customKeys];
+                    const sectionMap: Record<string, React.ReactNode> = {
+                      overview: <div key="overview">{renderOverview(false)}</div>,
+                      objectives: <div key="objectives">{renderObjectives(false)}</div>,
+                      instructor: <div key="instructor">{renderInstructor(false)}</div>,
+                      certificate: <div key="certificate">{renderCertificate(false)}</div>,
+                      contents: <div key="contents">{renderModules(false)}</div>,
+                      requirements: <div key="requirements">{renderRequirements(false)}</div>,
+                      faqs: <div key="faqs">{renderFaqs(false)}</div>,
+                      reviews: <div key="reviews">{renderReviews(false)}</div>,
+                    };
+                    return order
+                      .map((key) => {
+                        if (key.startsWith("custom:")) {
+                          return renderCustomSection(key.slice("custom:".length), false);
+                        }
+                        return sectionMap[key] || null;
+                      })
+                      .filter(Boolean);
+                  })()}
+                </div>
               </div>
 
-              {/* Pricing Card */}
-              <div className="w-[360px] flex-shrink-0">
-                <div className="bg-[var(--color-surface-card)] shadow-sm border border-[var(--color-border)] rounded-2xl sticky top-24">
+              {/* Pricing Card — the outer flex child itself is sticky so it
+                  follows the buyer through the entire page scroll. `items-start`
+                  on the parent stops the right column from being stretched, and
+                  moving `sticky top-24` to this wrapper (instead of the inner
+                  card) keeps stickiness relative to the whole two-column region,
+                  not just the card's own natural height. */}
+              <div className="w-[360px] flex-shrink-0 sticky top-24 self-start">
+                <div className="bg-[var(--color-surface-card)] shadow-sm border border-[var(--color-border)] rounded-2xl">
                   {/* Course Image */}
                   <div className="p-4 pb-0">
                     <div className="relative h-[200px] rounded-xl overflow-hidden">
@@ -1694,15 +2320,15 @@ const CourseDetailContent = ({
                   {getFeatures().length > 0 && (
                     <div className="px-5 pt-5 pb-4">
                       <h3 className={`text-[15px] font-semibold text-[var(--color-text-primary)] mb-3 text-start`}>
-                        {featuresHeading || (locale === "ar" ? "المميزات" : "Features")}
+                        {headingFor('features', featuresHeading) || t("features")}
                       </h3>
                       <div className="flex flex-col gap-3">
                         {getFeatures().map((feature, index) => (
-                          <div key={index} className={`flex items-start gap-2.5 ${isRTL ? "flex-row-reverse text-right" : ""}`}>
+                          <div key={index} className="flex items-start gap-2.5">
                             <div className="w-5 h-5 rounded-full bg-[#DCFCE7] flex items-center justify-center flex-shrink-0 mt-0.5">
                               <Check className="w-3 h-3 text-[#16A34A]" strokeWidth={3} />
                             </div>
-                            <span className="text-[var(--color-text-secondary)] text-[13px] leading-[18px]">{feature}</span>
+                            <span className="text-[var(--color-text-secondary)] text-[13px] leading-[18px] text-start">{feature}</span>
                           </div>
                         ))}
                       </div>
@@ -1711,7 +2337,7 @@ const CourseDetailContent = ({
 
                   {/* Price */}
                   <div className="px-4 pb-5">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4">
                       <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                         {apiIsFree ? (
                           <span className="text-2xl font-bold text-[#16A34A]">{t("pricingCard.free")}</span>
@@ -1749,31 +2375,16 @@ const CourseDetailContent = ({
                           </>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 relative">
-                        <button
-                          onClick={handleFavouriteClick}
-                          aria-label={favourited ? tFav("removeFromFavourites") : tFav("addToFavourites")}
-                          aria-pressed={favourited}
-                          className="p-2.5 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)] transition-colors cursor-pointer"
-                        >
-                          <Heart
-                            className={`w-4 h-4 ${favourited ? "text-red-500 fill-red-500" : "text-[var(--color-text-secondary)]"}`}
-                          />
-                        </button>
-                        <button
-                          onClick={handleShare}
-                          className="p-2.5 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)] transition-colors"
-                          aria-label="Share course"
-                        >
-                          <Share2 className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                        </button>
-                        {shareTooltip && (
-                          <span className="absolute -bottom-8 right-0 bg-[var(--color-primary)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                            {locale === "ar" ? "تم نسخ الرابط" : "Link copied"}
-                          </span>
-                        )}
-                      </div>
                     </div>
+
+                    {/* Registration countdown — visible only when the course
+                        has an enrollment deadline that hasn't passed yet.
+                        Self-hides on tick when the deadline elapses. */}
+                    <RegistrationCountdown
+                      deadline={apiCourse.enrollmentDeadline}
+                      isRTL={isRTL}
+                      className="mb-4"
+                    />
 
                     {/* Primary Action Button */}
                     {!canEnroll ? (
@@ -1892,6 +2503,7 @@ const CourseDetailContent = ({
                           price={apiEffectivePrice}
                           currency="SAR"
                           source="product"
+                          instanceKey="desktop"
                           className="mb-3"
                         />
                         <button
@@ -1964,38 +2576,32 @@ const CourseDetailContent = ({
                         </div>
                       </div>
                     )}
+
+                    {/* Share + Favourites footer */}
+                    <div className={`mt-5 pt-4 border-t border-[var(--color-border)] flex items-center justify-center ${!apiIsFree ? "" : ""}`}>
+                      <button
+                        onClick={handleShare}
+                        className="flex-1 flex items-center justify-center gap-2 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors py-2"
+                      >
+                        <Share2 className="w-4 h-4" aria-hidden="true" />
+                        {t("share.action")}
+                      </button>
+                      <div className="w-px h-5 bg-[var(--color-border)]" aria-hidden="true" />
+                      <button
+                        onClick={handleFavouriteClick}
+                        aria-pressed={favourited}
+                        className="flex-1 flex items-center justify-center gap-2 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors py-2"
+                      >
+                        <Bookmark className={`w-4 h-4 ${favourited ? "fill-[var(--color-primary)]" : ""}`} aria-hidden="true" />
+                        {favourited ? tFav("removeFromFavourites") : tFav("addToFavourites")}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Content Sections (below hero) */}
-        <section className="px-16 pt-2 pb-12">
-          <div className="max-w-[1200px] mx-auto">
-            {(() => {
-              const defaultOrder = ["overview", "objectives", "instructor", "contents", "requirements", "faqs", "reviews"];
-              // Honour the manager's saved ordering, but append any default
-              // sections that aren't in it yet (e.g. courses saved before
-              // we added "instructor" / "faqs" still get those blocks).
-              const saved = apiCourse.sectionsOrder ?? [];
-              const order = saved.length > 0
-                ? [...saved, ...defaultOrder.filter((k) => !saved.includes(k))]
-                : defaultOrder;
-              const sectionMap: Record<string, React.ReactNode> = {
-                overview: <div key="overview">{renderOverview(false)}</div>,
-                objectives: <div key="objectives">{renderObjectives(false)}</div>,
-                instructor: <div key="instructor">{renderInstructor(false)}</div>,
-                contents: <div key="contents">{renderModules(false)}</div>,
-                requirements: <div key="requirements">{renderRequirements(false)}</div>,
-                faqs: <div key="faqs">{renderFaqs(false)}</div>,
-                reviews: <div key="reviews">{renderReviews(false)}</div>,
-              };
-              return order.map((key) => sectionMap[key] || null).filter(Boolean);
-            })()}
-          </div>
-        </section>
 
         {/* Related Courses */}
         <section className="px-16 py-16 bg-[var(--color-surface-page)]">
@@ -2070,7 +2676,7 @@ const CourseDetailContent = ({
             <div className={`flex items-center p-3 ps-4`}>
               <div className={`flex-1 text-center border-e border-[var(--color-border)]`}>
                 <p className="font-bold text-[var(--color-text-secondary)]">{apiCourse.avgRating.toFixed(1)}</p>
-                <div className={`flex items-center justify-center gap-0.5 mb-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="flex items-center justify-center gap-0.5 mb-0.5">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
@@ -2090,7 +2696,7 @@ const CourseDetailContent = ({
 
           {/* Price Card */}
           <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl p-4 mb-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4">
               <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                 {apiIsFree ? (
                   <span className="text-xl font-bold text-[#16A34A]">{t("pricingCard.free")}</span>
@@ -2128,50 +2734,34 @@ const CourseDetailContent = ({
                   </>
                 )}
               </div>
-              <div className="flex items-center gap-2 relative">
-                <button
-                  onClick={handleFavouriteClick}
-                  aria-label={favourited ? tFav("removeFromFavourites") : tFav("addToFavourites")}
-                  aria-pressed={favourited}
-                  className="p-2 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)] cursor-pointer"
-                >
-                  <Heart
-                    className={`w-4 h-4 ${favourited ? "text-red-500 fill-red-500" : "text-[var(--color-text-secondary)]"}`}
-                  />
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="p-2 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)]"
-                  aria-label="Share course"
-                >
-                  <Share2 className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                </button>
-                {shareTooltip && (
-                  <span className="absolute -bottom-8 right-0 bg-[var(--color-primary)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                    {locale === "ar" ? "تم نسخ الرابط" : "Link copied"}
-                  </span>
-                )}
-              </div>
             </div>
 
             {/* Features */}
             {getFeatures().length > 0 && (
               <div className="mb-4 pb-4 border-b border-[var(--color-border)]">
                 <h3 className={`text-sm font-semibold text-[var(--color-text-primary)] mb-3 text-start`}>
-                  {featuresHeading || (locale === "ar" ? "المميزات" : "Features")}
+                  {headingFor('features', featuresHeading) || (locale === "ar" ? "المميزات" : "Features")}
                 </h3>
                 <div className="flex flex-col gap-2.5">
                   {getFeatures().map((feature, index) => (
-                    <div key={index} className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse text-right" : ""}`}>
+                    <div key={index} className="flex items-start gap-2">
                       <div className="w-4 h-4 rounded-full bg-[#DCFCE7] flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Check className="w-2.5 h-2.5 text-[#16A34A]" strokeWidth={3} />
                       </div>
-                      <span className="text-[var(--color-text-secondary)] text-xs leading-[16px]">{feature}</span>
+                      <span className="text-[var(--color-text-secondary)] text-xs leading-[16px] text-start">{feature}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Registration countdown (mobile) — same behaviour as desktop:
+                only rendered while a deadline exists and hasn't passed. */}
+            <RegistrationCountdown
+              deadline={apiCourse.enrollmentDeadline}
+              isRTL={isRTL}
+              className="mb-3"
+            />
 
             {/* Primary Action Button */}
             {!canEnroll ? (
@@ -2278,6 +2868,7 @@ const CourseDetailContent = ({
                   price={apiEffectivePrice}
                   currency="SAR"
                   source="product"
+                  instanceKey="mobile"
                   className="mb-2"
                 />
                 <button
@@ -2306,6 +2897,26 @@ const CourseDetailContent = ({
                 )}
               </>
             )}
+
+            {/* Share + Favourites footer (mobile) */}
+            <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-center">
+              <button
+                onClick={handleShare}
+                className="flex-1 flex items-center justify-center gap-2 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors py-2"
+              >
+                <Share2 className="w-4 h-4" aria-hidden="true" />
+                {t("share.action")}
+              </button>
+              <div className="w-px h-5 bg-[var(--color-border)]" aria-hidden="true" />
+              <button
+                onClick={handleFavouriteClick}
+                aria-pressed={favourited}
+                className="flex-1 flex items-center justify-center gap-2 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors py-2"
+              >
+                <Bookmark className={`w-4 h-4 ${favourited ? "fill-[var(--color-primary)]" : ""}`} aria-hidden="true" />
+                {favourited ? tFav("removeFromFavourites") : tFav("addToFavourites")}
+              </button>
+            </div>
           </div>
 
           {/* CME + Seats Info — mobile */}
@@ -2346,63 +2957,84 @@ const CourseDetailContent = ({
 
         {/* Course Details */}
         <section className="px-4 py-6">
+          {/* Instructor mini-card — clickable, routes to instructor profile */}
+          {renderInstructorMini(true)}
+
           <div className="bg-[var(--color-surface-card)] rounded-xl p-4 mb-4">
-            <h2 className={`font-bold text-[var(--color-text-primary)] text-lg mb-4 text-start`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
+            <h2 className={`font-bold text-[var(--color-text-primary)] text-lg mb-4 text-start`}>{headingFor('courseDetails', courseDetailsHeading) || t("courseDetails.title")}</h2>
             <div className="space-y-4">
               {apiCourse.enrollmentDeadline && (
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <div className="text-start">
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                  <div className="text-start min-w-0">
                     <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.registrationDeadline")}</p>
-                    <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.enrollmentDeadline)}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">{formatDeadline(apiCourse.enrollmentDeadline)}</p>
                   </div>
                 </div>
               )}
-              <div className="flex items-center gap-3">
-                <Globe className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                <div className="text-start">
+              <div className="flex items-start gap-3">
+                <Globe className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                <div className="text-start min-w-0">
                   <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.language")}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{getLanguageLabel()}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Clock className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                <div className="text-start">
+              {apiCourse.startDate && (
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                  <div className="text-start min-w-0">
+                    <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.startDate")}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.startDate)}</p>
+                  </div>
+                </div>
+              )}
+              {apiCourse.endDate && (
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                  <div className="text-start min-w-0">
+                    <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.endDate")}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.endDate)}</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-start gap-3">
+                <Clock className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                <div className="text-start min-w-0">
                   <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.duration")}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Video className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                <div className="text-start">
-                  <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
+              <div className="flex items-start gap-3">
+                <Video className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                <div className="text-start min-w-0">
+                  <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.deliveryType")}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{getDeliveryLabel()}</p>
                 </div>
               </div>
               {apiCmeAccredited && (
-                <div className="flex items-center gap-3">
-                  <Award className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <div className="text-start">
-                    <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
+                <div className="flex items-start gap-3">
+                  <Award className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                  <div className="text-start min-w-0">
+                    <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.cmeHours")}</p>
                     <p className="text-sm text-[var(--color-text-secondary)]">{apiCmeHours} {t("courseDetails.hours")}</p>
                   </div>
                 </div>
               )}
               {showVenue && getVenue() && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <div className="text-start">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                  <div className="text-start min-w-0">
                     <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.venue")}</p>
                     <p className="text-sm text-[var(--color-text-secondary)]">{getVenue()}</p>
                   </div>
                 </div>
               )}
               {apiAccreditationNumber && (
-                <div className="flex items-center gap-3">
-                  <Award className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <div className="text-start">
+                <div className="flex items-start gap-3">
+                  <Award className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+                  <div className="text-start min-w-0">
                     <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-                      {locale === "ar" ? "رقم الاعتماد" : "Accreditation Number"}
+                      {t("courseDetails.accreditationNumber")}
                     </p>
                     <p className="text-sm text-[var(--color-text-secondary)] break-all">
                       {apiAccreditationNumber}
@@ -2415,9 +3047,9 @@ const CourseDetailContent = ({
             {getTargetAudience().length > 0 && (
               <div className={`mt-4 pt-4 border-t border-[var(--color-border)] text-start`}>
                 <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2">
-                  {targetAudienceHeading || t("targetAudience") || "Target Audience"}
+                  {headingFor('targetAudience', targetAudienceHeading) || t("targetAudience") || "Target Audience"}
                 </p>
-                <div className={`flex flex-wrap gap-1.5 ${isRTL ? "justify-end" : "justify-start"}`}>
+                <div className="flex flex-wrap gap-1.5 justify-start">
                   {getTargetAudience().map((item, idx) => (
                     <span
                       key={idx}
@@ -2434,19 +3066,32 @@ const CourseDetailContent = ({
           {(() => {
             const defaultOrder = ["overview", "objectives", "instructor", "contents", "requirements", "faqs", "reviews"];
             const saved = apiCourse.sectionsOrder ?? [];
+            const customKeys = (apiCourse.customSections ?? []).map((s) => `custom:${s.id}`);
             const order = saved.length > 0
-              ? [...saved, ...defaultOrder.filter((k) => !saved.includes(k))]
-              : defaultOrder;
+              ? [
+                  ...saved,
+                  ...defaultOrder.filter((k) => !saved.includes(k)),
+                  ...customKeys.filter((k) => !saved.includes(k)),
+                ]
+              : [...defaultOrder, ...customKeys];
             const sectionMap: Record<string, React.ReactNode> = {
               overview: <div key="overview">{renderOverview(true)}</div>,
               objectives: <div key="objectives">{renderObjectives(true)}</div>,
               instructor: <div key="instructor">{renderInstructor(true)}</div>,
+              certificate: <div key="certificate">{renderCertificate(true)}</div>,
               contents: <div key="contents">{renderModules(true)}</div>,
               requirements: <div key="requirements">{renderRequirements(true)}</div>,
               faqs: <div key="faqs">{renderFaqs(true)}</div>,
               reviews: <div key="reviews">{renderReviews(true)}</div>,
             };
-            return order.map((key) => sectionMap[key] || null).filter(Boolean);
+            return order
+              .map((key) => {
+                if (key.startsWith("custom:")) {
+                  return renderCustomSection(key.slice("custom:".length), true);
+                }
+                return sectionMap[key] || null;
+              })
+              .filter(Boolean);
           })()}
         </section>
 
@@ -2485,7 +3130,18 @@ const CourseDetailContent = ({
           onClose={() => setReviewsModalOpen(false)}
           isRTL={isRTL}
           locale={locale}
-          reviewsHeading={reviewsHeading}
+          reviewsHeading={headingFor('reviews', reviewsHeading)}
+        />
+      )}
+
+      {/* Share Modal */}
+      {shareModalOpen && apiCourse && (
+        <ShareModal
+          url={typeof window !== "undefined" ? window.location.href : ""}
+          title={getTitle()}
+          onClose={() => setShareModalOpen(false)}
+          isRTL={isRTL}
+          t={t}
         />
       )}
 

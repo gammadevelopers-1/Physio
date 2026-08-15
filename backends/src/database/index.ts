@@ -20,6 +20,12 @@ const poolConfig = process.env.DATABASE_URL
       connectionTimeoutMillis: 5000,
       keepAlive: true,
       keepAliveInitialDelayMillis: 10000,
+      // Cloud SQL public-IP connections encrypt traffic with TLS. Cert is
+      // Google-signed; we skip client-side verification because the pg
+      // library's default trust store doesn't include Google's CA, and
+      // endpoint identity is already guaranteed by the IP whitelist on
+      // the SQL instance. Encryption is the goal here, not mutual TLS.
+      ssl: { rejectUnauthorized: false } as { rejectUnauthorized: boolean },
     }
   : {
       host: process.env.DATABASE_HOST || 'localhost',

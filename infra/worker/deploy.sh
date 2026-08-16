@@ -207,11 +207,17 @@ fi
 # ------------------------------------------------------------------
 CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 
+# Per-service runtime SA (least-privilege). Same shape as api-runtime
+# because the worker executes the same code path (BullMQ consumers +
+# scheduled crons that read/write DB, Redis, storage buckets).
+WORKER_RUNTIME_SA="worker-runtime@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+
 log_step "Deploying worker to Cloud Run..."
 gcloud run deploy ${WORKER_SERVICE_NAME} \
     --image=${IMAGE_TAG} \
     --region=${GCP_REGION} \
     --platform=managed \
+    --service-account=${WORKER_RUNTIME_SA} \
     --port=${BACKEND_PORT} \
     --memory=${WORKER_MEMORY} \
     --cpu=${WORKER_CPU} \

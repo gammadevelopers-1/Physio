@@ -743,6 +743,20 @@
       "when": 1786752060000,
       "tag": "0120_user_consents",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1786752120000,
+      "tag": "0121_pdpl_soft_delete_users",
+      "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1786752180000,
+      "tag": "0122_pdpl_inactive_user_warning",
+      "breakpoints": true
     }
   ]
 }

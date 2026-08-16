@@ -172,6 +172,14 @@ if gcloud secrets describe MAIL_REPLY_TO &>/dev/null 2>&1; then
     log_info "Reply-to address configured"
 fi
 
+# Sentry (backend error monitoring — SDK no-ops if DSN missing)
+if gcloud secrets describe SENTRY_DSN_BACKEND &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},SENTRY_DSN=SENTRY_DSN_BACKEND:latest"
+    log_info "Sentry backend DSN found - error tracking enabled"
+else
+    log_warning "SENTRY_DSN_BACKEND not in Secret Manager - Sentry SDK will no-op"
+fi
+
 # Zoom Integration
 if gcloud secrets describe ZOOM_ACCOUNT_ID &>/dev/null 2>&1; then
     SECRETS="${SECRETS},ZOOM_ACCOUNT_ID=ZOOM_ACCOUNT_ID:latest"

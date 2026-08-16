@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import type { Request, Response } from 'express';
 
 /**
@@ -64,6 +65,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
         `[${request.method} ${request.originalUrl}] user=${userId ?? 'anon'} status=${status} code=${code ?? 'NONE'}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
+
+      Sentry.withScope((scope) => {
+        scope.setTag('http.method', request.method);
+        scope.setTag('http.status', String(status));
+        if (code) scope.setTag('error.code', code);
+        if (userId) scope.setUser({ id: userId });
+        scope.setContext('request', {
+          url: request.originalUrl,
+          method: request.method,
+        });
+        Sentry.captureException(exception);
+      });
     }
 
     response.status(status).json({

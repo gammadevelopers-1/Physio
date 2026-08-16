@@ -103,6 +103,11 @@ if gcloud secrets describe MAIL_REPLY_TO &>/dev/null 2>&1; then
     SECRETS="${SECRETS},MAIL_REPLY_TO=MAIL_REPLY_TO:latest"
 fi
 
+# Sentry (worker error monitoring — SDK no-ops if DSN missing)
+if gcloud secrets describe SENTRY_DSN_BACKEND &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},SENTRY_DSN=SENTRY_DSN_BACKEND:latest"
+fi
+
 # Redis / Memorystore — the WHOLE point of this service. Bootstrap must
 # fail loudly if the secret is missing rather than silently disable
 # workers (which is what api-web does).

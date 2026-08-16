@@ -351,12 +351,19 @@ else
 fi
 log_info "Sentry: ${SENTRY_ORG_BE}/${SENTRY_PROJECT_BE} via ${SENTRY_API_HOST_BE}"
 
+# Per-service runtime SA (least-privilege). Roles granted in Amna's
+# setup script: cloudsql.client, secretmanager.secretAccessor on the
+# specific secrets bound below, storage.objectAdmin on the three
+# platform buckets, cloudtrace.agent, monitoring.metricWriter.
+API_RUNTIME_SA="api-runtime@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
     log_info "Connecting to Cloud SQL: ${DB_INSTANCE_NAME}"
     gcloud run deploy ${BACKEND_SERVICE_NAME} \
         --image=${IMAGE_TAG} \
         --region=${GCP_REGION} \
         --platform=managed \
+        --service-account=${API_RUNTIME_SA} \
         --port=${BACKEND_PORT} \
         --memory=${BACKEND_MEMORY} \
         --cpu=${BACKEND_CPU} \
@@ -375,6 +382,7 @@ else
         --image=${IMAGE_TAG} \
         --region=${GCP_REGION} \
         --platform=managed \
+        --service-account=${API_RUNTIME_SA} \
         --port=${BACKEND_PORT} \
         --memory=${BACKEND_MEMORY} \
         --cpu=${BACKEND_CPU} \

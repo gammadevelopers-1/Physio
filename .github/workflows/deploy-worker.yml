@@ -1,0 +1,59 @@
+name: Deploy Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # NOT triggered by backends/** — that would fight the Deploy Backend
+      # workflow to build the same image twice. Worker chains AFTER a
+      # successful backend deploy via workflow_run below (worker uses the
+      # same image the backend workflow just built).
+      - 'infra/worker/**'
+      - '.github/workflows/deploy-worker.yml'
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Deploy Backend']
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: deploy-worker-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Worker
+    # Skip if triggered by a failed backend run.
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Run worker deploy script
+        run: bash infra/worker/deploy.sh
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ secrets.GCP_REGION }}

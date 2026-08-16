@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuditLogModule } from '../audit-logs/audit-logs.module';
 import { EmailModule } from '../email/email.module';
+import { ConsentsService } from './consents.service';
 import { DataExportService } from './data-export.service';
 import { ErasureService } from './erasure.service';
 import { MeController } from './me.controller';
@@ -19,6 +20,6 @@ import { MeController } from './me.controller';
     EmailModule,
   ],
   controllers: [MeController],
-  providers: [ErasureService, DataExportService],
+  providers: [ErasureService, DataExportService, ConsentsService],
 })
 export class MeModule {}

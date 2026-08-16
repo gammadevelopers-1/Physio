@@ -4,6 +4,7 @@ import { and, isNotNull, lt, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import { refreshTokens } from '../../database/schema/refresh-tokens';
 import { emailVerifications } from '../../database/schema/email-verifications';
+import { twoFactorChallenges } from '../../database/schema/two-factor';
 import { auditLogs } from '../../database/schema/audit-logs';
 import { DistributedLockService } from '../tasks/distributed-lock.service';
 
@@ -18,9 +19,10 @@ import { DistributedLockService } from '../tasks/distributed-lock.service';
  * KEEPING rows rather than deleting, so we never lose evidence needed
  * for a real incident):
  *
- *   refresh_tokens        > 7 days past expiry     → hard delete
- *   email_verifications   > 30 days past expiry     → hard delete
- *   audit_logs IP address > 90 days                 → anonymise (last octet zeroed)
+ *   refresh_tokens         > 7 days past expiry     → hard delete
+ *   email_verifications    > 30 days past expiry    → hard delete
+ *   two_factor_challenges  > 7 days past expiry     → hard delete
+ *   audit_logs IP address  > 90 days                → anonymise (last octet zeroed)
  *
  * Regulatory-retention tables (audit_logs body, nelc_audit_logs,
  * payment records, certificates) are NEVER touched here — those have
@@ -61,6 +63,7 @@ export class RetentionService {
       trigger,
       refreshTokensDeleted: 0,
       emailVerificationsDeleted: 0,
+      twoFactorChallengesDeleted: 0,
       auditLogIpsAnonymised: 0,
       errors: [],
     };
@@ -83,6 +86,21 @@ export class RetentionService {
       summary.emailVerificationsDeleted = ev.rowCount ?? 0;
     } catch (err) {
       summary.errors.push(`email_verifications: ${(err as Error).message}`);
+    }
+
+    // 2FA OTP challenges — same shape as email_verifications but keyed on
+    // userId. 7-day past-expiry cutoff matches refresh_tokens because
+    // these are shorter-lived and only kept briefly for forensics.
+    try {
+      const sevenDaysAgoForTfa = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const tfa = await db
+        .delete(twoFactorChallenges)
+        .where(lt(twoFactorChallenges.expiresAt, sevenDaysAgoForTfa));
+      summary.twoFactorChallengesDeleted = tfa.rowCount ?? 0;
+    } catch (err) {
+      summary.errors.push(
+        `two_factor_challenges: ${(err as Error).message}`,
+      );
     }
 
     // Anonymise last octet of IPs older than 90 days. Preserves geo
@@ -130,7 +148,7 @@ export class RetentionService {
       );
     } else {
       this.logger.log(
-        `PDPL retention purge complete: refresh=${summary.refreshTokensDeleted} email=${summary.emailVerificationsDeleted} ip_anon=${summary.auditLogIpsAnonymised} in ${summary.durationMs}ms`,
+        `PDPL retention purge complete: refresh=${summary.refreshTokensDeleted} email=${summary.emailVerificationsDeleted} tfa=${summary.twoFactorChallengesDeleted} ip_anon=${summary.auditLogIpsAnonymised} in ${summary.durationMs}ms`,
       );
     }
 
@@ -145,6 +163,7 @@ interface PurgeSummary {
   trigger: 'cron' | 'manual';
   refreshTokensDeleted: number;
   emailVerificationsDeleted: number;
+  twoFactorChallengesDeleted: number;
   auditLogIpsAnonymised: number;
   errors: string[];
 }

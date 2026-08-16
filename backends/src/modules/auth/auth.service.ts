@@ -219,6 +219,20 @@ export class AuthService {
         userAgent,
       });
     }
+    // PDPL — explicit consent for sensitive personal data (national_id +
+    // scfhs number). Required at registration because the DTO validator
+    // already requires nationalId, so the user has knowingly provided it.
+    // Withdrawable later via POST /me/consents/withdraw {type:sensitive_data};
+    // withdrawal does not retroactively erase already-collected data
+    // (that is what DELETE /me/account is for) but is recorded in the
+    // ledger for the auditor.
+    consentRows.push({
+      userId: newUser.id,
+      consentType: 'sensitive_data',
+      version: CURRENT_PRIVACY_VERSION,
+      ipAddress,
+      userAgent,
+    });
     await db.insert(userConsents).values(consentRows);
 
     // Award signup points (best-effort — never blocks registration if it fails).
@@ -1257,7 +1271,24 @@ export class AuthService {
       }
       // Only persist if currently null (first-time set). If client
       // re-sends the same value, treat as no-op.
-      if (!currentNationalId) updateData.nationalId = encryptPII(dto.nationalId);
+      if (!currentNationalId) {
+        updateData.nationalId = encryptPII(dto.nationalId);
+        // PDPL — legacy-user path: first-time provision of the sensitive
+        // field also records the sensitive_data consent so the ledger
+        // reflects the same "explicit consent at collection" story as
+        // the register() flow. Non-blocking best-effort insert.
+        db.insert(userConsents)
+          .values({
+            userId,
+            consentType: 'sensitive_data',
+            version: CURRENT_PRIVACY_VERSION,
+          })
+          .catch((err) =>
+            this.logger.warn(
+              `sensitive_data consent capture failed for ${userId}: ${(err as Error).message}`,
+            ),
+          );
+      }
     }
     if (dto.nationality !== undefined) updateData.nationality = dto.nationality;
     if (dto.gender !== undefined) updateData.gender = dto.gender;

@@ -510,6 +510,74 @@ export class EmailService {
     }
   }
 
+  /**
+   * PDPL Article 12 — Right to Erasure confirmation.
+   * Inline template (not routed through the admin-editable notification
+   * templates) because this is a legal-notice email, not a marketing
+   * one; admins should not be able to soften or hide its wording.
+   */
+  async sendAccountErasureConfirmation(
+    to: string,
+    firstName: string,
+    cancelUrl: string,
+    scheduledHardDeleteAt: Date,
+  ): Promise<void> {
+    try {
+      const dateStr = scheduledHardDeleteAt.toISOString().slice(0, 10);
+      const name = firstName || to.split('@')[0];
+      const subject = 'Account deletion requested — PhysioGuidance';
+      const html = `
+<!doctype html>
+<html><body style="font-family:Arial,sans-serif;color:#111;line-height:1.5;">
+  <h2>Account deletion requested</h2>
+  <p>Hi ${name},</p>
+  <p>We received a request to delete your PhysioGuidance account. Your
+     account has been deactivated immediately and is scheduled for
+     permanent removal on <strong>${dateStr}</strong>
+     (30 days from your request, per PDPL Article 12).</p>
+  <p>If this wasn't you, or you've changed your mind, click below within
+     the next 30 days to restore your account:</p>
+  <p><a href="${cancelUrl}" style="background:#0a5;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px;">Cancel deletion &amp; restore account</a></p>
+  <p><small>Or copy this link into your browser:<br>
+    <a href="${cancelUrl}">${cancelUrl}</a></small></p>
+  <hr>
+  <p><small>After ${dateStr}, personal data will be removed. Records
+     required by regulation (issued certificates, financial receipts,
+     xAPI audit statements) are retained per NELC/PDPL legal-obligation
+     basis and will be anonymised where possible.</small></p>
+</body></html>`;
+      const text = `Account deletion requested — PhysioGuidance
+
+Hi ${name},
+
+We received a request to delete your PhysioGuidance account. Your account
+has been deactivated immediately and is scheduled for permanent removal
+on ${dateStr} (30 days from your request, per PDPL Article 12).
+
+If this wasn't you, or you've changed your mind, open this link within
+the next 30 days to restore your account:
+
+${cancelUrl}
+
+After ${dateStr}, personal data will be removed. Records required by
+regulation (issued certificates, financial receipts, xAPI audit
+statements) are retained per NELC/PDPL legal-obligation basis and will
+be anonymised where possible.`;
+
+      await this.send({
+        to,
+        subject,
+        html,
+        text,
+        skipPreferenceCheck: true,
+      });
+      this.logger.log(`Erasure confirmation email sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send erasure confirmation to ${to}`, error);
+      throw error;
+    }
+  }
+
   async sendOTP(to: string, code: string, deviceName: string, locale: EmailLocale = 'en'): Promise<void> {
     try {
       const s = getEmailStrings(locale);

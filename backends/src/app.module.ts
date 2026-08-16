@@ -31,6 +31,8 @@ import { ProcessingModule } from './modules/processing/processing.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { AuditLogModule } from './modules/audit-logs/audit-logs.module';
 import { StudentModule } from './modules/student/student.module';
+import { MeModule } from './modules/me/me.module';
+import { PdplModule } from './modules/pdpl/pdpl.module';
 import { SupportModule } from './modules/support/support.module';
 import { UserNotificationsModule } from './modules/user-notifications/user-notifications.module';
 import { PointsModule } from './modules/points/points.module';
@@ -150,6 +152,8 @@ import nelcConfig from './config/nelc.config';
     BackupsModule,
     ErrorMonitoringModule,
     StudentModule,
+    MeModule,
+    PdplModule,
     SupportModule,
     UserNotificationsModule,
     PointsModule,

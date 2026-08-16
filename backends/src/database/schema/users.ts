@@ -79,6 +79,17 @@ export const users = pgTable('users', {
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+
+  // PDPL Article 12 (Right to Erasure). Non-null means the user has
+  // requested account deletion. They keep a 30-day grace window during
+  // which they can log back in and cancel via /me/account/cancel-deletion.
+  // isActive is set to false in the same transaction so all downstream
+  // auth checks reject them immediately without needing new WHERE clauses.
+  // Hard deletion (physical row removal + FK cascade) is an admin-only
+  // operational step — 68 tables reference users and each cascade needs
+  // individual audit.
+  deletedAt: timestamp('deleted_at'),
+  deletionReason: text('deletion_reason'),
 });
 
 // Relations will be defined in roles.ts to avoid circular imports

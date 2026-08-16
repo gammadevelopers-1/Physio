@@ -152,11 +152,16 @@ log_success "Image pushed"
 
 # Step 6: Deploy to Cloud Run
 log_step "Deploying to Cloud Run..."
+# Per-service runtime SA (least-privilege). See Amna's SA setup script:
+# only permissions the frontend actually needs (public-bucket signing, if any).
+FRONTEND_RUNTIME_SA="web-runtime@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+
 gcloud run deploy ${FRONTEND_SERVICE_NAME} \
     --image=${IMAGE_TAG} \
     --region=${GCP_REGION} \
     --platform=managed \
     --allow-unauthenticated \
+    --service-account=${FRONTEND_RUNTIME_SA} \
     --port=${FRONTEND_PORT} \
     --memory=${FRONTEND_MEMORY} \
     --cpu=${FRONTEND_CPU} \

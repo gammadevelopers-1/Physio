@@ -20,12 +20,12 @@ const poolConfig = process.env.DATABASE_URL
       connectionTimeoutMillis: 5000,
       keepAlive: true,
       keepAliveInitialDelayMillis: 10000,
-      // Cloud SQL public-IP connections encrypt traffic with TLS. Cert is
-      // Google-signed; we skip client-side verification because the pg
-      // library's default trust store doesn't include Google's CA, and
-      // endpoint identity is already guaranteed by the IP whitelist on
-      // the SQL instance. Encryption is the goal here, not mutual TLS.
-      ssl: { rejectUnauthorized: false } as { rejectUnauthorized: boolean },
+      // SSL behavior is driven by the DATABASE_URL query params:
+      //   • Public-IP path uses `?sslmode=no-verify` → SSL over TCP.
+      //   • Unix-socket path (Cloud Run's built-in Cloud SQL socket
+      //     at /cloudsql/PROJECT:REGION:INSTANCE) uses no SSL — traffic
+      //     is local IPC, and forcing SSL here confuses pg's transport
+      //     negotiation.
     }
   : {
       host: process.env.DATABASE_HOST || 'localhost',

@@ -365,7 +365,10 @@ export class AuthService {
       }
     }
 
-    // Reset failed attempts, verify user, and update last login
+    // Reset failed attempts, verify user, and update last login.
+    // Also clear inactive_warned_at so RetentionService will not
+    // hard-delete the user if they were previously warned — logging
+    // back in is the cancellation signal per PDPL Article 18 policy.
     await db
       .update(users)
       .set({
@@ -374,6 +377,7 @@ export class AuthService {
         lastLoginAt: new Date(),
         lastLoginIp: ipAddress,
         isVerified: true,
+        inactiveWarnedAt: null,
       })
       .where(eq(users.id, user.id));
 

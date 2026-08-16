@@ -90,6 +90,12 @@ export const users = pgTable('users', {
   // individual audit.
   deletedAt: timestamp('deleted_at'),
   deletionReason: text('deletion_reason'),
+
+  // PDPL Article 18 (Storage Limitation) — inactive user handling.
+  // Set by the nightly RetentionService when a user crosses the
+  // 24-month inactivity threshold. The user is then hard-deleted 30
+  // days later unless they log back in (login clears this column).
+  inactiveWarnedAt: timestamp('inactive_warned_at'),
 });
 
 // Relations will be defined in roles.ts to avoid circular imports

@@ -578,6 +578,82 @@ be anonymised where possible.`;
     }
   }
 
+  /**
+   * PDPL Article 18 — Storage Limitation. Sent by the nightly
+   * RetentionService when a student user crosses the 24-month
+   * inactivity threshold. Gives them a 30-day window to log back in
+   * and cancel the pending deletion (logging in clears
+   * `users.inactive_warned_at`).
+   *
+   * Inline template for the same reason as sendAccountErasureConfirmation:
+   * legal-notice email, admins must not be able to soften wording.
+   */
+  async sendInactiveAccountWarning(
+    to: string,
+    firstName: string,
+    scheduledDeleteAt: Date,
+  ): Promise<void> {
+    try {
+      const dateStr = scheduledDeleteAt.toISOString().slice(0, 10);
+      const name = firstName || to.split('@')[0];
+      const loginUrl = `${this.getFrontendBaseUrl()}/login`;
+      const subject =
+        'Your PhysioGuidance account will be deleted in 30 days';
+      const html = `
+<!doctype html>
+<html><body style="font-family:Arial,sans-serif;color:#111;line-height:1.5;">
+  <h2>Your account will be deleted in 30 days</h2>
+  <p>Hi ${name},</p>
+  <p>You have not signed in to your PhysioGuidance account for over 24
+     months. Under PDPL Article 18 (Storage Limitation), we do not keep
+     personal data longer than necessary, so your account is scheduled
+     for <strong>permanent deletion on ${dateStr}</strong>.</p>
+  <p>If you'd like to keep your account, simply sign in before that date
+     and the deletion will be cancelled automatically:</p>
+  <p><a href="${loginUrl}" style="background:#0a5;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px;">Sign in to keep my account</a></p>
+  <p><small>Or copy this link into your browser:<br>
+    <a href="${loginUrl}">${loginUrl}</a></small></p>
+  <hr>
+  <p><small>After ${dateStr}, your account and associated personal data
+     will be removed. Records required by regulation (issued certificates,
+     financial receipts, xAPI audit statements) are retained per
+     NELC/PDPL legal-obligation basis and will be anonymised where
+     possible. If you did not create this account, no action is needed
+     — the account will be removed automatically.</small></p>
+</body></html>`;
+      const text = `Your PhysioGuidance account will be deleted in 30 days
+
+Hi ${name},
+
+You have not signed in to your PhysioGuidance account for over 24 months.
+Under PDPL Article 18 (Storage Limitation), we do not keep personal data
+longer than necessary, so your account is scheduled for permanent
+deletion on ${dateStr}.
+
+If you'd like to keep your account, simply sign in before that date and
+the deletion will be cancelled automatically:
+
+${loginUrl}
+
+After ${dateStr}, your account and associated personal data will be
+removed. Records required by regulation (issued certificates, financial
+receipts, xAPI audit statements) are retained per NELC/PDPL
+legal-obligation basis and will be anonymised where possible.`;
+
+      await this.send({
+        to,
+        subject,
+        html,
+        text,
+        skipPreferenceCheck: true,
+      });
+      this.logger.log(`Inactive-account warning sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send inactive-account warning to ${to}`, error);
+      throw error;
+    }
+  }
+
   async sendOTP(to: string, code: string, deviceName: string, locale: EmailLocale = 'en'): Promise<void> {
     try {
       const s = getEmailStrings(locale);

@@ -5,3 +5,4 @@ export { default as NotificationsSection, type NotificationEvent } from "./Notif
 export { default as PreferencesSection } from "./PreferencesSection";
 export { default as PreferencesInline } from "./PreferencesInline";
 export { default as MasterNotificationToggles } from "./MasterNotificationToggles";
+export { default as PrivacySection } from "./PrivacySection";

@@ -1,12 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { and, isNotNull, lt, sql } from 'drizzle-orm';
+import { and, eq, exists, inArray, isNotNull, isNull, lt, not, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import { refreshTokens } from '../../database/schema/refresh-tokens';
 import { emailVerifications } from '../../database/schema/email-verifications';
 import { twoFactorChallenges } from '../../database/schema/two-factor';
 import { auditLogs } from '../../database/schema/audit-logs';
+import { users } from '../../database/schema/users';
+import { enrollments } from '../../database/schema/enrollments';
+import { certificateRequests } from '../../database/schema/certificate-requests';
+import { refunds } from '../../database/schema/refunds';
 import { DistributedLockService } from '../tasks/distributed-lock.service';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { EmailService } from '../email/email.service';
 
 /**
  * PDPL Article 18 — Storage Limitation.
@@ -23,6 +29,8 @@ import { DistributedLockService } from '../tasks/distributed-lock.service';
  *   email_verifications    > 30 days past expiry    → hard delete
  *   two_factor_challenges  > 7 days past expiry     → hard delete
  *   audit_logs IP address  > 90 days                → anonymise (last octet zeroed)
+ *   users (inactive)       last_login > 24 months   → warn (30-day grace)
+ *   users (past grace)     warned_at > 30 days      → hard delete (with exemptions)
  *
  * Regulatory-retention tables (audit_logs body, nelc_audit_logs,
  * payment records, certificates) are NEVER touched here — those have
@@ -39,7 +47,19 @@ export class RetentionService {
   private static readonly LOCK_KEY = 'lock:cron:pdpl-retention-purge';
   private static readonly LOCK_TTL_MS = 15 * 60 * 1000; // 15 min
 
-  constructor(private readonly lock: DistributedLockService) {}
+  // Client-approved inactive-user policy (2026-08-16). See
+  // ~/Desktop/PhysioGuidance-Handover/pdpl-inactive-user-policy.md
+  private static readonly INACTIVE_THRESHOLD_MS =
+    24 * 30 * 24 * 60 * 60 * 1000; // ~24 months
+  private static readonly INACTIVE_GRACE_MS =
+    30 * 24 * 60 * 60 * 1000; // 30 days between warning and delete
+  private static readonly INACTIVE_BATCH_LIMIT = 500;
+
+  constructor(
+    private readonly lock: DistributedLockService,
+    private readonly auditLog: AuditLogService,
+    private readonly emailService: EmailService,
+  ) {}
 
   @Cron('0 2 * * *', { timeZone: 'UTC', name: 'pdpl-retention-purge' })
   async run(): Promise<void> {
@@ -65,6 +85,8 @@ export class RetentionService {
       emailVerificationsDeleted: 0,
       twoFactorChallengesDeleted: 0,
       auditLogIpsAnonymised: 0,
+      inactiveUsersWarned: 0,
+      inactiveUsersDeleted: 0,
       errors: [],
     };
 
@@ -138,6 +160,22 @@ export class RetentionService {
       summary.errors.push(`audit_logs anonymise: ${(err as Error).message}`);
     }
 
+    // Inactive-user handling (Article 18 — Storage Limitation). Runs LAST
+    // because it's the only stage that emits emails; a mid-run failure in
+    // the earlier steps should NOT stop the auditor-visible cleanups.
+    try {
+      const warned = await this.warnInactiveUsers();
+      summary.inactiveUsersWarned = warned;
+    } catch (err) {
+      summary.errors.push(`inactive_warn: ${(err as Error).message}`);
+    }
+    try {
+      const deleted = await this.deleteInactiveUsersPastGrace();
+      summary.inactiveUsersDeleted = deleted;
+    } catch (err) {
+      summary.errors.push(`inactive_delete: ${(err as Error).message}`);
+    }
+
     summary.finishedAt = new Date().toISOString();
     summary.durationMs = Date.now() - startedAt.getTime();
 
@@ -148,11 +186,249 @@ export class RetentionService {
       );
     } else {
       this.logger.log(
-        `PDPL retention purge complete: refresh=${summary.refreshTokensDeleted} email=${summary.emailVerificationsDeleted} tfa=${summary.twoFactorChallengesDeleted} ip_anon=${summary.auditLogIpsAnonymised} in ${summary.durationMs}ms`,
+        `PDPL retention purge complete: refresh=${summary.refreshTokensDeleted} email=${summary.emailVerificationsDeleted} tfa=${summary.twoFactorChallengesDeleted} ip_anon=${summary.auditLogIpsAnonymised} inactive_warned=${summary.inactiveUsersWarned} inactive_deleted=${summary.inactiveUsersDeleted} in ${summary.durationMs}ms`,
       );
     }
 
     return summary;
+  }
+
+  /**
+   * Find STUDENT users who have not logged in for 24 months, who have no
+   * active enrollment, no issued certificate, no pending refund, and are
+   * currently active — then email them a 30-day deletion warning and
+   * set `inactive_warned_at` so we don't re-warn every night.
+   *
+   * Non-STUDENT users (instructors, admins, support, course managers)
+   * are exempt — their roles imply ongoing operational relevance.
+   *
+   * Deleted users (deletedAt IS NOT NULL) are already in the erasure
+   * grace flow; skipped here to avoid double-tracking.
+   */
+  private async warnInactiveUsers(): Promise<number> {
+    const cutoff = new Date(Date.now() - RetentionService.INACTIVE_THRESHOLD_MS);
+
+    const candidates = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+      })
+      .from(users)
+      .where(
+        and(
+          isNotNull(users.lastLoginAt),
+          lt(users.lastLoginAt, cutoff),
+          isNull(users.inactiveWarnedAt),
+          isNull(users.deletedAt),
+          eq(users.isActive, true),
+          eq(users.activeRole, 'STUDENT'),
+          not(
+            exists(
+              db
+                .select({ n: sql`1` })
+                .from(enrollments)
+                .where(
+                  and(
+                    eq(enrollments.studentId, users.id),
+                    inArray(enrollments.status, ['active', 'completed']),
+                  ),
+                ),
+            ),
+          ),
+          not(
+            exists(
+              db
+                .select({ n: sql`1` })
+                .from(certificateRequests)
+                .where(
+                  and(
+                    eq(certificateRequests.studentId, users.id),
+                    eq(certificateRequests.status, 'approved'),
+                  ),
+                ),
+            ),
+          ),
+          not(
+            exists(
+              db
+                .select({ n: sql`1` })
+                .from(refunds)
+                .where(
+                  and(
+                    eq(refunds.requestedBy, users.id),
+                    inArray(refunds.status, [
+                      'pending',
+                      'approved',
+                      'processing',
+                    ]),
+                  ),
+                ),
+            ),
+          ),
+        ),
+      )
+      .limit(RetentionService.INACTIVE_BATCH_LIMIT);
+
+    if (candidates.length === 0) return 0;
+
+    // Deadline shown in the email: warn now, delete in 30 days.
+    const deleteOn = new Date(Date.now() + RetentionService.INACTIVE_GRACE_MS);
+
+    // Stamp all candidates in one UPDATE, then fire emails best-effort.
+    // Ordering matters: if the stamp UPDATE fails, we haven't emailed;
+    // if an email fails, the stamp is already down so we won't re-warn
+    // that user (auditor sees exact-once). The user can still recover
+    // simply by logging in — which clears inactive_warned_at.
+    const ids = candidates.map((c) => c.id);
+    await db
+      .update(users)
+      .set({ inactiveWarnedAt: new Date() })
+      .where(inArray(users.id, ids));
+
+    for (const c of candidates) {
+      try {
+        await this.emailService.sendInactiveAccountWarning(
+          c.email,
+          c.firstName ?? '',
+          deleteOn,
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Inactive-warn email failed for ${c.email}: ${(err as Error).message}`,
+        );
+      }
+      try {
+        await this.auditLog.log({
+          entityType: 'user',
+          entityId: c.id,
+          action: 'pdpl.inactive_warned',
+          performedBy: c.id,
+          metadata: {
+            scheduledDeleteAt: deleteOn.toISOString(),
+            thresholdMonths: 24,
+          },
+        });
+      } catch (err) {
+        this.logger.warn(
+          `Inactive-warn audit failed for ${c.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    return candidates.length;
+  }
+
+  /**
+   * Hard-delete users who were warned more than 30 days ago and did not
+   * log back in. Re-check the exemption clauses at delete time (state
+   * may have changed since the warning fired). Relies on FK cascade
+   * (68 tables) to sweep dependents in-transaction.
+   *
+   * Deliberately batched at INACTIVE_BATCH_LIMIT so a bad day (e.g. a
+   * migration that made many users look inactive) can't run away with
+   * the whole database. If more than the batch qualifies, they get
+   * processed on subsequent nightly runs.
+   */
+  private async deleteInactiveUsersPastGrace(): Promise<number> {
+    const graceCutoff = new Date(
+      Date.now() - RetentionService.INACTIVE_GRACE_MS,
+    );
+    const activityCutoff = new Date(
+      Date.now() - RetentionService.INACTIVE_THRESHOLD_MS,
+    );
+
+    const candidates = await db
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(
+        and(
+          isNotNull(users.inactiveWarnedAt),
+          lt(users.inactiveWarnedAt, graceCutoff),
+          // Belt-and-braces: the user must STILL look inactive at delete
+          // time. If they logged back in after the warning fired but
+          // the login handler somehow failed to clear inactive_warned_at,
+          // this last-login check saves us.
+          isNotNull(users.lastLoginAt),
+          lt(users.lastLoginAt, activityCutoff),
+          isNull(users.deletedAt),
+          eq(users.isActive, true),
+          eq(users.activeRole, 'STUDENT'),
+          not(
+            exists(
+              db
+                .select({ n: sql`1` })
+                .from(enrollments)
+                .where(
+                  and(
+                    eq(enrollments.studentId, users.id),
+                    inArray(enrollments.status, ['active', 'completed']),
+                  ),
+                ),
+            ),
+          ),
+          not(
+            exists(
+              db
+                .select({ n: sql`1` })
+                .from(certificateRequests)
+                .where(
+                  and(
+                    eq(certificateRequests.studentId, users.id),
+                    eq(certificateRequests.status, 'approved'),
+                  ),
+                ),
+            ),
+          ),
+          not(
+            exists(
+              db
+                .select({ n: sql`1` })
+                .from(refunds)
+                .where(
+                  and(
+                    eq(refunds.requestedBy, users.id),
+                    inArray(refunds.status, [
+                      'pending',
+                      'approved',
+                      'processing',
+                    ]),
+                  ),
+                ),
+            ),
+          ),
+        ),
+      )
+      .limit(RetentionService.INACTIVE_BATCH_LIMIT);
+
+    if (candidates.length === 0) return 0;
+
+    let deleted = 0;
+    for (const c of candidates) {
+      try {
+        // Audit BEFORE deletion so the FK cascade doesn't wipe the log
+        // reference. `performedBy: null` because the actor is the system
+        // cron, not a user; the entity-level fields identify the target.
+        await this.auditLog.log({
+          entityType: 'user',
+          entityId: c.id,
+          action: 'pdpl.inactive_deleted',
+          performedBy: 'system',
+          metadata: {
+            email: c.email, // last chance to record who was deleted
+            thresholdMonths: 24,
+            graceDays: 30,
+          },
+        });
+        await db.delete(users).where(eq(users.id, c.id));
+        deleted += 1;
+      } catch (err) {
+        this.logger.error(
+          `Inactive-delete failed for ${c.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+    return deleted;
   }
 }
 
@@ -165,5 +441,7 @@ interface PurgeSummary {
   emailVerificationsDeleted: number;
   twoFactorChallengesDeleted: number;
   auditLogIpsAnonymised: number;
+  inactiveUsersWarned: number;
+  inactiveUsersDeleted: number;
   errors: string[];
 }

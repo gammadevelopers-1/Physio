@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { User as UserIcon, Shield, Bell, ChevronDown } from "lucide-react";
+import { User as UserIcon, Shield, Bell, ChevronDown, Lock } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
@@ -14,10 +14,11 @@ import {
   SecuritySection,
   PreferencesInline,
   MasterNotificationToggles,
+  PrivacySection,
 } from "@/components/settings";
 import DatePicker from "@/components/ui/DatePicker";
 
-type TabKey = "profile" | "security" | "notifications";
+type TabKey = "profile" | "security" | "notifications" | "privacy";
 
 interface StudentExtras {
   scfhsNumber: string;
@@ -65,6 +66,7 @@ const SettingsContent = () => {
     { key: "profile", label: tCommon("tabProfile"), icon: UserIcon },
     { key: "security", label: tCommon("tabSecurity"), icon: Shield },
     { key: "notifications", label: tCommon("tabNotifications"), icon: Bell },
+    { key: "privacy", label: tCommon("tabPrivacy"), icon: Lock },
   ];
 
   // Send empty strings as undefined so we don't clobber existing values when user hasn't touched a field.
@@ -142,6 +144,7 @@ const SettingsContent = () => {
                   )}
                   {activeTab === "security" && <SecuritySection idPrefix="student" />}
                   {activeTab === "notifications" && <MasterNotificationToggles />}
+                  {activeTab === "privacy" && <PrivacySection />}
                 </div>
               </div>
             </div>

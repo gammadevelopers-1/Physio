@@ -59,11 +59,18 @@ export class HealthService {
 
     const port = this.configService.get<number>('processing.redis.port', 6379);
     const tls = this.configService.get<boolean>('processing.redis.tls', false);
+    const caCert = process.env.REDIS_CA_CERT;
     const start = Date.now();
     const client = new Redis({
       host,
       port,
-      tls: tls ? {} : undefined,
+      // Match DistributedLockService: pass CA cert when Memorystore
+      // provides one, otherwise skip verification. Bare `tls: {}` fails
+      // the handshake because Memorystore's cert isn't in the default
+      // trust store.
+      ...(tls
+        ? { tls: caCert ? { ca: caCert } : { rejectUnauthorized: false } }
+        : {}),
       connectTimeout: 2000,
       commandTimeout: 2000,
       maxRetriesPerRequest: 1,

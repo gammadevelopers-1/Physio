@@ -116,11 +116,18 @@ else
     ENV_VARS="${ENV_VARS},DATABASE_PASSWORD=${STRAPI_DB_PASSWORD:-}"
 fi
 
+# Per-service runtime SA (least-privilege). Roles granted in Amna's
+# setup script: cloudsql.client (Strapi's Postgres), secretmanager
+# accessor on the CMS-specific secrets, storage.objectAdmin only on
+# the public assets bucket (Strapi uploads).
+STRAPI_RUNTIME_SA="strapi-runtime@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+
 gcloud run deploy ${STRAPI_SERVICE_NAME} \
     --image=${IMAGE_TAG} \
     --region=${GCP_REGION} \
     --platform=managed \
     --allow-unauthenticated \
+    --service-account=${STRAPI_RUNTIME_SA} \
     --port=${STRAPI_PORT} \
     --memory=${STRAPI_MEMORY} \
     --cpu=${STRAPI_CPU} \

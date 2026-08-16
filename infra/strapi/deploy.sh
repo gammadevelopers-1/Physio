@@ -78,11 +78,10 @@ log_step "Deploying to Cloud Run..."
 # Check if Cloud SQL instance exists
 CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 
-# Strapi DB connection uses direct IP (not Cloud SQL proxy)
-# These values match the current production configuration.
-# To change DB credentials, update them here or use Secret Manager.
-# IP is the public IP of the me-central2 Cloud SQL instance (physioguidance-db-me).
-STRAPI_DB_HOST="${STRAPI_DB_HOST:-34.166.25.208}"
+# Strapi DB connects via Cloud Run's built-in Cloud SQL socket
+# (mounted at /cloudsql/PROJECT:REGION:INSTANCE via --add-cloudsql-instances
+# below). No SSL needed — traffic is local IPC inside the container.
+STRAPI_DB_HOST="${STRAPI_DB_HOST:-/cloudsql/${CONNECTION_NAME}}"
 STRAPI_DB_PORT="${STRAPI_DB_PORT:-5432}"
 STRAPI_DB_NAME="${STRAPI_DB_NAME:-strapi}"
 STRAPI_DB_USER="${STRAPI_DB_USER:-apiuser}"
@@ -94,8 +93,7 @@ ENV_VARS="${ENV_VARS},DATABASE_HOST=${STRAPI_DB_HOST}"
 ENV_VARS="${ENV_VARS},DATABASE_PORT=${STRAPI_DB_PORT}"
 ENV_VARS="${ENV_VARS},DATABASE_NAME=${STRAPI_DB_NAME}"
 ENV_VARS="${ENV_VARS},DATABASE_USERNAME=${STRAPI_DB_USER}"
-ENV_VARS="${ENV_VARS},DATABASE_SSL=true"
-ENV_VARS="${ENV_VARS},DATABASE_SSL_REJECT_UNAUTHORIZED=false"
+ENV_VARS="${ENV_VARS},DATABASE_SSL=false"
 
 # Upload provider — Google Cloud Storage (ephemeral local disk would lose every upload on restart)
 ENV_VARS="${ENV_VARS},GCS_BUCKET_NAME=physioguidance-cms"
@@ -128,6 +126,7 @@ gcloud run deploy ${STRAPI_SERVICE_NAME} \
     --cpu=${STRAPI_CPU} \
     --min-instances=${STRAPI_MIN_INSTANCES} \
     --max-instances=${STRAPI_MAX_INSTANCES} \
+    --add-cloudsql-instances=${CONNECTION_NAME} \
     --vpc-connector=physio-vpc-connector-me \
     --vpc-egress=all-traffic \
     --set-env-vars="${ENV_VARS}" \

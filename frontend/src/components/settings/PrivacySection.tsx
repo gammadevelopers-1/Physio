@@ -52,13 +52,39 @@ export default function PrivacySection() {
     }
   };
 
+  // Optimistic update: flip the toggle visually before the network round
+  // trip completes so the user gets instant feedback. Reverted on error.
+  const applyOptimistic = (
+    type: "marketing_email" | "sensitive_data",
+    granted: boolean,
+  ) => {
+    setConsents((prev) =>
+      prev
+        ? {
+            ...prev,
+            currentStatus: {
+              ...prev.currentStatus,
+              [type]: {
+                granted,
+                version: prev.currentStatus[type]?.version ?? null,
+                acceptedAt: prev.currentStatus[type]?.acceptedAt ?? null,
+                withdrawnAt: granted ? null : new Date().toISOString(),
+              },
+            },
+          }
+        : prev,
+    );
+  };
+
   const setMarketing = async (enabled: boolean) => {
     setTogglingMarketing(true);
+    applyOptimistic("marketing_email", enabled);
     try {
       await api.patch("/me/consents/marketing", { enabled });
       toast.success(enabled ? t("marketingEnabled") : t("marketingDisabled"));
       await fetchConsents();
     } catch {
+      applyOptimistic("marketing_email", !enabled); // revert
       toast.error(t("consentToggleError"));
     } finally {
       setTogglingMarketing(false);
@@ -67,6 +93,7 @@ export default function PrivacySection() {
 
   const toggleSensitiveData = async (currentlyGranted: boolean) => {
     setTogglingSensitive(true);
+    applyOptimistic("sensitive_data", !currentlyGranted);
     try {
       if (currentlyGranted) {
         await api.post("/me/consents/withdraw", { type: "sensitive_data" });
@@ -77,6 +104,7 @@ export default function PrivacySection() {
       }
       await fetchConsents();
     } catch {
+      applyOptimistic("sensitive_data", currentlyGranted); // revert
       toast.error(t("consentToggleError"));
     } finally {
       setTogglingSensitive(false);

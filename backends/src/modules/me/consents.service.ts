@@ -68,7 +68,16 @@ export class ConsentsService {
       withdrawnAt: r.withdrawnAt ? r.withdrawnAt.toISOString() : null,
     }));
 
-    const knownTypes = Object.values(CONSENT_TYPE);
+    // Include base CONSENT_TYPE members PLUS any consent type actually
+    // present in the ledger (covers 'sensitive_data' which lives outside
+    // the enum, and any future type added via DB without an enum bump).
+    const baseTypes: string[] = [
+      ...Object.values(CONSENT_TYPE),
+      'sensitive_data',
+    ];
+    const rowTypes = new Set(rows.map((r) => r.consentType));
+    const knownTypes = new Set([...baseTypes, ...rowTypes]);
+
     const currentStatus: Record<string, {
       granted: boolean;
       version: string | null;

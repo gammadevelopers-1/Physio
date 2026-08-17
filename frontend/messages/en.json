@@ -15504,7 +15504,7 @@
     "unsupportedStatusTransition": "Unsupported status transition",
     "fillRequiredFields": "Please fill in all required fields",
     "firstLastNameMinLength": "First name and last name must be at least 2 characters",
-    "invalidNationalId": "Please enter a valid Saudi National ID or Iqama (10 digits)",
+    "invalidNationalId": "That doesn't look like a valid Saudi National ID or Iqama. Enter the 10-digit number from your ID card (starts with 1 for citizens, 2 for residents).",
     "passwordMismatch": "Passwords do not match",
     "acceptTerms": "Please accept the terms and conditions",
     "genericError": "An error occurred. Please try again.",

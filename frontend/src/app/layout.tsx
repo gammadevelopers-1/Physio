@@ -5,7 +5,6 @@ import "./globals.css";
 import { getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
 import JsonLd from "@/components/seo/JsonLd";
 import { organizationLD } from "@/lib/structured-data";
-import CookieConsentManager from "@/components/cookie-consent/CookieConsentManager";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -84,11 +83,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Per-request CSP nonce from middleware. Next auto-applies it to scripts it
-  // controls, but we pass it explicitly to next/script so the inline tracking
-  // bootstraps (GTM / GA4 / Meta Pixel) are accepted under the strict script-src.
   const h = await headers();
-  const nonce = h.get("x-nonce") ?? undefined;
   // Locale from middleware (x-locale header) — drives <html lang dir> at SSR.
   // Falling back to "en" is safe because middleware always sets this header
   // for any route that reaches this layout.
@@ -160,11 +155,11 @@ export default async function RootLayout({
       </head>
       <body className={`${dmSans.variable} ${notoSansArabic.variable} antialiased`}>
         {/* Third-party trackers (GTM, GA4, Meta Pixel) are injected by
-            CookieConsentManager ONLY after the visitor accepts the matching
-            category. Nothing fires without consent (PDPL Article 4 +
-            cookie-consent best practice). See privacy notice + PDPL
-            handover doc §11 (control PDPL-29) for policy detail. */}
-        <CookieConsentManager nonce={nonce} />
+            CookieConsentManager mounted inside `[locale]/layout.tsx`
+            (needs NextIntlClientProvider for the banner strings), and
+            fire only after the visitor accepts the matching category.
+            PDPL Article 4 + cookie-consent best practice. See PDPL
+            handover doc §11 (control PDPL-29). */}
         {children}
       </body>
     </html>

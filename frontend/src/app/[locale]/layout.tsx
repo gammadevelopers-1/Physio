@@ -1,5 +1,6 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
+import { headers } from "next/headers";
 import { routing } from "@/i18n/routing";
 import { notFound, redirect } from "next/navigation";
 import { ClientProviders } from "@/components/providers/ClientProviders";
@@ -8,6 +9,7 @@ import NavigationProgress from "@/components/NavigationProgress";
 import LocaleSwitchOverlay from "@/components/LocaleSwitchOverlay";
 import WhatsAppChatWidget from "@/components/WhatsAppChatWidget";
 import MobileFooterStrip from "@/components/MobileFooterStrip";
+import CookieConsentManager from "@/components/cookie-consent/CookieConsentManager";
 import { getSiteSettings } from "@/lib/strapi";
 import { getPlatformLocaleSettings } from "@/lib/platform-locale-server";
 import { getPlatformGeneralSettings } from "@/lib/platform-general-server";
@@ -48,6 +50,9 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
   const messages = await getMessages();
   const settings = await getSiteSettings(locale).catch(() => null);
+  // CSP nonce for the tracker scripts CookieConsentManager injects after
+  // consent. Set by middleware on every request.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   const isRTL = locale === "ar";
 
@@ -86,6 +91,7 @@ export default async function LocaleLayout({
           replyTime={platformGeneral.whatsappReplyTime ?? settings?.whatsappReplyTime}
           locale={locale}
         />
+        <CookieConsentManager nonce={nonce} />
       </ClientProviders>
     </NextIntlClientProvider>
   );

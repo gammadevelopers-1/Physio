@@ -26,7 +26,7 @@ import {
 } from "@/lib/api";
 
 type Gateway = "moyasar" | "tamara" | "tabby" | "bank_transfer";
-type TamaraMode = "test" | "live";
+type GatewayMode = "test" | "live";
 
 interface PaymentsSettings extends Record<string, unknown> {
   // SAR is the only supported currency platform-wide. Kept on the type so
@@ -34,11 +34,18 @@ interface PaymentsSettings extends Record<string, unknown> {
   currency: "SAR";
   // Per-gateway `enabled` gates checkout visibility. Missing key on load
   // is treated as `true` (backward-compat) via the FALLBACK defaults.
-  moyasar: { publishableKey: string; secretKeyRef: string; enabled?: boolean };
+  moyasar: {
+    publishableKey: string;
+    secretKeyRef: string;
+    /** Admin-controlled test/live toggle. When set, wins over MOYASAR_MODE
+     *  env var — lets the platform owner flip modes without a redeploy. */
+    mode?: GatewayMode;
+    enabled?: boolean;
+  };
   tamara: {
     merchantToken: string;
     secretKeyRef: string;
-    mode?: TamaraMode;
+    mode?: GatewayMode;
     enabled?: boolean;
   };
   tabby: { publicKey: string; secretKeyRef: string; enabled?: boolean };
@@ -68,7 +75,12 @@ const FALLBACK: PaymentsSettings = {
   currency: "SAR",
   // Secret fields default to empty strings — the load endpoint strips
   // encrypted secret values, and empty-on-save means "preserve existing".
-  moyasar: { publishableKey: "", secretKeyRef: "", enabled: true },
+  moyasar: {
+    publishableKey: "",
+    secretKeyRef: "",
+    mode: undefined,
+    enabled: true,
+  },
   tamara: { merchantToken: "", secretKeyRef: "", mode: undefined, enabled: true },
   tabby: { publicKey: "", secretKeyRef: "", enabled: true },
   bankTransfer: {
@@ -344,6 +356,38 @@ export default function PaymentsTab() {
 
           {viewGateway === "moyasar" && (
             <>
+              {/* Moyasar mode dropdown — DB-stored `moyasar.mode` overrides
+                  the MOYASAR_MODE env var at runtime. The platform owner
+                  can flip test↔live from this dropdown alone (no redeploy,
+                  no gcloud command). "Auto-detect from key" leaves mode
+                  unset, so the sk_test_ / sk_live_ prefix decides. */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+                  {t("payments.moyasarMode")}
+                </label>
+                <Select
+                  value={draft.moyasar.mode ?? ""}
+                  onChange={(v) =>
+                    setDraft((d) => ({
+                      ...d,
+                      moyasar: {
+                        ...d.moyasar,
+                        mode: (v || undefined) as GatewayMode | undefined,
+                      },
+                    }))
+                  }
+                  className="w-full"
+                  options={[
+                    { value: "", label: t("payments.moyasarModeAuto") },
+                    { value: "test", label: t("payments.modeTest") },
+                    { value: "live", label: t("payments.modeLive") },
+                  ]}
+                />
+                <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                  {t("payments.moyasarModeHelp")}
+                </p>
+              </div>
+
               <CredField
                 label={t("payments.publishableKey")}
                 value={draft.moyasar.publishableKey}
@@ -386,7 +430,7 @@ export default function PaymentsTab() {
                       ...d,
                       tamara: {
                         ...d.tamara,
-                        mode: (v || undefined) as TamaraMode | undefined,
+                        mode: (v || undefined) as GatewayMode | undefined,
                       },
                     }))
                   }

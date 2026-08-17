@@ -83,6 +83,10 @@ interface DbPaymentsSettings {
   moyasar?: {
     publishableKey?: string;
     secretKeyRef?: string | null;
+    /** Admin-saved mode override. When present, wins over the MOYASAR_MODE
+     *  env var and the key-prefix fallback — so the platform owner can flip
+     *  test↔live entirely from the admin dashboard without a redeploy. */
+    mode?: 'test' | 'live';
     enabled?: boolean;
   };
   tamara?: {
@@ -312,11 +316,21 @@ export class GatewayCredentialsService implements OnModuleInit {
     const moyDbPub = this.nonEmpty(db.moyasar?.publishableKey);
     const moyDbSec = decryptSecret(db.moyasar?.secretKeyRef);
     const moyDbHook = decryptSecret(db.webhookSecretRef);
-    if (moyDbPub || moyDbSec || moyDbHook) {
+    const moyStoredMode = db.moyasar?.mode;
+    if (moyDbPub || moyDbSec || moyDbHook || moyStoredMode) {
       const envPub = this.cfg('payments.moyasar.publishableKey');
       const envSec = this.cfg('payments.moyasar.secretKey');
       const envHook = this.cfg('payments.moyasar.webhookSecret');
       const effectiveSec = moyDbSec || envSec;
+      // Admin-saved mode wins over MOYASAR_MODE env var and key-prefix
+      // detection — this is how the platform owner flips test↔live from
+      // the dashboard alone. Falls through to the config-or-prefix logic
+      // when no mode is stored (backward compatible with pre-toggle rows).
+      const effectiveMode: GatewayMode | null = moyStoredMode
+        ? moyStoredMode
+        : effectiveSec
+          ? this.modeFromMoyasarConfigOrPrefix(effectiveSec)
+          : null;
       this.moyasar = {
         secretKey: effectiveSec,
         publishableKey: moyDbPub || envPub,
@@ -326,7 +340,7 @@ export class GatewayCredentialsService implements OnModuleInit {
           [moyDbPub, moyDbSec, moyDbHook],
           [envPub, envSec, envHook],
         ),
-        mode: effectiveSec ? this.modeFromMoyasarConfigOrPrefix(effectiveSec) : null,
+        mode: effectiveMode,
         lastFour: this.tailFour(effectiveSec),
       };
     }

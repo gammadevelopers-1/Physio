@@ -8344,6 +8344,9 @@
         "tamaraMode": "Tamara mode (sandbox / live)",
         "tamaraModeAuto": "Auto — use environment URL",
         "tamaraModeHelp": "Tamara uses different URLs for sandbox and live. Picking Sandbox or Live here switches the runtime URL — no devops change needed. Auto falls back to the TAMARA_API_URL environment variable.",
+        "moyasarMode": "Moyasar mode (test / live)",
+        "moyasarModeAuto": "Auto — detect from key prefix",
+        "moyasarModeHelp": "Picking Test or Live here wins over the MOYASAR_MODE environment variable — you can flip Moyasar from test to live directly here after entering the live credentials, without any deploy. Auto lets the sk_test_ / sk_live_ prefix of your secret key decide.",
         "activeGateway": "Active Gateway",
         "activeGatewayHelp": "The gateway selected here is what new checkout sessions use. Existing sessions continue with whatever they started with.",
         "gateway": {

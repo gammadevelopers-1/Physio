@@ -23,7 +23,11 @@ import {
 } from '../payments/gateways/payments-secrets.util';
 
 interface DbPaymentsForHealth {
-  moyasar?: { publishableKey?: string; secretKeyRef?: string | null };
+  moyasar?: {
+    publishableKey?: string;
+    secretKeyRef?: string | null;
+    mode?: 'test' | 'live';
+  };
   tamara?: {
     merchantToken?: string | null;
     secretKeyRef?: string | null;

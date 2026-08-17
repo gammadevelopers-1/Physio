@@ -137,20 +137,21 @@ Every capability was verified against controller/UI code before being written. S
 
 ## §6 — Payment Gateway Production Configuration
 
-**Your ask:** Verify actual deployed config (backend mode, frontend key, CDN env, webhook, callback URL, prod/test toggle, gateway health test, refund config) for Tabby (prod), Tamara (prod), Moyasar (test until live), Bank Transfer (prod/manual).
+**Your ask:** Verify actual deployed config (backend mode, frontend key, CDN env, webhook, callback URL, prod/test toggle, gateway health test, refund config) for Tabby (prod), Tamara (prod), Moyasar (test until live), Bank Transfer (prod/manual). Provide complete self-serve documentation for Moyasar activation.
 
-**Status: Completed for Tabby, Tamara, Bank Transfer. Moyasar test-mode until SCFHS license issued.**
+**Status: Completed. Moyasar activation is now fully self-serve from the admin dashboard.**
 
-**Delivered:**
-- Per-gateway configuration state is documented in [05-user-guides/finance-guide.pdf](05-user-guides/finance-guide.pdf) §5 (Bank Transfer full flow) and §12 (Settings → Gateways).
-- Actual deployed environment variables and secrets are in [14-env-config-and-secrets/environment-configuration-CONFIDENTIAL.pdf](14-env-config-and-secrets/environment-configuration-CONFIDENTIAL.pdf).
-- Live-mode Moyasar secret (`MOYASAR_WEBHOOK_SECRET_LIVE`) is the one production dependency — see [09-security-hardening/secrets-rotation-plan.pdf](09-security-hardening/secrets-rotation-plan.pdf) §8. It is filed by you once Moyasar activates the account (they are waiting for the SCFHS license).
+**Delivered in [06-payment-gateways/](06-payment-gateways/):**
+- **`moyasar-activation-self-serve.pdf`** — complete step-by-step guide for the platform owner to activate Moyasar production, switch Test → Live, verify, roll back, and rotate credentials **entirely from the admin dashboard**. No gcloud command, no CI redeploy, no developer involvement required.
+- Also delivered as code in this cycle: a new **Moyasar Mode dropdown** in admin Settings → System → Payments. The DB-stored mode wins over the `MOYASAR_MODE` env var, so a single UI change flips Test → Live. Details in the self-serve guide.
+- Cross-refs: general gateway workflow in [05-user-guides/finance-guide.pdf](05-user-guides/finance-guide.pdf) §5 + §12. Env-var / Secret Manager alternative path in [14-env-config-and-secrets/environment-configuration-CONFIDENTIAL.pdf](14-env-config-and-secrets/environment-configuration-CONFIDENTIAL.pdf).
 
-**Client action:**
-1. Upload SCFHS license to Moyasar dashboard "Additional Info" section.
-2. Moyasar reviews (~1–3 business days) and activates the merchant account.
-3. You add `MOYASAR_WEBHOOK_SECRET_LIVE` to Secret Manager.
-4. Ghulam (or the on-boarding developer) redeploys backend and flips `MOYASAR_MODE=live`.
+**Client action (all owner-side, no developer needed):**
+1. Upload SCFHS license to Moyasar dashboard.
+2. Wait for Moyasar approval (~1–3 business days).
+3. Follow the self-serve guide: copy live keys + webhook secret from Moyasar → enter in PhysioGuidance admin → Settings → System → Payments → select "Live" mode → Save → verify with a 1 SAR test transaction.
+
+That's it. Steps 1–3 can all happen after the developer contract has ended.
 
 ---
 
@@ -360,7 +361,7 @@ The 4 non-PASS items are all documented externally or intentionally deferred wit
 | 4c | Design Assets | Requires Client Action |
 | 4d | Tutorial/Walkthrough Videos | Will Complete |
 | 5 | User Guides | Completed |
-| 6 | Payment Gateway Production Configuration | Completed except Moyasar (upstream) |
+| 6 | Payment Gateway Production Configuration | Completed — Moyasar activation now self-serve from admin |
 | 7 | NELC Final Handover Evidence | Completed |
 | 8 | PDPL Technical Completion | Completed; 6 client/legal actions remain |
 | 9 | Security Hardening | Completed; 2 minor client actions |
@@ -381,7 +382,7 @@ The 4 non-PASS items are all documented externally or intentionally deferred wit
 Everything Amna needs to do, in order:
 
 1. **[§4c]** Provide design source files (Figma / logos / icons / illustrations / certificate design / email templates) or advise where they are held.
-2. **[§6 / §14]** Once SCFHS license is issued, upload to Moyasar dashboard → activate merchant account → file `MOYASAR_WEBHOOK_SECRET_LIVE` in Secret Manager → developer redeploys backend and flips `MOYASAR_MODE=live`.
+2. **[§6]** Once SCFHS license is issued, follow [06-payment-gateways/moyasar-activation-self-serve.pdf](06-payment-gateways/moyasar-activation-self-serve.pdf) — enter live credentials in admin → Settings → System → Payments, select "Live" mode, save. Fully self-serve, no developer needed.
 3. **[§8]** Six PDPL client/legal actions:
    - Sign off the inactive-user policy.
    - Finalise + publish Privacy Notice (draft provided).

@@ -29,25 +29,30 @@ import { CertificatesService } from './modules/certificates/certificates.service
 import { SiteSettingsService } from './modules/site-settings/site-settings.service';
 import { TaxComputationService } from './modules/payments/services/tax-computation.service';
 
+// Arabic strings deliberately avoid Latin parentheses because PDFKit does
+// not do full bidi shaping — LTR neutrals inside RTL runs get placed in
+// visual RTL order, so "(نموذج)" renders as ")نموذج(". Use an em-dash
+// separator + Latin digits (a common Saudi PDF convention) so numeric
+// runs stay LTR without being reversed.
 const SAMPLE = {
   buyerNameEn: 'Sample Student',
   buyerNameAr: 'طالب نموذجي',
   buyerEmail: 'sample.student@example.com',
   nationalId: '1000000008',
   courseTitleEn: 'Introduction to Physiotherapy (SAMPLE)',
-  courseTitleAr: 'مقدمة في العلاج الطبيعي (نموذج)',
+  courseTitleAr: 'مقدمة في العلاج الطبيعي — نموذج',
   courseId1: 'sample-course-uuid-000000000001',
   courseId2: 'sample-course-uuid-000000000002',
   lineItems: [
     {
       description: 'Introduction to Physiotherapy (SAMPLE)',
-      descriptionAr: 'مقدمة في العلاج الطبيعي (نموذج)',
+      descriptionAr: 'مقدمة في العلاج الطبيعي — نموذج',
       deliveryType: 'zoom',
       amount: 500,
     },
     {
       description: 'Advanced Manual Therapy Techniques (SAMPLE)',
-      descriptionAr: 'تقنيات العلاج اليدوي المتقدمة (نموذج)',
+      descriptionAr: 'تقنيات العلاج اليدوي المتقدمة — نموذج',
       deliveryType: 'self_paced',
       amount: 750,
     },
@@ -298,8 +303,8 @@ async function main() {
       courseTitle,
       cmeHours: 10,
       regNumber: 'SAMPLE-2026',
-      dateFormatted: lang === 'ar' ? '١٧ أغسطس ٢٠٢٦' : '17 AUGUST 2026',
-      accreditationDate: lang === 'ar' ? '١٧ أغسطس ٢٠٢٦' : '17 AUGUST 2026',
+      dateFormatted: lang === 'ar' ? '17 أغسطس 2026' : '17 AUGUST 2026',
+      accreditationDate: lang === 'ar' ? '17 أغسطس 2026' : '17 AUGUST 2026',
       courseAccreditationNumber: 'CRS001-SAMPLE',
       logoBuffer,
       secondaryLogoSvg,

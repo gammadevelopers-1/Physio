@@ -186,6 +186,13 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
     return () => { cancelled = true; };
   }, [selectedCourseId]);
 
+  // Clear any prior server-error message when the user edits the form,
+  // otherwise a stale "Cannot modify a completed/ended/archived course"
+  // (or similar) lingers under fresh, valid inputs and reads as a bug.
+  useEffect(() => {
+    setError("");
+  }, [selectedCourseId, file, title]);
+
   const handleFileSelect = (f: File) => {
     const result = validateUploadFile(f);
     if (!result.ok) {

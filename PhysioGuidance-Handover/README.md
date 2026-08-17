@@ -101,17 +101,21 @@ Status vocabulary matches your doc: **Completed / Will Complete / Requires Clien
 
 ### 4c. Design Assets
 
-**Status: Requires Client Action.**
+**Status: Delivered (source-link + expected zip of production images).**
 
-Design assets (Figma files, source logos, icons, illustrations, certificate design source, email template designs) were not part of the code repository. Please advise where the source files are held or provide them so they can be included in the handover.
+- **Figma design source:** [physioguidance.org FInal](https://www.figma.com/design/KRCkhoyaFhmEKUnz3vOOqo/physioguidance.org-FInal?m=auto&t=S1RCi7BKeY01i1Rp-6) — full design file, access via Figma workspace login.
+- **Production images/logos/icons zip:** being provided by the client separately as `physioguidance-public-assets.zip` — will be dropped into [04-missing-deliverables/design-assets/](04-missing-deliverables/design-assets/) on arrival.
+- The exports currently used in production live in `frontend/public/` in the repo (logo.png, nelc-logo.png, payment icons, illustrations).
 
-**Placeholder folder:** [04-missing-deliverables/design-assets/](04-missing-deliverables/design-assets/) — will be filled once sources are provided.
+To also save a local `.fig` for a fully offline handover, open the Figma file → File menu → "Save local copy". Details in [04-missing-deliverables/design-assets/README.md](04-missing-deliverables/design-assets/README.md).
 
 ### 4d. Tutorial / Walkthrough Videos
 
-**Status: Will Complete.**
+**Status: Delivered as Supercut stack link. Local MP4 exports available on-demand from the same UI.**
 
-Walkthroughs currently exist as a Supercut share link (delivered separately). Downloadable copies will be exported and added to [04-missing-deliverables/walkthrough-videos/](04-missing-deliverables/walkthrough-videos/) so the permanent handover no longer depends on the Supercut share link.
+- **Supercut stack (title: Physio):** https://supercut.ai/stack/f6e0c007-f944-4474-887e-85c80cc08005/ZxPN5YsKs3I8BKaEIJ1lAw
+- The stack contains all seven walkthroughs (Student journey, Instructor course build, Manager approval, Finance workflow, Payment success, Zoom session, Certificate approval).
+- Per-video MP4 download is available directly from the Supercut player UI. Once downloaded, drop the files into [04-missing-deliverables/walkthrough-videos/](04-missing-deliverables/walkthrough-videos/) so the handover no longer depends on the Supercut share link at all. Suggested filenames in that folder's README.
 
 ---
 
@@ -358,8 +362,8 @@ The 4 non-PASS items are all documented externally or intentionally deferred wit
 | 3 | Final Repository Verification | Completed |
 | 4a | Evidence Matrix | Completed |
 | 4b | Platform Owner Guide | Completed |
-| 4c | Design Assets | Requires Client Action |
-| 4d | Tutorial/Walkthrough Videos | Will Complete |
+| 4c | Design Assets | Delivered (Figma link + incoming zip) |
+| 4d | Tutorial/Walkthrough Videos | Delivered (Supercut stack; per-video MP4 export available) |
 | 5 | User Guides | Completed |
 | 6 | Payment Gateway Production Configuration | Completed — Moyasar activation now self-serve from admin |
 | 7 | NELC Final Handover Evidence | Completed |
@@ -381,7 +385,7 @@ The 4 non-PASS items are all documented externally or intentionally deferred wit
 
 Everything Amna needs to do, in order:
 
-1. **[§4c]** Provide design source files (Figma / logos / icons / illustrations / certificate design / email templates) or advise where they are held.
+1. **[§4c]** (Optional finalisation) When ready, drop `physioguidance-public-assets.zip` into `04-missing-deliverables/design-assets/` and save a local `.fig` from the Figma file for a fully offline copy. Figma link + zip source already documented.
 2. **[§6]** Once SCFHS license is issued, follow [06-payment-gateways/moyasar-activation-self-serve.pdf](06-payment-gateways/moyasar-activation-self-serve.pdf) — enter live credentials in admin → Settings → System → Payments, select "Live" mode, save. Fully self-serve, no developer needed.
 3. **[§8]** Six PDPL client/legal actions:
    - Sign off the inactive-user policy.

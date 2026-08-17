@@ -1,24 +1,21 @@
 # §4d — Tutorial / Walkthrough Videos
 
-**Status: Will Complete (developer action).**
+**Status: Delivered as Supercut stack link. Local downloadable copies exportable from the same UI.**
 
-Walkthrough videos of the major end-to-end flows currently exist as a Supercut share link (delivered to Amna in the earlier handover message).
+## Supercut stack (all seven walkthroughs)
 
-Amna asked for downloadable copies so the permanent handover does not depend on a Supercut share link that may later expire or be removed.
+**https://supercut.ai/stack/f6e0c007-f944-4474-887e-85c80cc08005/ZxPN5YsKs3I8BKaEIJ1lAw**
 
-## Coverage in the current Supercut
+Stack title in Supercut: **Physio**
 
-- Student journey (signup → login → enroll → learn → assessment → certificate download)
-- Instructor course build (create → add modules → schedule Zoom → submit for review)
-- Course manager approval flow (review pending course → approve or request changes)
-- Finance workflow (payments queue → bank-transfer approval → refund)
-- Payment success (Moyasar test → callback → invoice)
-- Zoom session (start → attendance → end → finalize)
-- Certificate approval (manager approves → PDF generated → student downloads EN + AR)
+Access is via the shared Supercut link plus the account that owns the stack. From the stack page you can:
+- Play each walkthrough inline
+- Download each video individually as MP4 (per-video "Download" option in Supercut's player UI)
+- Rearrange, retitle, or add new walkthroughs later
 
-## Action
+## To make the handover permanent
 
-Ghulam will export each of the seven Supercut videos as MP4 and add them here as:
+Since Amna asked that the handover not depend only on the Supercut share link long-term, please download each walkthrough as MP4 from the Supercut UI and drop them into this folder alongside this README with these filenames:
 
 ```
 01-student-journey.mp4
@@ -30,4 +27,14 @@ Ghulam will export each of the seven Supercut videos as MP4 and add them here as
 07-certificate-approval.mp4
 ```
 
-Once exported, this README will be updated with an index + timestamps for the major moments in each video.
+Once downloaded, they live in this handover permanently regardless of what happens to the Supercut account or share link.
+
+## Coverage in the current Supercut stack
+
+- Student journey (signup → login → enroll → learn → assessment → certificate download)
+- Instructor course build (create → add modules → schedule Zoom → submit for review)
+- Course manager approval flow (review pending course → approve or request changes)
+- Finance workflow (payments queue → bank-transfer approval → refund)
+- Payment success (Moyasar test → callback → invoice)
+- Zoom session (start → attendance → end → finalize)
+- Certificate approval (manager approves → PDF generated → student downloads EN + AR)

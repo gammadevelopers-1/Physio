@@ -1,4 +1,25 @@
 {
+  "cookieConsent": {
+    "bannerTitle": "نحن نحترم خصوصيتك",
+    "bannerBody": "نستخدم ملفات تعريف الارتباط الأساسية للحفاظ على تسجيل دخولك، وبموافقتك نستخدم أيضاً ملفات التحليلات والتسويق لفهم كيفية استخدام المنصة وقياس الحملات. يمكنك قبول الكل، أو رفض غير الأساسي، أو إدارة كل فئة على حدة.",
+    "privacyLink": "اقرأ إشعار الخصوصية",
+    "acceptAll": "قبول الكل",
+    "rejectAll": "رفض غير الأساسي",
+    "managePreferences": "إدارة التفضيلات",
+    "modalTitle": "تفضيلات ملفات تعريف الارتباط",
+    "modalIntro": "اختر الفئات التي تسمح بها. ملفات تعريف الارتباط الأساسية مفعّلة دائماً لأن المنصة لا تعمل بدونها.",
+    "categoryEssentialTitle": "أساسية",
+    "categoryEssentialBody": "ملف تعريف الارتباط للجلسة الذي يبقيك مسجّل الدخول. لا يمكن إيقافه.",
+    "categoryAnalyticsTitle": "التحليلات",
+    "categoryAnalyticsBody": "Google Analytics 4 وGoogle Tag Manager. يساعدنا على فهم الصفحات التي تُزار وكيف تُستخدم المنصة. لا يتم إنشاء ملف شخصي.",
+    "categoryMarketingTitle": "التسويق",
+    "categoryMarketingBody": "Meta Pixel. يُستخدم لقياس فعالية الحملات التسويقية وعرض محتوى ذي صلة على منصات Meta.",
+    "categoryAlwaysOn": "مفعّل دائماً",
+    "cancel": "إلغاء",
+    "savePreferences": "حفظ التفضيلات",
+    "closeAriaLabel": "إغلاق تفضيلات ملفات تعريف الارتباط",
+    "footerLink": "تفضيلات ملفات تعريف الارتباط"
+  },
   "bankTransfer": {
     "pageTitle": "الدفع بالتحويل البنكي",
     "breadcrumb": "التحويل البنكي",

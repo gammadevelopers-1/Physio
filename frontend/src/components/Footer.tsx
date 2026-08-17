@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Copyright, Facebook, Linkedin, Twitter, Instagram } from "lucide-react";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
 import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import { resolveHref } from "@/lib/href-utils";
+import { COOKIE_CONSENT_OPEN_PREFERENCES_EVENT } from "@/components/cookie-consent/CookieConsentManager";
 
 interface FooterProps {
   siteSettings?: SiteSettings | null;
@@ -23,6 +24,11 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
   const locale = useLocale();
   const isRTL = locale === "ar";
   const platformGeneral = usePlatformGeneral();
+  const tCookies = useTranslations("cookieConsent");
+
+  const openCookiePreferences = () => {
+    window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_OPEN_PREFERENCES_EVENT));
+  };
 
   // Auth / payment / verify-invoice pages are `"use client"` and can't fetch
   // Strapi server-side, so they render `<Footer />` with no props — which
@@ -90,7 +96,10 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
   const hasOrganization = !!(siteSettings?.footerOrganizationTitle || organizationLinks.length > 0);
   const hasSupport = !!(siteSettings?.footerSupportTitle || supportLinks.length > 0);
   const hasCopyright = !!siteSettings?.copyrightText;
-  const hasBottomRow = hasCopyright;
+  // Bottom row always renders when the footer is visible — the Cookie
+  // Preferences link is the minimum content so visitors can revisit their
+  // consent decision at any time (PDPL requirement).
+  const hasBottomRow = true;
   const hasMainRow = !!logoUrl || !!siteName || hasDescription || socialLinks.length > 0 || hasPlatform || hasOrganization || hasSupport || paymentMethods.length > 0 || hasBusinessInfo || hasNelcInfo;
 
   // Entire footer hides if nothing is configured
@@ -335,6 +344,14 @@ const Footer = ({ siteSettings: passedSettings, footerLinks: passedLinks }: Foot
                 </span>
               </div>
             )}
+            <button
+              type="button"
+              onClick={openCookiePreferences}
+              className="text-[var(--color-footer-text)] hover:text-[var(--on-surface-primary)] transition-colors underline underline-offset-2"
+              style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+            >
+              {tCookies("footerLink")}
+            </button>
           </div>
         )}
       </div>

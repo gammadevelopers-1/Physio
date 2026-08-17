@@ -1,4 +1,25 @@
 {
+  "cookieConsent": {
+    "bannerTitle": "We value your privacy",
+    "bannerBody": "We use essential cookies to keep you signed in and, with your permission, analytics and marketing cookies to understand how the platform is used and to measure campaigns. You can accept all, reject non-essential, or manage each category individually.",
+    "privacyLink": "Read our Privacy Notice",
+    "acceptAll": "Accept all",
+    "rejectAll": "Reject non-essential",
+    "managePreferences": "Manage preferences",
+    "modalTitle": "Cookie preferences",
+    "modalIntro": "Choose which categories of cookies you allow. Essential cookies are always on because the platform cannot function without them.",
+    "categoryEssentialTitle": "Essential",
+    "categoryEssentialBody": "The session cookie that keeps you signed in. Cannot be switched off.",
+    "categoryAnalyticsTitle": "Analytics",
+    "categoryAnalyticsBody": "Google Analytics 4 and Google Tag Manager. Helps us understand which pages are visited and how the platform is used. No personal profile is built.",
+    "categoryMarketingTitle": "Marketing",
+    "categoryMarketingBody": "Meta Pixel. Used to measure the effectiveness of marketing campaigns and to show relevant content on Meta platforms.",
+    "categoryAlwaysOn": "Always on",
+    "cancel": "Cancel",
+    "savePreferences": "Save preferences",
+    "closeAriaLabel": "Close cookie preferences",
+    "footerLink": "Cookie preferences"
+  },
   "maintenancePage": {
     "title": "We'll be right back",
     "subtitle": "The platform is undergoing scheduled maintenance.",

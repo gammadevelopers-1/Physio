@@ -2191,6 +2191,73 @@ export interface ErrorMonitoringTrendBucket {
   count: number;
 }
 
+// ===========================================
+// Monitoring — admin-facing infrastructure health API
+// Consumed by /dashboard/admin/monitoring page.
+// ===========================================
+export interface MonitoringServiceHealth {
+  name: string;
+  status: 'up' | 'down' | 'unknown';
+  latencyMs: number | null;
+  httpStatus: number | null;
+  lastCheckedAt: string;
+}
+export interface MonitoringServicesHealthResponse {
+  services: MonitoringServiceHealth[];
+}
+export interface MonitoringJobsStats {
+  iamGrantPending?: boolean;
+  windowHours: number;
+  jobs: Array<{
+    name: string;
+    succeeded: number;
+    failed: number;
+    lastExecutionAt: string | null;
+  }>;
+}
+export interface MonitoringCloudSql {
+  iamGrantPending?: boolean;
+  cpuPercent: number | null;
+  connections: number | null;
+  diskBytes: number | null;
+  memoryPercent: number | null;
+  lastCheckedAt: string;
+}
+export interface MonitoringRedis {
+  iamGrantPending?: boolean;
+  memoryPercent: number | null;
+  memoryBytes: number | null;
+  connectedClients: number | null;
+  opsPerSec: number | null;
+  lastCheckedAt: string;
+}
+export interface MonitoringBuckets {
+  iamGrantPending?: boolean;
+  buckets: Array<{ name: string; sizeBytes: number | null }>;
+  lastCheckedAt: string;
+}
+export interface MonitoringUptime {
+  iamGrantPending?: boolean;
+  checks: Array<{
+    name: string;
+    isUp: boolean | null;
+    latestLatencyMs: number | null;
+    checkedFrom: number;
+  }>;
+  lastCheckedAt: string;
+}
+
+export const monitoringApi = {
+  servicesHealth: () =>
+    api.get<MonitoringServicesHealthResponse>('/admin/monitoring/services-health'),
+  jobsStats: (hours = 24) =>
+    api.get<MonitoringJobsStats>(`/admin/monitoring/jobs-stats?hours=${hours}`),
+  cloudSql: () => api.get<MonitoringCloudSql>('/admin/monitoring/cloudsql'),
+  redis: () => api.get<MonitoringRedis>('/admin/monitoring/redis'),
+  buckets: () => api.get<MonitoringBuckets>('/admin/monitoring/buckets'),
+  uptime: () => api.get<MonitoringUptime>('/admin/monitoring/uptime'),
+};
+
 export const errorMonitoringApi = {
   getOverview: () =>
     api.get<ErrorMonitoringOverview>('/admin/error-monitoring/overview'),

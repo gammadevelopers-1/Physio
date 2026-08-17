@@ -6544,7 +6544,8 @@
       "editProfile": "Edit Profile",
       "avatarUploadError": "Failed to upload avatar. Please try again.",
       "logout": "Logout",
-      "certificates": "Certificates"
+      "certificates": "Certificates",
+      "monitoring": "Monitoring"
     },
     "kpi": {
       "activeUsers": "Active Users",
@@ -15832,5 +15833,38 @@
     "genericError": "This cancellation link is invalid or has expired. If you still want to keep your account, please contact support.",
     "missingToken": "The cancellation link is incomplete. Please open it directly from the confirmation email.",
     "homeButton": "Back to home"
+  },
+  "adminMonitoring": {
+    "title": "Monitoring",
+    "subtitle": "Live infrastructure health, background jobs, and resource pressure",
+    "openInGcp": "Open in GCP",
+    "refresh": "Refresh",
+    "lastRefreshed": "Last refreshed",
+    "iamPendingTitle": "IAM grant pending",
+    "iamPendingBody": "Some metrics require roles/monitoring.viewer on api-runtime@ SA. Ask the project owner to grant it; widgets will populate automatically once granted.",
+    "iamPendingShort": "IAM grant pending",
+    "sectionServices": "Services",
+    "sectionEvents": "Events",
+    "sectionJobs": "Background jobs (last 24h)",
+    "sectionResources": "Resource pressure",
+    "statusUp": "Up",
+    "statusDown": "Down",
+    "statusUnknown": "Unknown",
+    "uptimeChecks": "Uptime checks (last hour)",
+    "uptimeUp": "Probes reporting up",
+    "jobsSummary24h": "Jobs (last 24h)",
+    "succeeded": "Succeeded",
+    "failed": "Failed",
+    "jobName": "Job",
+    "lastRun": "Last run",
+    "cloudSql": "Cloud SQL",
+    "redis": "Redis",
+    "storageBuckets": "Storage",
+    "cpu": "CPU",
+    "connections": "Connections",
+    "memory": "Memory",
+    "memoryUsed": "Used",
+    "opsPerSec": "Ops/sec",
+    "dbSize": "DB size"
   }
 }

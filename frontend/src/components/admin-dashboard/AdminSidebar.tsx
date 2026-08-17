@@ -26,6 +26,7 @@ import {
   Headphones,
   UserPlus,
   Wifi,
+  Activity,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { roleRequestsApi, profileApi, adminApi, supportApi } from "@/lib/api";
@@ -212,6 +213,11 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
       label: t("sidebar.security"),
       href: `/${locale}/dashboard/admin/security`,
       icon: Lock,
+    },
+    {
+      label: t("sidebar.monitoring"),
+      href: `/${locale}/dashboard/admin/monitoring`,
+      icon: Activity,
     },
 
     // Config

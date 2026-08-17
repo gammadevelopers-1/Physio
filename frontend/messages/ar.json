@@ -6544,7 +6544,8 @@
       "avatarUploadError": "فشل رفع الصورة الشخصية. يرجى المحاولة مرة أخرى.",
       "logout": "تسجيل الخروج",
       "activeToday": "نشط اليوم",
-      "certificates": "الشهادات"
+      "certificates": "الشهادات",
+      "monitoring": "المراقبة"
     },
     "kpi": {
       "activeUsers": "المستخدمون النشطون",
@@ -15832,5 +15833,38 @@
     "genericError": "رابط الإلغاء هذا غير صالح أو منتهي الصلاحية. إذا كنت لا تزال ترغب في الاحتفاظ بحسابك، يرجى التواصل مع الدعم.",
     "missingToken": "رابط الإلغاء غير مكتمل. يرجى فتحه مباشرة من رسالة التأكيد.",
     "homeButton": "العودة إلى الصفحة الرئيسية"
+  },
+  "adminMonitoring": {
+    "title": "المراقبة",
+    "subtitle": "الحالة الحية للبنية التحتية، والمهام الخلفية، وضغط الموارد",
+    "openInGcp": "فتح في GCP",
+    "refresh": "تحديث",
+    "lastRefreshed": "آخر تحديث",
+    "iamPendingTitle": "بانتظار منح IAM",
+    "iamPendingBody": "تتطلب بعض المقاييس صلاحية roles/monitoring.viewer على حساب api-runtime@. اطلب من مالك المشروع منحها؛ ستُملأ الأدوات تلقائيًا بعد المنح.",
+    "iamPendingShort": "بانتظار منح IAM",
+    "sectionServices": "الخدمات",
+    "sectionEvents": "الأحداث",
+    "sectionJobs": "المهام الخلفية (آخر 24 ساعة)",
+    "sectionResources": "ضغط الموارد",
+    "statusUp": "يعمل",
+    "statusDown": "متوقف",
+    "statusUnknown": "غير معروف",
+    "uptimeChecks": "فحوصات التشغيل (آخر ساعة)",
+    "uptimeUp": "المسبار الذي يبلغ عن التشغيل",
+    "jobsSummary24h": "المهام (آخر 24 ساعة)",
+    "succeeded": "نجح",
+    "failed": "فشل",
+    "jobName": "المهمة",
+    "lastRun": "آخر تنفيذ",
+    "cloudSql": "Cloud SQL",
+    "redis": "Redis",
+    "storageBuckets": "التخزين",
+    "cpu": "المعالج",
+    "connections": "الاتصالات",
+    "memory": "الذاكرة",
+    "memoryUsed": "المستخدم",
+    "opsPerSec": "عملية/ثانية",
+    "dbSize": "حجم قاعدة البيانات"
   }
 }

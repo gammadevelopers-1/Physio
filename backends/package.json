@@ -32,6 +32,8 @@
     "db:reset": "npm run db:push && npm run db:seed:roles"
   },
   "dependencies": {
+    "@google-cloud/monitoring": "^5.4.0",
+    "@google-cloud/run": "^3.3.0",
     "@google-cloud/storage": "^7.18.0",
     "@google-cloud/tasks": "^6.3.0",
     "@nestjs/bullmq": "^11.0.4",

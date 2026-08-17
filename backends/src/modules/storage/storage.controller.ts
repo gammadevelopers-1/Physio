@@ -10,6 +10,8 @@ import {
   UploadedFile,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
+  HttpException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SkipThrottle } from '@nestjs/throttler';
@@ -205,6 +207,35 @@ export class StorageController {
 
     // For GCP storage, stream file directly from the bucket
     if (!this.storageService.isLocal) {
+      // Malware gate — private + trainers buckets receive user uploads
+      // (payment receipts, trainer CVs/certificates, support attachments)
+      // that must be blocked until the Eventarc-triggered scanner
+      // ([infra/malware-scanner/main.js](infra/malware-scanner/main.js))
+      // marks them clean. Public bucket is exempt: it holds system-
+      // generated content (invoice PDFs, transcoded materials) and
+      // course materials that stay hidden from students until their
+      // downstream processing pipeline completes — the scanner has
+      // long since finished by then.
+      if (bucket === 'private' || bucket === 'trainers') {
+        const scan = await this.storageService.getScanStatus(
+          bucket,
+          filePath,
+        );
+        if (scan.status === 'quarantined') {
+          throw new ForbiddenException(
+            'This file was flagged as infected by the malware scanner and has been quarantined',
+          );
+        }
+        if (scan.status === 'pending') {
+          // HTTP 425 Too Early — @nestjs/common's HttpStatus enum lacks
+          // this code, so use the numeric literal.
+          throw new HttpException(
+            'Malware scan has not completed yet — please wait a moment and try again',
+            425,
+          );
+        }
+      }
+
       const stream = await this.storageService.getFileStream(
         bucket as 'public' | 'private' | 'trainers',
         filePath,

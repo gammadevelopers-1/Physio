@@ -1,4 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ForbiddenException,
+  HttpException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -98,12 +103,45 @@ export class StorageService {
   }
 
   /**
-   * Get a signed URL for private file access (GCP only; local returns direct URL)
+   * Get a signed URL for private file access (GCP only; local returns direct URL).
+   *
+   * Malware gate — pass `requireCleanScan: true` for any download surface
+   * that hands untrusted uploads back to users (payment receipts, trainer
+   * CVs, support attachments). The gate:
+   *   - throws 403 if the object was quarantined by the scanner
+   *   - throws 425 (Too Early) if the scan hasn't finished yet
+   *   - lets `unknown` through (metadata lookup failed — likely a network
+   *     blip; we choose availability over false-positive blocking)
+   *
+   * System-generated content (invoices we just wrote, materials that go
+   * through the transcode pipeline) does NOT need this flag: either the
+   * bytes originated on our side or the material is invisible to users
+   * until a downstream processor confirms it.
    */
   async getSignedUrl(
     bucket: 'public' | 'private' | 'trainers',
     filename: string,
+    opts: { requireCleanScan?: boolean } = {},
   ): Promise<string> {
+    if (opts.requireCleanScan && !this.useLocal) {
+      const scan = await this.getScanStatus(bucket, filename);
+      if (scan.status === 'quarantined') {
+        throw new ForbiddenException(
+          'This file was flagged as infected by the malware scanner and has been quarantined',
+        );
+      }
+      if (scan.status === 'pending') {
+        // HTTP 425 Too Early — @nestjs/common's HttpStatus enum doesn't
+        // include this code, so we use the numeric literal directly.
+        // Semantically the correct status: request came before the
+        // server was ready to satisfy it.
+        throw new HttpException(
+          'Malware scan has not completed yet — please wait a moment and try again',
+          425,
+        );
+      }
+    }
+
     if (this.useLocal) {
       return `${this.baseUrl}/storage/files/${bucket}/${filename}`;
     }
@@ -297,7 +335,6 @@ export class StorageService {
   }
 
   /**
-<<<<<<< HEAD
    * Read the malware-scan verdict produced by the Eventarc-triggered
    * scanner ([infra/malware-scanner/main.js](infra/malware-scanner/main.js)).
    *

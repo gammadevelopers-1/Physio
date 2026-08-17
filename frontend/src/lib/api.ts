@@ -8443,7 +8443,10 @@ export interface BankTransferReceiptDetail {
       bankName: string;
       nationalId: string | null;
     };
-    downloadUrl: string;
+    // Null while the malware scanner hasn't cleared the file, or if the
+    // file was quarantined. Frontend must hide download links and show
+    // a scan-status chip instead when null.
+    downloadUrl: string | null;
   };
   payment: {
     id: string;

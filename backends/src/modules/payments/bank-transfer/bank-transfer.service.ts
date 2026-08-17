@@ -5,6 +5,7 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  HttpException,
 } from '@nestjs/common';
 import { eq, and, isNull, desc, count, ilike, or, sql, inArray } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
@@ -334,9 +335,13 @@ export class BankTransferService {
       throw new NotFoundException('Receipt not found');
     }
 
+    // Malware gate — the buyer or finance reviewer must not be handed a
+    // download link for a receipt that the scanner hasn't cleared. Throws
+    // 403 quarantined / 425 pending. See StorageService.getSignedUrl.
     const url = await this.storageService.getSignedUrl(
       'private',
       receipt.gcsObjectPath,
+      { requireCleanScan: true },
     );
 
     return { url, fileName: receipt.fileName };
@@ -893,10 +898,28 @@ export class BankTransferService {
       throw new NotFoundException('Receipt not found');
     }
 
-    const downloadUrl = await this.storageService.getSignedUrl(
-      'private',
-      row.receipt.gcsObjectPath,
-    );
+    // Malware gate — finance must not preview a receipt the scanner has
+    // not yet cleared. We degrade gracefully instead of throwing (the
+    // review modal has many other useful fields the reviewer needs);
+    // the frontend hides the preview and shows a scan-status chip when
+    // downloadUrl is null. Approval is separately gated in approveReceipt.
+    let downloadUrl: string | null = null;
+    try {
+      downloadUrl = await this.storageService.getSignedUrl(
+        'private',
+        row.receipt.gcsObjectPath,
+        { requireCleanScan: true },
+      );
+    } catch (err) {
+      const status = (err as HttpException)?.getStatus?.();
+      // 403 quarantined, 425 pending — both are expected scan-gate rejects.
+      // Any other error is a real failure and must propagate.
+      if (status === 403 || status === 425) {
+        // Keep downloadUrl null; the modal surfaces scan status separately.
+      } else {
+        throw err;
+      }
+    }
 
     return {
       receipt: {

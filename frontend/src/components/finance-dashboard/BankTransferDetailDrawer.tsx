@@ -338,35 +338,51 @@ const BankTransferDetailDrawer = ({ receiptId, onClose, onChanged }: Props) => {
                       ({(data.receipt.fileSizeBytes / 1024).toFixed(0)} KB)
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <a
-                      href={data.receipt.downloadUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] text-[var(--color-primary)] hover:underline px-2 py-1"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      {t("bankTransferQueue.drawer.overview.openInNewTab")}
-                    </a>
-                    <a
-                      href={data.receipt.downloadUrl}
-                      download={data.receipt.fileName}
-                      className="inline-flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-2 py-1"
-                    >
-                      <Download className="w-3 h-3" />
-                      {t("bankTransferQueue.drawer.overview.download")}
-                    </a>
-                  </div>
-                </div>
-                <ReceiptPreview
-                  url={data.receipt.downloadUrl}
-                  mimeType={data.receipt.mimeType}
-                  unavailableLabel={t(
-                    "bankTransferQueue.drawer.overview.previewUnavailable",
+                  {/* Malware gate — download links hidden while the
+                      scanner hasn't cleared the file. downloadUrl is
+                      null when scan is pending or quarantined; the
+                      scan-status chip below the preview shows why. */}
+                  {data.receipt.downloadUrl && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <a
+                        href={data.receipt.downloadUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] text-[var(--color-primary)] hover:underline px-2 py-1"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        {t("bankTransferQueue.drawer.overview.openInNewTab")}
+                      </a>
+                      <a
+                        href={data.receipt.downloadUrl}
+                        download={data.receipt.fileName}
+                        className="inline-flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-2 py-1"
+                      >
+                        <Download className="w-3 h-3" />
+                        {t("bankTransferQueue.drawer.overview.download")}
+                      </a>
+                    </div>
                   )}
-                  imageAlt={t("bankTransferQueue.drawer.overview.receiptImageAlt")}
-                  pdfTitle={t("bankTransferQueue.drawer.overview.receiptPdfTitle")}
-                />
+                </div>
+                {data.receipt.downloadUrl ? (
+                  <ReceiptPreview
+                    url={data.receipt.downloadUrl}
+                    mimeType={data.receipt.mimeType}
+                    unavailableLabel={t(
+                      "bankTransferQueue.drawer.overview.previewUnavailable",
+                    )}
+                    imageAlt={t("bankTransferQueue.drawer.overview.receiptImageAlt")}
+                    pdfTitle={t("bankTransferQueue.drawer.overview.receiptPdfTitle")}
+                  />
+                ) : (
+                  <div className="p-4 text-[12px] text-[var(--color-text-secondary)] bg-[var(--color-surface-page)]">
+                    {data.receipt.scanStatus === "pending"
+                      ? t("bankTransferQueue.drawer.overview.scanPending")
+                      : data.receipt.scanStatus === "infected"
+                        ? t("bankTransferQueue.drawer.overview.scanInfected")
+                        : t("bankTransferQueue.drawer.overview.previewUnavailable")}
+                  </div>
+                )}
               </div>
 
               {/* Amount + meta */}

@@ -9766,6 +9766,8 @@
         "receipt": "Receipt",
         "openInNewTab": "Open in new tab",
         "previewUnavailable": "Preview not available — open the file in a new tab.",
+        "scanPending": "Preview will be available once the malware scan completes (usually a few seconds).",
+        "scanInfected": "This receipt was flagged as infected by the malware scanner and has been quarantined.",
         "payment": "Payment",
         "student": "Student",
         "course": "Course",

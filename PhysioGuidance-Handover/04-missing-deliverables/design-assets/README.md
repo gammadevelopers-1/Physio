@@ -16,15 +16,11 @@ To export the .fig source for a truly local copy, open the file in Figma → Fil
 
 ## Production images / logos / icons zip
 
-A zip of the platform's public `frontend/public/` folder (logos, icons, illustrations, brand imagery used in production) is being provided separately by the client and will be dropped into this folder as `physioguidance-public-assets.zip` on arrival.
+**[public.zip](public.zip)** — 48 MB archive of the platform's public assets folder (logos, icons, illustrations, brand imagery used in production). Provided by the client.
 
-Coverage expected in the zip:
-- Site logo (SVG + PNG variants)
-- NELC logo
-- Payment method icons (Moyasar, Tabby, Tamara, Bank Transfer)
-- Course category illustrations
-- Marketing hero images
-- Certificate logo used in the PDF renderer
+## System-generated document samples
+
+**[samples/](samples/)** — six PDFs showing exactly what the platform generates for invoices, proforma invoices, and CME certificates in both EN and AR. Rendered by the actual production PDF code, not fabricated. See [samples/README.md](samples/README.md) for the full explanation of what is real vs sample about the payload.
 
 ## What is already in the code repo
 

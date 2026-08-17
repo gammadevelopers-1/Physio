@@ -104,7 +104,8 @@ Status vocabulary matches your doc: **Completed / Will Complete / Requires Clien
 **Status: Delivered (source-link + expected zip of production images).**
 
 - **Figma design source:** [physioguidance.org FInal](https://www.figma.com/design/KRCkhoyaFhmEKUnz3vOOqo/physioguidance.org-FInal?m=auto&t=S1RCi7BKeY01i1Rp-6) — full design file, access via Figma workspace login.
-- **Production images/logos/icons zip:** being provided by the client separately as `physioguidance-public-assets.zip` — will be dropped into [04-missing-deliverables/design-assets/](04-missing-deliverables/design-assets/) on arrival.
+- **Production images/logos/icons zip:** [public.zip](04-missing-deliverables/design-assets/public.zip) — 48 MB, delivered by the client.
+- **System-generated document samples:** [04-missing-deliverables/design-assets/samples/](04-missing-deliverables/design-assets/samples/) — six PDFs (invoice / proforma / certificate × EN + AR) produced by the actual production PDFKit renderers. See the samples folder README for what is real vs sample about the payload.
 - The exports currently used in production live in `frontend/public/` in the repo (logo.png, nelc-logo.png, payment icons, illustrations).
 
 To also save a local `.fig` for a fully offline handover, open the Figma file → File menu → "Save local copy". Details in [04-missing-deliverables/design-assets/README.md](04-missing-deliverables/design-assets/README.md).
@@ -385,7 +386,7 @@ The 4 non-PASS items are all documented externally or intentionally deferred wit
 
 Everything Amna needs to do, in order:
 
-1. **[§4c]** (Optional finalisation) When ready, drop `physioguidance-public-assets.zip` into `04-missing-deliverables/design-assets/` and save a local `.fig` from the Figma file for a fully offline copy. Figma link + zip source already documented.
+1. **[§4c]** (Optional finalisation) Save a local `.fig` from the Figma file for a fully offline copy. `public.zip` + Figma link already delivered.
 2. **[§6]** Once SCFHS license is issued, follow [06-payment-gateways/moyasar-activation-self-serve.pdf](06-payment-gateways/moyasar-activation-self-serve.pdf) — enter live credentials in admin → Settings → System → Payments, select "Live" mode, save. Fully self-serve, no developer needed.
 3. **[§8]** Six PDPL client/legal actions:
    - Sign off the inactive-user policy.

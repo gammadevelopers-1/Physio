@@ -55,3 +55,15 @@ Thumbs.db
 graphify-out
 # Local-only compose override (points frontend at prod Strapi)
 docker-compose.override.yml
+
+# Handover pack — delivered to client separately, not source-controlled
+PhysioGuidance-Handover/
+
+# Client design source zip — kept on disk only, not source-controlled
+public.zip
+
+# Amna review doc (client input, not a source artifact)
+amna-doc.docx
+
+# Sample-PDF generator output
+backends/samples-output/

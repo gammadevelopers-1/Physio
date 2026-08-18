@@ -12263,13 +12263,17 @@ export class SupportService implements OnModuleInit {
 
   // ─── Retention policy ─────────────────────────────────
   //
-  // The actual purge is implemented as a stub today: when retention
-  // is enabled (days > 0) we LOG which tickets would be purged but
-  // don't delete. Hard-deleting a ticket loses learner history that
-  // legal might still need; the deferred enforcement gives Amna a
-  // policy hook to flip on after she's confirmed the rules with
-  // compliance. Wire enforcement by replacing the log with a delete
-  // / archive write inside getRetentionCandidates().
+  // Admin sets a retention window via `setRetentionDays(n)` (0 = off).
+  // The nightly PDPL retention cron (RetentionService.run) calls
+  // `purgeExpiredTickets()` below to hard-delete every CLOSED ticket
+  // whose closedAt is older than the window. Replies and attachment
+  // scan rows cascade via FK onDelete: 'cascade'. Every purge writes
+  // one audit_logs row summarising the count for auditor evidence.
+  //
+  // Regulatory-retention concerns (financial receipts, xAPI, NELC
+  // certificates) live in separate tables that this purge never
+  // touches — the FK cascade only sweeps ticket_replies and
+  // ticket_attachment_scans, both of which are support-only data.
 
   async getRetentionDays(): Promise<number> {
     try {
@@ -12320,6 +12324,26 @@ export class SupportService implements OnModuleInit {
         ),
       )
       .limit(500);
+  }
+
+  // Nightly cron entry point (called from RetentionService.run). Hard
+  // deletes every CLOSED ticket past the admin-configured retention
+  // window. Batched at 500 so a bad config change can't run away with
+  // the whole database in one go; remainders sweep on the next run.
+  // FK cascade on ticket_replies + ticket_attachment_scans handles
+  // dependents in the same transaction.
+  async purgeExpiredTickets(): Promise<number> {
+    const days = await this.getRetentionDays();
+    if (days <= 0) return 0;
+    const candidates = await this.getRetentionCandidates();
+    if (candidates.length === 0) return 0;
+    const ids = candidates.map((c) => c.id);
+    const res = await db.delete(tickets).where(inArray(tickets.id, ids));
+    const deleted = res.rowCount ?? candidates.length;
+    this.logger.log(
+      `Support ticket retention purge: deleted ${deleted} tickets past ${days}-day window`,
+    );
+    return deleted;
   }
 
   // ─── KB Search Analytics ───────────────────────────────

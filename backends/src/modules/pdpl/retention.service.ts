@@ -10,6 +10,8 @@ import { users } from '../../database/schema/users';
 import { enrollments } from '../../database/schema/enrollments';
 import { certificateRequests } from '../../database/schema/certificate-requests';
 import { refunds } from '../../database/schema/refunds';
+import { tickets, TICKET_STATUS } from '../../database/schema/tickets';
+import { supportConfig } from '../../database/schema/support-config';
 import { DistributedLockService } from '../tasks/distributed-lock.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { EmailService } from '../email/email.service';
@@ -31,6 +33,7 @@ import { EmailService } from '../email/email.service';
  *   audit_logs IP address  > 90 days                → anonymise (last octet zeroed)
  *   users (inactive)       last_login > 24 months   → warn (30-day grace)
  *   users (past grace)     warned_at > 30 days      → hard delete (with exemptions)
+ *   support tickets        closed_at > N days       → hard delete (N = admin-configured, 0 = off)
  *
  * Regulatory-retention tables (audit_logs body, nelc_audit_logs,
  * payment records, certificates) are NEVER touched here — those have
@@ -54,6 +57,7 @@ export class RetentionService {
   private static readonly INACTIVE_GRACE_MS =
     30 * 24 * 60 * 60 * 1000; // 30 days between warning and delete
   private static readonly INACTIVE_BATCH_LIMIT = 500;
+  private static readonly TICKET_BATCH_LIMIT = 500;
 
   constructor(
     private readonly lock: DistributedLockService,
@@ -87,6 +91,7 @@ export class RetentionService {
       auditLogIpsAnonymised: 0,
       inactiveUsersWarned: 0,
       inactiveUsersDeleted: 0,
+      supportTicketsDeleted: 0,
       errors: [],
     };
 
@@ -176,6 +181,17 @@ export class RetentionService {
       summary.errors.push(`inactive_delete: ${(err as Error).message}`);
     }
 
+    // Support ticket retention (admin-configurable, 0 = off). Runs after
+    // inactive-user handling so a bad ticket-purge query doesn't abort
+    // the higher-priority PII purges above. FK cascade sweeps
+    // ticket_replies + ticket_attachment_scans in-transaction.
+    try {
+      const deleted = await this.purgeExpiredSupportTickets();
+      summary.supportTicketsDeleted = deleted;
+    } catch (err) {
+      summary.errors.push(`support_tickets: ${(err as Error).message}`);
+    }
+
     summary.finishedAt = new Date().toISOString();
     summary.durationMs = Date.now() - startedAt.getTime();
 
@@ -186,7 +202,7 @@ export class RetentionService {
       );
     } else {
       this.logger.log(
-        `PDPL retention purge complete: refresh=${summary.refreshTokensDeleted} email=${summary.emailVerificationsDeleted} tfa=${summary.twoFactorChallengesDeleted} ip_anon=${summary.auditLogIpsAnonymised} inactive_warned=${summary.inactiveUsersWarned} inactive_deleted=${summary.inactiveUsersDeleted} in ${summary.durationMs}ms`,
+        `PDPL retention purge complete: refresh=${summary.refreshTokensDeleted} email=${summary.emailVerificationsDeleted} tfa=${summary.twoFactorChallengesDeleted} ip_anon=${summary.auditLogIpsAnonymised} inactive_warned=${summary.inactiveUsersWarned} inactive_deleted=${summary.inactiveUsersDeleted} tickets=${summary.supportTicketsDeleted} in ${summary.durationMs}ms`,
       );
     }
 
@@ -430,6 +446,46 @@ export class RetentionService {
     }
     return deleted;
   }
+
+  /**
+   * Support-ticket retention. Admin sets a retention window in days via
+   * the support admin UI (0 = off). Every CLOSED ticket whose closedAt
+   * is older than the window is hard-deleted; ticket_replies and
+   * ticket_attachment_scans cascade via FK.
+   *
+   * Batched at TICKET_BATCH_LIMIT so a bad config change cannot run
+   * away with the whole tickets table in a single night; remainders
+   * sweep on subsequent nightly runs.
+   */
+  private async purgeExpiredSupportTickets(): Promise<number> {
+    const [row] = await db
+      .select({ value: supportConfig.value })
+      .from(supportConfig)
+      .where(eq(supportConfig.key, 'ticket_retention_days'));
+    const daysRaw = Number((row?.value as { days?: unknown } | undefined)?.days);
+    const days = Number.isFinite(daysRaw) && daysRaw > 0 ? daysRaw : 0;
+    if (days <= 0) return 0;
+
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const candidates = await db
+      .select({ id: tickets.id })
+      .from(tickets)
+      .where(
+        and(
+          eq(tickets.status, TICKET_STATUS.CLOSED),
+          isNotNull(tickets.closedAt),
+          lt(tickets.closedAt, cutoff),
+        ),
+      )
+      .limit(RetentionService.TICKET_BATCH_LIMIT);
+
+    if (candidates.length === 0) return 0;
+
+    const ids = candidates.map((c) => c.id);
+    const res = await db.delete(tickets).where(inArray(tickets.id, ids));
+    return res.rowCount ?? candidates.length;
+  }
 }
 
 interface PurgeSummary {
@@ -443,5 +499,6 @@ interface PurgeSummary {
   auditLogIpsAnonymised: number;
   inactiveUsersWarned: number;
   inactiveUsersDeleted: number;
+  supportTicketsDeleted: number;
   errors: string[];
 }

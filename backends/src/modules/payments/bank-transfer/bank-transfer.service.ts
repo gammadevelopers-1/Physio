@@ -1491,10 +1491,56 @@ export class BankTransferService {
         `Receipt ${receiptId} scan verdict: ${newStatus} (attempt ${attempts + 1})`,
       );
 
-      // TODO Phase 1C: if infected, email student to re-upload + flag in finance queue
+      // Notify the buyer when their receipt was flagged infected so the
+      // upload doesn't just sit in "infected" forever waiting for
+      // finance to notice. Finance still sees infected receipts in the
+      // pending queue with a red scan-status chip; this closes the loop
+      // for the student side.
+      if (newStatus === RECEIPT_SCAN_STATUS.INFECTED) {
+        void this.notifyBuyerReceiptInfected(receiptId);
+      }
     } catch (err) {
       this.logger.error(
         `pollScanStatus failed for receipt ${receiptId}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Look up the buyer for a flagged-infected receipt and email them
+   * with a re-upload prompt. Best-effort: any failure here logs a
+   * warning and does not disturb the scanner path that fired the
+   * verdict update. Called via `void` from pollScanStatus.
+   */
+  private async notifyBuyerReceiptInfected(receiptId: string): Promise<void> {
+    try {
+      const [row] = await db
+        .select({
+          paymentId: paymentReceipts.paymentId,
+          userId: payments.userId,
+          userEmail: users.email,
+          userFirstName: users.firstName,
+        })
+        .from(paymentReceipts)
+        .innerJoin(payments, eq(payments.id, paymentReceipts.paymentId))
+        .innerJoin(users, eq(users.id, payments.userId))
+        .where(eq(paymentReceipts.id, receiptId));
+
+      if (!row?.userEmail) {
+        this.logger.warn(
+          `Cannot notify buyer for infected receipt ${receiptId}: user email not found`,
+        );
+        return;
+      }
+
+      await this.emailService.sendReceiptFlaggedInfected(
+        row.userEmail,
+        row.userFirstName ?? '',
+        row.paymentId,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `notifyBuyerReceiptInfected failed for ${receiptId}: ${(err as Error).message}`,
       );
     }
   }

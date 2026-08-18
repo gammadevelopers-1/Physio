@@ -3342,6 +3342,76 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
       'https://physioguidance.org'
     );
   }
+
+  /**
+   * Bank-transfer receipt failed the malware scan. Ask the buyer to
+   * re-upload from a clean source. Inline template because this is a
+   * security-notice email — admins should not be able to soften the
+   * wording via the templates area.
+   */
+  async sendReceiptFlaggedInfected(
+    to: string,
+    firstName: string,
+    paymentReference: string,
+  ): Promise<void> {
+    try {
+      const name = firstName ? escapeHtml(firstName) : to.split('@')[0];
+      const ref = escapeHtml(paymentReference || '');
+      const dashboardUrl = `${this.frontendUrlFromEnv()}/dashboard/student/billing`;
+      const subject = 'Please re-upload your payment receipt — PhysioGuidance';
+      const html = `
+<!doctype html>
+<html><body style="font-family:Arial,sans-serif;color:#111;line-height:1.5;">
+  <h2>Payment receipt could not be accepted</h2>
+  <p>Hi ${name},</p>
+  <p>We scanned the file you uploaded for payment
+     <strong>${ref}</strong> and our malware scanner flagged it as
+     potentially unsafe. For everyone's protection we cannot accept it,
+     and the file has been quarantined.</p>
+  <p>Please re-generate or re-download your bank-transfer receipt from
+     a trusted source (your bank's app or its official website) and
+     upload a fresh copy from your Billing page:</p>
+  <p><a href="${dashboardUrl}" style="background:#0a5;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px;">Upload a new receipt</a></p>
+  <p><small>Common causes: the PDF was edited in an unofficial editor,
+     the file was downloaded through a compromised extension, or the
+     file was passed through a filesharing service that injected content.
+     A clean receipt straight from your bank will pass.</small></p>
+  <hr>
+  <p><small>If you believe this is a false positive or you need help,
+     reply to this email or open a support ticket from your
+     dashboard.</small></p>
+</body></html>`;
+      const text = `Payment receipt could not be accepted — PhysioGuidance
+
+Hi ${firstName || to.split('@')[0]},
+
+We scanned the file you uploaded for payment ${paymentReference || ''} and
+our malware scanner flagged it as potentially unsafe. For everyone's
+protection we cannot accept it, and the file has been quarantined.
+
+Please re-generate or re-download your bank-transfer receipt from a
+trusted source (your bank's app or its official website) and upload a
+fresh copy from your Billing page:
+
+${dashboardUrl}
+
+If you believe this is a false positive or you need help, reply to this
+email or open a support ticket from your dashboard.
+`;
+      await this.send({
+        to,
+        subject,
+        html,
+        text,
+        skipPreferenceCheck: true,
+      });
+      this.logger.log(`Receipt-infected email sent to ${to} (payment ${paymentReference})`);
+    } catch (err) {
+      this.logger.warn(
+        `Receipt-infected email to ${to} failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
 }
 
 function escapeHtml(input: string): string {

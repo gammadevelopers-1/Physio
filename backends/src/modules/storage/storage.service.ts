@@ -107,11 +107,12 @@ export class StorageService {
    *
    * Malware gate — pass `requireCleanScan: true` for any download surface
    * that hands untrusted uploads back to users (payment receipts, trainer
-   * CVs, support attachments). The gate:
-   *   - throws 403 if the object was quarantined by the scanner
-   *   - throws 425 (Too Early) if the scan hasn't finished yet
-   *   - lets `unknown` through (metadata lookup failed — likely a network
-   *     blip; we choose availability over false-positive blocking)
+   * CVs, support attachments). Fails closed at every failure mode: a file
+   * is downloadable only when the scanner has explicitly written
+   * `malware-scan: clean` to its object metadata. Every other state — the
+   * scan hasn't finished yet, the metadata lookup errored, the object was
+   * moved to quarantine — refuses the URL. Amna doc §13 requires no
+   * bypass path.
    *
    * System-generated content (invoices we just wrote, materials that go
    * through the transcode pipeline) does NOT need this flag: either the
@@ -127,7 +128,7 @@ export class StorageService {
       const scan = await this.getScanStatus(bucket, filename);
       if (scan.status === 'quarantined') {
         throw new ForbiddenException(
-          'This file was flagged as infected by the malware scanner and has been quarantined',
+          'This file was flagged as infected or could not be scanned safely — it has been quarantined and cannot be downloaded',
         );
       }
       if (scan.status === 'pending') {
@@ -137,6 +138,17 @@ export class StorageService {
         // server was ready to satisfy it.
         throw new HttpException(
           'Malware scan has not completed yet — please wait a moment and try again',
+          425,
+        );
+      }
+      if (scan.status === 'unknown') {
+        // Metadata lookup itself errored (GCS blip). Fail closed with
+        // the same "please try again" semantics as pending — do NOT
+        // let the file through just because the scanner status check
+        // couldn't be read. A transient GCS glitch retried by the
+        // client is far better than a scan-bypass window.
+        throw new HttpException(
+          'Malware scan status could not be verified — please retry',
           425,
         );
       }
@@ -341,9 +353,11 @@ export class StorageService {
    * Verdict source of truth lives on the GCS object metadata:
    *   - `malware-scan: clean` + `malware-scan-at: <iso>`  → object scanned and passed
    *   - object missing entirely                          → moved to the quarantine
-   *                                                          bucket (= infected)
-   *   - metadata absent on a present object              → still scanning, or
-   *                                                          skipped (>50 MiB)
+   *                                                          bucket (either infected
+   *                                                          verdict or oversize —
+   *                                                          same 403 either way)
+   *   - metadata absent on a present object              → scan still running,
+   *                                                          treated as pending
    *
    * Local-storage driver has no scanner, so we report `clean` to avoid
    * false alarms in dev.
@@ -367,10 +381,10 @@ export class StorageService {
       const verdict = custom['malware-scan'];
       const scannedAt = custom['malware-scan-at'] || null;
       if (verdict === 'clean') return { status: 'clean', scannedAt };
-      // Object exists but no verdict yet → scan still running, or it
-      // was skipped because it exceeded the scanner size cap. Either
-      // way, treat as pending so the UI shows a "scan in progress"
-      // chip rather than silently allowing the download.
+      // Object exists but no verdict yet → scan still running. Files
+      // that exceed the scanner size cap are moved to the quarantine
+      // bucket by the scanner itself and hit the 404 branch below, so
+      // this path only fires during the ~5-second post-upload window.
       return { status: 'pending', scannedAt: null };
     } catch (err) {
       // getMetadata throws 404 when the object isn't in this bucket.

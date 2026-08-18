@@ -223,7 +223,7 @@ export class StorageController {
         );
         if (scan.status === 'quarantined') {
           throw new ForbiddenException(
-            'This file was flagged as infected by the malware scanner and has been quarantined',
+            'This file was flagged as infected or could not be scanned safely — it has been quarantined and cannot be downloaded',
           );
         }
         if (scan.status === 'pending') {
@@ -231,6 +231,15 @@ export class StorageController {
           // this code, so use the numeric literal.
           throw new HttpException(
             'Malware scan has not completed yet — please wait a moment and try again',
+            425,
+          );
+        }
+        if (scan.status === 'unknown') {
+          // Metadata lookup errored (GCS blip). Fail closed — a
+          // transient error retried by the client is safer than a
+          // scan-bypass window.
+          throw new HttpException(
+            'Malware scan status could not be verified — please retry',
             425,
           );
         }

@@ -221,6 +221,10 @@ import {
   getBankTransferRejectedText,
 } from './templates/bank-transfer-rejected.template';
 import {
+  getReceiptFlaggedInfectedHtml,
+  getReceiptFlaggedInfectedText,
+} from './templates/receipt-flagged-infected.template';
+import {
   getTamaraStuckAlertHtml,
   getTamaraStuckAlertText,
   type TamaraStuckSeverity,
@@ -3345,70 +3349,59 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
   /**
    * Bank-transfer receipt failed the malware scan. Ask the buyer to
-   * re-upload from a clean source. Inline template because this is a
-   * security-notice email — admins should not be able to soften the
-   * wording via the templates area.
+   * re-upload from a clean source. Uses a file-based template (not
+   * editable via the admin Templates area) so the security-notice
+   * wording can't be softened operationally, and stays branded +
+   * bilingual like the rest of the payment-lifecycle emails.
    */
   async sendReceiptFlaggedInfected(
-    to: string,
-    firstName: string,
-    paymentReference: string,
+    paymentId: string,
+    localeOverride?: EmailLocale,
   ): Promise<void> {
     try {
-      const name = firstName ? escapeHtml(firstName) : to.split('@')[0];
-      const ref = escapeHtml(paymentReference || '');
-      const dashboardUrl = `${this.frontendUrlFromEnv()}/dashboard/student/billing`;
-      const subject = 'Please re-upload your payment receipt — PhysioGuidance';
-      const html = `
-<!doctype html>
-<html><body style="font-family:Arial,sans-serif;color:#111;line-height:1.5;">
-  <h2>Payment receipt could not be accepted</h2>
-  <p>Hi ${name},</p>
-  <p>We scanned the file you uploaded for payment
-     <strong>${ref}</strong> and our malware scanner flagged it as
-     potentially unsafe. For everyone's protection we cannot accept it,
-     and the file has been quarantined.</p>
-  <p>Please re-generate or re-download your bank-transfer receipt from
-     a trusted source (your bank's app or its official website) and
-     upload a fresh copy from your Billing page:</p>
-  <p><a href="${dashboardUrl}" style="background:#0a5;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px;">Upload a new receipt</a></p>
-  <p><small>Common causes: the PDF was edited in an unofficial editor,
-     the file was downloaded through a compromised extension, or the
-     file was passed through a filesharing service that injected content.
-     A clean receipt straight from your bank will pass.</small></p>
-  <hr>
-  <p><small>If you believe this is a false positive or you need help,
-     reply to this email or open a support ticket from your
-     dashboard.</small></p>
-</body></html>`;
-      const text = `Payment receipt could not be accepted — PhysioGuidance
+      const [payment] = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.id, paymentId))
+        .limit(1);
+      if (!payment) return;
 
-Hi ${firstName || to.split('@')[0]},
+      const user = await this.getUserData(payment.userId);
+      if (!user?.email) {
+        this.logger.warn(
+          `sendReceiptFlaggedInfected: no user email for payment ${paymentId}`,
+        );
+        return;
+      }
 
-We scanned the file you uploaded for payment ${paymentReference || ''} and
-our malware scanner flagged it as potentially unsafe. For everyone's
-protection we cannot accept it, and the file has been quarantined.
+      const locale = await this.resolveLocale(payment.userId, localeOverride);
+      const s = getEmailStrings(locale);
 
-Please re-generate or re-download your bank-transfer receipt from a
-trusted source (your bank's app or its official website) and upload a
-fresh copy from your Billing page:
+      const studentName =
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+        user.email.split('@')[0];
+      const appBase = this.frontendUrlFromEnv();
+      const uploadUrl = `${appBase}/${locale}/dashboard/student/billing`;
 
-${dashboardUrl}
+      const params = {
+        studentName,
+        paymentReference: paymentId,
+        uploadUrl,
+      };
 
-If you believe this is a false positive or you need help, reply to this
-email or open a support ticket from your dashboard.
-`;
       await this.send({
-        to,
-        subject,
-        html,
-        text,
+        to: user.email,
+        subject: s.receiptInfectedSubject,
+        html: getReceiptFlaggedInfectedHtml(params, locale),
+        text: getReceiptFlaggedInfectedText(params, locale),
         skipPreferenceCheck: true,
       });
-      this.logger.log(`Receipt-infected email sent to ${to} (payment ${paymentReference})`);
+      this.logger.log(
+        `Receipt-infected email sent to ${user.email} (payment ${paymentId}, locale ${locale})`,
+      );
     } catch (err) {
       this.logger.warn(
-        `Receipt-infected email to ${to} failed: ${err instanceof Error ? err.message : String(err)}`,
+        `Receipt-infected email for payment ${paymentId} failed: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }

@@ -296,6 +296,16 @@ const strings = {
   bankRejectedReason:          { en: 'Rejection reason:',             ar: 'سبب الرفض:' },
   bankRejectedCta:             { en: 'Upload a new receipt',          ar: 'رفع إيصال جديد' },
 
+  /* ── Receipt flagged infected (malware scan) ─────────── */
+  receiptInfectedSubject:      { en: 'Please re-upload your payment receipt', ar: 'يرجى إعادة رفع إيصال الدفع' },
+  receiptInfectedTitle:        { en: 'Payment receipt could not be accepted', ar: 'تعذر قبول إيصال الدفع' },
+  receiptInfectedBody:         { en: 'We scanned the file you uploaded for your payment and our malware scanner flagged it as potentially unsafe. For everyone\'s protection we cannot accept it, and the file has been quarantined.', ar: 'قمنا بفحص الملف الذي رفعته لدفعتك، ورصده فاحص البرمجيات الخبيثة على أنه قد يكون غير آمن. لحماية الجميع، لا يمكننا قبوله وقد تم عزل الملف.' },
+  receiptInfectedInstruction:  { en: 'Please re-generate or re-download your bank-transfer receipt from a trusted source (your bank\'s app or its official website) and upload a fresh copy from your Billing page.', ar: 'يرجى إعادة توليد أو إعادة تنزيل إيصال التحويل البنكي من مصدر موثوق (تطبيق بنكك أو موقعه الرسمي) ثم رفع نسخة جديدة من صفحة الفواتير.' },
+  receiptInfectedCta:          { en: 'Upload a new receipt',          ar: 'رفع إيصال جديد' },
+  receiptInfectedCauses:       { en: 'Common causes: the PDF was edited in an unofficial editor, the file was downloaded through a compromised extension, or the file was passed through a filesharing service that injected content. A clean receipt straight from your bank will pass.', ar: 'أسباب شائعة: تم تعديل ملف PDF في محرر غير رسمي، أو تم تنزيل الملف عبر إضافة مخترقة، أو تم تمرير الملف عبر خدمة مشاركة ملفات أضافت محتوى. سيمر إيصال نظيف من بنكك مباشرة.' },
+  receiptInfectedSupport:      { en: 'If you believe this is a false positive or need help, reply to this email or open a support ticket from your dashboard.', ar: 'إذا كنت تعتقد أن هذا إنذار خاطئ أو تحتاج إلى مساعدة، يرجى الرد على هذا البريد أو فتح تذكرة دعم من لوحة التحكم.' },
+  paymentReferenceLabel:       { en: 'Payment reference:',            ar: 'مرجع الدفع:' },
+
   /* ── Refund notifications (4 variants) ──────────────── */
   refundSubmittedSubject:      { en: 'Refund Request Received - {course}', ar: 'تم استلام طلب الاسترداد - {course}' },
   refundSubmittedTitle:        { en: 'Refund Request Received',       ar: 'تم استلام طلب الاسترداد' },

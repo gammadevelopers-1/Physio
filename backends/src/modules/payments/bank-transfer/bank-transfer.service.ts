@@ -1507,37 +1507,29 @@ export class BankTransferService {
   }
 
   /**
-   * Look up the buyer for a flagged-infected receipt and email them
-   * with a re-upload prompt. Best-effort: any failure here logs a
+   * Look up the payment for a flagged-infected receipt and email the
+   * buyer with a re-upload prompt. Best-effort: any failure here logs a
    * warning and does not disturb the scanner path that fired the
-   * verdict update. Called via `void` from pollScanStatus.
+   * verdict update. Called via `void` from pollScanStatus. Email
+   * service resolves the buyer's preferred locale internally and
+   * renders the branded bilingual template.
    */
   private async notifyBuyerReceiptInfected(receiptId: string): Promise<void> {
     try {
       const [row] = await db
-        .select({
-          paymentId: paymentReceipts.paymentId,
-          userId: payments.userId,
-          userEmail: users.email,
-          userFirstName: users.firstName,
-        })
+        .select({ paymentId: paymentReceipts.paymentId })
         .from(paymentReceipts)
-        .innerJoin(payments, eq(payments.id, paymentReceipts.paymentId))
-        .innerJoin(users, eq(users.id, payments.userId))
-        .where(eq(paymentReceipts.id, receiptId));
+        .where(eq(paymentReceipts.id, receiptId))
+        .limit(1);
 
-      if (!row?.userEmail) {
+      if (!row?.paymentId) {
         this.logger.warn(
-          `Cannot notify buyer for infected receipt ${receiptId}: user email not found`,
+          `Cannot notify buyer for infected receipt ${receiptId}: payment not found`,
         );
         return;
       }
 
-      await this.emailService.sendReceiptFlaggedInfected(
-        row.userEmail,
-        row.userFirstName ?? '',
-        row.paymentId,
-      );
+      await this.emailService.sendReceiptFlaggedInfected(row.paymentId);
     } catch (err) {
       this.logger.warn(
         `notifyBuyerReceiptInfected failed for ${receiptId}: ${(err as Error).message}`,

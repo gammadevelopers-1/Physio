@@ -2,10 +2,24 @@
 
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
+import { useLocale } from "next-intl"
 
 import { cn } from "@/lib/utils"
 
-const DropdownMenu = DropdownMenuPrimitive.Root
+// Radix DropdownMenu defaults to LTR positioning when no `dir` prop or
+// DirectionProvider is present, which breaks the popover placement on RTL
+// pages — the portal computes wrong x-offset relative to the trigger and
+// the menu can end up off-screen (top-left corner). Reading the current
+// locale here and passing `dir` to the Root fixes it globally for every
+// dropdown that uses this wrapper.
+const DropdownMenu = ({
+  dir,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>) => {
+  const locale = useLocale()
+  const resolvedDir = dir ?? (locale === "ar" ? "rtl" : "ltr")
+  return <DropdownMenuPrimitive.Root dir={resolvedDir} {...props} />
+}
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 const DropdownMenuPortal = DropdownMenuPrimitive.Portal
 

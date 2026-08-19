@@ -32,6 +32,11 @@
     },
     "blocks": {
       "type": "dynamiczone",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "components": [
         "blocks.accordion-block",
         "blocks.accreditation-badges-block",

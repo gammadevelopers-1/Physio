@@ -64,9 +64,25 @@ export function HeroBannerBlock({ data }: HeroBannerBlockProps) {
         </div>
       )}
 
-      <div className={`relative z-10 flex flex-col lg:flex-row gap-8 lg:gap-20 items-start max-w-[1440px] mx-auto px-4 lg:px-16 py-12 lg:py-24 ${isRTL ? "lg:flex-row-reverse" : ""}`}>
+      <div
+        className={
+          data.backgroundImage
+            ? // With background image: single-column stacked layout (title above description),
+              // aligned to the reading start (left in EN, right in AR).
+              // `items-start` in a flex-col respects direction — start = left in LTR, right in RTL.
+              // Use physical text-alignment classes (text-left/text-right) so the text within each
+              // child block also aligns properly, since text-start isn't in older Tailwind builds.
+              `relative z-10 flex flex-col gap-6 max-w-[1440px] mx-auto px-4 lg:px-16 py-12 lg:py-24 min-h-[420px] lg:min-h-[560px] lg:py-32 justify-center items-start ${
+                isRTL ? "text-right" : "text-left"
+              }`
+            : // No background image: original two-column layout (used by homepage hero etc.)
+              `relative z-10 flex flex-col lg:flex-row gap-8 lg:gap-20 items-start max-w-[1440px] mx-auto px-4 lg:px-16 py-12 lg:py-24 ${
+                isRTL ? "lg:flex-row-reverse" : ""
+              }`
+        }
+      >
         {/* Title Column */}
-        <div className="flex-1 min-w-0">
+        <div className={data.backgroundImage ? "w-full max-w-3xl min-w-0" : "flex-1 min-w-0"}>
           {/* Mobile title */}
           <h1 className="lg:hidden text-[var(--on-surface-default)] font-semibold tracking-[-0.72px] leading-[1.1] text-[36px]">
             {data.titleMobile || data.title}
@@ -84,7 +100,11 @@ export function HeroBannerBlock({ data }: HeroBannerBlockProps) {
         </div>
 
         {/* Description + Buttons Column */}
-        <div className="flex-1 min-w-0 flex flex-col gap-8">
+        <div className={
+          data.backgroundImage
+            ? "w-full max-w-3xl min-w-0 flex flex-col gap-6"
+            : "flex-1 min-w-0 flex flex-col gap-8"
+        }>
           {data.description && (
             <p className="text-[var(--on-surface-default)] leading-7 text-[18px] lg:text-[20px]">
               {data.description}

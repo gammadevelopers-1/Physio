@@ -36,7 +36,7 @@ export BACKEND_MAX_INSTANCES=10
 # Strapi CMS Configuration
 export STRAPI_SERVICE_NAME="physioguidance-cms"
 export STRAPI_PORT=1337
-export STRAPI_MEMORY="512Mi"
+export STRAPI_MEMORY="1Gi"
 export STRAPI_CPU="1"
 export STRAPI_MIN_INSTANCES=0
 export STRAPI_MAX_INSTANCES=2
